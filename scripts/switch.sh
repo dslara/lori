@@ -16,7 +16,7 @@ for dir in projects/*/; do
         if [ "$topic" = "$CURRENT_TOPIC" ]; then
             current=" ${YELLOW}← atual${NC}"
         fi
-        logs=$(ls -1 "$dir/logs/daily"/*.md 2>/dev/null | wc -l | xargs)
+        logs=$(find "$dir/logs/daily" -maxdepth 1 -name "*.md" 2>/dev/null | wc -l | xargs)
         echo -e "  📦 $topic ($logs dias)$current"
     fi
 done

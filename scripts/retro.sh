@@ -13,7 +13,7 @@ echo ""
 echo -e "${YELLOW}📊 Resumo da Semana:${NC}"
 
 WEEK_START=$(date -v-7d +%Y-%m-%d 2>/dev/null || date -d '7 days ago' +%Y-%m-%d)
-LOGS_THIS_WEEK=$(ls -1 "$TOPIC_PATH/logs/daily"/*.md 2>/dev/null | while read f; do
+LOGS_THIS_WEEK=$(find "$TOPIC_PATH/logs/daily" -maxdepth 1 -name "*.md" 2>/dev/null | while read f; do
     FDATE=$(basename "$f" .md)
     if [[ "$FDATE" > "$WEEK_START" ]] || [[ "$FDATE" == "$WEEK_START" ]]; then
         echo "$f"
@@ -34,7 +34,7 @@ echo ""
 
 # Usar numeração sequencial baseada nos arquivos week-*.md existentes
 # (não date +%U que usa semana ISO do ano)
-EXISTING_WEEKS=$(ls "$TOPIC_PATH/meta"/week-*.md 2>/dev/null | wc -l)
+EXISTING_WEEKS=$(find "$TOPIC_PATH/meta" -maxdepth 1 -name "week-*.md" 2>/dev/null | wc -l)
 WEEK=$((EXISTING_WEEKS))
 RETRO_FILE="$TOPIC_PATH/meta/retro-week-$WEEK.md"
 

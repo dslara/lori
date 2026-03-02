@@ -13,7 +13,7 @@ echo ""
 
 if [ "$CURRENT_TOPIC" != "nenhum" ]; then
     print_info "📦 Módulo atual: $CURRENT_TOPIC"
-    logs=$(ls -1 "$TOPIC_PATH/logs/daily"/*.md 2>/dev/null | wc -l | xargs)
+    logs=$(find "$TOPIC_PATH/logs/daily" -maxdepth 1 -name "*.md" 2>/dev/null | wc -l | xargs)
     echo "   Dias de estudo: $logs"
 else
     print_warning "Nenhum módulo ativo"

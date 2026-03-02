@@ -68,20 +68,20 @@ make end     # Salva + atualiza streak
 ```
 ┌─────────────────────────────────────────────────────────────┐
 │  AGENTES (.opencode/agents/)                                │
-│  ════════════════════════════════════════════════════════    │
+│  ════════════════════════════════════════════════════════   │
 │  @meta (primary) → Planejamento estratégico                 │
-│  @tutor (subagent) → Execução de sessões                    │
-│  @review (subagent, hidden) → Auditoria do framework        │
+│  @tutor (primary) → Execução de sessões                     │
+│  @review (primary, hidden) → Auditoria do framework         │
 │  @session (subagent) → Orquestração início/fim              │
-│                                                              │
-│  Carregam skills ON-DEMAND → reduzem tokens permanentes      │
+│                                                             │
+│  Carregam skills ON-DEMAND → reduzem tokens permanentes     │
 └─────────────────────────────────────────────────────────────┘
                             │
                             │ skill({ name: "drill" })
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  SKILLS (.opencode/skills/)                                  │
-│  ════════════════════════════════════════════════════════    │
+│  SKILLS (.opencode/skills/)                                 │
+│  ════════════════════════════════════════════════════════   │
 │  10 Skills carregadas sob demanda:                          │
 │  - drill → Prática deliberada 5-10x                         │
 │  - feynman → Validar compreensão explicando                 │
@@ -90,21 +90,21 @@ make end     # Salva + atualiza streak
 │  - quiz → Retrieval practice rápido                         │
 │  - zombie-mode → Superar procrastinação                     │
 │  - debug-socratic → Guia socrático de bugs                  │
-│  - scaffold → Criar boilerplate                            │
-│  - decomposition → Dividir objetivos (@meta)               │
-│  - benchmarking → Testes de proficiência (@meta)           │
-│                                                              │
+│  - scaffold → Criar boilerplate                             │
+│  - decomposition → Dividir objetivos (@meta)                │
+│  - benchmarking → Testes de proficiência (@meta)            │
+│                                                             │
 │  Skills SUGEREM comandos → NÃO executam scripts             │
 └─────────────────────────────────────────────────────────────┘
                             │
                             │ Handoff para
                             ▼
 ┌─────────────────────────────────────────────────────────────┐
-│  MAKEFILE & SCRIPTS                                          │
-│  ════════════════════════════════════════════════════════    │
-│  16 comandos make → 19 scripts bash                          │
-│                                                              │
-│  Scripts são a INTERFACE → Agentes executam o comportamento  │
+│  MAKEFILE & SCRIPTS                                         │
+│  ════════════════════════════════════════════════════════   │
+│  16 comandos make → 19 scripts bash                         │
+│                                                             │
+│  Scripts são a INTERFACE → Agentes executam o comportamento │
 └─────────────────────────────────────────────────────────────┘
 ```
 
@@ -303,27 +303,27 @@ O projeto arquivado mantém todo o histórico e pode ser consultado futuramente.
 ## 🔥 Workflow Diário
 
 ```
-┌─────────────────────────────────────┐
-│  make start    (5 min)              │
-│  └── Quiz automático (3 perguntas)  │
-├─────────────────────────────────────┤
-│  make study    (50 min)             │
-│  ├── 0. Session   → Sugestão do plano│
-│  ├── 1. Code      → Projeto prático │
-│  ├── 2. Drill     → Exercícios      │
-│  ├── 3. Feynman   → Explicar        │
-│  ├── 4. Scaffold  → Estrutura       │
-│  ├── 5. Experiment→ Comparar        │
-│  ├── 6. Feedback  → Revisar código  │
-│  ├── 7. Explain   → Introdução      │
-│  ├── 8. Intuition → Por quê         │
-│  ├── 9. Debug     → Debug socrático │
-│  ├── z. Zombie    → Procrastinação  │
-│  └── d. Diffuse   → Modo difuso     │
-├─────────────────────────────────────┤
-│  make end      (5 min)              │
-│  └── Salva log + atualiza streak    │
-└─────────────────────────────────────┘
+┌───────────────────────────────────────┐
+│  make start    (5 min)                │
+│  └── Quiz automático (3 perguntas)    │
+├───────────────────────────────────────┤
+│  make study    (50 min)               │
+│  ├── 0. Session   → Sugestão do plano │
+│  ├── 1. Code      → Projeto prático   │
+│  ├── 2. Drill     → Exercícios        │
+│  ├── 3. Feynman   → Explicar          │
+│  ├── 4. Scaffold  → Estrutura         │
+│  ├── 5. Experiment→ Comparar          │
+│  ├── 6. Feedback  → Revisar código    │
+│  ├── 7. Explain   → Introdução        │
+│  ├── 8. Intuition → Por quê           │
+│  ├── 9. Debug     → Debug socrático   │
+│  ├── z. Zombie    → Procrastinação    │
+│  └── d. Diffuse   → Modo difuso       │
+├───────────────────────────────────────┤
+│  make end      (5 min)                │
+│  └── Salva log + atualiza streak      │
+└───────────────────────────────────────┘
 ```
 
 ---
