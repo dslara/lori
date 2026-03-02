@@ -7,6 +7,28 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Não Publicado]
 
+## [3.1.0] - 2026-03-02
+
+### Added
+- **Agente `@run`** integrado ao `opencode.json` — executor de comandos make sem sair do chat
+  * Keywords documentadas no README e no diagrama de arquitetura
+- **`planning/archived/`** — proposta obsoleta `proposta-claude-code-2026-02-27.md` arquivada
+
+### Changed
+- **`VERSION`** atualizado de `2.7.1` → `3.1.0`
+- **`@review`** marcado como `hidden: true` no `opencode.json`
+- **`@session`** — Model Routing corrigido (Claude/Haiku → GLM-4.7); pronomes pt-PT → pt-BR
+- **`@review`** — contagem de agentes corrigida ("3 agentes" → "5 agentes")
+- **`README.md`** — `@run` adicionado em tabela de agentes, diagrama ASCII e seção de keywords
+- **`scripts/study.sh:11`** — instrução de instalação corrigida (URL do binário em vez de `npm install -g opencode`)
+
+### Removed
+- **`.opencode/node_modules/`** — removido (6.2MB de dependências não utilizadas)
+- **`.gitignore`** — linhas legadas removidas (estrutura `04-logs/`, `03-drills/`, `01-meta/`, `02-projects/`, `05-knowledge-base/`)
+
+### Documentation
+- `reviews/audit-complete-2026-03-02-v6.0.0.md` — auditoria completa: 13 problemas resolvidos
+
 ## [3.0.0] - 2026-02-26
 
 ### Added

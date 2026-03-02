@@ -17,10 +17,9 @@ if [ -f "$MASTER_DECK" ]; then
 fi
 
 # Criar header se master-deck não existe
-if [ ! -f "$MASTER_DECK" ]; then
-    echo "front,back,module,difficulty,last_reviewed,next_review,interval_days" > "$MASTER_DECK"
-    print_success "Master-deck criado com header"
-fi
+# Sempre recriar master-deck para evitar duplicatas acumuladas
+echo "front,back,module,difficulty,last_reviewed,next_review,interval_days" > "$MASTER_DECK"
+print_success "Master-deck criado com header"
 
 # Agregar cards de cada módulo
 MODULES_FOUND=0
@@ -44,9 +43,9 @@ if [ -d "$BY_MODULE_DIR" ]; then
     done
 fi
 
-# Remover duplicatas (mantém primeira ocorrência)
+# Remover duplicatas (chave composta: front+back+module)
 if [ -f "$MASTER_DECK" ]; then
-    awk '!seen[$1]++' "$MASTER_DECK" > "$MASTER_DECK.tmp"
+    awk -F',' 'NR==1{print; next} !seen[$1","$2","$3]++' "$MASTER_DECK" > "$MASTER_DECK.tmp"
     mv "$MASTER_DECK.tmp" "$MASTER_DECK"
 fi
 

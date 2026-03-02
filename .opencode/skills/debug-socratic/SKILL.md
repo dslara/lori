@@ -21,7 +21,7 @@ Guia o usuário para encontrar bugs através de **perguntas**, não respostas.
 
 **Por que socrático**:
 - ✅ Ensina a debugar (skill permanente)
-- ✅ Desenvolve intuição de errors
+- ✅ Desenvolve intuição de erros
 - ✅ Cria independência (não precisa de ajuda próxima vez)
 
 ## Quando Usar

@@ -40,7 +40,12 @@ echo ""
 read -p "Remover projeto do módulo ativo? [s/N]: " confirm
 
 if [ "$confirm" = "s" ] || [ "$confirm" = "S" ]; then
-    rm -rf "$TOPIC_PATH"
+    if [[ "$TOPIC_PATH" == projects/* && -d "$TOPIC_PATH" ]]; then
+        rm -rf "$TOPIC_PATH"
+    else
+        print_error "TOPIC_PATH inválido: $TOPIC_PATH"
+        exit 1
+    fi
     echo "nenhum" > .current-topic
     print_success "Projeto removido do módulo"
 else

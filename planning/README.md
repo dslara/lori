@@ -22,10 +22,7 @@ planning/
 
 ## Documentos Ativos
 
-| Arquivo | Tipo | Descrição | Status |
-|---------|------|-----------|--------|
-| [consolidated-analysis-2026-02-28-v1.0.0.md](./consolidated-analysis-2026-02-28-v1.0.0.md) | análise | Consolidação de todos os plannings | ✅ Ativo |
-| [proposta-memoria-automatica-2026-02-28.md](./proposta-memoria-automatica-2026-02-28.md) | proposta | Carregamento automático de contexto no `make start` | 🟡 Proposta |
+Nenhum documento ativo no momento.
 
 ---
 
@@ -39,8 +36,10 @@ Consulte [`archived/README.md`](./archived/README.md) para o histórico completo
 |---------|--------|
 | `plano-implementacao-skills-2026-02-27.md` | ✅ Implementado |
 | `plano-migracao-glm-2026-02-27.md` | ✅ Implementado |
+| `proposta-memoria-automatica-2026-02-28.md` | ✅ Implementada |
 | `proposta-estrutura-modular.md` | ⚠️ Parcial (40%) |
 | `report-prototipo-fase0.md` | ✅ Validado |
+| `consolidated-analysis-2026-02-28-v1.0.0.md` | ✅ Consolidado |
 
 ---
 

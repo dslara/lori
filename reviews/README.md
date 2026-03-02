@@ -58,15 +58,13 @@ Exemplos:
 
 ## Revisão Ativa
 
-| Arquivo | Tipo | Data | Versão | Resumo |
-|---------|------|------|--------|--------|
-| [consolidated-analysis-2026-02-28-v1.0.0.md](./consolidated-analysis-2026-02-28-v1.0.0.md) | consolidated | 2026-02-28 | v1.0.0 | Análise de 14 reviews: 83% problemas resolvidos, nota 9.1/10 |
+- [`audit-quality-2026-03-02-v3.1.0.md`](./audit-quality-2026-03-02-v3.1.0.md) — Auditoria completa de qualidade (10/15 issues resolvidos)
 
 ---
 
 ## Revisões Arquivadas
 
-Todas as revisões técnicas foram consolidadas e arquivadas.
+Revisões supersedidas ou implementadas ficam em `archived/`.
 
 Consulte [`archived/README.md`](./archived/README.md) para o histórico completo.
 
@@ -121,6 +119,7 @@ opencode run --agent @review "#meta-review [arquivo]"
 
 | Data | Documento | Reviews Analisadas | Veredito |
 |------|-----------|-------------------|----------|
+| 2026-03-02 | `pendencias-consolidadas-2026-03-02-v1.0.0.md` | — | Pendências consolidadas (reviews + planning) |
 | 2026-02-28 | `consolidated-analysis-2026-02-28-v1.0.0.md` | 14 | 9.1/10, 83% resolvidos |
 
 ---

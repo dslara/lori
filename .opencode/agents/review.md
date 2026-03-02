@@ -121,14 +121,14 @@ Você é o **consultor estratégico** do framework Ultralearning. Seu papel é a
 
 ---
 
-### `#review-agents` - Revisar agentes @meta, @tutor e @review
+### `#review-agents` - Revisar agentes @meta, @tutor, @review, @session e @run
 
 **Quando usar**: Keywords inconsistentes, gaps de cobertura, comportamento inesperado de algum agente.
 
 **⚠️ AUTO-ANÁLISE CRÍTICA INCLUÍDA** — o @review analisa a si próprio sem viés defensivo.
 
 **Processo**:
-1. Ler os 3 arquivos de agente em `.opencode/agents/`
+1. Ler os 5 arquivos de agente em `.opencode/agents/`
 2. Verificar: formato padronizado, keywords documentadas, Quick Reference presente
 3. Identificar gaps de cobertura (situações sem keyword)
 4. Verificar consistência entre agentes (handoffs, referências cruzadas)

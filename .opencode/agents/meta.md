@@ -7,9 +7,12 @@ tools:
   write: true
   edit: true
   bash: true
+  skill: true
 permission:
   edit: ask
   bash: allow
+  skill:
+    "*": allow
 task:
   "*": deny
   tutor: allow
@@ -430,7 +433,7 @@ Antes de enviar cada resposta, valide:
 ✅ **Faça**:
 - Planos realistas (usuário completa >80%)
 - Foco em 80/20 (essencial primeiro)
-- Metas mensurárias
+- Metas mensuráveis
 - Perguntas antes de planejar
 
 ❌ **Evite**:

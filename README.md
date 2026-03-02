@@ -10,22 +10,19 @@ Sistema de aprendizado autodirigido integrando três abordagens científicas:
 
 Otimizado para aprendizado acelerado de Ciência da Computação.
 
-## ⚡ Quick Start
+## ⚡ Como Usar
+
+> **Guia completo**: [`HOW_TO_USE.md`](HOW_TO_USE.md) — Setup, rotina diária, comandos, keywords, troubleshooting.
 
 ```bash
-# 1. Criar módulo
-make module
-# Digite: python-basics
-
-# 2. Começar estudo (3 comandos)
-make start   # Inicia + quiz automático
+make start   # Inicia sessão + quiz automático
 make study   # Loop de estudo interativo
-make end     # Salva + atualiza streak
+make end     # Encerra, salva log, atualiza streak
 ```
 
 ---
 
-## 📋 Comandos (16 total)
+## 📋 Comandos (17 total)
 
 ### Sessão Diária
 | Comando | Descrição |
@@ -71,8 +68,9 @@ make end     # Salva + atualiza streak
 │  ════════════════════════════════════════════════════════   │
 │  @meta (primary) → Planejamento estratégico                 │
 │  @tutor (primary) → Execução de sessões                     │
-│  @review (primary, hidden) → Auditoria do framework         │
+│  @review (primary) → Auditoria do framework                 │
 │  @session (subagent) → Orquestração início/fim              │
+│  @run (subagent) → Executor de comandos make                │
 │                                                             │
 │  Carregam skills ON-DEMAND → reduzem tokens permanentes     │
 └─────────────────────────────────────────────────────────────┘
@@ -102,7 +100,7 @@ make end     # Salva + atualiza streak
 ┌─────────────────────────────────────────────────────────────┐
 │  MAKEFILE & SCRIPTS                                         │
 │  ════════════════════════════════════════════════════════   │
-│  16 comandos make → 19 scripts bash                         │
+│  17 comandos make → 19 scripts bash                         │
 │                                                             │
 │  Scripts são a INTERFACE → Agentes executam o comportamento │
 └─────────────────────────────────────────────────────────────┘
@@ -122,8 +120,9 @@ make end     # Salva + atualiza streak
 |--------|--------|--------|
 | **@meta** | GLM-5 | Planejamento estratégico, decomposição de objetivos |
 | **@tutor** | GLM-5 | Mentor socrático, quiz, drills, feedback |
-| **@review** | GLM-5 | Revisão arquitetural, auditoria (hidden) |
+| **@review** | GLM-5 | Revisão arquitetural, auditoria |
 | **@session** | opencode/glm-4.7 | Orquestrador de sessões — lightweight |
+| **@run** | opencode/glm-4.7 | Executor de comandos make — roda scripts sem sair do chat |
 
 ### Skills do @tutor
 
@@ -183,6 +182,11 @@ make end     # Salva + atualiza streak
 | `#session-start` | Inicia sessão com contexto do plano — sugere keyword do @tutor |
 | `#session-end` | Consolida sessão — gera reflexão + texto para `make end` |
 | `#session-plan` | Consulta progresso das entregas da semana |
+
+### Keywords do @run
+| Keyword | Uso |
+|---------|-----|
+| `#run [comando]` | Executa `make [comando]` sem sair do chat |
 
 ---
 
@@ -247,7 +251,7 @@ Comece ridicularmente pequeno:
 ```
 ultralearning/
 ├── .opencode/
-│   ├── agents/           # @meta, @tutor, @review, @session
+│   ├── agents/           # @meta, @tutor, @review, @session, @run
 │   ├── skills/           # 10 skills carregadas on-demand
 │   └── opencode.json     # Config de modelos + agents
 ├── scripts/              # 19 scripts bash (streak, SRS, etc.)
@@ -263,7 +267,7 @@ ultralearning/
 ├── guides/               # 9 princípios + 23 técnicas
 ├── reviews/              # Revisões técnicas do framework
 ├── planning/             # Propostas de mudança do FRAMEWORK
-└── Makefile              # 16 comandos
+└── Makefile              # 17 comandos
 ```
 
 O projeto está organizado em pastas especializadas:
@@ -355,114 +359,6 @@ Baseado em **Ultralearning** de Scott Young:
 7. **Retention**: Spaced repetition (SRS)
 8. **Intuition**: Entenda o "por quê"
 9. **Experimentation**: Teste múltiplas abordagens
-
----
-
-## 🎓 Como Estudar (Guia Passo a Passo)
-
-### Primeira Vez? Comece Aqui:
-
-```bash
-# 1. Configure o sistema
-make setup
-
-# 2. Crie seu primeiro módulo
-make module
-# Digite o tema: ex "python-basics"
-
-# 3. Planeje com @meta (opcional mas recomendado)
-make plan
-# Ou direto: opencode run --agent @meta "#decompose-goal Python básico"
-```
-
-### Rotina Diária (1 hora)
-
-**🌅 Início (5 min)**
-```bash
-make start
-```
-- @session carrega skill automaticamente
-- Quiz automático testa o que você estudou ontem
-- Ativa memória antes de aprender novo conteúdo
-
-**📚 Estudo (50 min)**
-```bash
-make study
-```
-Escolha baseado no que precisa (skills carregadas automaticamente):
-
-| Situação | Opção | Skill carregada | Por quê |
-|----------|-------|-----------------|--------|
-| Não sabe o que fazer hoje | 0. Session | — | @session lê o plano e sugere |
-| Conceito completamente novo | 7. Explain | `explain-concept` | Analogia primeiro |
-| Aprender fazendo | 1. Code | `directness` | Projeto real |
-| Praticar sintaxe | 2. Drill | `drill` | Repetição = automatização |
-| Revisar conceito | 3. Feynman | `feynman` | Se não explica, não entendeu |
-| Começar projeto | 4. Scaffold | `scaffold` | Estrutura pronta |
-| Bug difícil | 9. Debug | `debug-socratic` | Guia socrático |
-| Sem vontade de estudar | z. Zombie | `zombie-mode` | Two-Minute Rule |
-| Travado há >30min | d. Diffuse | — (inline) | Deixar cérebro processar |
-
-**🏁 Fim (5 min)**
-```bash
-make end
-```
-- Anota o que aprendeu
-- Atualiza seu streak 🔥
-
-### Rotina Semanal
-
-**Domingo (30 min)**
-```bash
-make retro    # O que funcionou? O que não?
-make plan     # Planejar próxima semana
-```
-
-**Qualquer dia**
-```bash
-make review   # Revisar flashcards (SRS)
-make status   # Ver progresso
-```
-
-### Dicas de Ouro 💡
-
-1. **Consistência > Intensidade**: 1h/dia todo dia > 5h no fim de semana
-2. **Não releia, recupere**: Quiz diário força memória ativa
-3. **Projetos reais**: Não fique só em tutoriais
-4. **Seja honesto**: Se não entendeu, use `#feynman` para testar
-5. **Mantenha o streak**: A gamificação funciona!
-
----
-
-## 🔧 Troubleshooting
-
-**Módulo não encontrado?**
-```bash
-make switch  # Lista módulos disponíveis
-```
-
-**Quiz não funciona?**
-```bash
-# Verifique se opencode está instalado
-opencode --version
-
-# Verifique se GLM-5 está selecionado
-# No TUI: /models → deve mostrar opencode/glm-5
-```
-
-**Skills não carregam?**
-```bash
-# Verifique se as skills existem
-ls .opencode/skills/*/SKILL.md
-
-# Teste manual
-opencode run --agent @tutor "#drill binary search"
-```
-
-**Streak não atualiza?**
-```bash
-./scripts/streak.sh reset  # Resetar stats
-```
 
 ---
 

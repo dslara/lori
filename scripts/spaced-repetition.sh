@@ -1,6 +1,9 @@
 #!/bin/bash
 # Sistema de Spaced Repetition (Algoritmo SM-2 simplificado)
 # Baseado em: SuperMemo, Anki
+#
+# SCRIPT INTERNO — não tem target Makefile direto.
+# Chamado por: review.sh (make review) para listar, revisar e adicionar flashcards
 
 source "$(dirname "$0")/common.sh"
 
@@ -9,6 +12,10 @@ check_module
 # Verificar dependências
 if ! command -v jq &> /dev/null; then
     print_error "'jq' não instalado. Execute: brew install jq"
+    exit 1
+fi
+if ! command -v bc &> /dev/null; then
+    print_error "'bc' não instalado. Execute: brew install bc"
     exit 1
 fi
 

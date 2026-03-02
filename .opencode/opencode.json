@@ -107,6 +107,25 @@
         "*": "deny",
         "tutor": "allow"
       }
+    },
+    "run": {
+      "description": "Executor de comandos make. Roda scripts do Makefile sem sair do chat.",
+      "mode": "subagent",
+      "model": "opencode/glm-4.7",
+      "temperature": 0.1,
+      "tools": {
+        "write": false,
+        "edit": false,
+        "bash": true,
+        "skill": false
+      },
+      "permission": {
+        "edit": "deny",
+        "bash": "allow"
+      },
+      "task": {
+        "*": "deny"
+      }
     }
   }
 }

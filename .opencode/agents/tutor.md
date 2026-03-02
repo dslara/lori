@@ -7,12 +7,15 @@ tools:
   write: true
   edit: true
   bash: true
+  skill: true
 permission:
   edit: ask
   bash:
     "*": ask
     "grep *": allow
     "git status": allow
+  skill:
+    "*": allow
 ---
 
 # 🎓 Agente @tutor - Mentor Socrático

@@ -11,7 +11,7 @@ metadata:
 
 ## O que é [Skill]
 
-[Definição em 2-3 fraturas do que o agente deve fazer]
+[Definição em 2-3 frases do que o agente deve fazer]
 
 ## Quando Usar
 

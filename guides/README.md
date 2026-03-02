@@ -7,24 +7,19 @@ Biblioteca completa de técnicas e princípios de aprendizado acelerado.
 ```
 guides/
 ├── README.md                    # Este arquivo
-├── quickstart.md               # Comece aqui (5 min)
 ├── indice.md                   # Navegação completa
-├── checklist.md                # Checklist pré-sessão
 ├── workflow.mmd                # Diagrama visual
 ├── principios/                 # 9 princípios do Ultralearning
-└── tecnicas/                   # 20+ técnicas práticas
+└── tecnicas/                   # 23 técnicas práticas
 ```
 
 ## Como Usar
 
 ### Primeira vez?
-→ Comece pelo **[Quickstart](./quickstart.md)**
+→ Comece pelo **[Como Usar](/HOW_TO_USE.md)** — setup, rotina, comandos, troubleshooting
 
 ### Quer entender o sistema?
-→ Veja o **[Índice](./indice.md)**
-
-### Antes de cada sessão?
-→ Use o **[Checklist](./checklist.md)**
+→ Veja o **[Índice](./indice.md)** — princípios e técnicas
 
 ## Princípios (9)
 
@@ -42,7 +37,7 @@ Os 9 princípios de Ultralearning de Scott Young:
 | 8 | **Intuition** | [8-intuition.md](./principios/8-intuition.md) |
 | 9 | **Experimentation** | [9-experimentation.md](./principios/9-experimentation.md) |
 
-## Técnicas (20+)
+## Técnicas (23)
 
 Implementações práticas organizadas por princípio:
 

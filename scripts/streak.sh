@@ -1,6 +1,9 @@
 #!/bin/bash
 # streak.sh - Sistema simplificado de streak
 # Apenas: streak, total de sessões, última sessão
+#
+# SCRIPT INTERNO — não tem target Makefile direto.
+# Chamado por: end.sh (atualiza streak) e status.sh (exibe streak)
 
 source "$(dirname "$0")/common.sh"
 

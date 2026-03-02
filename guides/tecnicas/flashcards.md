@@ -86,7 +86,7 @@ Flashcards são perfeitos para **memorização de informação factual**:
 # 2. ENTÃO crie flashcard para fatos relacionados
 
 # Adicionar ao arquivo
-nano 01-math-foundations/knowledge/flashcards-source.csv
+ nano projects/M1-math-foundations/knowledge/flashcards-source.csv
 ```
 
 **Exemplo de workflow**:
@@ -106,7 +106,7 @@ nano 01-math-foundations/knowledge/flashcards-source.csv
 # ❌ MAU: Busca no Google toda vez
 # ✅ BOM: Cria flashcard para não esquecer de novo
 
-echo '"Como criar Vec vazio?","Vec::new() ou vec![]","M2-rust",easy,"","",1' >> knowledge/flashcards-source.csv
+ echo '"Como criar ArrayList vazio?","std.ArrayList.init(allocator)","M2-zig",easy,"","",1' >> knowledge/flashcards-source.csv
 ```
 
 ### ⏰ Frequência de Criação
@@ -129,7 +129,7 @@ echo '"Como criar Vec vazio?","Vec::new() ou vec![]","M2-rust",easy,"","",1' >> 
 
 #### Passo 1: Abrir arquivo do módulo atual
 ```bash
-cd 01-math-foundations
+ cd projects/M1-math-foundations
 nano knowledge/flashcards-source.csv
 ```
 
@@ -142,7 +142,7 @@ front,back,module,difficulty,last_reviewed,next_review,interval_days
 **Campos explicados**:
 - `front`: Pergunta (use aspas duplas)
 - `back`: Resposta (use aspas duplas)
-- `module`: Identificador do módulo (ex: M1-math, M2-rust)
+- `module`: Identificador do módulo (ex: M1-math, M2-zig)
 - `difficulty`: `easy`, `medium`, `hard`
 - `last_reviewed`: Deixe vazio (`""`)
 - `next_review`: Deixe vazio (`""`)
@@ -189,7 +189,7 @@ make study
 
 #### Passo 1: Criar cards no módulo
 ```bash
-cd 01-math-foundations
+ cd projects/M1-math-foundations
 nano knowledge/flashcards-source.csv
 # Adicione seus cards
 ```
@@ -202,7 +202,7 @@ cp knowledge/flashcards-source.csv ../shared/flashcards/by-module/M1-math.csv
 #### Passo 3: Sincronizar ao master-deck
 ```bash
 cd ../shared/flashcards
-bash sync-script.sh
+ bash scripts/sync-flashcards.sh
 ```
 
 **O que o script faz**:
@@ -217,7 +217,7 @@ bash sync-script.sh
 ✅ Backup criado: master-deck.csv.backup
 📚 Processando: M1-math
    ✅ 10 cards adicionados
-📚 Processando: M2-rust
+📚 Processando: M2-zig
    ✅ 15 cards adicionados
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -328,7 +328,7 @@ nano knowledge/flashcards-source.csv
 ```csv
 "Quanto é log₂(64)?","6","M1-math",easy,"","",1
 "Lei de De Morgan: ¬(A ∧ B) = ?","¬A ∨ ¬B","M1-math",medium,"","",1
-"Rust: como criar Vec vazio?","Vec::new() ou vec![]","M2-rust",easy,"","",1
+"Zig: como criar ArrayList vazio?","std.ArrayList.init(allocator)","M2-zig",easy,"","",1
 ```
 
 **Por quê funciona**:
@@ -360,7 +360,7 @@ nano knowledge/flashcards-source.csv
 ### ✅ BOM: Usa Contexto
 
 ```csv
-"Rust: Vec::push() é O(?)","O(1) amortizado","M2-rust",medium,"","",1
+"Zig: ArrayList.append() é O(?)","O(1) amortizado","M2-zig",medium,"","",1
 "Hash table: pior caso de busca?","O(n) se todas keys colidirem","M3-ds",hard,"","",1
 ```
 
@@ -433,7 +433,7 @@ nano knowledge/flashcards-source.csv
 ```bash
 # 6. Sincronizar cards novos ao master-deck
 cp knowledge/flashcards-source.csv ../shared/flashcards/by-module/M1-math.csv
-cd ../shared/flashcards && bash sync-script.sh
+ bash scripts/sync-flashcards.sh
 
 # 7. Finalizar sessão
 make end
@@ -548,7 +548,7 @@ nano knowledge/flashcards-source.csv
 ```bash
 # 4. Sincronizar
 cp knowledge/flashcards-source.csv ../shared/flashcards/by-module/M1-math.csv
-cd ../shared/flashcards && bash sync-script.sh
+ bash scripts/sync-flashcards.sh
 
 # 5. Finalizar
 make end

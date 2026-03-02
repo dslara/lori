@@ -36,29 +36,50 @@ echo -e "${PURPLE}🧠 Warm-up: iniciando sessão com contexto...${NC}"
 echo ""
 
 if check_opencode; then
-    # Tentar carregar plano da semana actual como contexto
     WEEK_FILE=$(get_week_context)
+    RECENT_LOGS=$(get_recent_logs 3)
+    SRS_PENDING=$(get_srs_pending)
+
+    # Construir contexto estruturado
+    CONTEXT="Contexto do módulo: $CURRENT_TOPIC
+Data: $TODAY
+
+"
 
     if [ -n "$WEEK_FILE" ]; then
         print_info "📅 Plano encontrado: $(basename "$WEEK_FILE")"
-        WEEK_CONTEXT=$(cat "$WEEK_FILE")
-        opencode run --agent @session "#session-start
+        WEEK_CONTENT=$(cat "$WEEK_FILE")
+        CONTEXT="${CONTEXT}## Plano da Semana
+$WEEK_CONTENT
 
-Contexto do módulo: $CURRENT_TOPIC
-Data: $TODAY
-
-Plano da semana:
-$WEEK_CONTEXT"
+"
     else
-        # Fallback: sessão genérica se não há plano da semana
-        print_warning "Nenhum plano de semana encontrado — sessão genérica de aquecimento."
-        print_info "Cria um plano com: @meta #create-weekly-plan"
-        opencode run --agent @session "#session-start
-Contexto do módulo: $CURRENT_TOPIC
-Data: $TODAY
+        print_warning "Nenhum plano de semana encontrado"
+        print_info "Crie um com: @meta #create-weekly-plan"
+        CONTEXT="${CONTEXT}## Plano da Semana
+Nenhum plano disponível. Crie com: @meta #create-weekly-plan
 
-Nenhum plano de semana disponível. Sessão de aquecimento genérica."
+"
     fi
+
+    if [ -n "$RECENT_LOGS" ]; then
+        print_info "📝 Últimas sessões carregadas"
+        CONTEXT="${CONTEXT}## Últimas Sessões
+$RECENT_LOGS
+
+"
+    else
+        CONTEXT="${CONTEXT}## Últimas Sessões
+Nenhuma sessão anterior registrada.
+
+"
+    fi
+
+    CONTEXT="${CONTEXT}## SRS Pendente
+$SRS_PENDING"
+
+    opencode run --agent @session "#session-start
+$CONTEXT"
 else
     print_warning "OpenCode não instalado. Quiz pulado."
     print_info "Instale o opencode (binário nativo)"

@@ -21,8 +21,10 @@
 ### M1 - Math Foundations
 *Nenhum projeto arquivado*
 
-### M2 - Rust Foundations
+### M2 - Zig Foundations
 *Nenhum projeto arquivado*
+
+*(Nota histórica: este módulo foi originalmente planejado como "Rust Foundations" e migrado para Zig em fev/2026)*
 
 ### M3 - Data Structures
 *Nenhum projeto arquivado*
@@ -30,8 +32,10 @@
 ### M4 - Algorithms
 *Nenhum projeto arquivado*
 
-### M5 - Advanced Rust
+### M5 - Zig Comptime + DP
 *Nenhum projeto arquivado*
+
+*(Nota histórica: este módulo foi originalmente planejado como "Advanced Rust" e migrado para Zig Comptime + DP em fev/2026)*
 
 ### M6 - Go & Systems
 *Nenhum projeto arquivado*

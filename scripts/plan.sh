@@ -17,7 +17,12 @@ echo ""
 # Usar numeração sequencial baseada nos arquivos existentes (não date +%U)
 mkdir -p "$TOPIC_PATH/meta"
 EXISTING_WEEKS=$(find "$TOPIC_PATH/meta" -maxdepth 1 -name "week-*.md" 2>/dev/null | wc -l)
-WEEK=$((EXISTING_WEEKS + 1))
+LAST_WEEK_NUM=$(find "$TOPIC_PATH/meta" -maxdepth 1 -name "week-*.md" 2>/dev/null | sed -E 's/.*week-([0-9]+)\.md/\1/' | sort -n | tail -1)
+if [ -z "$LAST_WEEK_NUM" ]; then
+    WEEK=1
+else
+    WEEK=$((LAST_WEEK_NUM + 1))
+fi
 
 opencode run --agent @meta "#create-weekly-plan semana $WEEK" | tee "$TOPIC_PATH/meta/week-$WEEK.md"
 

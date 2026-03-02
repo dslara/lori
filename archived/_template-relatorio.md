@@ -3,7 +3,7 @@
 **Projeto**: [Nome do Projeto]  
 **Módulo**: [Módulo de origem, ex: M3 - Data Structures]  
 **Período**: [Data de início] a [Data de arquivamento]  
-**Arquivado em**: 2026-02-19
+**Arquivado em**: YYYY-MM-DD
 
 ---
 
@@ -117,5 +117,5 @@ _Anything else?_
 ---
 
 **Arquivado por**: [Seu nome]  
-**Data**: 2026-02-19  
+**Data**: YYYY-MM-DD  
 **Status**: ✅ Concluído e arquivado

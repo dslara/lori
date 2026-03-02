@@ -11,8 +11,7 @@
 
 | Recurso | Descrição | Quando Usar |
 |---------|-----------|-------------|
-| **[🚀 Quickstart](quickstart.md)** | Guia de 5 minutos | Primeira vez |
-| **[✅ Checklist](checklist.md)** | Validação pré-sessão | Antes de cada sessão |
+| **[📖 Como Usar](/HOW_TO_USE.md)** | Guia completo (setup, rotina, comandos) | Primeira vez + referência |
 | **[📊 Workflow](workflow.mmd)** | Diagrama visual | Entender o fluxo |
 
 ---
@@ -42,7 +41,7 @@ Este sistema está organizado em:
 
 ---
 
-## 🛠️ Técnicas (20)
+## 🛠️ Técnicas (23)
 
 ### Por Princípio
 
@@ -57,6 +56,8 @@ Este sistema está organizado em:
 - [pomodoro.md](tecnicas/pomodoro.md) - Blocos de foco
 - [environment-design.md](tecnicas/environment-design.md) - Ambiente
 - [timeboxing.md](tecnicas/timeboxing.md) - Gestão de tempo flexível
+- [focused-diffuse.md](tecnicas/focused-diffuse.md) - Modos focado/difuso
+- [procrastination-zombie.md](tecnicas/procrastination-zombie.md) - Modo Zumbi
 
 **#3 Directness:**
 - [directness.md](tecnicas/directness.md) - Projetos reais
@@ -78,6 +79,7 @@ Este sistema está organizado em:
 - [srs.md](tecnicas/srs.md) - Spaced Repetition
 - [mnemonics.md](tecnicas/mnemonics.md) - Técnicas mnemônicas
 - [interleaving.md](tecnicas/interleaving.md) - Prática intercalada
+- [chunk-transfer.md](tecnicas/chunk-transfer.md) - Transferência de chunks
 
 **#8 Intuition:**
 - [analogy.md](tecnicas/analogy.md) - Analogias
@@ -142,15 +144,12 @@ Este sistema integra três abordagens de aprendizado:
 
 ## 🚀 Quick Start
 
-**Primeira vez?** Comece por aqui:
-
-1. **[Quickstart](quickstart.md)** - 5 minutos para começar
-2. **[Checklist](checklist.md)** - Valide antes de cada sessão
+**Primeira vez?** Comece pelo **[Como Usar](/HOW_TO_USE.md)** — setup, rotina diária, comandos e troubleshooting.
 
 **Depois, aprofunde:**
-3. [1-metalearning.md](principios/1-metalearning.md) - Planejamento
-4. [2-focus.md](principios/2-focus.md) - Concentração
-5. [pomodoro.md](tecnicas/pomodoro.md) - Implementação
+1. [1-metalearning.md](principios/1-metalearning.md) - Planejamento
+2. [2-focus.md](principios/2-focus.md) - Concentração
+3. [pomodoro.md](tecnicas/pomodoro.md) - Implementação
 
 ---
 

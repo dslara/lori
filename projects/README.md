@@ -1,99 +1,54 @@
-# 📁 Projects
+# Projects
 
-Pasta contendo todos os módulos e projetos de aprendizado Ultralearning.
+Container de todos os projetos de aprendizado Ultralearning. Cada subdiretório é um projeto independente.
 
-## Estrutura
+## Projetos Ativos
+
+| Projeto | Descrição | Status |
+|---------|-----------|--------|
+| [M1-math-foundations](M1-math-foundations/README.md) | Fundamentos matemáticos para CS | ⬜ |
+| [M2-zig-foundations](M2-zig-foundations/README.md) | Zig + comptime: memória, pointers, allocators | ⬜ |
+| [M3-data-structures](M3-data-structures/README.md) | Estruturas de dados do zero | ⬜ |
+| [M4-algorithms](M4-algorithms/README.md) | Algoritmos + DP | ⬜ |
+| [M5-go-os-cpu](M5-go-os-cpu/README.md) | Go + OS/CPU | ⬜ |
+| [M6-networking-db](M6-networking-db/README.md) | Networking + DB | ⬜ |
+| [M7-compilers](M7-compilers/README.md) | Lexer, parser, interpreter | ⬜ |
+| [M8-capstone](M8-capstone/README.md) | Projeto capstone final | ⬜ |
+
+> Para criar um novo projeto: `make module`
+
+## Estrutura Esperada de um Projeto
+
+Cada projeto pode ter sua própria estrutura interna. A convenção adotada nos projetos atuais:
 
 ```
-projects/
-├── README.md                    # Este arquivo
-├── shared/                      # Recursos compartilhados entre módulos
-│   ├── flashcards/              # Sistema SRS (Spaced Repetition)
-│   ├── retrospectives/          # Templates de retrospectivas
-│   ├── planning/                # Planejamento compartilhado
-│   └── master-learning-map.md   # Mapa de aprendizado global
-└── [modulo]/                    # Módulos individuais
-    ├── README.md                # Landing page do módulo
-    ├── meta/                    # Planos ativos (learning-map, weeks, phases)
-    ├── planning/                # Planos de mudança do currículo
-    ├── projects/                # Projetos práticos
-    ├── logs/                    # Logs diários de estudo
-    └── knowledge/               # Conceitos e flashcards
+nome-do-projeto/
+├── README.md          # Objetivos, pré-requisitos, quick-start
+└── meta/
+    ├── learning-map.md  # Timeline e métricas
+    ├── resources.md     # Recursos por semana
+    └── week-NN-tema.md  # Planos de semana
 ```
 
-## O que é um Módulo?
+## Shared
 
-Um módulo é uma unidade de aprendizado focada em um tema específico. Cada módulo:
+A pasta `shared/` contém recursos transversais a múltiplos projetos:
 
-- Tem seu próprio espaço isolado
-- Mantém logs diários de estudo
-- Contém projetos práticos
-- Armazena conhecimento adquirido
-- Pode ser arquivado quando concluído
+| Arquivo/Pasta | Descrição |
+|---------------|-----------|
+| `master-learning-map.md` | Visão global do plano atual — timeline, dependências, milestones |
+| `resources-master.md` | Recursos globais: comunidades, plataformas, estratégia LeetCode |
+| `_template-week.md` | Template para criar arquivos de semana |
+| `buffer-week.md` | Template para semanas de buffer |
+| `flashcards/` | Master deck SRS + decks por projeto |
+| `retrospectives/` | Retrospectivas trimestrais |
+| `archived/` | Projetos e arquivos encerrados |
 
-## Módulos Atuais
-
-| Módulo | Status | Descrição |
-|--------|--------|-----------|
-| foundations-of-computing | 🟢 Ativo | Fundamentos de Computação (CS Fundamentals) |
-
-## Recursos Compartilhados
-
-A pasta `shared/` contém recursos utilizados por todos os módulos:
-
-### Flashcards (`shared/flashcards/`)
-- `master-deck.csv` - Deck unificado para SRS
-- `by-module/` - Cards organizados por módulo
-- `sync-flashcards.sh` - Script de sincronização (em scripts/)
-
-### Retrospectivas (`shared/retrospectives/`)
-- Templates para retrospectivas trimestrais
-- Relatórios de feedback
-
-### Planejamento (`shared/planning/`)
-- Documentos de planejamento relacionados a múltiplos módulos
-- Guias de uso da estrutura
-
-### Master Learning Map (`shared/master-learning-map.md`)
-- Visão global de 88 semanas
-- Timeline completa do plano
-- Dependências entre módulos
-
-## Como Criar um Novo Módulo
+## Comandos
 
 ```bash
-make module
-# Digite o nome do módulo quando solicitado
+make module   # Criar novo projeto
+make switch   # Trocar projeto ativo
+make start    # Iniciar sessão no projeto atual
+make status   # Ver status geral
 ```
-
-O módulo será criado automaticamente em `projects/[nome-do-modulo]/`
-
-## Como Alternar entre Módulos
-
-```bash
-make switch
-# Escolha o módulo na lista
-```
-
-## Arquivamento
-
-Quando um módulo é concluído:
-
-```bash
-make archive
-```
-
-O módulo será movido para `archived/` mantendo todo o histórico.
-
-## Separação de Planejamento
-
-| Domínio | Local |
-|---------|-------|
-| **Framework** (scripts, agentes, Makefile) | `planning/` (raiz do projeto) |
-| **Módulo específico** (currículo, migração de linguagem) | `projects/{modulo}/planning/` |
-| **Compartilhado** (múltiplos módulos) | `projects/shared/planning/` |
-| **Planos ativos** (learning-map, weeks, phases) | `projects/{modulo}/meta/` |
-
----
-
-*Cada módulo é uma jornada de aprendizado. Mantenha-os focados e bem documentados.*

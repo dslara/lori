@@ -161,3 +161,59 @@ get_week_context() {
         echo "$week_file"
     fi
 }
+
+# Função: Obter últimos N logs diários (default: 3)
+get_recent_logs() {
+    local n="${1:-3}"
+    local logs_dir="$TOPIC_PATH/logs/daily"
+
+    if [ ! -d "$logs_dir" ]; then
+        echo ""
+        return
+    fi
+
+    ls -t "$logs_dir"/*.md 2>/dev/null | head -n "$n" | while read -r file; do
+        echo "=== $(basename "$file") ==="
+        head -n 50 "$file"
+        echo ""
+    done
+}
+
+# Função: Obter cards SRS pendentes de revisão
+get_srs_pending() {
+    local srs_file="$TOPIC_PATH/knowledge/spaced-repetition.jsonl"
+    local today
+    today=$(date +%Y-%m-%d)
+
+    if [ ! -f "$srs_file" ]; then
+        echo "Nenhum card cadastrado."
+        return
+    fi
+
+    if ! command -v jq &> /dev/null; then
+        echo "jq não instalado — SRS não carregado."
+        return
+    fi
+
+    local count=0
+    local pending=""
+
+    while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        local next_review
+        next_review=$(echo "$line" | jq -r '.next_review' 2>/dev/null)
+        if [[ "$next_review" < "$today" ]] || [[ "$next_review" == "$today" ]]; then
+            count=$((count + 1))
+            local front
+            front=$(echo "$line" | jq -r '.front' 2>/dev/null)
+            pending="${pending}- ${front}\n"
+        fi
+    done < "$srs_file"
+
+    if [ "$count" -eq 0 ]; then
+        echo "Nenhum card para revisar hoje."
+    else
+        echo "$count cards pendentes:"
+        printf "%b" "$pending"
+    fi
+}

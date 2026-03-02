@@ -34,8 +34,12 @@ echo ""
 
 # Usar numeração sequencial baseada nos arquivos week-*.md existentes
 # (não date +%U que usa semana ISO do ano)
-EXISTING_WEEKS=$(find "$TOPIC_PATH/meta" -maxdepth 1 -name "week-*.md" 2>/dev/null | wc -l)
-WEEK=$((EXISTING_WEEKS))
+LAST_WEEK_NUM=$(find "$TOPIC_PATH/meta" -maxdepth 1 -name "week-*.md" 2>/dev/null | sed -E 's/.*week-([0-9]+)\.md/\1/' | sort -n | tail -1)
+if [ -z "$LAST_WEEK_NUM" ]; then
+    WEEK=1
+else
+    WEEK=$LAST_WEEK_NUM
+fi
 RETRO_FILE="$TOPIC_PATH/meta/retro-week-$WEEK.md"
 
 safe_write "# Retro Semana $WEEK - $CURRENT_TOPIC" "$RETRO_FILE" "overwrite" || exit 1

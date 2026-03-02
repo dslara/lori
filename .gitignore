@@ -69,28 +69,6 @@ backups/
 # Ultralearning - Dados pessoais de SRS
 projects/*/knowledge/spaced-repetition.jsonl
 
-# Logs (keep structure, ignore content)
-04-logs/daily/*.md
-!04-logs/daily/.gitkeep
-04-logs/retrospectives/*.md
-!04-logs/retrospectives/.gitkeep
-
-# Temporary drills
-03-drills/temp-*
-03-drills/scratch-*
-
-# Keep structure folders
-!01-meta/active/.gitkeep
-!01-meta/completed/.gitkeep
-!01-meta/templates/.gitkeep
-!02-projects/current/.gitkeep
-!02-projects/completed/.gitkeep
-!03-drills/syntax/.gitkeep
-!03-drills/algorithms/.gitkeep
-!03-drills/timed/.gitkeep
-!05-knowledge-base/concepts/.gitkeep
-!05-knowledge-base/mental-models/.gitkeep
-
 # Optional: Keep learning maps but not personal logs
 # Uncomment if you want to track learning maps in Git
 # !01-meta/active/**/learning-map.md

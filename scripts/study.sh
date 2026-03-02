@@ -8,7 +8,7 @@ check_module
 
 if ! check_opencode; then
     echo "Modo offline: edite $TOPIC_PATH/logs/daily/$TODAY.md"
-    echo "Instale: npm install -g opencode"
+    echo "Instale: Baixe o binário em https://github.com/opencode-ai/opencode/releases"
     exit 0
 fi
 
@@ -97,12 +97,14 @@ $WEEK_CONTEXT"
         ;;
     6|feedback)
         echo "Cole seu código e pressione Ctrl+D:"
-        code=$(cat)
-        if [ -n "$code" ]; then
-            opencode run --agent @tutor "#feedback $code"
+        tmp_file=$(mktemp)
+        cat > "$tmp_file"
+        if [ -s "$tmp_file" ]; then
+            opencode run --agent @tutor "#feedback" "$(cat "$tmp_file")"
         else
             print_error "Nenhum código fornecido"
         fi
+        rm -f "$tmp_file"
         ;;
     7|explain)
         read -p "Qual conceito introduzir? " concept
