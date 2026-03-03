@@ -33,9 +33,9 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ### Added
 - **Agente `@session`** — orquestrador de sessões de estudo
-  * `#session-start` — lê `week-{N}.md` e sugere keyword do @tutor com base no plano
-  * `#session-end` — consolida sessão com reflexão estruturada + texto para log
-  * `#session-plan` — consulta progresso das entregas da semana
+  * `#start` — lê `week-{N}.md` e sugere keyword do @tutor com base no plano
+  * `#end` — consolida sessão com reflexão estruturada + texto para log
+  * `#plan` — consulta progresso das entregas da semana
 - **Keywords novas no @tutor**
   * `#explain [conceito]` — introdução a conceito novo (antes de `#feynman`)
   * `#wrap-up` — consolidação de sessão com 4 blocos + texto para `make end`
@@ -47,8 +47,8 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 - **Otimizações de custo** nos agentes: nota de cache na Identidade, instrução de concisão no Checklist Final, exemplos compostos em vez de duplicados
 
 ### Changed
-- **`start.sh`** — detecta `week-{N}.md` mais recente e invoca `@session #session-start` com contexto real; fallback para quiz genérico se sem plano
-- **`end.sh`** — invoca `@session #session-end` antes do `read`; hint de fallback para resumo livre
+- **`start.sh`** — detecta `week-{N}.md` mais recente e invoca `@session #start` com contexto real; fallback para quiz genérico se sem plano
+- **`end.sh`** — invoca `@session #end` antes do `read`; hint de fallback para resumo livre
 - **`study.sh`** — opção `0` (default) para `@session`; 5 keywords novas no menu (`#explain`, `#intuition`, `#debug`, `#zombie`, `#diffuse`); total de 12 opções
 - **`@tutor #scaffold`** — exemplo substituído por processo tecnologia-neutro (4 passos + 6 regras de geração)
 - **`@review`** — keywords consolidadas, `#review-architecture` completa, contradição "cria/não cria" resolvida

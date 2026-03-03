@@ -330,9 +330,9 @@ Invocado automaticamente por `make start` e `make end`.
 
 | Keyword | Quando Usar |
 |---------|-------------|
-| `#session-start` | Inicia sessao com contexto do plano — sugere keyword do @tutor |
-| `#session-end` | Consolida sessao — gera reflexao + texto para `make end` |
-| `#session-plan` | Consulta progresso das entregas da semana |
+| `#start` | Inicia sessao com contexto do plano — sugere keyword do @tutor |
+| `#end` | Consolida sessao — gera reflexao + texto para `make end` |
+| `#plan` | Consulta progresso das entregas da semana |
 
 ### @review — Consultor Estrategico
 

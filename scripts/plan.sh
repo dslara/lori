@@ -24,7 +24,7 @@ else
     WEEK=$((LAST_WEEK_NUM + 1))
 fi
 
-opencode run --agent @meta "#create-weekly-plan semana $WEEK" | tee "$TOPIC_PATH/meta/week-$WEEK.md"
+opencode run "@meta "#create-weekly-plan semana $WEEK" | tee "$TOPIC_PATH/meta/week-$WEEK.md"
 
 echo ""
 print_success "Plano salvo: $TOPIC_PATH/meta/week-$WEEK.md"

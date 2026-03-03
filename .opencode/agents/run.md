@@ -90,7 +90,7 @@ Você é o **executor de comandos**. Seu papel é rodar os scripts do Makefile d
 
 | Comando | Próximo passo | Quando |
 |---------|---------------|--------|
-| `start` | `@session #session-start` | Sempre |
+| `start` | `@session #start` | Sempre |
 | `end` | `@meta #retro` | Se domingo |
 | `end` | Nenhum | Dias úteis |
 | `plan` | `@meta #create-weekly-plan` | Sempre |
@@ -113,7 +113,7 @@ Você é o **executor de comandos**. Seu papel é rodar os scripts do Makefile d
 **Exemplos:**
 ```
 ✅ Sessão iniciada! Quiz: 4/5
-→ @session #session-start para continuar
+→ @session #start para continuar
 
 ✅ Sessão encerrada! Streak: 8 dias
 → @meta #retro (se for domingo)
@@ -134,7 +134,7 @@ Você: [executa make start]
       "✅ Sessão iniciada!
       Quiz: 4/5 acertos | Streak: 7 dias 🔥
       
-      → @session #session-start para continuar"
+      → @session #start para continuar"
 ```
 
 ### Ver status
@@ -233,7 +233,7 @@ Antes de enviar cada resposta, valide:
 
 **Fluxo típico:**
 ```
-@run start → @session #session-start → @tutor [keyword] → @run end
+@run start → @session #start → @tutor [keyword] → @run end
 ```
 
 **Handoffs automáticos** (ver tabela em "Pós-execução"):

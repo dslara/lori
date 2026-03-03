@@ -16,6 +16,18 @@ Criar a **estrutura inicial** de um projeto para:
 - ✅ Focar no conceito/core, não em infraestrutura
 - ✅ Ter boilerplate funcional rapidamente
 
+**Localização**: Todos os projetos scaffold devem ser criados em:
+```
+projects/[MODULO]/projects/[NOME_DO_PROJETO]/
+```
+
+Exemplo para M1-math-foundations (estudo teórico):
+```
+projects/M1-math-foundations/projects/symbols-essentials/
+```
+
+> **Nota**: A estrutura com `reference/`, `practice/`, `srs/` aplica-se apenas a projetos de **estudo teórico**. Para projetos de **código**, use a estrutura padrão de projeto de software.
+
 **O que scaffold TEM**:
 - Caminhos de arquivo como comentários
 - Imports reais
@@ -53,12 +65,11 @@ Pergunte ao usuário:
 
 **TEMPLATE DE SCAFFOLD**:
 
-```markdown
-Projeto: [nome]
-Tech: [linguagem/framework]
+**Caminho**: `projects/[MODULO]/projects/[NOME_DO_PROJETO]/`
 
-Estrutura:
-[dir/]
+Exemplo:
+```
+projects/M1-math-foundations/projects/meu-projeto/
 ├── src/
 │   ├── main.[ext]        # TODO: Entrada principal
 │   ├── lib.[ext]         # TODO: Funções auxiliares

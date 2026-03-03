@@ -487,7 +487,7 @@ Para consulta quando precisar. Nao tente decorar — use quando a situacao pedir
 |--------|-------|--------------------|
 | **@tutor** | Mentor de estudo (via `make study`) | `#explain`, `#feynman`, `#drill`, `#quiz`, `#directness`, `#scaffold`, `#intuition`, `#debug`, `#feedback`, `#experiment`, `#zombie`, `#diffuse`, `#wrap-up` |
 | **@meta** | Planejamento estrategico (via `make plan`) | `#decompose-goal`, `#benchmark-test`, `#map-resources`, `#create-weekly-plan`, `#update-plan`, `#adjust-plan`, `#habit-stack` |
-| **@session** | Orquestrador de sessoes (automatico) | `#session-start`, `#session-end`, `#session-plan` |
+| **@session** | Orquestrador de sessoes (automatico) | `#start`, `#end`, `#plan` |
 | **@review** | Consultor do framework (manutencao) | `#review-structure`, `#review-scripts`, `#review-docs`, `#review-makefile`, `#review-agents`, `#review-consistency`, `#review-architecture`, `#review-costs`, `#audit-quality`, `#check-readiness`, `#meta-review` |
 | **@run** | Executor de comandos (atalho) | `#run [comando]` |
 

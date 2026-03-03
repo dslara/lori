@@ -13,7 +13,7 @@ if check_opencode; then
     echo -e "${PURPLE}💭 Consolidando sessão com @session...${NC}"
     echo -e "${YELLOW}  (pressiona Ctrl+C para saltar e escrever diretamente)${NC}"
     echo ""
-    opencode run --agent @session "#session-end" || true
+    opencode run "@session "#end" || true
     echo ""
     print_info "📋 Copia o texto gerado acima para o resumo abaixo."
     echo -e "${YELLOW}  (ou escreve um resumo livre se não usaste @session)${NC}"

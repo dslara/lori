@@ -42,4 +42,4 @@ fi
 print_success "Módulo criado: projects/$TOPIC_SLUG/"
 echo ""
 print_info "Use @meta para planejar:"
-echo "opencode run --agent @meta \"#decompose-goal $topic\""
+echo "opencode run \"@meta \"#decompose-goal $topic\""

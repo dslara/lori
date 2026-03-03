@@ -179,9 +179,9 @@ make end     # Encerra, salva log, atualiza streak
 ### Keywords do @session
 | Keyword | Uso |
 |---------|-----|
-| `#session-start` | Inicia sessão com contexto do plano — sugere keyword do @tutor |
-| `#session-end` | Consolida sessão — gera reflexão + texto para `make end` |
-| `#session-plan` | Consulta progresso das entregas da semana |
+| `#start` | Inicia sessão com contexto do plano — sugere keyword do @tutor |
+| `#end` | Consolida sessão — gera reflexão + texto para `make end` |
+| `#plan` | Consulta progresso das entregas da semana |
 
 ### Keywords do @run
 | Keyword | Uso |
@@ -288,9 +288,9 @@ O projeto está organizado em pastas especializadas:
 | Domínio | Local |
 |---------|-------|
 | **Framework** (scripts, agentes, Makefile) | `planning/` |
-| **Módulo específico** (currículo, migração de linguagem) | `projects/{modulo}/planning/` |
+| **Módulo específico** (currículo, migração de linguagem) | `projects/[modulo]/planning/` |
 | **Compartilhado** (múltiplos módulos) | `projects/shared/planning/` |
-| **Planos ativos** (learning-map, weeks, phases) | `projects/{modulo}/meta/` |
+| **Planos ativos** (learning-map, weeks, phases) | `projects/[modulo]/meta/` |
 
 ## 📦 Arquivamento de Projetos
 

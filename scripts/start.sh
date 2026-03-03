@@ -78,7 +78,7 @@ Nenhuma sessão anterior registrada.
     CONTEXT="${CONTEXT}## SRS Pendente
 $SRS_PENDING"
 
-    opencode run --agent @session "#session-start
+    opencode run "@session #start
 $CONTEXT"
 else
     print_warning "OpenCode não instalado. Quiz pulado."

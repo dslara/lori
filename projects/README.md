@@ -24,11 +24,30 @@ Cada projeto pode ter sua própria estrutura interna. A convenção adotada nos 
 ```
 nome-do-projeto/
 ├── README.md          # Objetivos, pré-requisitos, quick-start
-└── meta/
-    ├── learning-map.md  # Timeline e métricas
-    ├── resources.md     # Recursos por semana
-    └── week-NN-tema.md  # Planos de semana
+├── meta/
+│   ├── learning-map.md  # Timeline e métricas
+│   ├── resources.md     # Recursos por semana
+│   └── week-NN-tema.md  # Planos de semana
+└── projects/            # Sub-projetos de prática (Opcional)
+    └── [nome]/          # Cada sub-projeto tem sua própria estrutura
 ```
+
+### Estrutura de Sub-projetos de Estudo
+
+Esta estrutura aplica-se a **projetos de estudo teórico** (não de código):
+
+```
+projects/M1-math-foundations/projects/symbols-essentials/
+├── README.md           # Este projeto
+├── reference/         # Material de consulta (cheatsheets)
+├── practice/          # Exercícios e drills
+├── srs/              # Flashcards de referência
+└── [outros]/         # O que precisar
+```
+
+> **Nota**: Esta estrutura é para projetos de **estudo/revisão** (como M1). Para projetos de **código** (ex: M2-zig-foundations), use a estrutura padrão de projeto de código.
+
+**Para criar um sub-projeto**: Use `#scaffold` que automaticamente criará na estrutura adequada.
 
 ## Shared
 

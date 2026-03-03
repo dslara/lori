@@ -18,8 +18,9 @@ export NC='\033[0m'
 
 # Variáveis
 export TODAY=$(date +%Y-%m-%d)
-export CURRENT_TOPIC=$(cat .current-topic 2>/dev/null || echo "nenhum")
-export TOPIC_PATH="projects/$CURRENT_TOPIC"
+export PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
+export CURRENT_TOPIC=$(cat "$PROJECT_ROOT/.current-topic" 2>/dev/null || echo "nenhum")
+export TOPIC_PATH="$PROJECT_ROOT/projects/$CURRENT_TOPIC"
 
 # Carregar .env se existir
 [ -f .env ] && source .env
@@ -154,9 +155,9 @@ sanitize_input() {
     echo "$input" | tr -cd '[:alnum:][:space:]-_'
 }
 
-# Função: Obter contexto da semana mais recente
+# Função: Obter contexto da semana atual (primeira semana se não há progresso salvo)
 get_week_context() {
-    local week_file=$(find "$TOPIC_PATH/meta" -maxdepth 1 -name "week-*.md" 2>/dev/null | sort -V | tail -1)
+    local week_file=$(find "$TOPIC_PATH/meta" -maxdepth 1 -name "week-*.md" 2>/dev/null | sort -V | head -1)
     if [ -n "$week_file" ]; then
         echo "$week_file"
     fi

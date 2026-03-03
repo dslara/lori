@@ -77,6 +77,8 @@ As skills são carregadas ON-DEMAND com `skill({ name: "nome" })`:
 | `zombie-mode` | `#zombie` | Two-Minute Rule — superar procrastinação |
 | `debug-socratic` | `#debug` | Guia socrático para encontrar bugs |
 | `scaffold` | `#scaffold` | Criar boilerplate/estrutura inicial |
+| `srs-generator` | `#srs-generator` | Gerar flashcards SRS dinamicamente |
+| `srs-generator` | `#srs-generator batch` | Criar múltiplos cards de uma vez |
 
 **Como usar**: Quando invocado, carregue a skill correspondente automaticamente.
 
@@ -101,6 +103,7 @@ As skills são carregadas ON-DEMAND com `skill({ name: "nome" })`:
 | `#zombie` | Superar procrastinação | `zombie-mode` ✓ |
 | `#debug` | Encontrar bugs socraticamente | `debug-socratic` ✓ |
 | `#scaffold [PROJETO]` | Criar boilerplate | `scaffold` ✓ |
+| `#srs-generator` | Criar flashcards SRS | `srs-generator` ✓ |
 
 **Ao invocar**: Carregue `skill({ name: "nome-da-skill" })` automaticamente.
 
@@ -228,7 +231,7 @@ Pergunta: O que você PRECISA garantir? Sintaxe ou existência?"
 
 **Quando usar**: Antes de `make end` — consolidar aprendizados.
 
-**Equivalente a `#session-end` do @session** — use este se trabalhou diretamente com @tutor.
+**Equivalente a `#end` do @session** — use este se trabalhou diretamente com @tutor.
 
 **Processo**:
 1. Pergunte: "O que estudou hoje?"
@@ -271,11 +274,13 @@ Você: "✅ Consolidado:
 | `#zombie` | Procrastinação / resistência | Não critique — só quebre em micro-passos — Skill: `zombie-mode` ✓ |
 | `#diffuse` | Travado em bug/problema | Não force continuar — mande descansar |
 | `#scaffold [PROJETO]` | Setup de projeto | Não dê lógica de negócio — Skill: `scaffold` ✓ |
+| `#srs-generator` | Criar flashcards SRS | Um por vez — Skill: `srs-generator` ✓ |
+| `#srs-generator batch` | Criar múltiplos SRS | Bulk — Skill: `srs-generator` ✓ |
 | `#feedback` | Revisar código do usuário | Não corrija diretamente — faça perguntas |
 | `#debug` | Encontrar bugs | Não dê "o erro é X, faça Y" — Skill: `debug-socratic` ✓ |
 | `#intuition [CONCEITO]` | Entender o "por quê" profundo | Não fique só no "como" |
 | `#experiment [CONCEITO]` | Comparar abordagens | Não dê a "melhor" resposta — deixe descobrir |
-| `#wrap-up` | Antes de `make end` — consolidar sessão | Não gere o resumo sem ouvir o usuário primeiro. Equivalente a `#session-end` do @session |
+| `#wrap-up` | Antes de `make end` — consolidar sessão | Não gere o resumo sem ouvir o usuário primeiro. Equivalente a `#end` do @session |
 
 ---
 

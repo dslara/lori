@@ -19,7 +19,7 @@ read -p "Conceito já dominado: " concept
 if [ -n "$concept" ]; then
     echo -e "${PURPLE}🎯 Gerando 5 variações de dificuldade...${NC}"
     echo ""
-    opencode run --agent @tutor "#drill $concept com 5 variações: fácil → médio → difícil → edge case → transferência"
+    opencode run "@tutor "#drill $concept com 5 variações: fácil → médio → difícil → edge case → transferência"
 else
     print_warning "Conceito não informado"
 fi

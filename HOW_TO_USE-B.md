@@ -526,34 +526,34 @@ Invocado automaticamente por `make start` e `make end`. Orquestra o fluxo da ses
 opencode run --agent @session "#keyword"
 ```
 
-#### `#session-start`
+#### `#start`
 
 Inicia sessao com contexto do plano semanal — sugere keyword do @tutor.
 
 ```bash
 # Invocado automaticamente por: make start
-opencode run --agent @session "#session-start"
+opencode run "@session "#start"
 ```
 
 > Resultado: Le o plano semanal, verifica onde voce parou, sugere a proxima atividade com a keyword ideal (ex: "Sugiro #drill binary search — voce precisa praticar mais antes de avancar").
 
-#### `#session-end`
+#### `#end`
 
 Consolida sessao — gera reflexao estruturada.
 
 ```bash
 # Invocado automaticamente por: make end
-opencode run --agent @session "#session-end"
+opencode run "@session "#end"
 ```
 
 > Resultado: Perguntas de reflexao ("O que aprendeu?", "O que foi dificil?"), gera texto de log e atualiza contexto para proxima sessao.
 
-#### `#session-plan`
+#### `#plan`
 
 Consulta progresso das entregas da semana.
 
 ```bash
-opencode run --agent @session "#session-plan"
+opencode run "@session "#plan"
 ```
 
 > Resultado: Status de cada entrega semanal (done/in-progress/blocked) e sugestao do que priorizar hoje.

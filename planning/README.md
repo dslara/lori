@@ -2,7 +2,7 @@
 
 Pasta destinada a documentos de planejamento estratégico do **framework Ultralearning** — propostas de mudança em arquitetura, agentes, scripts e configuração.
 
-> **Nota**: Planos relacionados a projetos de estudo (currículo, fases, migração de linguagem) ficam em `projects/{modulo}/planning/`.
+> **Nota**: Planos relacionados a projetos de estudo (currículo, fases, migração de linguagem) ficam em `projects/[modulo]/planning/`.
 
 ---
 
@@ -48,9 +48,9 @@ Consulte [`archived/README.md`](./archived/README.md) para o histórico completo
 | Domínio | Local |
 |---------|-------|
 | **Framework** (scripts, agentes, Makefile, arquitetura) | `planning/` (esta pasta) |
-| **Projeto de estudo** (currículo, fases, migração de linguagem) | `projects/{modulo}/planning/` |
+| **Projeto de estudo** (currículo, fases, migração de linguagem) | `projects/[modulo]/planning/` |
 | **Guias compartilhados** | `projects/shared/planning/` |
-| **Planos ativos do projeto** | `projects/{modulo}/meta/` |
+| **Planos ativos do projeto** | `projects/[modulo]/meta/` |
 
 ---
 

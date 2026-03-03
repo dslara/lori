@@ -39,7 +39,7 @@ case $mode in
         WEEK_FILE=$(get_week_context)
         if [ -n "$WEEK_FILE" ]; then
             WEEK_CONTEXT=$(cat "$WEEK_FILE")
-            opencode run --agent @session "#session-start
+            opencode run "@session" "#start
 
 Contexto do módulo: $CURRENT_TOPIC
 Data: $TODAY
@@ -47,14 +47,14 @@ Data: $TODAY
 Plano da semana:
 $WEEK_CONTEXT"
         else
-            opencode run --agent @session "#session-start"
+            opencode run "@session" "#start"
         fi
         ;;
     1|code)
         read -p "Qual desafio? " challenge
         challenge=$(sanitize_input "$challenge")
         if [ -n "$challenge" ]; then
-            opencode run --agent @tutor "#directness $challenge"
+            opencode run "@tutor" "#directness $challenge"
         else
             print_error "Desafio inválido"
         fi
@@ -63,7 +63,7 @@ $WEEK_CONTEXT"
         read -p "Qual conceito? " concept
         concept=$(sanitize_input "$concept")
         if [ -n "$concept" ]; then
-            opencode run --agent @tutor "#drill $concept"
+            opencode run "@tutor" "#drill $concept"
         else
             print_error "Conceito inválido"
         fi
@@ -72,7 +72,7 @@ $WEEK_CONTEXT"
         read -p "Qual conceito explicar? " concept
         concept=$(sanitize_input "$concept")
         if [ -n "$concept" ]; then
-            opencode run --agent @tutor "#feynman $concept"
+            opencode run "@tutor" "#feynman $concept"
         else
             print_error "Conceito inválido"
         fi
@@ -81,7 +81,7 @@ $WEEK_CONTEXT"
         read -p "Descreva o projeto: " project
         project=$(sanitize_input "$project")
         if [ -n "$project" ]; then
-            opencode run --agent @tutor "#scaffold $project"
+            opencode run "@tutor" "#scaffold $project"
         else
             print_error "Descrição de projeto inválida"
         fi
@@ -90,7 +90,7 @@ $WEEK_CONTEXT"
         read -p "Qual conceito explorar? " concept
         concept=$(sanitize_input "$concept")
         if [ -n "$concept" ]; then
-            opencode run --agent @tutor "#experiment $concept"
+            opencode run "@tutor" "#experiment $concept"
         else
             print_error "Conceito inválido"
         fi
@@ -100,7 +100,7 @@ $WEEK_CONTEXT"
         tmp_file=$(mktemp)
         cat > "$tmp_file"
         if [ -s "$tmp_file" ]; then
-            opencode run --agent @tutor "#feedback" "$(cat "$tmp_file")"
+            opencode run "@tutor" "#feedback" "$(cat "$tmp_file")"
         else
             print_error "Nenhum código fornecido"
         fi
@@ -110,7 +110,7 @@ $WEEK_CONTEXT"
         read -p "Qual conceito introduzir? " concept
         concept=$(sanitize_input "$concept")
         if [ -n "$concept" ]; then
-            opencode run --agent @tutor "#explain $concept"
+            opencode run "@tutor" "#explain $concept"
         else
             print_error "Conceito inválido"
         fi
@@ -119,7 +119,7 @@ $WEEK_CONTEXT"
         read -p "Qual conceito aprofundar? " concept
         concept=$(sanitize_input "$concept")
         if [ -n "$concept" ]; then
-            opencode run --agent @tutor "#intuition $concept"
+            opencode run "@tutor" "#intuition $concept"
         else
             print_error "Conceito inválido"
         fi
@@ -128,16 +128,16 @@ $WEEK_CONTEXT"
         read -p "Descreve o problema: " problem
         problem=$(sanitize_input "$problem")
         if [ -n "$problem" ]; then
-            opencode run --agent @tutor "#debug $problem"
+            opencode run "@tutor" "#debug $problem"
         else
             print_error "Problema inválido"
         fi
         ;;
     z|zombie)
-        opencode run --agent @tutor "#zombie"
+        opencode run "@tutor" "#zombie"
         ;;
     d|diffuse)
-        opencode run --agent @tutor "#diffuse"
+        opencode run "@tutor" "#diffuse"
         ;;
     q|Q)
         echo "Saindo..."
