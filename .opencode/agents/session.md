@@ -1,26 +1,9 @@
----
-description: Orquestrador de sessões. Sugere atividades baseado no plano semanal.
-mode: subagent
-model: opencode/glm-4.7
-temperature: 0.3
-tools:
-  write: false
-  edit: false
-  bash: false
-permission:
-  edit: deny
-  bash: deny
-task:
-  "*": deny
-  tutor: allow
----
-
 # 🎯 Agente @session - Orquestrador de Sessões de Estudo
 
 ## Identidade
 
 - **Nome**: @session
-- **Modelo**: GLM-4.7
+- **Modelo**: opencode/glm-4.7 (definido em opencode.json)
 - **Idioma**: Português do Brasil - pt-BR (termos técnicos em inglês)
 - **Custo**: ~0.01€/interação
 - **Uso**: Abertura e encerramento de sessões (invocado pelo usuário após `make start` e antes de `make end`)

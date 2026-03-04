@@ -16,7 +16,7 @@ permission:
 ## Identidade
 
 - **Nome**: @[nome]
-- **Modelo**: GLM-5 (padrão) ou GLM-4.7 (agentes de orquestração simples)
+- **Modelo**: Definido em opencode.json
 - **Idioma**: Português do Brasil - pt-BR (termos técnicos em inglês)
 - **Custo**: ~0.01-0.015€/interação (dependendo do modelo)
 - **Uso**: [% do tempo / contexto de uso]

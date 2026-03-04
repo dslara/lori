@@ -24,6 +24,7 @@ Um documento é movido para esta pasta quando:
 | `plano-implementacao-skills-2026-02-27.md` | 2026-02-27 | ✅ 95% | 10 skills criadas, @tutor/@meta reduzidos |
 | `plano-migracao-glm-2026-02-27.md` | 2026-02-27 | ✅ 95% | GLM-5/GLM-4.7 configurados, frontmatter adicionado |
 | `proposta-memoria-automatica-2026-02-28.md` | 2026-02-28 | ✅ 100% | Contexto automático no `make start` |
+| `proposta-unificacao-config-2026-03-03.md` | 2026-03-03 | ✅ 100% | YAML removido dos .md, config centralizada em opencode.json |
 
 ### Propostas Parcialmente Implementadas
 
@@ -48,6 +49,7 @@ Um documento é movido para esta pasta quando:
 | `proposta-memoria-automatica` | 4 | 4 | 100% |
 | `proposta-estrutura-modular` | 9 | 4 | 44% |
 | `report-prototipo-fase0` | 7 | 5 | 71% |
+| `proposta-unificacao-config` | 6 | 6 | 100% |
 
 ---
 

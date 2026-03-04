@@ -58,7 +58,7 @@ Exemplos:
 
 ## Revisão Ativa
 
-- [`audit-quality-2026-03-02-v3.1.0.md`](./audit-quality-2026-03-02-v3.1.0.md) — Auditoria completa de qualidade (10/15 issues resolvidos)
+- Nehuma Revisão Ativa
 
 ---
 
