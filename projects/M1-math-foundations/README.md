@@ -43,6 +43,15 @@ meta/
 ├── week-03-log-exp.md
 ├── week-04-summation-induction.md
 └── week-05-combinatorics-probability.md
+
+projects/                         # Projetos de prática
+└── symbols-essentials/           # Símbolos matemáticos
+    ├── reference/
+    │   └── symbols-cheatsheet.md # Consulta rápida
+    ├── practice/
+    │   └── symbols-drill.md      # Exercícios de tradução
+    └── srs/
+        └── symbols-cards.md      # Flashcards para Anki/Mochi
 ```
 
 ---

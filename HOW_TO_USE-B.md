@@ -342,6 +342,20 @@ opencode run --agent @tutor "#quiz 5 sorting algorithms"
 
 > Resultado: 5 perguntas de recall ativo. Nao mostra respostas ate voce tentar. Pontua e indica o que precisa revisar.
 
+#### `#srs-generator`
+
+Criar flashcards dinamicamente baseados no contexto de estudo.
+
+```bash
+# Modo individual (1 card por vez)
+opencode run --agent @tutor "#srs-generator"
+
+# Modo batch (múltiplos cards de uma vez)
+opencode run --agent @tutor "#srs-generator batch"
+```
+
+> Resultado: Detecta o módulo/semana atual, sugere conceitos-chave, gera cards Q/A otimizados para SRS, e adiciona ao sistema automaticamente. Ideal para criar cards enquanto estuda ou após identificar gaps.
+
 #### `#directness [desafio]`
 
 Aprender fazendo — construir projeto pratico real, nao tutorial isolado.

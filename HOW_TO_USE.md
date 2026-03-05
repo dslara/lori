@@ -294,21 +294,22 @@ O sistema tem 5 agentes AI que respondem a keywords especificas.
 
 O agente principal durante `make study`. Carrega skills on-demand.
 
-| Keyword | Quando Usar |
-|---------|-------------|
-| `#explain [conceito]` | Conceito completamente novo — introducao com analogias |
-| `#feynman [conceito]` | Voce acha que entendeu — teste explicando |
-| `#drill [skill]` | Praticar procedimento 5-10x ate automatizar |
-| `#quiz N [topico]` | Retrieval practice rapido — 3-5 perguntas |
-| `#directness [desafio]` | Construir projeto pratico real |
-| `#scaffold [projeto]` | Gerar estrutura/boilerplate de projeto |
-| `#intuition [conceito]` | Entender o "por que" profundo |
-| `#debug` | Bug dificil — guia socratico (nunca da a resposta) |
-| `#feedback` | Revisar e avaliar codigo escrito |
-| `#experiment` | Comparar 3 solucoes diferentes |
-| `#zombie` | Nao consegue comecar — Two-Minute Rule |
-| `#diffuse` | Travou no problema — modo difuso |
-| `#wrap-up` | Consolidar sessao antes de `make end` |
+| Keyword                 | Quando Usar                                            |
+| ----------------------- | ------------------------------------------------------ |
+| `#explain [conceito]`   | Conceito completamente novo — introducao com analogias |
+| `#feynman [conceito]`   | Voce acha que entendeu — teste explicando              |
+| `#drill [skill]`        | Praticar procedimento 5-10x ate automatizar            |
+| `#quiz N [topico]`      | Retrieval practice rapido — 3-5 perguntas              |
+| `#srs-generator`        | Criar flashcards dinamicamente (individual ou batch)   |
+| `#directness [desafio]` | Construir projeto pratico real                         |
+| `#scaffold [projeto]`   | Gerar estrutura/boilerplate de projeto                 |
+| `#intuition [conceito]` | Entender o "por que" profundo                          |
+| `#debug`                | Bug dificil — guia socratico (nunca da a resposta)     |
+| `#feedback`             | Revisar e avaliar codigo escrito                       |
+| `#experiment`           | Comparar 3 solucoes diferentes                         |
+| `#zombie`               | Nao consegue comecar — Two-Minute Rule                 |
+| `#diffuse`              | Travou no problema — modo difuso                       |
+| `#wrap-up`              | Consolidar sessao antes de `make end`                  |
 
 ### @meta — Planejamento Estrategico
 

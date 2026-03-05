@@ -326,6 +326,35 @@ make end
 
 ---
 
+### Criando Flashcards
+
+Apos cada sessao, voce pode criar flashcards para revisao futura (SRS). O sistema tem duas formas:
+
+**Modo Individual** — crie um card por vez:
+
+```bash
+#srs-generator
+```
+
+O agente detecta o contexto atual e sugere conceitos. Voce escolhe, o card e gerado e adicionado ao SRS.
+
+**Modo Batch** — crie multiplos cards de uma vez:
+
+```bash
+#srs-generator batch
+```
+
+O agente lista 5-10 conceitos do tema atual. Voce escolhe (ex: "1-7" ou "todos") e todos sao criados de uma vez.
+
+**Quando usar**:
+- Apos identificar gaps com `#feynman`
+- Durante pratica com `#drill` (erros recorrentes)
+- Ao final de uma sessao de estudo
+
+**Keywords adicionadas**: `#srs-generator`
+
+---
+
 ### Sua Primeira Semana
 
 Apos 3-4 sessoes, voce ja tem conceitos acumulados. E hora de testar se realmente entendeu.
@@ -485,7 +514,7 @@ Para consulta quando precisar. Nao tente decorar — use quando a situacao pedir
 
 | Agente | Papel | Keywords Principais |
 |--------|-------|--------------------|
-| **@tutor** | Mentor de estudo (via `make study`) | `#explain`, `#feynman`, `#drill`, `#quiz`, `#directness`, `#scaffold`, `#intuition`, `#debug`, `#feedback`, `#experiment`, `#zombie`, `#diffuse`, `#wrap-up` |
+| **@tutor** | Mentor de estudo (via `make study`) | `#explain`, `#feynman`, `#drill`, `#quiz`, `#srs-generator`, `#directness`, `#scaffold`, `#intuition`, `#debug`, `#feedback`, `#experiment`, `#zombie`, `#diffuse`, `#wrap-up` |
 | **@meta** | Planejamento estrategico (via `make plan`) | `#decompose-goal`, `#benchmark-test`, `#map-resources`, `#create-weekly-plan`, `#update-plan`, `#adjust-plan`, `#habit-stack` |
 | **@session** | Orquestrador de sessoes (automatico) | `#start`, `#end`, `#plan` |
 | **@review** | Consultor do framework (manutencao) | `#review-structure`, `#review-scripts`, `#review-docs`, `#review-makefile`, `#review-agents`, `#review-consistency`, `#review-architecture`, `#review-costs`, `#audit-quality`, `#check-readiness`, `#meta-review` |
