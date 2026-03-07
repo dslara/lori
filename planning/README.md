@@ -22,7 +22,10 @@ planning/
 
 ## Documentos Ativos
 
-Nenhum documento ativo no momento.
+| Arquivo | Status |
+|---------|--------|
+| `proposta-base-dados-csv-2026-03-06.md` | ✅ Implementada |
+| `exemplo-registro-automatico-tutor.md` | ✅ Documentação |
 
 ---
 

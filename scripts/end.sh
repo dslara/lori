@@ -1,8 +1,9 @@
 #!/bin/bash
 
-# end.sh - Encerrar sessão (salva + streak)
+# end.sh - Encerrar sessão (salva + streak + CSV)
 
 source "$(dirname "$0")/common.sh"
+source "$(dirname "$0")/data.sh"
 
 check_module
 
@@ -23,9 +24,13 @@ fi
 # Verificar se há terminal interativo
 if [ -t 0 ]; then
     read -p "O que você aprendeu hoje? (breve): " learning
+    read -p "Duração da sessão (min): " duration
+    read -p "Score de foco (1-10): " focus_score
 else
-    print_info "📝 Para salvar resumo, execute: make end LEARNING='seu resumo'"
+    print_info "📝 Para salvar resumo, execute: make end LEARNING='seu resumo' DURATION=60 FOCUS=7"
     learning="${LEARNING:-}"
+    duration="${DURATION:-60}"
+    focus_score="${FOCUS:-7}"
 fi
 
 if [ -n "$learning" ]; then
@@ -41,13 +46,25 @@ if [ -n "$learning" ]; then
     safe_write "$learning" "$TOPIC_PATH/logs/daily/$TODAY.md" || exit 1
     safe_write "" "$TOPIC_PATH/logs/daily/$TODAY.md" || exit 1
     print_success "Resumo salvo"
+    
+    # Registrar sessão no CSV
+    module_id=$(echo "$CURRENT_TOPIC" | grep -oE '^[A-Z][0-9]' || echo "M1")
+    
+    create_session "$module_id" "$duration" "$focus_score" "$learning" > /dev/null
+    print_success "Sessão registrada em data/sessions.csv"
 fi
 
 echo ""
 
-# Atualizar streak
-"$(dirname "$0")/streak.sh" session
+# Atualizar streak (agora via data.sh)
+"$(dirname "$0")/data.sh" streak
 
 echo ""
+
+# Gerar analytics
+"$(dirname "$0")/analytics.sh" update "$module_id" > /dev/null 2>&1 || true
+
 echo -e "${GREEN}📝 Log: $TOPIC_PATH/logs/daily/$TODAY.md${NC}"
+echo -e "${GREEN}📊 Dados: data/sessions.csv${NC}"
+echo -e "${GREEN}📈 Analytics: data/insights.csv${NC}"
 print_success "Sessão encerrada! Bom trabalho! 🎉"

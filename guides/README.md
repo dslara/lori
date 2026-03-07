@@ -9,6 +9,7 @@ guides/
 ├── README.md                    # Este arquivo
 ├── indice.md                   # Navegação completa
 ├── workflow.mmd                # Diagrama visual
+├── sistema-dados.md            # Sistema de dados (CSV)
 ├── principios/                 # 9 princípios do Ultralearning
 └── tecnicas/                   # 23 técnicas práticas
 ```
@@ -20,6 +21,9 @@ guides/
 
 ### Quer entender o sistema?
 → Veja o **[Índice](./indice.md)** — princípios e técnicas
+
+### Quer entender os dados?
+→ Veja o **[Sistema de Dados](./sistema-dados.md)** — como os dados são salvos
 
 ## Princípios (9)
 

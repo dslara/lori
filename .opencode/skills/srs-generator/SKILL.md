@@ -377,6 +377,118 @@ Quer criar outro card? (s/n)
 
 ---
 
+## 🚀 Modo Revisão Socrática (`#srs-generator review`)
+
+Este modo é invocado quando o usuário executa `make review`.
+
+### Fluxo
+
+1. **O sistema já listou os cards pendentes** — você já tem a lista
+2. **Comece pelo primeiro card** — mostre a PERGUNTA (nunca a resposta)
+3. **Aguarde o usuário tentar responder** — no chat
+4. **Compare com a resposta correta** — sem mostrar ainda
+5. **Dê feedback socrático** — "correto" ou "tente de novo"
+6. **Mostre a resposta oficial** — depois do feedback
+7. **Coleete nota 0-5** — para calcular próxima revisão
+8. **Atualize o card** — via script
+9. **Próximo card** — repita até acabarem
+
+### Exemplo de interação
+
+```
+Você: "
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+📚 Card 1/3 — [symbols]
+
+❓ PERGUNTA:
+O que significa o símbolo ∀?
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+⚠️ Tente responder! Quando pronto, escreva 'mostrar'.
+"
+
+[Usuário escreve: "Para todos"]
+
+Você: "
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+❌ Não exatamente.
+
+Dica: É sobre cada elemento sem exceção...
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Tente de novo ou escreva 'mostrar' para ver a resposta.
+"
+
+[Usuário escreve: "mostrar"]
+
+Você: "
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+✅ RESPOSTA OFICIAL:
+Para todo / Cada elemento sem exceção
+
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+Sua tentativa: 'Para todos'
+
+📊 Como você se saiu?
+  0 - Não lembrei nada
+  1 - Lembrei pouco
+  2 - Lembrei com esforço
+  3 - Lembrei com alguma dificuldade
+  4 - Lembrei facilmente
+  5 - Perfeito, muito fácil
+"
+```
+
+### Após coletar a nota
+
+1. **Atualize o card no JSONL** usando jq:
+
+```bash
+cd projects/M1-math-foundations/knowledge
+
+# Parâmetros
+card_id="[ID_DO_CARD]"
+quality="[NOTA_0_5]"
+interval="[INTERVALO_ATUAL]"
+easiness="[EASINESS_ATUAL]"
+reviews="[REVIEWS_ATUAL]"
+
+# Calcular novos valores
+new_easiness=$(echo "$easiness + 0.1 - (5 - $quality) * (0.08 + (5 - $quality) * 0.02)" | bc -l)
+new_easiness=$(echo "if ($new_easiness < 1.3) 1.3 else if ($new_easiness > 2.5) 2.5 else $new_easiness" | bc -l)
+
+if [ "$quality" -lt 3 ]; then
+    new_interval=1
+elif [ "$interval" -eq 0 ]; then
+    new_interval=1
+elif [ "$interval" -eq 1 ]; then
+    new_interval=3
+else
+    new_interval=$(echo "$interval * $new_easiness" | bc -l | cut -d. -f1)
+fi
+
+new_next_review=$(date -d "+${new_interval} days" +%Y-%m-%d)
+new_reviews=$((reviews + 1))
+
+# Atualizar JSONL
+jq --arg next "$new_next_review" --arg interval "$new_interval" --arg easiness "$new_easiness" --arg reviews "$new_reviews" --arg id "$card_id" \
+   'if .id == $id then .next_review = $next | .interval = ($interval | tonumber) | .easiness = ($easiness | tonumber) | .reviews = ($reviews | tonumber) else . end' \
+   spaced-repetition.jsonl > spaced-repetition.tmp && mv spaced-repetition.tmp spaced-repetition.jsonl
+
+echo "✅ Card atualizado! Próxima revisão: $new_next_review (em ${new_interval} dias)"
+```
+
+2. **Passe para o próximo card** — repita até acabarem
+
+### Atualizar card existente
+
+Para atualizar um card já existente (não criar novo), você precisa:
+1. Ler o JSONL
+2. Modificar os campos: `next_review`, `interval`, `easiness`, `reviews`
+3. Reescrever o JSONL
+
+---
+
 ## 🔄 Como Fazer Revisão Manual na Skill
 
 Quando o usuário escolher "revisar" ou "fazer review":

@@ -3,6 +3,7 @@
 # setup.sh - Configuração inicial
 
 source "$(dirname "$0")/common.sh"
+source "$(dirname "$0")/data.sh"
 
 print_header "⚙️ Configurando Ultralearning"
 echo ""
@@ -40,12 +41,11 @@ fi
 
 echo ""
 
-mkdir -p scripts .opencode/agents
+mkdir -p scripts .opencode/agents data backups
 chmod +x scripts/*.sh 2>/dev/null || true
 
-if [ ! -f ".current-topic" ]; then
-    echo "nenhum" > .current-topic
-fi
+# Inicializar dados CSV
+init_data
 
 print_success "Setup completo!"
 echo ""

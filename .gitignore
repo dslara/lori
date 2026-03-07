@@ -55,16 +55,13 @@ ENV/
 .zed/.tmp*
 
 # Project specific
-.current-topic
 *.bak
 temp-*.py
 draft-*.py
 
-# Ultralearning - Logs pessoais e stats
-projects/*/logs/daily/*.md
-!projects/*/logs/daily/.gitkeep
-.ultralearning-stats
+# Ultralearning - Dados (CSV são versionados, dados não)
 backups/
+projects/*/logs/daily/*.md
 
 # Ultralearning - Dados pessoais de SRS
 projects/*/knowledge/spaced-repetition.jsonl
@@ -74,3 +71,4 @@ projects/*/knowledge/spaced-repetition.jsonl
 # !01-meta/active/**/learning-map.md
 # !01-meta/active/**/resources.md
 .obsidian
+node_modules

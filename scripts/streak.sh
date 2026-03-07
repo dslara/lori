@@ -1,11 +1,13 @@
 #!/bin/bash
-# streak.sh - Sistema simplificado de streak
-# Apenas: streak, total de sessões, última sessão
+# streak.sh - Sistema de streak (agora via data.sh)
 #
 # SCRIPT INTERNO — não tem target Makefile direto.
 # Chamado por: end.sh (atualiza streak) e status.sh (exibe streak)
+#
+# MANTIDO PARA COMPATIBILIDADE — redireciona para data.sh
 
 source "$(dirname "$0")/common.sh"
+source "$(dirname "$0")/data.sh"
 
 STATS_FILE="${STATS_FILE:-.ultralearning-stats}"
 TODAY=$(date +%Y-%m-%d)
@@ -80,109 +82,28 @@ days_diff() {
     echo $(( (s2 - s1) / 86400 ))
 }
 
-# Registrar sessão
+# Registrar sessão (agora via data.sh)
 register_session() {
-    load_stats
+    # Usar data.sh para atualizar CSV
+    "$(dirname "$0")/data.sh" streak
     
-    # Já estudou hoje?
-    if [ "$last_session" = "$TODAY" ]; then
-        echo -e "${YELLOW}Sessão já registrada hoje${NC}"
-        show_status
-        return
-    fi
+    # Sincronizar com .ultralearning-stats para compatibilidade
+    local csv_streak=$(get_streak)
+    local csv_best=$(get_best_streak)
+    local csv_total=$(get_total_sessions)
+    local csv_last=$(get_insight "last_session" "" "")
     
-    # Calcular streak
-    if [ -z "$last_session" ]; then
-        # Primeira sessão
-        streak=1
-    else
-        local diff=$(days_diff "$last_session" "$TODAY")
-        
-        if [ "$diff" -eq 1 ]; then
-            # Dia consecutivo
-            streak=$((streak + 1))
-            echo -e "${GREEN}🔥 Streak +1!${NC}"
-        elif [ "$diff" -eq 0 ]; then
-            # Mesmo dia (não deveria chegar aqui)
-            :
-        else
-            # Quebrou streak
-            echo -e "${RED}💔 Streak perdido (${diff} dias sem estudar)${NC}"
-            streak=1
-        fi
-    fi
-    
-    # Atualizar best streak
-    if [ "$streak" -gt "$best_streak" ]; then
-        best_streak=$streak
-        echo -e "${GREEN}🏆 Novo recorde: ${best_streak} dias!${NC}"
-    fi
-    
-    # Incrementar sessões
-    total_sessions=$((total_sessions + 1))
-    last_session="$TODAY"
+    streak=$csv_streak
+    best_streak=$csv_best
+    total_sessions=$csv_total
+    last_session=$csv_last
     
     save_stats
-    echo ""
-    show_status
 }
 
-# Mostrar status
+# Mostrar status (agora via data.sh)
 show_status() {
-    load_stats
-    
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo -e "${GREEN}        🎮 STATUS${NC}"
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
-    echo ""
-    
-    # Progress bar (meta: 7 dias para nível, 30 para mestre)
-    local target=7
-    local progress=$streak
-    if [ "$streak" -ge 30 ]; then
-        target=30
-        local level="🌟 MESTRE"
-    elif [ "$streak" -ge 7 ]; then
-        target=30
-        local level="🔥 Em chamas"
-    else
-        local level="⭐ Iniciando"
-    fi
-    
-    # Calcular barra (10 blocos)
-    local filled=$((progress * 10 / target))
-    [ "$filled" -gt 10 ] && filled=10
-    local empty=$((10 - filled))
-    
-    local bar=""
-    for ((i=0; i<filled; i++)); do bar+="█"; done
-    for ((i=0; i<empty; i++)); do bar+="░"; done
-    
-    # Streak com barra visual
-    if [ "$streak" -ge 30 ]; then
-        echo -e "Streak:      ${GREEN}🔥 ${streak} dias${NC}"
-        echo -e "Progresso:   ${GREEN}${bar}${NC} $level"
-    elif [ "$streak" -ge 7 ]; then
-        echo -e "Streak:      ${GREEN}🔥 ${streak} dias${NC}"
-        echo -e "Progresso:   ${YELLOW}${bar}${NC} ${streak}/${target} → $level"
-    elif [ "$streak" -ge 1 ]; then
-        echo -e "Streak:      ${YELLOW}🔥 ${streak} dias${NC}"
-        echo -e "Progresso:   ${YELLOW}${bar}${NC} ${streak}/${target} → $level"
-    else
-        echo -e "Streak:      ${RED}💤 0 dias${NC}"
-        echo -e "Progresso:   ${RED}${bar}${NC} 0/${target}"
-    fi
-    
-    echo ""
-    echo "Recorde:     🏆 ${best_streak} dias"
-    echo "Sessões:     📚 ${total_sessions} total"
-    
-    if [ -n "$last_session" ]; then
-        echo "Última:      📅 ${last_session}"
-    fi
-    
-    echo ""
-    echo -e "${BLUE}━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━${NC}"
+    "$(dirname "$0")/data.sh" status
 }
 
 # Main
@@ -195,6 +116,7 @@ case "${1:-status}" in
         ;;
     reset)
         rm -f "$STATS_FILE"
+        "$(dirname "$0")/data.sh" init
         echo "Stats resetados"
         ;;
     *)

@@ -3,21 +3,6 @@
   "model": "opencode/glm-5",
   "small_model": "opencode/glm-4.7",
   "provider": {
-    "lmstudio": {
-      "npm": "@ai-sdk/openai-compatible",
-      "name": "LM Studio (local)",
-      "options": {
-        "baseURL": "http://192.168.1.137:1234/v1"
-      },
-      "models": {
-        "qwen/qwen3-coder-30b": {
-          "name": "Qwen 3.5 Coder 30B (local)"
-        },
-        "zai-org/glm-4.7-flash": {
-          "name": "GLM 4.7 Flash (local)"
-        }
-      }
-    },
     "opencode": {
       "options": {
         "setCacheKey": true
@@ -61,11 +46,7 @@
       },
       "permission": {
         "edit": "ask",
-        "bash": {
-          "*": "ask",
-          "grep *": "allow",
-          "git status": "allow"
-        },
+        "bash": "allow",
         "skill": {
           "*": "allow"
         }
@@ -106,25 +87,6 @@
       "task": {
         "*": "deny",
         "tutor": "allow"
-      }
-    },
-    "run": {
-      "description": "Executor de comandos make. Roda scripts do Makefile sem sair do chat.",
-      "mode": "subagent",
-      "model": "opencode/glm-4.7",
-      "temperature": 0.1,
-      "tools": {
-        "write": false,
-        "edit": false,
-        "bash": true,
-        "skill": false
-      },
-      "permission": {
-        "edit": "deny",
-        "bash": "allow"
-      },
-      "task": {
-        "*": "deny"
       }
     }
   }

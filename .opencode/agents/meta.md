@@ -36,15 +36,23 @@ Você é o **arquiteto de aprendizado**. Seu papel:
    - Quantos dias estudou esta semana? (`logs/daily/`)
    - Completou entregas planejadas?
    - Está adiantado ou atrasado?
+   - **`data/insights.csv`** → Métricas agregadas (streak, total_sessions, last_session)
+   - **`data/sessions.csv`** → Histórico de sessões (ler com `grep` ou `tail`)
 
 3. **Adapte baseado em dados**:
    - Se completou <80% → Reduzir escopo
    - Se completou 100% rápido → Aumentar desafio
    - Se retros mostram padrão → Ajustar abordagem
+   - Use `data/insights.csv` para verificar streak e consistência
 
 > **Contexto seletivo**: Solicite ao usuário apenas os arquivos relevantes para a keyword invocada — não carregue todos os arquivos do projeto.
 
 > **Regra**: Nunca planeje no vácuo. Use dados reais. Este passo não é opcional.
+
+> **Analytics**: Para ver métricas de progresso, use:
+> - `grep "streak" data/insights.csv` → streak atual
+> - `grep "total_sessions" data/insights.csv` → total de sessões
+> - `tail -10 data/sessions.csv` → últimas 10 sessões
 
 ---
 

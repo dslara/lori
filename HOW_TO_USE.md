@@ -2,17 +2,17 @@
 
 > Guia completo para estudar com o framework. Do primeiro `make setup` ao dominio de CS Fundamentals.
 
-**Ultima atualizacao**: 2026-03-02
+**Última atualização**: 2026-03-06
 
 ---
 
-## Indice
+## Índice
 
 - [1. Quick Start (Primeira Vez)](#1-quick-start-primeira-vez)
-- [2. Checklist Pre-Sessao](#2-checklist-pre-sessao)
+- [2. Checklist Pré-Sessão](#2-checklist-pré-sessão)
 - [3. Rotina Diaria (1 hora)](#3-rotina-diaria-1-hora)
 - [4. Rotina Semanal](#4-rotina-semanal)
-- [5. Validacao Pos-Sessao](#5-validacao-pos-sessao)
+- [5. Validação Pós-Sessão](#5-validação-pós-sessão)
 - [6. Referencia de Comandos (17)](#6-referencia-de-comandos-17)
 - [7. Keywords e Agentes](#7-keywords-e-agentes)
 - [8. Armadilhas Comuns e Dicas](#8-armadilhas-comuns-e-dicas)
@@ -26,7 +26,7 @@
 3 comandos para comecar. 5 minutos de setup, 1 hora de estudo.
 
 ```bash
-# 1. Configuracao inicial (1x so)
+# 1. Configuração inicial (1x só)
 make setup
 
 # 2. Criar seu primeiro modulo
@@ -50,11 +50,11 @@ make end     # Encerra, salva log, atualiza streak (5 min)
 
 ---
 
-## 2. Checklist Pre-Sessao
+## 2. Checklist Pré-Sessão
 
-> 2 minutos de preparacao = sessao 3x mais produtiva.
+> 2 minutos de preparação = sessão 3x mais produtiva.
 
-### Verificacao de Ambiente
+### Verificação de Ambiente
 
 Confirme antes de comecar:
 
@@ -81,7 +81,7 @@ Confirme antes de comecar:
 Responda mentalmente antes de `make start`:
 
 - [ ] **Objetivo claro**: O que vou aprender/praticar hoje? (1 frase)
-- [ ] **Duracao definida**: Quanto tempo vou estudar? (recomendado: 1h)
+- [ ] **Duração definida**: Quanto tempo vou estudar? (recomendado: 1h)
 - [ ] **Distracoes eliminadas**:
   - [ ] Celular no modo Nao Perturbe
   - [ ] Notificacoes desligadas
@@ -90,7 +90,7 @@ Responda mentalmente antes de `make start`:
   - [ ] Cafe/agua a mao
   - [ ] Caderno/digital para anotacoes rapidas
 
-### Auto-Avaliacao de Readiness
+### Auto-Avaliação de Readiness
 
 **Readiness de 1 a 10:** ___/10
 
@@ -137,7 +137,7 @@ opencode run --agent @tutor "#zombie"
 │  7. Explain (#explain) -> Introducao a conceito novo          │
 │  8. Intuition (#intuition) -> Entender o "por que"            │
 │  9. Debug (#debug) -> Debug socratico                         │
-│  z. Zombie (#zombie) -> Superar procrastinacao                │
+│  z. Zombie (#zombie) -> Superar procrastinação                │
 │  d. Diffuse (#diffuse) -> Modo difuso (travado)               │
 │                                                               │
 └───────────────────────────────────────────────────────────────┘
@@ -162,12 +162,12 @@ make study
 
 Escolha baseado no que precisa. Skills sao carregadas automaticamente:
 
-| Situacao | Opcao | Skill | Por que |
+| Situação | Opção | Skill | Por quê |
 |----------|-------|-------|---------|
 | Nao sabe o que fazer hoje | 0. Session | — | @session le o plano e sugere |
 | Conceito completamente novo | 7. Explain | `explain-concept` | Analogia primeiro |
 | Aprender fazendo | 1. Code | `directness` | Projeto real |
-| Praticar sintaxe/procedimento | 2. Drill | `drill` | Repeticao = automatizacao |
+| Praticar sintaxe/procedimento | 2. Drill | `drill` | Repetição = automatização |
 | Revisar conceito | 3. Feynman | `feynman` | Se nao explica, nao entendeu |
 | Comecar projeto novo | 4. Scaffold | `scaffold` | Estrutura pronta |
 | Comparar abordagens | 5. Experiment | — (inline) | Testar 3 solucoes |
@@ -218,7 +218,7 @@ make status   # Ver streak e progresso
 
 ---
 
-## 5. Validacao Pos-Sessao
+## 5. Validação Pós-Sessão
 
 Confirme antes de sair:
 
@@ -246,9 +246,9 @@ Confirme antes de sair:
 
 ---
 
-## 6. Referencia de Comandos (17)
+## 6. Referencia de Comandos (18)
 
-### Sessao Diaria
+### Sessão Diária
 
 | Comando | Descricao |
 |---------|-----------|
@@ -279,8 +279,9 @@ Confirme antes de sair:
 | Comando | Descricao |
 |---------|-----------|
 | `make status` | Ver streak e info do modulo |
+| `make analytics` | Ver analytics avancados (tempo, foco, tecnicas) |
 | `make help` | Lista todos os comandos |
-| `make setup` | Configuracao inicial |
+| `make setup` | Configuração inicial |
 | `make backup` | Backup dos dados |
 | `make archive` | Arquivar projeto finalizado |
 
@@ -309,7 +310,6 @@ O agente principal durante `make study`. Carrega skills on-demand.
 | `#experiment`           | Comparar 3 solucoes diferentes                         |
 | `#zombie`               | Nao consegue comecar — Two-Minute Rule                 |
 | `#diffuse`              | Travou no problema — modo difuso                       |
-| `#wrap-up`              | Consolidar sessao antes de `make end`                  |
 
 ### @meta — Planejamento Estrategico
 
@@ -322,7 +322,7 @@ Usado em `make plan` e para decomposicao de objetivos.
 | `#map-resources [topico]` | Curar recursos em 3 tiers |
 | `#create-weekly-plan semana N` | Gerar plano semanal |
 | `#update-plan semana [N]` | Registrar progresso |
-| `#adjust-plan [situacao]` | Reajustar cronograma |
+| `#adjust-plan [situação]` | Reajustar cronograma |
 | `#habit-stack` | Criar cadeia de habitos |
 
 ### @session — Orquestrador de Sessoes
@@ -341,25 +341,17 @@ Analisa o framework e sugere melhorias. Uso esporadico.
 
 | Keyword | Quando Usar |
 |---------|-------------|
-| `#review-structure` | Analisa organizacao de pastas |
+| `#review-structure` | Analisa organização de pastas |
 | `#review-scripts` | Avalia qualidade dos scripts bash |
-| `#review-docs` | Verifica coerencia da documentacao |
-| `#review-makefile` | Revisa orquestracao de comandos |
+| `#review-docs` | Verifica coerência da documentação |
+| `#review-makefile` | Revisa orquestração de comandos |
 | `#review-agents` | Analisa efetividade dos agentes |
 | `#review-consistency` | Verifica consistencia geral |
 | `#review-architecture` | Analise arquitetural profunda |
-| `#review-costs` | Auditoria de otimizacao de tokens |
+| `#review-costs` | Auditoria de otimização de tokens |
 | `#audit-quality` | Auditoria completa (executa todas acima) |
 | `#check-readiness [versao]` | Prontidao para release |
 | `#meta-review [arquivo]` | Revisa documento gerado pelo @review |
-
-### @run — Executor de Comandos
-
-Roda scripts do Makefile sem sair do chat.
-
-| Keyword | Quando Usar |
-|---------|-------------|
-| `#run [comando]` | Executa `make [comando]` no terminal |
 
 ---
 
@@ -393,7 +385,7 @@ Roda scripts do Makefile sem sair do chat.
 2. **Nao releia, recupere**: Quiz diario forca memoria ativa (retrieval practice)
 3. **Projetos reais**: Nao fique so em tutoriais — use `#directness`
 4. **Seja honesto**: Se nao entendeu, use `#feynman` para testar
-5. **Mantenha o streak**: A gamificacao funciona — `make status` para acompanhar
+5. **Mantenha o streak**: A gamificação funciona — `make status` para acompanhar
 
 ---
 
@@ -481,6 +473,72 @@ make retro + make plan
 
 ---
 
+## 11. Sistema de Dados
+
+O sistema salva automaticamente seus dados em arquivos CSV para acompanhamento e analytics.
+
+### Onde os Dados São Salvos
+
+```
+data/
+├── sessions.csv              # Suas sessões diárias
+├── insights.csv             # Métricas (streak, tempo, foco)
+├── tutor_interactions.csv   # Histórico de interações com o tutor
+├── modules.csv              # Módulos de estudo
+└── schema.md               # Documentação completa
+```
+
+### Verificando Seus Dados
+
+```bash
+# Ver status geral (streak, sessões)
+make status
+
+# Ver analytics avançados
+make analytics
+
+# Ver detalhes de uma tabela
+cat data/sessions.csv
+cat data/insights.csv
+```
+
+### O que é Salvo Automaticamente
+
+| Dado | Arquivo | Como |
+|------|---------|------|
+| Sessão diária | `sessions.csv` | `make end` |
+| Streak | `insights.csv` | `make end` |
+| Tempo de estudo | `sessions.csv` | `make end` |
+| Foco (1-10) | `sessions.csv` | `make end` |
+| Interações do tutor | `tutor_interactions.csv` | Automaticamente |
+
+### Analytics Disponíveis
+
+```bash
+make analytics
+```
+
+Mostra:
+- Streak atual e melhor
+- Total de sessões
+- Tempo total de estudo
+- Técnica mais usada
+- Sessões desta semana
+
+### Backup
+
+```bash
+make backup
+```
+
+Cria backup de todos os dados em `backups/`.
+
+### Mais Informações
+
+Consulte [`data/schema.md`](data/schema.md) para documentação completa do schema.
+
+---
+
 ## Proximos Passos
 
 Apos dominar a rotina basica:
@@ -488,7 +546,8 @@ Apos dominar a rotina basica:
 1. **Aprofunde nos principios**: Explore os [9 principios](guides/principios/) do Ultralearning
 2. **Domine as tecnicas**: Consulte o [indice de tecnicas](guides/indice.md) (23 tecnicas)
 3. **Planeje com estrategia**: Use `@meta` com `#decompose-goal` para quebrar objetivos grandes
-4. **Acompanhe o progresso**: Consulte o [master learning map](projects/shared/master-learning-map.md)
+4. **Acompanhe o progresso**: Use [`make analytics`](guides/sistema-dados.md) para ver métricas
+5. **Entenda os dados**: Leia [Sistema de Dados](guides/sistema-dados.md) para entender como os dados são salvos
 
 ---
 

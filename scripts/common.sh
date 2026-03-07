@@ -5,8 +5,8 @@
 # Error handling: Sair em caso de erro, variável não definida ou erro em pipe
 set -euo pipefail
 
-# Trap para mostrar linha de erro
-trap 'echo -e "\033[0;31m❌ Erro na linha $LINENO do script $(basename "$0"). Abortando.\033[0m" >&2' ERR
+# Trap para mostrar linha de erro (usar BASH_SOURCE para obter nome correto)
+trap 'script_name="${BASH_SOURCE[0]:-$0}"; echo -e "\033[0;31m❌ Erro na linha $LINENO do script $(basename "$script_name"). Abortando.\033[0m" >&2' ERR
 
 # Cores
 export BLUE='\033[0;34m'
@@ -18,8 +18,30 @@ export NC='\033[0m'
 
 # Variáveis
 export TODAY=$(date +%Y-%m-%d)
-export PROJECT_ROOT="$(cd "$(dirname "$0")/.." && pwd)"
-export CURRENT_TOPIC=$(cat "$PROJECT_ROOT/.current-topic" 2>/dev/null || echo "nenhum")
+
+# Determinar PROJECT_ROOT automaticamente
+# Tentar determinar a partir do caminho do script
+SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
+if [ -f "$SCRIPT_DIR/common.sh" ]; then
+    export PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+fi
+
+# Se PROJECT_ROOT ainda não estiver definido, usar diretório padrão
+: ${PROJECT_ROOT:=/home/dani/Work/dslara/ultralearning}
+
+# Ler módulo ativo de modules.csv (is_active=true)
+if [ -f "$PROJECT_ROOT/data/modules.csv" ]; then
+    active_line=$(grep ",true,active," "$PROJECT_ROOT/data/modules.csv" 2>/dev/null | head -1)
+    if [ -n "$active_line" ]; then
+        module_id=$(echo "$active_line" | cut -d',' -f1)
+        module_name=$(echo "$active_line" | cut -d',' -f3)
+        export CURRENT_TOPIC="$module_id-$module_name"
+    else
+        export CURRENT_TOPIC="nenhum"
+    fi
+else
+    export CURRENT_TOPIC="nenhum"
+fi
 export TOPIC_PATH="$PROJECT_ROOT/projects/$CURRENT_TOPIC"
 
 # Carregar .env se existir

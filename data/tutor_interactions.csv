@@ -1,1 +1,8 @@
-id,session_id,skill,topic,user_message,tutor_response,timestamp,metadata
+id,session_id,skill,topic,user_message,user_response,tutor_response,timestamp,metadata
+I20260306085731,2026-03-06-085708,quiz,símbolos matemáticos,"O que significa ∀?","","Para todo (quantificador universal)",2026-03-06T08:57:31+01:00,"{"correct":true}"
+I20260306090143,2026-03-06-085708,quiz,símbolos matemáticos,"O que significa ∃?","","Existe (quantificador existencial)",2026-03-06T09:01:43+01:00,"{"correct":true}"
+I20260306090213,2026-03-06-085708,feynman,recursão,"Explique recursão como para uma criança","","Imagine que você tem uma caixa de brinquedos...",2026-03-06T09:02:13+01:00,"{"depth_score":9}"
+I20260306090453,2026-03-06-085708,quiz,símbolos matemáticos,"O que significa ∈?","Pertence","Correto! ∈ significa 'pertence a um conjunto'",2026-03-06T09:04:53+01:00,"{"correct":true}"
+I20260306090503,2026-03-06-085708,drill,Big O,"Qual a complexidade de n log n? ","Linearítmica ","Correto! Cresce mais devagar que n² ",2026-03-06T09:05:03+01:00,"{"correct":true}"
+I20260306090503,2026-03-06-085708,feynman,recursão,"Explique recursão ","É quando uma função chama a si mesma com um caso base ","Excelente! Você entendeu o conceito fundamental ",2026-03-06T09:05:03+01:00,"{"depth_score":8}"
+I20260306090538,2026-03-06-085708,debug,null pointer,"Por que recebo NullPointerException? ","O objeto está null ","Onde você inicializou? ",2026-03-06T09:05:38+01:00,"{"found":false}"

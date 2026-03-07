@@ -49,14 +49,16 @@ dani,dani,,America/Sao_Paulo,2026-03-01,"{""daily_goal_min"":60}"
 | `id` | TEXT (PK) | Identificador único (ex: M1) |
 | `user_id` | TEXT (FK) | Referência a users.id |
 | `name` | TEXT | Nome do módulo |
-| `status` | TEXT | active, paused, completed |
+| `is_active` | BOOLEAN | Módulo ativo atualmente |
+| `status` | TEXT | Status geral (active, paused, completed) |
 | `started_at` | DATE | Data de início |
 | `completed_at` | DATE | Data de conclusão (se completo) |
 | `total_hours` | REAL | Horas totais estudadas |
 
 **Exemplo**:
 ```csv
-M1,dani,math-foundations,active,2026-03-01,,0
+M1,dani,math-foundations,true,active,2026-03-01,,0
+M2,dani,zig-foundations,false,paused,2026-02-15,2026-02-28,15.0
 ```
 
 ---
@@ -206,14 +208,15 @@ G1,dani,M1,Completar fundamentos matemáticos,2026-04-30,in_progress,0.25
 | `session_id` | TEXT (FK) | Referência a sessions.id |
 | `skill` | TEXT | Técnica usada |
 | `topic` | TEXT | Tópico discutido |
-| `user_message` | TEXT | Mensagem do usuário |
+| `user_message` | TEXT | Mensagem/pergunta do usuário |
+| `user_response` | TEXT | Resposta do usuário (se houver) |
 | `tutor_response` | TEXT | Resposta do tutor |
 | `timestamp` | DATETIME | Timestamp da interação |
 | `metadata` | JSON | Metadados em JSON |
 
 **Exemplo**:
 ```csv
-I001,2026-03-04-001,quiz,símbolos matemáticos,"O que significa ∀?","Para todo (universal quantifier)...",2026-03-04T10:15:00,"{""correct"":true}"
+I001,2026-03-04-001,quiz,símbolos matemáticos,"O que significa ∀?","Para todo","Correto! ∀ é o quantificador universal",2026-03-04T10:15:00,"{""correct"":true}"
 ```
 
 ---

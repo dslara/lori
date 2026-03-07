@@ -117,7 +117,6 @@ graph LR
 | `#debug` | Guia de debug socrático |
 | `#zombie` | Não consegue começar? |
 | `#diffuse` | Travou no problema? |
-| `#wrap-up` | Consolidar sessão antes de `make end` |
 
 ---
 

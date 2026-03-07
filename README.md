@@ -22,7 +22,7 @@ make end     # Encerra, salva log, atualiza streak
 
 ---
 
-## 📋 Comandos (17 total)
+## 📋 Comandos (18 total)
 
 ### Sessão Diária
 | Comando | Descrição |
@@ -51,6 +51,7 @@ make end     # Encerra, salva log, atualiza streak
 | Comando | Descrição |
 |---------|-----------|
 | `make status` | Ver streak e info do módulo |
+| `make analytics` | Ver analytics avançados (tempo, foco, técnicas) |
 | `make help` | Lista todos os comandos |
 | `make setup` | Configuração inicial |
 | `make backup` | Backup dos dados |
@@ -70,7 +71,6 @@ make end     # Encerra, salva log, atualiza streak
 │  @tutor (primary) → Execução de sessões                     │
 │  @review (primary) → Auditoria do framework                 │
 │  @session (subagent) → Orquestração início/fim              │
-│  @run (subagent) → Executor de comandos make                │
 │                                                             │
 │  Carregam skills ON-DEMAND → reduzem tokens permanentes     │
 └─────────────────────────────────────────────────────────────┘
@@ -122,7 +122,6 @@ make end     # Encerra, salva log, atualiza streak
 | **@tutor** | GLM-5 | Mentor socrático, quiz, drills, feedback |
 | **@review** | GLM-5 | Revisão arquitetural, auditoria |
 | **@session** | opencode/glm-4.7 | Orquestrador de sessões — lightweight |
-| **@run** | opencode/glm-4.7 | Executor de comandos make — roda scripts sem sair do chat |
 
 ### Skills do @tutor
 
@@ -142,7 +141,6 @@ make end     # Encerra, salva log, atualiza streak
 - `#feedback` — Revisão de código
 - `#intuition [conceito]` — Entender o "por quê" profundo
 - `#diffuse` — Usar modo difuso quando travado
-- `#wrap-up` — Consolidar sessão antes de `make end`
 
 ### Skills do @meta
 
@@ -182,11 +180,6 @@ make end     # Encerra, salva log, atualiza streak
 | `#start` | Inicia sessão com contexto do plano — sugere keyword do @tutor |
 | `#end` | Consolida sessão — gera reflexão + texto para `make end` |
 | `#plan` | Consulta progresso das entregas da semana |
-
-### Keywords do @run
-| Keyword | Uso |
-|---------|-----|
-| `#run [comando]` | Executa `make [comando]` sem sair do chat |
 
 ---
 
@@ -249,12 +242,18 @@ Comece ridicularmente pequeno:
 ## 📁 Estrutura do Projeto
 
 ```
-ultralearning/
+ ultralearning/
 ├── .opencode/
-│   ├── agents/           # @meta, @tutor, @review, @session, @run
-│   ├── skills/           # 10 skills carregadas on-demand
-│   └── opencode.json     # Config de modelos + agents
-├── scripts/              # 19 scripts bash (streak, SRS, etc.)
+│   ├── agents/           # @meta, @tutor, @review, @session
+│   ├── skills/           # Skills carregadas on-demand
+│   └── opencode.json    # Config de modelos + agents
+├── data/                # Base de dados local (CSV)
+│   ├── sessions.csv     # Sessões diárias
+│   ├── insights.csv     # Métricas (streak, tempo, foco)
+│   ├── tutor_interactions.csv  # Memória do tutor
+│   ├── modules.csv     # Módulos de estudo
+│   └── schema.md       # Documentação do schema
+├── scripts/             # 23 scripts bash
 ├── projects/            # Módulos de aprendizado
 │   ├── [modulo]/
 │   │   ├── logs/daily/   # Logs diários
@@ -276,12 +275,13 @@ O projeto está organizado em pastas especializadas:
 |-------|-----------|--------------|
 | `.opencode/agents/` | Agentes opencode com frontmatter YAML | — |
 | `.opencode/skills/` | Skills carregadas on-demand pelos agentes | [Template](.opencode/skills/_template-skill/SKILL.md) |
+| `data/` | Base de dados local (CSV) | [schema.md](data/schema.md) |
 | `projects/` | Módulos e projetos de aprendizado | [README](projects/README.md) |
 | `guides/` | Biblioteca de técnicas e princípios de aprendizado | [README](guides/README.md) |
 | `planning/` | Propostas de mudança do framework (scripts, agentes) | [README](planning/README.md) |
 | `reviews/` | Revisões técnicas do framework (consolidadas) | [README](reviews/README.md) |
 | `archived/` | Projetos finalizados e arquivados | [README](archived/README.md) |
-| `scripts/` | Scripts utilitários (streak, SRS) | - |
+| `scripts/` | Scripts utilitários (23 scripts) | — |
 
 ### Separação de Planejamento
 
