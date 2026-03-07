@@ -63,9 +63,6 @@ draft-*.py
 backups/
 projects/*/logs/daily/*.md
 
-# Ultralearning - Dados pessoais de SRS
-projects/*/knowledge/spaced-repetition.jsonl
-
 # Optional: Keep learning maps but not personal logs
 # Uncomment if you want to track learning maps in Git
 # !01-meta/active/**/learning-map.md

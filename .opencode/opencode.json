@@ -45,7 +45,7 @@
         "skill": true
       },
       "permission": {
-        "edit": "ask",
+        "edit": "allow",
         "bash": "allow",
         "skill": {
           "*": "allow"

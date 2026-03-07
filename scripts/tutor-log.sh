@@ -28,7 +28,7 @@ log_interaction() {
     tutor_response=$(echo "$tutor_response" | tr '\n' ' ' | tr ',' ';' | head -c 500)
     
     # Registrar
-    echo "$interaction_id,$session_id,$skill,$topic,\"$user_message\",\"$user_response\",\"$tutor_response\",$timestamp,\"$metadata\"" >> "$DATA_DIR/tutor_interactions.csv"
+    echo "$interaction_id,$session_id,$skill,$topic,\"$user_message\",\"$user_response\",\"$tutor_response\",$timestamp,$metadata" >> "$DATA_DIR/tutor_interactions.csv"
     
     echo "$interaction_id"
 }

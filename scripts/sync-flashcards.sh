@@ -12,8 +12,8 @@ print_header "🔄 Sincronizando Flashcards"
 
 # Criar backup do master-deck
 if [ -f "$MASTER_DECK" ]; then
-    cp "$MASTER_DECK" "$MASTER_DECK.backup"
-    print_success "Backup criado: master-deck.csv.backup"
+    cp "$MASTER_DECK" "$MASTER_DECK.bak"
+    print_success "Backup criado: master-deck.csv.bak"
 fi
 
 # Criar header se master-deck não existe

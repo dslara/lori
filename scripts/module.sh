@@ -26,7 +26,7 @@ fi
 module_id="M$(date +%m%d%H%M%S)"
 
 # Criar estrutura de diretórios
-if ! mkdir -p "projects/$module_id-$TOPIC_SLUG"/{meta,projects,logs/daily,knowledge}; then
+if ! mkdir -p "projects/$module_id-$TOPIC_SLUG"/{meta,projects,knowledge}; then
     print_error "Falha ao criar diretórios do módulo (sem permissão?)"
     exit 1
 fi

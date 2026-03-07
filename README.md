@@ -12,50 +12,82 @@ Otimizado para aprendizado acelerado de Ciência da Computação.
 
 ## ⚡ Como Usar
 
-> **Guia completo**: [`HOW_TO_USE.md`](HOW_TO_USE.md) — Setup, rotina diária, comandos, keywords, troubleshooting.
+> **Guia completo**: [`HOW_TO_USE.md`](HOW_TO_USE.md) — Setup, rotina diária, keywords, troubleshooting.
+
+### Interface Principal (OpenCode)
+
+Todas as funcionalidades são acessíveis via **keywords** no OpenCode:
 
 ```bash
-make start   # Inicia sessão + quiz automático
-make study   # Loop de estudo interativo
-make end     # Encerra, salva log, atualiza streak
+# Sessão de estudo
+@tutor #start              # Iniciar sessão com contexto
+@tutor #drill recursão     # Prática deliberada
+@tutor #feynman closures  # Validar compreensão
+@tutor #quiz 3 Big O       # Warm-up
+@tutor #end                # Encerrar e salvar progresso
+
+# Planejamento
+@meta #decompose-goal "Aprender algoritmos"  # Decompor objetivo
+@meta #create-weekly-plan semana 1           # Criar plano semanal
+@meta #retro                                 # Retrospectiva semanal
+
+# Revisão
+@tutor #srs-generator       # Criar flashcard
+@tutor #srs-generator review # Revisar flashcards
+```
+
+### Interface Secundária (Terminal, opcional)
+
+Atalhos para quem prefere terminal:
+
+```bash
+make start   # Atalho para @tutor #start
+make end     # Atalho para @tutor #end
+make status  # Ver métricas
 ```
 
 ---
 
-## 📋 Comandos (18 total)
+## 📋 Keywords Disponíveis
 
-### Sessão Diária
+### Sessão de Estudo (@tutor)
+
+| Keyword | Descrição | Skill |
+|---------|-----------|-------|
+| `#start` | Iniciar sessão com contexto | `session` |
+| `#end` | Encerrar e salvar progresso | `session` |
+| `#plan` | Ver progresso da semana | `session` |
+| `#drill [conceito]` | Prática deliberada 5-10x | `drill` |
+| `#feynman [conceito]` | Validar compreensão | `feynman` |
+| `#quiz N [tópico]` | Warm-up / retrieval | `quiz` |
+| `#directness [desafio]` | Projeto real | `directness` |
+| `#explain [conceito]` | Introduzir conceito novo | `explain-concept` |
+| `#debug` | Debug socrático | `debug-socratic` |
+| `#zombie` | Superar procrastinação | `zombie-mode` |
+| `#scaffold [projeto]` | Criar boilerplate | `scaffold` |
+| `#srs-generator` | Criar flashcards | `srs-generator` |
+
+### Planejamento (@meta)
+
+| Keyword | Descrição | Skill |
+|---------|-----------|-------|
+| `#decompose-goal [OBJ]` | Decompor objetivo | `decomposition` |
+| `#retro` | Retrospectiva semanal | `retrospective` |
+| `#benchmark-test` | Definir critério de conclusão | `benchmarking` |
+
+### Comandos de Terminal (atalhos)
+
 | Comando | Descrição |
 |---------|-----------|
-| `make start` | Inicia sessão + quiz automático |
-| `make study` | Loop interativo (code/drill/feynman/scaffold) |
-| `make end` | Encerra, salva log, atualiza streak |
-
-### Módulos
-| Comando | Descrição |
-|---------|-----------|
+| `make start` | Atalho para @tutor #start |
+| `make end` | Atalho para @tutor #end |
+| `make status` | Ver streak e métricas |
 | `make module` | Criar novo módulo |
 | `make switch` | Alternar módulo ativo |
-| `make plan` | Planejar semana com @meta |
-| `make resources` | Mapear recursos para o módulo |
-
-### Revisão
-| Comando | Descrição |
-|---------|-----------|
-| `make review` | Spaced repetition (SRS) |
-| `make retro` | Retrospectiva semanal (3 perguntas) |
-| `make break` | Pausa de 15 min para modo difuso (Oakley) |
-| `make drill-extra` | Overlearning: 5 variações de drill (Oakley) |
-
-### Utilitários
-| Comando | Descrição |
-|---------|-----------|
-| `make status` | Ver streak e info do módulo |
-| `make analytics` | Ver analytics avançados (tempo, foco, técnicas) |
-| `make help` | Lista todos os comandos |
-| `make setup` | Configuração inicial |
-| `make backup` | Backup dos dados |
-| `make archive` | Arquivar projeto finalizado |
+| `make plan` | Planejar semana |
+| `make review` | Revisar flashcards |
+| `make retro` | Retrospectiva semanal |
+| `make analytics` | Ver analytics avançados |
 
 ---
 
@@ -79,7 +111,7 @@ make end     # Encerra, salva log, atualiza streak
 ┌─────────────────────────────────────────────────────────────┐
 │  SKILLS (.opencode/skills/)                                 │
 │  ════════════════════════════════════════════════════════   │
-│  11 Skills carregadas sob demanda:                          │
+│  14 Skills carregadas sob demanda:                          │
 │  - session → Orquestrar início/fim de sessão                │
 │  - drill → Prática deliberada 5-10x                         │
 │  - feynman → Validar compreensão explicando                 │
@@ -89,10 +121,11 @@ make end     # Encerra, salva log, atualiza streak
 │  - zombie-mode → Superar procrastinação                     │
 │  - debug-socratic → Guia socrático de bugs                  │
 │  - scaffold → Criar boilerplate                             │
+│  - srs-generator → Gerar flashcards SRS                     │
 │  - decomposition → Dividir objetivos (@meta)                │
-│  - benchmarking → Testes de proficiência (@meta)            │
+│  - retrospective → Retrospectiva semanal (@meta)           │
 │                                                             │
-│  Skills SUGEREM comandos → NÃO executam scripts             │
+│  Skills INVOCAM scripts internamente → interface unificada  │
 └─────────────────────────────────────────────────────────────┘
                             │
                             │ Handoff para
@@ -100,7 +133,7 @@ make end     # Encerra, salva log, atualiza streak
 ┌─────────────────────────────────────────────────────────────┐
 │  MAKEFILE & SCRIPTS                                         │
 │  ════════════════════════════════════════════════════════   │
-│  17 comandos make → 19 scripts bash                         │
+│  21 comandos make → 26 scripts bash                         │
 │                                                             │
 │  Scripts são a INTERFACE → Agentes executam o comportamento │
 └─────────────────────────────────────────────────────────────┘
@@ -135,6 +168,8 @@ make end     # Encerra, salva log, atualiza streak
 | `scaffold` | `#scaffold [projeto]` | Criar estrutura base |
 | `debug-socratic` | `#debug` | Guia socrático de bugs |
 | `zombie-mode` | `#zombie` | Superar procrastinação |
+| `srs-generator` | `#srs-generator` | Criar e revisar flashcards |
+| `tutor-log` | (interno) | Registrar interações no CSV |
 
 **Outras keywords** (mantidas inline no agente):
 - `#experiment [conceito]` — Comparar 3 soluções diferentes
@@ -246,10 +281,10 @@ Comece ridicularmente pequeno:
 │   ├── tutor_interactions.csv  # Memória do tutor
 │   ├── modules.csv     # Módulos de estudo
 │   └── schema.md       # Documentação do schema
-├── scripts/             # 23 scripts bash
+├── scripts/             # 26 scripts bash
 ├── projects/            # Módulos de aprendizado
 │   ├── [modulo]/
-│   │   ├── logs/daily/   # Logs diários
+│   │   ├── meta/         # Planos ativos (learning-map, weeks)
 │   │   ├── meta/         # Planos ativos (learning-map, weeks)
 │   │   ├── planning/     # Planos de mudança do currículo
 │   │   ├── projects/     # Projetos práticos
@@ -259,7 +294,7 @@ Comece ridicularmente pequeno:
 ├── guides/               # 9 princípios + 23 técnicas
 ├── reviews/              # Revisões técnicas do framework
 ├── planning/             # Propostas de mudança do FRAMEWORK
-└── Makefile              # 17 comandos
+└── Makefile              # 21 comandos
 ```
 
 O projeto está organizado em pastas especializadas:
@@ -274,7 +309,7 @@ O projeto está organizado em pastas especializadas:
 | `planning/` | Propostas de mudança do framework (scripts, agentes) | [README](planning/README.md) |
 | `reviews/` | Revisões técnicas do framework (consolidadas) | [README](reviews/README.md) |
 | `archived/` | Projetos finalizados e arquivados | [README](archived/README.md) |
-| `scripts/` | Scripts utilitários (23 scripts) | — |
+| `scripts/` | Scripts utilitários (26 scripts) | — |
 
 ### Separação de Planejamento
 

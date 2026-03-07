@@ -1,1 +1,11 @@
 id,user_id,module_id,front,back,category,created_at,tags,next_review,interval,easiness,reviews
+17725133055432,dani,M1,"O que significa o símbolo ∀?","Para todo / Cada elemento sem exceção",symbols,2026-03-03,,2026-03-04,1,2.5,1
+17725146253417,dani,M1,"O que significa o símbolo ∃?","Existe / Pelo menos um elemento",symbols,2026-03-03,,2026-03-05,1,2.18,1
+17725146253718,dani,M1,"O que significa o símbolo Σ?","Somatório / Soma de todos os elementos",symbols,2026-03-03,,2026-03-05,1,2.5,1
+17725146251428,dani,M1,"O que significa o símbolo ∈?","Pertence a / Faz parte de (elemento de conjunto)",symbols,2026-03-03,,2026-03-05,1,2.5,1
+17725146251245,dani,M1,"O que significa o símbolo ⊂?","Subconjunto / Está contido em",symbols,2026-03-03,,2026-03-05,1,2.18,1
+17725146257637,dani,M1,"O que significa o símbolo ∩?","Interseção / Elementos em comum entre conjuntos",symbols,2026-03-03,,2026-03-05,1,2.18,1
+17725146257513,dani,M1,"O que significa o símbolo ∪?","União / Junta todos os elementos (sem repetir)",symbols,2026-03-03,,2026-03-05,1,2.18,1
+17725146254964,dani,M1,"O que significa o símbolo ⇒?","Implica / Se... então",symbols,2026-03-03,,2026-03-05,1,2.36,1
+17725146255677,dani,M1,"O que significa o símbolo ⇔?","Equivalente / Se e somente se",symbols,2026-03-03,,2026-03-05,1,2.18,1
+17725146257401,dani,M1,"O que significa o símbolo |A|?","Cardinalidade / Número de elementos do conjunto",symbols,2026-03-03,,2026-03-05,1,2.18,1

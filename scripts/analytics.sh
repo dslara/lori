@@ -150,6 +150,10 @@ try:
             metadata_raw = row.get('metadata', '').strip()
             if not topic or not metadata_raw:
                 continue
+            
+            # Remover aspas externas se presentes (CSV escaping)
+            if metadata_raw.startswith('"') and metadata_raw.endswith('"'):
+                metadata_raw = metadata_raw[1:-1]
 
             try:
                 meta = json.loads(metadata_raw)

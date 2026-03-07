@@ -12,22 +12,22 @@ echo ""
 # Resumo semanal automático
 echo -e "${YELLOW}📊 Resumo da Semana:${NC}"
 
-WEEK_START=$(date -v-7d +%Y-%m-%d 2>/dev/null || date -d '7 days ago' +%Y-%m-%d)
-LOGS_THIS_WEEK=$(find "$TOPIC_PATH/logs/daily" -maxdepth 1 -name "*.md" 2>/dev/null | while read f; do
-    FDATE=$(basename "$f" .md)
-    if [[ "$FDATE" > "$WEEK_START" ]] || [[ "$FDATE" == "$WEEK_START" ]]; then
-        echo "$f"
-    fi
-done | wc -l | xargs)
+# Contar sessões do CSV nos últimos 7 dias
+WEEK_START=$(date -d '7 days ago' +%Y-%m-%d 2>/dev/null || date -v-7d +%Y-%m-%d)
+module_id=$(echo "$CURRENT_TOPIC" | grep -oE '^[A-Z][0-9]+' || echo "M1")
+SESSIONS_THIS_WEEK=$(awk -F, -v start="$WEEK_START" -v today="$TODAY" -v mid="$module_id" '
+    $3 == mid && $4 >= start && $4 <= today {count++}
+    END {print count+0}
+' "$PROJECT_ROOT/data/sessions.csv")
 
-echo "   📅 Dias estudados esta semana: $LOGS_THIS_WEEK"
+echo "   📅 Sessões esta semana: $SESSIONS_THIS_WEEK"
 
-if [ "$LOGS_THIS_WEEK" -ge 6 ]; then
-    echo -e "   ${GREEN}✅ Excelente! Meta de 6 dias atingida!${NC}"
-elif [ "$LOGS_THIS_WEEK" -ge 4 ]; then
-    echo -e "   ${YELLOW}⚠️  Bom! $(( 6 - $LOGS_THIS_WEEK )) dias para meta${NC}"
+if [ "$SESSIONS_THIS_WEEK" -ge 6 ]; then
+    echo -e "   ${GREEN}✅ Excelente! Meta de 6 sessões atingida!${NC}"
+elif [ "$SESSIONS_THIS_WEEK" -ge 4 ]; then
+    echo -e "   ${YELLOW}⚠️  Bom! $(( 6 - SESSIONS_THIS_WEEK )) sessões para meta${NC}"
 else
-    echo -e "   ${RED}❌ Faltaram $(( 6 - $LOGS_THIS_WEEK )) dias${NC}"
+    echo -e "   ${RED}❌ Faltaram $(( 6 - SESSIONS_THIS_WEEK )) sessões${NC}"
 fi
 
 echo ""

@@ -11,18 +11,18 @@ metadata:
 
 ## O que é Session
 
-Skill de orquestração leve para início e encerramento de sessões de estudo. Remove a fricção entre `make start`/`make end` e as keywords do @tutor — o usuário não precisa saber qual keyword usar: você lê o contexto, sugere a atividade mais adequada e consolida ao final.
+Skill de orquestração para sessões de estudo. Remove a fricção entre scripts e keywords — o usuário não precisa saber qual keyword usar: você lê o contexto, sugere a atividade mais adequada e salva o progresso ao final.
 
-**Você NÃO ensina, NÃO planeja e NÃO revisa o framework.** Você lê, sugere e consolida.
+**Você NÃO ensina, NÃO planeja e NÃO revisa o framework.** Você lê, sugere e persiste.
 
 > "O melhor estudo começa com o contexto certo e termina com reflexão estruturada."
 
 ## Quando Usar
 
 ✅ **USE** para:
-- Logo após `make start` → `#start`
-- Antes de `make end` → `#end`
-- Consultar progresso da semana durante a sessão → `#plan`
+- Iniciar sessão → `#start`
+- Encerrar sessão → `#end`
+- Consultar progresso → `#plan`
 
 ❌ **NÃO USE** para:
 - Ensinar conceitos → use `#explain` ou `#intuition`
@@ -33,9 +33,25 @@ Skill de orquestração leve para início e encerramento de sessões de estudo. 
 
 ### `#start` — Iniciar Sessão com Contexto
 
-**Passo 0: Carregar contexto dos dados (automático, sem perguntar ao usuário)**
+**Passo 0: Executar script de setup (automático, silencioso)**
 
-Execute os comandos abaixo silenciosamente para ter contexto antes de responder:
+Execute antes de responder:
+
+```bash
+./scripts/start.sh > /dev/null 2>&1 || {
+    echo "❌ Erro ao iniciar sessão. Verifique se há módulo ativo."
+    exit 1
+}
+```
+
+Isso:
+- Salva timestamp de início
+- Carrega contexto do DB
+- Prepara ambiente
+
+**Passo 1: Carregar contexto dos dados (automático)**
+
+Execute os comandos abaixo silenciosamente para ter contexto:
 
 ```bash
 # Módulo ativo
@@ -110,28 +126,41 @@ Ou prefere: #[alternativa]?"
 
 ---
 
-### `#end` — Encerrar com Reflexão Estruturada
+### `#end` — Encerrar Sessão
 
-**Passo 1: Ouvir primeiro (não presumir)**
+**Passo 0: Ouvir primeiro (não presumir)**
 ```
 "Vamos consolidar! O que você fez hoje? (lista rápida)"
 ```
 
-**Passo 2: Gerar reflexão em 4 blocos**
+**Passo 1: Gerar reflexão em 4 blocos**
 Com base no que o usuário relatou:
 - **O que aprendi**: conceitos novos absorvidos
 - **Conceitos consolidados**: o que ficou mais sólido
 - **Para o SRS**: perguntas candidatas a flashcard (2-3 itens)
 - **Próxima sessão**: o que ficou pendente
 
-**Passo 3: Texto pronto para `make end`**
-Gerar 1-2 frases para copiar diretamente no prompt do `make end`.
+**Passo 2: Executar script de persistência (automático)**
 
-**Passo 4: Detecção de domingo**
+Após gerar reflexão, execute:
+
+```bash
+./scripts/end.sh > /dev/null 2>&1 || {
+    echo "❌ Erro ao salvar sessão. Tente novamente."
+    exit 1
+}
+```
+
+Isso:
+- Salva sessão no CSV
+- Atualiza streak
+- Gera analytics
+
+**Passo 3: Detecção de domingo**
 Se for domingo, adicionar após a reflexão:
 ```
 "📅 Hoje é domingo — fim de semana!
-→ @meta #retro semana [N] para revisar a semana e alimentar o próximo plano."
+→ @meta #retro para revisar a semana e alimentar o próximo plano."
 ```
 
 ---
@@ -233,46 +262,6 @@ Se preferir entender antes de praticar:
 → #explain recursão → depois #feynman recursão"
 ```
 
-### `#end`
-
-```
-Usuário: "#end"
-
-Você:
-"Vamos consolidar! O que você fez hoje? (lista rápida)"
-
----
-
-Usuário: "terminei os repositories da API, fiz autenticação JWT, ainda não testei"
-
-Você:
-"✅ Sessão consolidada:
-
-**O que aprendi**: repositories como camada de abstração de dados;
-JWT: header.payload.signature — o servidor valida sem guardar estado.
-
-**Conceitos consolidados**: repository pattern, JWT estrutura e validação
-
-**Para o SRS** (adicionar com `make review`):
-- O que é o repository pattern e por que separa da lógica de negócio?
-- Como o servidor valida um JWT sem base de dados?
-
-**Próxima sessão**: escrever testes para autenticação — ficou pendente.
-
----
-📋 Copie isto para o `make end`:
-'Repository pattern + JWT: abstração de dados e autenticação stateless. Falta: testes de autenticação.'"
-```
-
-### `#end` (domingo)
-
-```
-[reflexão normal da sessão...]
-
-"📅 Hoje é domingo — fim de semana!
-→ @meta #retro semana [N] para revisar a semana e alimentar o próximo plano."
-```
-
 ### `#plan`
 
 ```
@@ -305,32 +294,32 @@ Sábado disponível para benchmark — você está no tempo."
 | Sugestão baseada em contexto real | Referencia entrega do plano | Sugestão genérica sem base |
 | `#start` apresenta opções | 1 principal + 1 alternativa | Só 1 ou mais de 3 |
 | `#end` tem 4 blocos | Todos presentes | Bloco faltando |
-| Texto para `make end` | Pronto para copiar, 1-2 frases | Vago ou muito longo |
 
 ## Handoff
 
 - `#start` → keyword sugerida (ex: `#directness`, `#drill`, `#feynman`)
-- `#end` no domingo → `@meta #retro semana [N]`
+- `#end` no domingo → `@meta #retro`
 - Usuário 2+ dias atrasado → `@meta #adjust-plan`
 - Usuário quer planejar semana nova → `@meta #create-weekly-plan`
 
-## 📋 Makefile Integration
+## 📋 Interface
 
-**Comandos relacionados**:
-- `make start` — inicia sessão; usar `#start` logo após para contextualizar
-- `make end` — encerra sessão; usar `#end` antes para gerar o texto de log
-- `make review` — adicionar cards SRS sugeridos pelo `#end`
+**Keywords são a interface principal**. Scripts são executados internamente.
 
-**Quando sugerir**:
-- Ao iniciar → sugerir `make start` se ainda não foi feito
-- Após `#end` → lembrar de `make end` com o texto gerado
-- SRS candidatos identificados → sugerir `make review`
+**Fluxo típico**:
+```
+@tutor #start → [estuda com #drill, #feynman, etc.] → @tutor #end
+```
+
+**Atalhos de terminal (opcional)**:
+- `make start` — atalho para script
+- `make end` — atalho para script
+- `make status` — ver métricas
 
 ## 🚀 Model Routing
 
 **Candidatas a `small_model`** (glm-4.7 — custo ~40% menor):
 - `#start` — sugestão baseada em contexto simples, sem raciocínio complexo
-- `#end` — consolidação com estrutura fixa
 - `#plan` — leitura e display de status
 
 > Todas as keywords desta skill são elegíveis para `small_model`. Não exigem GLM-5.

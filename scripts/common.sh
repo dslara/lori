@@ -24,10 +24,10 @@ export TODAY=$(date +%Y-%m-%d)
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
 if [ -f "$SCRIPT_DIR/common.sh" ]; then
     export PROJECT_ROOT="${PROJECT_ROOT:-$(cd "$SCRIPT_DIR/.." && pwd)}"
+else
+    # Fallback: usar diretório de trabalho atual se não detectado
+    export PROJECT_ROOT="${PROJECT_ROOT:-$(pwd)}"
 fi
-
-# Se PROJECT_ROOT ainda não estiver definido, usar diretório padrão
-: ${PROJECT_ROOT:=/home/dani/Work/dslara/ultralearning}
 
 # Ler módulo ativo de modules.csv (is_active=true, independente do status)
 if [ -f "$PROJECT_ROOT/data/modules.csv" ]; then
@@ -185,26 +185,30 @@ get_week_context() {
     fi
 }
 
-# Função: Obter últimos N logs diários (default: 3)
-get_recent_logs() {
+# Função: Obter últimas N sessões do CSV (default: 3)
+get_recent_sessions() {
     local n="${1:-3}"
-    local logs_dir="$TOPIC_PATH/logs/daily"
-
-    if [ ! -d "$logs_dir" ]; then
-        echo ""
-        return
-    fi
-
-    ls -t "$logs_dir"/*.md 2>/dev/null | head -n "$n" | while read -r file; do
-        echo "=== $(basename "$file") ==="
-        head -n 50 "$file"
+    local module_id=$(echo "$CURRENT_TOPIC" | grep -oE '^[A-Z][0-9]+' || echo "M1")
+    
+    init_data
+    
+    # Buscar últimas N sessões do módulo
+    grep ",$module_id," "$DATA_DIR/sessions.csv" 2>/dev/null | tail -n "$n" | while IFS= read -r line; do
+        local date=$(echo "$line" | cut -d',' -f4)
+        local duration=$(echo "$line" | cut -d',' -f5)
+        local focus=$(echo "$line" | cut -d',' -f6)
+        local notes=$(echo "$line" | cut -d',' -f7- | sed 's/^"//;s/"$//')
+        
+        echo "=== $date ==="
+        echo "Duração: ${duration}min | Foco: $focus/10"
+        [ -n "$notes" ] && echo "Notas: $notes"
         echo ""
     done
 }
 
 # Função: Obter cards SRS pendentes de revisão
 get_srs_pending() {
-    local srs_file="$TOPIC_PATH/knowledge/spaced-repetition.jsonl"
+    local srs_file="$DATA_DIR/flashcards.csv"
     local today
     today=$(date +%Y-%m-%d)
 
@@ -213,27 +217,45 @@ get_srs_pending() {
         return
     fi
 
-    if ! command -v jq &> /dev/null; then
-        echo "jq não instalado — SRS não carregado."
-        return
-    fi
-
     local count=0
     local pending=""
 
-    while IFS= read -r line; do
+    # Pular header e ler CSV
+    tail -n +2 "$srs_file" | while IFS= read -r line; do
         [ -z "$line" ] && continue
-        local next_review
-        next_review=$(echo "$line" | jq -r '.next_review' 2>/dev/null)
+        local next_review front
+        # Campo 9 = next_review, Campo 4 = front (usando python3 para parsing robusto)
+        next_review=$(python3 -c "
+import csv, sys
+reader = csv.reader([sys.argv[1]])
+row = next(reader)
+print(row[8] if len(row) > 8 else '')
+" "$line" 2>/dev/null)
         if [[ "$next_review" < "$today" ]] || [[ "$next_review" == "$today" ]]; then
             count=$((count + 1))
-            local front
-            front=$(echo "$line" | jq -r '.front' 2>/dev/null)
+            front=$(python3 -c "
+import csv, sys
+reader = csv.reader([sys.argv[1]])
+row = next(reader)
+print(row[3] if len(row) > 3 else '')
+" "$line" 2>/dev/null)
             pending="${pending}- ${front}\n"
         fi
-    done < "$srs_file"
+    done
 
-    if [ "$count" -eq 0 ]; then
+    # Contar separadamente (subshell não preserva variável)
+    count=$(tail -n +2 "$srs_file" | while IFS= read -r line; do
+        [ -z "$line" ] && continue
+        next_review=$(python3 -c "
+import csv, sys
+reader = csv.reader([sys.argv[1]])
+row = next(reader)
+print(row[8] if len(row) > 8 else '')
+" "$line" 2>/dev/null)
+        [[ "$next_review" < "$today" ]] || [[ "$next_review" == "$today" ]] && echo "1"
+    done | wc -l | tr -d ' ')
+
+    if [ "${count:-0}" -eq 0 ]; then
         echo "Nenhum card para revisar hoje."
     else
         echo "$count cards pendentes:"

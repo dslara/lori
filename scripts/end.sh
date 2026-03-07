@@ -9,18 +9,6 @@ check_module
 
 print_header "🏁 Encerrando Sessão"
 
-# Reflexão estruturada com @tutor antes de salvar o log
-if check_opencode; then
-    echo -e "${PURPLE}💭 Consolidando sessão com @tutor...${NC}"
-    echo -e "${YELLOW}  (pressiona Ctrl+C para saltar e escrever diretamente)${NC}"
-    echo ""
-    opencode run '@tutor "#end"' || true
-    echo ""
-    print_info "📋 Copia o texto gerado acima para o resumo abaixo."
-    echo -e "${YELLOW}  ou escreve um resumo livre se não usaste @tutor${NC}"
-    echo ""
-fi
-
 # Calcular duração automaticamente se start_time foi salvo
 duration=""
 if [ -f "$DATA_DIR/.session_start_time" ]; then
@@ -50,19 +38,6 @@ else
 fi
 
 if [ -n "$learning" ]; then
-    # Verificar se o arquivo de log existe antes de escrever
-    if [ ! -f "$TOPIC_PATH/logs/daily/$TODAY.md" ]; then
-        print_error "Arquivo de log não encontrado. Execute 'make start' primeiro."
-        exit 1
-    fi
-
-    safe_write "" "$TOPIC_PATH/logs/daily/$TODAY.md" || exit 1
-    safe_write "## 📊 Resumo da Sessão" "$TOPIC_PATH/logs/daily/$TODAY.md" || exit 1
-    safe_write "" "$TOPIC_PATH/logs/daily/$TODAY.md" || exit 1
-    safe_write "$learning" "$TOPIC_PATH/logs/daily/$TODAY.md" || exit 1
-    safe_write "" "$TOPIC_PATH/logs/daily/$TODAY.md" || exit 1
-    print_success "Resumo salvo"
-
     # Registrar sessão no CSV
     module_id=$(echo "$CURRENT_TOPIC" | grep -oE '^[A-Z][0-9]+' || echo "M1")
 
@@ -92,7 +67,6 @@ echo ""
 # Gerar analytics (inclui error_rate e flashcards_reviewed)
 "$(dirname "$0")/analytics.sh" update "${module_id:-M1}" > /dev/null 2>&1 || true
 
-echo -e "${GREEN}📝 Log: $TOPIC_PATH/logs/daily/$TODAY.md${NC}"
 echo -e "${GREEN}📊 Dados: data/sessions.csv${NC}"
 echo -e "${GREEN}📈 Analytics: data/insights.csv${NC}"
 print_success "Sessão encerrada! Bom trabalho! 🎉"

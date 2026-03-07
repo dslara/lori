@@ -2,7 +2,7 @@
 
 > Valide sua preparação antes de cada sessão. 2 minutos que economizam 30.
 
-**Última atualização**: 2026-02-27
+**Última atualização**: 2026-03-07
 
 ---
 
@@ -19,19 +19,19 @@ Confirme antes de começar:
 - [ ] **Make disponível**
   ```bash
   make help
-  # Deve listar 16 comandos
+  # Deve listar 21 comandos
   ```
 
 - [ ] **Módulo ativo definido**
   ```bash
-  cat .current-topic
-  # Deve mostrar: python-basics, rust-fundamentals, etc.
+  make status
+  # Deve mostrar: M1-math-foundations, M2-zig-foundations, etc.
   ```
 
-- [ ] **Log do dia criado**
+- [ ] **Dados inicializados**
   ```bash
-  ls logs/daily/$(date +%F).md
-  # Criado automaticamente pelo make start
+  ls data/*.csv
+  # Deve listar: sessions.csv, insights.csv, etc.
   ```
 
 ---
@@ -101,10 +101,10 @@ opencode run --agent @tutor "#zombie"
 
 Confirme antes de sair:
 
-- [ ] **Log preenchido**
+- [ ] **Sessão salva no CSV**
   ```bash
-  # Verifique: [modulo]/logs/daily/YYYY-MM-DD.md
-  # Deve conter: Objetivo, Notas, Aprendizados
+  tail -3 data/sessions.csv
+  # Deve conter sua sessão de hoje
   ```
 
 - [ ] **Streak atualizado**
@@ -191,7 +191,7 @@ PRÉ-SESSÃO:
 ☐ Materiais prontos | ☐ 1h disponível
 
 PÓS-SESSÃO:
-☐ Log salvo | ☐ Streak ok | ☐ Próxima marcada
+☐ Sessão salva | ☐ Streak ok | ☐ Próxima marcada
 ☐ Difíceis no SRS
 
 SE TRAVAR: make break

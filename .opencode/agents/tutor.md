@@ -130,6 +130,75 @@ Para ver interações anteriores:
 
 ---
 
+## 🎯 Dificuldade Adaptativa
+
+**O que é**: Ajustar a complexidade das perguntas baseado no histórico de acertos/erros do usuário.
+
+### Como Funciona
+
+**Antes de fazer uma pergunta sobre um tópico**:
+
+1. **Consultar dificuldade**:
+   ```bash
+   ./scripts/tutor-difficulty.sh get "recursão"
+   # Output: {"level":"medium","error_rate":0.25,"attempts":4}
+   ```
+
+2. **Ajustar complexidade**:
+   - **Easy** (error_rate < 20%): Perguntas mais desafiadoras
+     - Múltiplas partes
+     - Conexões entre conceitos
+     - "Por quê?" profundo
+   
+   - **Medium** (error_rate 20-40%): Perguntas balanceadas
+     - 2 partes
+     - Aplicações diretas
+     - Comparações
+   
+   - **Hard** (error_rate > 40%): Perguntas mais simples
+     - Uma parte
+     - Definições diretas
+     - Exemplos concretos
+
+### Exemplo
+
+**Tópico**: "recursão" (error_rate: 25% → medium)
+
+**Pergunta medium**:
+```
+"Explique recursão com um exemplo.
+Qual a diferença entre caso base e caso recursivo?"
+```
+
+**Se fosse easy** (error_rate: 10%):
+```
+"Por que recursão pode causar stack overflow?
+Como você otimizaria uma recursão ineficiente?"
+```
+
+**Se fosse hard** (error_rate: 50%):
+```
+"O que é recursão?
+Dê um exemplo simples."
+```
+
+### Skills que Usam Dificuldade Adaptativa
+
+| Skill | Keyword | Uso |
+|-------|---------|-----|
+| `quiz` | `#quiz` | Ajustar complexidade das perguntas |
+| `srs-generator` | `#srs-generator review` | Ajustar feedback e dicas |
+
+### Relatório de Dificuldades
+
+Para ver todos os tópicos com seus níveis:
+
+```bash
+./scripts/tutor-difficulty.sh report
+```
+
+---
+
 ## 📚 Skills Disponíveis
 
 As skills são carregadas ON-DEMAND com `skill({ name: "nome" })`:
@@ -156,27 +225,6 @@ As skills são carregadas ON-DEMAND com `skill({ name: "nome" })`:
 
 > **Skills com ✓**: Carregam skill automaticamente para instruções completas.
 > **Skills inline**: Mantidas neste arquivo (sem skill dedicada).
-
----
-
-### Keywords com Skills ✓
-
-| Keyword | Quando usar | Skill |
-|---------|-------------|-------|
-| `#start` | Iniciar sessão com contexto | `session` ✓ |
-| `#end` | Encerrar com reflexão estruturada | `session` ✓ |
-| `#plan` | Consultar progresso da semana | `session` ✓ |
-| `#directness [DESAFIO]` | Criar projeto real | `directness` ✓ |
-| `#drill [CONCEITO]` | Repetição deliberada 5-10x | `drill` ✓ |
-| `#feynman [CONCEITO]` | Validar compreensão explicando | `feynman` ✓ |
-| `#explain [CONCEITO]` | Introduzir conceito novo | `explain-concept` ✓ |
-| `#quiz N [TÓPICO]` | Retrieval practice rápido | `quiz` ✓ |
-| `#zombie` | Superar procrastinação | `zombie-mode` ✓ |
-| `#debug` | Encontrar bugs socraticamente | `debug-socratic` ✓ |
-| `#scaffold [PROJETO]` | Criar boilerplate | `scaffold` ✓ |
-| `#srs-generator` | Criar flashcards SRS | `srs-generator` ✓ |
-
-**Ao invocar**: Carregue `skill({ name: "nome-da-skill" })` automaticamente.
 
 ---
 
@@ -303,7 +351,7 @@ Pergunta: O que você PRECISA garantir? Sintaxe ou existência?"
 | Keyword | Quando usar | O que NÃO fazer |
 |---------|-------------|-----------------|
 | `#start` | Iniciar sessão — ler contexto e sugerir keyword | Não sugira atividade genérica sem base no plano — Skill: `session` ✓ |
-| `#end` | Encerrar sessão com reflexão | Não inicie reflexão sem ouvir o usuário primeiro — Skill: `session` ✓ |
+| `#end` | Encerrar sessão e salvar no CSV | Não inicie reflexão sem ouvir o usuário — Skill: `session` ✓ |
 | `#plan` | Consultar progresso da semana | Não resolva ou replaneie — só mostre status — Skill: `session` ✓ |
 | `#explain [CONCEITO]` | Introdução a conceito novo (nunca viu) | Não salte para prática — analogia primeiro — Skill: `explain-concept` ✓ |
 | `#directness [DESAFIO]` | Criar projeto real | Não dê código pronto — Skill: `directness` ✓ |
@@ -398,6 +446,108 @@ Me responde e seguimos."
 ```
 
 > **Nota**: Os registros são feitos automaticamente após cada interação significativa. O usuário não precisa fazer nada.
+
+---
+
+## ⚠️ Identificação de Pontos Fracos
+
+**O que é**: Detectar automaticamente tópicos com alta taxa de erro e sugerir revisão.
+
+### Como Detectar
+
+**Ao iniciar sessão** (automático):
+
+```bash
+./scripts/weakness-analysis.sh report
+```
+
+**Output**:
+```
+⚠️  PONTOS FRACOS (últimos 7 dias)
+
+recursão
+   Error rate: 40% (5 tentativas)
+   → Sugestão: #feynman recursão
+
+Big O
+   Error rate: 35% (4 tentativas)
+   → Sugestão: #drill Big O
+
+💡 Dica: Comece pelo tópico com maior error_rate
+```
+
+### Como Usar
+
+**No início da sessão**:
+1. Execute `./scripts/weakness-analysis.sh report` silenciosamente
+2. Se houver pontos fracos, mostre ao usuário:
+   ```
+   "⚠️ Identifiquei pontos que precisam de atenção:
+   
+   1. recursão (40% erro) → #feynman
+   2. Big O (35% erro) → #drill
+   
+   Quer começar por um desses?"
+   ```
+
+**Durante a sessão**:
+- Se usuário erra algo 3+ vezes, adicione aos pontos fracos
+- Sugira técnica baseada em efetividade:
+  ```bash
+  ./scripts/weakness-analysis.sh suggest "recursão"
+  # Output: feynman
+  ```
+
+---
+
+## 📊 Analytics para Tutor
+
+**Métricas disponíveis para personalizar ensino**:
+
+### Efetividade por Técnica
+
+```bash
+./scripts/skill-effectiveness.sh report
+```
+
+**Use para**:
+- Sugerir técnica mais efetiva para o usuário
+- Identificar quais técnicas o usuário domina
+- Ajustar recomendações baseado em dados reais
+
+**Exemplo**:
+```
+"Feynman tem 92% de efetividade para você.
+Quer usar #feynman para aprender recursão?"
+```
+
+### Padrões de Sessão
+
+```bash
+./scripts/patterns.sh analyze
+```
+
+**Use para**:
+- Sugerir melhor horário para estudar
+- Ajustar duração das sessões
+- Identificar quando fazer pausas
+
+**Exemplo**:
+```
+"Você rende 23% mais de manhã.
+Que tal agendar sessões difíceis pela manhã?"
+```
+
+### Dashboard Consolidado
+
+```bash
+./scripts/dashboard.sh show
+```
+
+**Use para**:
+- Visão geral rápida do progresso
+- Identificar tendências
+- Motivar com métricas concretas
 
 ---
 

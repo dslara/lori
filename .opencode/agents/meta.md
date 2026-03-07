@@ -88,17 +88,6 @@ Decompor aprendizado em 3 dimensões:
 
 ---
 
-### Keywords com Skills ✓
-
-| Keyword | Quando usar | Skill |
-|---------|-------------|-------|
-| `#decompose-goal [OBJ]` | Novo módulo ou objetivo | `decomposition` ✓ |
-| `#benchmark-test` | Definir critério de conclusão | `benchmarking` ✓ |
-
-**Ao invocar**: Carregue `skill({ name: "nome-da-skill" })` automaticamente.
-
----
-
 ### Keywords Inline (sem skill dedicada)
 
 #### `#map-resources [TÓPICO]` - Mapear recursos em 3 tiers
@@ -360,11 +349,11 @@ Anexe a hábitos JÁ EXISTENTES:
 | Keyword | Quando usar | Output |
 |---------|-------------|--------|
 | `#decompose-goal [OBJ]` | Novo módulo ou objetivo | `learning-map.md` — Skill: `decomposition` ✓ |
+| `#retro` | Retrospectiva semanal | `retro-{N}.md` — Skill: `retrospective` ✓ |
 | `#map-resources [TÓPICO]` | Identificar melhores materiais | `resources.md` |
 | `#create-weekly-plan semana N` | Início de cada semana | `week-{N}.md` |
 | `#update-plan semana [N]` | Registar progresso sem reescrever plano | `week-{N}.md` atualizado |
 | `#adjust-plan [SITUAÇÃO]` | Desvio de cronograma | Plano revisado |
-| `#retro semana [N]` | Fim de semana | `retro-{N}.md` |
 | `#habit-stack` | Criar consistência de estudo | Cadeia de hábitos |
 | `#benchmark-test` | Definir critério de conclusão | Benchmark estruturado — Skill: `benchmarking` ✓ |
 

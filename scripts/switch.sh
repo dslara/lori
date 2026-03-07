@@ -37,7 +37,7 @@ module_id=$(grep ",$topic_name," "$PROJECT_ROOT/data/modules.csv" 2>/dev/null | 
 if [ -z "$module_id" ]; then
     # Criar novo módulo
     module_id="M$(date +%m%d%H%M%S)"
-    mkdir -p "projects/$module_id-$topic_name"/{meta,projects,logs/daily,knowledge}
+    mkdir -p "projects/$module_id-$topic_name"/{meta,projects,knowledge}
     
     # Adicionar ao CSV
     init_data

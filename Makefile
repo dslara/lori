@@ -1,19 +1,21 @@
 # Makefile para Sistema Ultralearning
 # Comandos delegados para scripts em scripts/
+#
+# Scripts internos (sem target):
+#   - common.sh, data.sh → bibliotecas
+#   - spaced-repetition.sh → chamado por review.sh
+#   - tutor-*.sh → chamados por agentes ou outros scripts
 
 SHELL := /bin/bash
 .DEFAULT_GOAL := help
-.PHONY: help start study end module switch plan resources review retro break drill-extra status archive backup setup sync-flashcards analytics
+.PHONY: help start end module switch plan resources review retro break drill-extra status archive backup setup sync-flashcards analytics skill-effectiveness patterns dashboard weaknesses
 
-##@ 📋 Sessão Diária (3 comandos)
+##@ 📋 Sessão Diária (2 comandos)
 
-start: ## 🚀 Iniciar sessão + quiz automático
+start: ## 🚀 Iniciar sessão (atalho para #start)
 	@./scripts/start.sh
 
-study: ## 💻 Loop de estudo interativo
-	@./scripts/study.sh
-
-end: ## 🏁 Encerrar sessão (salva + streak)
+end: ## 🏁 Encerrar sessão (atalho para #end)
 	@./scripts/end.sh
 
 ##@ 🗺️ Módulos (4 comandos)
@@ -38,7 +40,7 @@ review: ## 📚 Spaced repetition (SRS)
 retro: ## 📝 Retrospectiva semanal
 	@./scripts/retro.sh
 
-##@ 📊 Status e Overlearning (3 comandos)
+##@ 📊 Status e Analytics (8 comandos)
 
 break: ## 🧠 Pausa de 15 min para modo difuso
 	@./scripts/break.sh
@@ -51,6 +53,18 @@ status: ## 📊 Ver status geral
 
 analytics: ## 📈 Ver analytics avançados
 	@./scripts/analytics.sh report
+
+skill-effectiveness: ## 🎯 Ver efetividade por técnica
+	@./scripts/skill-effectiveness.sh report
+
+patterns: ## ⏰ Ver padrões de sessão
+	@./scripts/patterns.sh analyze
+
+dashboard: ## 📊 Ver dashboard consolidado
+	@./scripts/dashboard.sh show
+
+weaknesses: ## ⚠️ Ver pontos fracos
+	@./scripts/weakness-analysis.sh report
 
 ##@ 📦 Arquivamento (2 comandos)
 
@@ -72,9 +86,10 @@ setup: ## ⚙️ Configuração inicial
 
 help: ## 📖 Mostra esta ajuda
 	@echo ""
-	@echo "🚀 Ultralearning System - Comandos Disponíveis"
+	@echo "🚀 Ultralearning System - Atalhos de Terminal"
 	@echo ""
 	@awk 'BEGIN {FS = ":.*?## "} /^[a-zA-Z_-]+:.*?## / {printf "  \033[0;33m%-15s\033[0m %s\n", $$1, $$2}' $(MAKEFILE_LIST)
 	@echo ""
-	@echo "Workflow diário: make start → make study → make end"
+	@echo "Interface principal: use keywords no OpenCode"
+	@echo "  @tutor #start → @tutor #drill → @tutor #end"
 	@echo ""

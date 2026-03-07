@@ -148,7 +148,7 @@ grep "símbolos matemáticos" data/tutor_interactions.csv
 ## Como os Dados São Salvos
 
 ### make start
-- Cria arquivo de log diário em `projects/[modulo]/logs/daily/`
+- Salva timestamp de início para calcular duração
 
 ### make end
 - Salva sessão em `data/sessions.csv`

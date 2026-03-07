@@ -379,7 +379,41 @@ Quer criar outro card? (s/n)
 
 ## 🚀 Modo Revisão Socrática (`#srs-generator review`)
 
-Este modo é invocado quando o usuário executa `make review`.
+Este modo é invocado quando o usuário executa `#srs-generator review`.
+
+### Passo 0: Carregar cards pendentes (automático)
+
+Execute silenciosamente:
+
+```bash
+./scripts/review.sh > /dev/null 2>&1 || {
+    echo "❌ Erro ao carregar cards. Verifique se há cards pendentes."
+    exit 1
+}
+```
+
+Isso lista os cards pendentes para revisão.
+
+### Passo 0.5: Consultar dificuldade do card (automático)
+
+Antes de mostrar cada card, execute:
+
+```bash
+./scripts/tutor-difficulty.sh get "[categoria do card]" > /dev/null 2>&1
+```
+
+Use o nível para ajustar feedback:
+
+| Nível | Feedback | Dicas |
+|-------|----------|-------|
+| **Easy** | Minimal | "Correto!" ou "Tente de novo" |
+| **Medium** | Balanceado | "Correto! X significa Y" |
+| **Hard** | Detalhado | "Correto! X significa Y. Dica: [explicação extra]" |
+
+**Exemplo**:
+- **Easy**: "✅ Correto!" (sem explicação extra)
+- **Medium**: "✅ Correto! ∀ é o quantificador universal."
+- **Hard**: "✅ Correto! ∀ significa 'para todo'. Dica: Pense em 'cada elemento sem exceção'. Exemplo: ∀x ∈ N, x ≥ 0."
 
 ### Fluxo
 
@@ -389,9 +423,10 @@ Este modo é invocado quando o usuário executa `make review`.
 4. **Compare com a resposta correta** — sem mostrar ainda
 5. **Dê feedback socrático** — "correto" ou "tente de novo"
 6. **Mostre a resposta oficial** — depois do feedback
-7. **Coleete nota 0-5** — para calcular próxima revisão
-8. **Atualize o card** — via script
-9. **Próximo card** — repita até acabarem
+7. **Colete nota 0-5** — para calcular próxima revisão
+8. **Registre interação** — via script (automático)
+9. **Atualize o card** — via script
+10. **Próximo card** — repita até acabarem
 
 ### Exemplo de interação
 
@@ -441,7 +476,20 @@ Sua tentativa: 'Para todos'
 
 ### Após coletar a nota
 
-1. **Atualize o card no CSV** via script:
+1. **Registre interação** (automático, silencioso):
+
+```bash
+./scripts/tutor-interaction.sh srs-generator "[categoria]" "[pergunta do card]" "[resposta do usuário]" "[resposta oficial]" '{"correct":true/false,"quality":N}'
+```
+
+**Exemplo**:
+```bash
+./scripts/tutor-interaction.sh srs-generator "symbols" "O que significa ∀?" "Para todos" "Para todo / Cada elemento sem exceção" '{"correct":false,"quality":2}'
+```
+
+**Nota**: `correct` é `true` se quality ≥ 3, `false` se < 3.
+
+2. **Atualize o card no CSV** via script:
 
 ```bash
 # O script review_cards() do spaced-repetition.sh faz isso automaticamente

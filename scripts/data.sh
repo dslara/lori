@@ -3,7 +3,7 @@
 # data.sh - Funções para gerenciar dados CSV
 # 
 # SCRIPT INTERNO — não tem target Makefile direto.
-# Chamado por: end.sh, status.sh, streak.sh, etc.
+# Chamado por: end.sh, status.sh, etc.
 
 # Só carregar common.sh se ainda não foi carregado
 if [ -z "${PROJECT_ROOT:-}" ]; then
@@ -75,6 +75,18 @@ set_insight() {
     echo "$date,$USER_ID,$metric,$value,$module_id" >> "$DATA_DIR/insights.csv"
 }
 
+# Truncar notas para 200 chars
+truncate_notes() {
+    local notes="$1"
+    local max_len=200
+    
+    if [ ${#notes} -gt $max_len ]; then
+        echo "${notes:0:$max_len}..."
+    else
+        echo "$notes"
+    fi
+}
+
 # Criar sessão
 create_session() {
     local module_id="$1"
@@ -83,6 +95,9 @@ create_session() {
     local notes="${4:-}"
     
     init_data
+    
+    # Truncar notas se necessário
+    notes=$(truncate_notes "$notes")
     
     local session_id="$TODAY-$(date +%H%M%S)"
     echo "$session_id,$USER_ID,$module_id,$TODAY,$duration,$focus_score,\"$notes\"" >> "$DATA_DIR/sessions.csv"

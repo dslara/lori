@@ -43,8 +43,32 @@ read -p "Marcar módulo como 'completed'? [s/N]: " confirm
 if [ "$confirm" = "s" ] || [ "$confirm" = "S" ]; then
     # Atualizar status em modules.csv
     module_id=$(echo "$CURRENT_TOPIC" | grep -oE '^[A-Z][0-9]+' || echo "M1")
-    sed -i "s/^$module_id,\([^,]*\),\(.*\),true,active,/&completed,/" "$PROJECT_ROOT/data/modules.csv" 2>/dev/null || true
-    sed -i "s/,$module_id,/false,paused,/" "$PROJECT_ROOT/data/modules.csv" 2>/dev/null || true
+    
+    # Usar Python para atualização robusta do CSV
+    python3 - "$module_id" "$TODAY" "$PROJECT_ROOT/data/modules.csv" <<'PYEOF'
+import csv
+import sys
+
+module_id = sys.argv[1]
+completed_at = sys.argv[2]
+csv_file = sys.argv[3]
+
+rows = []
+with open(csv_file, newline='', encoding='utf-8') as f:
+    reader = csv.DictReader(f)
+    fieldnames = reader.fieldnames
+    for row in reader:
+        if row['id'] == module_id:
+            row['is_active'] = 'false'
+            row['status'] = 'completed'
+            row['completed_at'] = completed_at
+        rows.append(row)
+
+with open(csv_file, 'w', newline='', encoding='utf-8') as f:
+    writer = csv.DictWriter(f, fieldnames=fieldnames)
+    writer.writeheader()
+    writer.writerows(rows)
+PYEOF
     
     # Atualizar CURRENT_TOPIC
     export CURRENT_TOPIC="nenhum"

@@ -45,13 +45,26 @@ Pergunte ao usuário:
 Ou use contexto da sessão:
 - "Vi que você estudou [conceito] ontem. Quiz sobre isso?"
 
-### Passo 2: Gerar Perguntas (1 min)
+### Passo 1.5: Consultar dificuldade (automático, silencioso)
+
+Execute antes de gerar perguntas:
+
+```bash
+./scripts/tutor-difficulty.sh get "[tópico]" > /dev/null 2>&1
+```
+
+Isso retorna o nível de dificuldade:
+- **Easy** (error_rate < 20%): Perguntas mais desafiadoras
+- **Medium** (error_rate 20-40%): Perguntas balanceadas  
+- **Hard** (error_rate > 40%): Perguntas mais simples
+
+### Passo 2: Gerar Perguntas (ajustado por dificuldade)
 
 **Regras das perguntas**:
 - **Curtas** — respondíveis em 10-30 segundos mentais
 - **Específicas** — não vagas ("O que é X?" → melhor: "Qual a complexidade de binary search?")
 - **Variadas** — fatos, definições, trade-offs, "por quês"
-- **Nível adequado** — nem muito fácil, nem impossível
+- **Nível adequado** — ajustar por dificuldade
 
 **Tipos de perguntas**:
 ```markdown
@@ -60,6 +73,29 @@ Tipo 2 - Definição: "O que é ownership em 1 frase?"
 Tipo 3 - Comparação: "Qual a diferença de & e &mut?"
 Tipo 4 - Trade-off: "Por que Rust não tem GC?"
 Tipo 5 - Aplicação: "Quando usar HashMap vs BTreeMap?"
+```
+
+**Complexidade por nível**:
+
+| Nível | Complexidade | Exemplo |
+|-------|--------------|---------|
+| **Easy** | Múltiplas partes, conexões | "Por que X? Como se relaciona com Y?" |
+| **Medium** | 2 partes, aplicações | "O que é X? Qual a diferença de Y?" |
+| **Hard** | 1 parte, definição | "O que significa X?" |
+
+**Exemplos por nível**:
+```markdown
+Easy:
+  - "Por que Big O ignora constantes? Como isso afeta n=1000 vs n=1M?"
+  - "Compare HashMap vs BTreeMap. Quando usar cada um?"
+
+Medium:
+  - "Qual a complexidade de binary search? Por que?"
+  - "O que é ownership? Qual a diferença de borrowing?"
+
+Hard:
+  - "O que significa ∀?"
+  - "Qual a complexidade de n²?"
 ```
 
 ### Passo 3: Apresentar e Aguardar Resposta (2-3 min/pergunta)
@@ -77,6 +113,21 @@ Você: [Feedback imediato]
 - "Pense por 3 segundos antes de responder"
 - Evita resposta impulsiva errada
 - Força retrieval ativo
+
+### Passo 3.5: Registrar interação (automático, silencioso)
+
+Após cada pergunta respondida, registre:
+
+```bash
+./scripts/tutor-interaction.sh quiz "[tópico]" "[pergunta]" "[resposta do usuário]" "[seu feedback]" '{"correct":true/false}'
+```
+
+**Exemplo**:
+```bash
+./scripts/tutor-interaction.sh quiz "símbolos matemáticos" "O que significa ∀?" "Para todo" "Correto! ∀ é o quantificador universal" '{"correct":true}'
+```
+
+Isso popula `tutor_interactions.csv` para cálculo de `error_rate`.
 
 ### Passo 4: Contabilizar e Dar Feedback (1 min)
 

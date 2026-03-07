@@ -75,12 +75,14 @@ M2,dani,zig-foundations,false,paused,2026-02-15,2026-02-28,15.0
 | `date` | DATE | Data da sessão |
 | `duration_min` | INT | Duração em minutos |
 | `focus_score` | INT | Score de foco (1-10) |
-| `notes` | TEXT | Notas da sessão |
+| `notes` | TEXT | Notas da sessão (máx 200 chars, truncado automaticamente) |
 
 **Exemplo**:
 ```csv
 2026-03-04-001,dani,M1,2026-03-04,60,7,"SRS review, símbolos matemáticos"
 ```
+
+**Nota**: O campo `notes` é a única fonte de narrativa da sessão. Não há mais logs markdown separados.
 
 ---
 
@@ -178,12 +180,32 @@ M2,dani,zig-foundations,false,paused,2026-02-15,2026-02-28,15.0
 - `study_time_min` - Tempo de estudo
 - `flashcards_reviewed` - Cards revisados
 - `focus_avg` - Média de foco
+- `error_rate_<topic>` - Taxa de erro por tópico (ex: `error_rate_recursão`)
+
+**Métricas de Analytics Avançados**:
+
+Calculadas pelos scripts em `scripts/`:
+
+| Métrica | Script | Descrição |
+|---------|--------|-----------|
+| **Taxa de acerto por skill** | `skill-effectiveness.sh` | % de acertos por técnica (quiz, feynman, drill) |
+| **Retenção por técnica** | `skill-effectiveness.sh` | Média de `easiness` por `category` em flashcards |
+| **Foco médio por técnica** | `skill-effectiveness.sh` | Média de `success_rating` por skill em session_skills |
+| **Velocidade** | `skill-effectiveness.sh` | Sessões até 3 acertos consecutivos por tópico |
+| **Melhor horário** | `patterns.sh` | Período com maior foco médio (manhã/tarde/noite) |
+| **Duração ideal** | `patterns.sh` | Bucket de duração com maior foco |
+| **Ponto de fadiga** | `patterns.sh` | Duração quando foco cai > 2 pontos |
+| **Melhor dia da semana** | `patterns.sh` | Dia com maior foco médio |
+| **Nível de dificuldade** | `tutor-difficulty.sh` | easy/medium/hard baseado em error_rate |
+| **Pontos fracos** | `weakness-analysis.sh` | Tópicos com error_rate > 0.3 |
 
 **Exemplo**:
 ```csv
 2026-03-04,dani,study_time_min,60,M1
 2026-03-04,dani,flashcards_reviewed,10,M1
 2026-03-04,dani,streak,1,
+2026-03-06,dani,error_rate_recursão,0.40,
+2026-03-06,dani,error_rate_big_o,0.35,
 ```
 
 ---

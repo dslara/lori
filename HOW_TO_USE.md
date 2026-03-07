@@ -1,8 +1,8 @@
-# Como Usar o Ultralearning System
+─# Como Usar o Ultralearning System
 
 > Guia completo para estudar com o framework. Do primeiro `make setup` ao dominio de CS Fundamentals.
 
-**Última atualização**: 2026-03-06
+**Última atualização**: 2026-03-07
 
 ---
 
@@ -13,8 +13,8 @@
 - [3. Rotina Diaria (1 hora)](#3-rotina-diaria-1-hora)
 - [4. Rotina Semanal](#4-rotina-semanal)
 - [5. Validação Pós-Sessão](#5-validação-pós-sessão)
-- [6. Referencia de Comandos (17)](#6-referencia-de-comandos-17)
-- [7. Keywords e Agentes](#7-keywords-e-agentes)
+- [6. Referencia de Keywords](#6-referencia-de-keywords)
+- [7. Comandos de Terminal (Atalhos)](#7-comandos-de-terminal-atalhos)
 - [8. Armadilhas Comuns e Dicas](#8-armadilhas-comuns-e-dicas)
 - [9. Troubleshooting](#9-troubleshooting)
 - [10. Checklist Imprimivel](#10-checklist-imprimivel)
@@ -23,7 +23,7 @@
 
 ## 1. Quick Start (Primeira Vez)
 
-3 comandos para comecar. 5 minutos de setup, 1 hora de estudo.
+3 passos para comecar. 5 minutos de setup, 1 hora de estudo.
 
 ```bash
 # 1. Configuração inicial (1x só)
@@ -34,16 +34,15 @@ make module
 # Digite o tema: ex "python-basics"
 
 # 3. (Opcional) Planejar com @meta
-make plan
-# Ou direto: opencode run --agent @meta "#decompose-goal Python basico"
+@meta #decompose-goal "Python basico"
 ```
 
 Apos o setup, a rotina diaria e:
 
 ```bash
-make start   # Inicia sessao + quiz automatico (5 min)
-make study   # Loop interativo — escolha tecnica (50 min)
-make end     # Encerra, salva log, atualiza streak (5 min)
+@tutor #start   # Inicia sessao com contexto (5 min)
+@tutor #drill recursão  # Escolha técnica (50 min)
+@tutor #end     # Encerra e salva progresso (5 min)
 ```
 
 **Tempo total**: ~1 hora | **Custo estimado**: ~0.01EUR por sessao
@@ -64,21 +63,21 @@ Confirme antes de comecar:
   # Deve retornar versao (ex: 0.5.1)
   ```
 
-- [ ] **Make disponivel**
+- [ ] **Make disponivel** (opcional)
   ```bash
   make help
-  # Deve listar 17 comandos
+  # Deve listar atalhos de terminal
   ```
 
 - [ ] **Modulo ativo definido**
   ```bash
-  cat .current-topic
+  make status
   # Deve mostrar: M1-math-foundations, M2-zig-foundations, etc.
   ```
 
 ### Checklist Mental
 
-Responda mentalmente antes de `make start`:
+Responda mentalmente antes de `@tutor #start`:
 
 - [ ] **Objetivo claro**: O que vou aprender/praticar hoje? (1 frase)
 - [ ] **Duração definida**: Quanto tempo vou estudar? (recomendado: 1h)
@@ -96,13 +95,13 @@ Responda mentalmente antes de `make start`:
 
 | Score | Acao Recomendada |
 |-------|------------------|
-| **8-10** | Va para `make start` |
-| **5-7** | Use `#zombie` mode (Two-Minute Rule) |
+| **8-10** | Va para `@tutor #start` |
+| **5-7** | Use `@tutor #zombie` (Two-Minute Rule) |
 | **1-4** | Considere descansar e remarcar |
 
 Se score < 7:
 ```bash
-opencode run --agent @tutor "#zombie"
+@tutor #zombie
 # O agente vai te guiar para comecar ridiculamente pequeno
 ```
 
@@ -118,27 +117,24 @@ opencode run --agent @tutor "#zombie"
 ├───────────────────────────────────────────────────────────────┤
 │                                                               │
 │  START (5 min)              STUDY (50 min)            END     │
-│  ┌──────────┐              ┌──────────────┐          ┌─────┐  │
-│  │  make    │──────────────│  #feynman    │──────────│make │  │
-│  │  start   │  Quiz auto   │  #drill      │          │end  │  │
-│  └──────────┘              │  #directness │          └─────┘  │
+│  ┌──────────┐              ┌──────────────┐        ┌───────┐  │
+│  │ @tutor   │──────────────│  #feynman    │────────│@tutor │  │
+│  │  #start  │  Contexto    │  #drill      │        │ #end  │  │
+│  └──────────┘              │  #directness │        └───────┘  │
 │       |                    │  #quiz       │        5 min      │
 │       |                    └──────────────┘                   │
 │       └──────────────────────────────────────────────────->   │
 │                                                               │
-│  OPCOES DO make study:                                        │
-│  0. Session (#start) -> Sugestao baseada no plano             │
-│  1. Code (#directness) -> Projeto pratico                     │
-│  2. Drill (#drill) -> Repeticao de procedimentos              │
-│  3. Feynman (#feynman) -> Explicar conceito                   │
-│  4. Scaffold (#scaffold) -> Estrutura base                    │
-│  5. Experiment (#experiment) -> Comparar abordagens           │
-│  6. Feedback (#feedback) -> Revisar codigo                    │
-│  7. Explain (#explain) -> Introducao a conceito novo          │
-│  8. Intuition (#intuition) -> Entender o "por que"            │
-│  9. Debug (#debug) -> Debug socratico                         │
-│  z. Zombie (#zombie) -> Superar procrastinação                │
-│  d. Diffuse (#diffuse) -> Modo difuso (travado)               │
+│  KEYWORDS DISPONIVEIS:                                        │
+│  #drill -> Repeticao de procedimentos                         │
+│  #feynman -> Explicar conceito                                │
+│  #quiz -> Warm-up rapido                                      │
+│  #directness -> Projeto pratico                               │
+│  #explain -> Introducao a conceito novo                       │
+│  #debug -> Debug socratico                                    │
+│  #zombie -> Superar procrastinação                            │
+│  #scaffold -> Estrutura base                                  │
+│  #srs-generator -> Criar flashcards                           │
 │                                                               │
 └───────────────────────────────────────────────────────────────┘
 ```
@@ -146,48 +142,50 @@ opencode run --agent @tutor "#zombie"
 ### 3.1 Start (5 min)
 
 ```bash
-make start
+@tutor #start
 ```
 
 O que acontece:
-- `@tutor` com skill `session` carrega o plano semanal e sugere atividade
+- Script `start.sh` salva timestamp e carrega contexto
+- `@tutor` com skill `session` sugere atividade baseada no plano
 - Quiz automatico testa o que voce estudou ontem (3 perguntas)
 - Ativa memoria antes de aprender conteudo novo
 
 ### 3.2 Study (50 min)
 
+Escolha uma keyword baseado no que precisa:
+
+| Situação | Keyword | Skill | Por quê |
+|----------|---------|-------|---------|
+| Conceito completamente novo | `#explain [conceito]` | `explain-concept` | Analogia primeiro |
+| Aprender fazendo | `#directness [desafio]` | `directness` | Projeto real |
+| Praticar sintaxe/procedimento | `#drill [conceito]` | `drill` | Repetição = automatização |
+| Revisar conceito | `#feynman [conceito]` | `feynman` | Se nao explica, nao entendeu |
+| Warm-up rapido | `#quiz N [tópico]` | `quiz` | Retrieval practice |
+| Comecar projeto novo | `#scaffold [projeto]` | `scaffold` | Estrutura pronta |
+| Bug dificil | `#debug` | `debug-socratic` | Guia socratico |
+| Sem vontade de estudar | `#zombie` | `zombie-mode` | Two-Minute Rule |
+| Criar flashcard | `#srs-generator` | `srs-generator` | Memorização |
+
+**Exemplos**:
 ```bash
-make study
+@tutor #drill recursão
+@tutor #feynman closures
+@tutor #directness "API REST com autenticação"
+@tutor #quiz 3 Big O
 ```
 
-Escolha baseado no que precisa. Skills sao carregadas automaticamente:
-
-| Situação | Opção | Skill | Por quê |
-|----------|-------|-------|---------|
-| Nao sabe o que fazer hoje | 0. Session | `session` | #start le o plano e sugere |
-| Conceito completamente novo | 7. Explain | `explain-concept` | Analogia primeiro |
-| Aprender fazendo | 1. Code | `directness` | Projeto real |
-| Praticar sintaxe/procedimento | 2. Drill | `drill` | Repetição = automatização |
-| Revisar conceito | 3. Feynman | `feynman` | Se nao explica, nao entendeu |
-| Comecar projeto novo | 4. Scaffold | `scaffold` | Estrutura pronta |
-| Comparar abordagens | 5. Experiment | — (inline) | Testar 3 solucoes |
-| Revisar codigo | 6. Feedback | — (inline) | Code review |
-| Entender o "por que" | 8. Intuition | — (inline) | Profundidade |
-| Bug dificil | 9. Debug | `debug-socratic` | Guia socratico |
-| Sem vontade de estudar | z. Zombie | `zombie-mode` | Two-Minute Rule |
-| Travado ha >30min | d. Diffuse | — (inline) | Deixar cerebro processar |
-
-**Dica**: Se e sua primeira sessao no modulo, comece pela opcao **0 (Session)** — o `#start` vai ler seu plano semanal e sugerir a melhor atividade.
+**Dica**: Se nao sabe o que fazer, use `@tutor #start` — ele vai ler seu plano e sugerir a melhor atividade.
 
 ### 3.3 End (5 min)
 
 ```bash
-make end
+@tutor #end
 ```
 
 O que acontece:
-- `@tutor #end` (skill session) consolida a sessao com reflexao estruturada
-- Voce anota o que aprendeu
+- Skill `session` consolida a sessao com reflexao estruturada
+- Script `end.sh` salva no CSV automaticamente
 - Streak e atualizado automaticamente
 
 ---
@@ -197,23 +195,23 @@ O que acontece:
 ### Domingo (30 min)
 
 ```bash
-make retro    # O que funcionou? O que nao? (3 perguntas)
-make plan     # Planejar proxima semana com @meta
+@meta #retro    # Retrospectiva: o que funcionou? O que nao?
+@meta #create-weekly-plan semana N  # Planejar proxima semana
 ```
 
 ### Qualquer Dia
 
 ```bash
-make review   # Revisar flashcards (SRS) — ideal 3x/semana
-make status   # Ver streak e progresso
+@tutor #srs-generator review   # Revisar flashcards (SRS) — ideal 3x/semana
+make status                    # Ver streak e progresso (atalho)
 ```
 
 ### Checklist Semanal
 
-- [ ] **Retrospectiva feita** (`make retro`)
-- [ ] **Plano da semana criado** (`make plan`)
+- [ ] **Retrospectiva feita** (`@meta #retro`)
+- [ ] **Plano da semana criado** (`@meta #create-weekly-plan`)
 - [ ] **Streak mantido** — 7 dias seguidos? (`make status`)
-- [ ] **SRS revisado** — minimo 3x na semana (`make review`)
+- [ ] **SRS revisado** — minimo 3x na semana (`@tutor #srs-generator review`)
 - [ ] **Projetos avancando** — algum projeto pratico em andamento?
 
 ---
@@ -222,10 +220,10 @@ make status   # Ver streak e progresso
 
 Confirme antes de sair:
 
-- [ ] **Log preenchido**
+- [ ] **Sessão salva no CSV**
   ```bash
-  # Verifique: projects/[modulo]/logs/daily/YYYY-MM-DD.md
-  # Deve conter: Objetivo, Notas, Aprendizados
+  tail -3 data/sessions.csv
+  # Deve conter sua sessão de hoje
   ```
 
 - [ ] **Streak atualizado**
@@ -240,97 +238,50 @@ Confirme antes de sair:
 
 - [ ] **Conceitos dificeis marcados**
   ```bash
-  make review
+  @tutor #srs-generator
   # Adicione ao SRS o que nao dominou 100%
   ```
 
 ---
 
-## 6. Referencia de Comandos (18)
+## 6. Referencia de Keywords
 
-### Sessão Diária
+### @tutor — Sessão de Estudo
 
-| Comando | Descricao |
-|---------|-----------|
-| `make start` | Inicia sessao + quiz automatico |
-| `make study` | Loop interativo (code/drill/feynman/scaffold + 8 opcoes) |
-| `make end` | Encerra, salva log, atualiza streak |
+| Keyword | Quando Usar | Skill |
+|---------|-------------|-------|
+| `#start` | Iniciar sessão com contexto | `session` |
+| `#end` | Encerrar e salvar progresso | `session` |
+| `#plan` | Ver progresso da semana | `session` |
+| `#drill [conceito]` | Praticar procedimento 5-10x | `drill` |
+| `#feynman [conceito]` | Testar compreensão explicando | `feynman` |
+| `#quiz N [tópico]` | Warm-up / retrieval | `quiz` |
+| `#directness [desafio]` | Projeto real | `directness` |
+| `#explain [conceito]` | Conceito novo | `explain-concept` |
+| `#debug` | Bug difícil | `debug-socratic` |
+| `#zombie` | Procrastinação | `zombie-mode` |
+| `#scaffold [projeto]` | Criar estrutura | `scaffold` |
+| `#srs-generator` | Criar flashcard | `srs-generator` |
+| `#srs-generator review` | Revisar flashcards | `srs-generator` |
+| `#intuition [conceito]` | Entender o "por quê" | — (inline) |
+| `#feedback` | Revisar código | — (inline) |
+| `#experiment` | Comparar abordagens | — (inline) |
+| `#diffuse` | Travado no problema | — (inline) |
 
-### Modulos
+### @meta — Planejamento
 
-| Comando | Descricao |
-|---------|-----------|
-| `make module` | Criar novo modulo |
-| `make switch` | Alternar modulo ativo |
-| `make plan` | Planejar semana com @meta |
-| `make resources` | Mapear recursos para o modulo |
+| Keyword | Quando Usar | Skill |
+|---------|-------------|-------|
+| `#decompose-goal [objetivo]` | Decompor objetivo | `decomposition` |
+| `#retro` | Retrospectiva semanal | `retrospective` |
+| `#benchmark-test` | Criar teste de proficiência | `benchmarking` |
+| `#map-resources [tópico]` | Curar recursos | — (inline) |
+| `#create-weekly-plan semana N` | Criar plano semanal | — (inline) |
+| `#update-plan semana [N]` | Registrar progresso | — (inline) |
+| `#adjust-plan [situação]` | Reajustar cronograma | — (inline) |
+| `#habit-stack` | Criar cadeia de hábitos | — (inline) |
 
-### Revisao
-
-| Comando | Descricao |
-|---------|-----------|
-| `make review` | Spaced repetition (SRS) |
-| `make retro` | Retrospectiva semanal (3 perguntas) |
-| `make break` | Pausa de 15 min para modo difuso (Oakley) |
-| `make drill-extra` | Overlearning: 5 variacoes de drill (Oakley) |
-
-### Utilitarios
-
-| Comando | Descricao |
-|---------|-----------|
-| `make status` | Ver streak e info do modulo |
-| `make analytics` | Ver analytics avancados (tempo, foco, tecnicas) |
-| `make help` | Lista todos os comandos |
-| `make setup` | Configuração inicial |
-| `make backup` | Backup dos dados |
-| `make archive` | Arquivar projeto finalizado |
-
----
-
-## 7. Keywords e Agentes
-
-O sistema tem 4 agentes AI que respondem a keywords especificas.
-
-### @tutor — Mentor de Estudo
-
-O agente principal durante `make study`. Carrega skills on-demand — incluindo a skill `session` para orquestração de início/fim de sessão.
-
-| Keyword                 | Quando Usar                                            |
-| ----------------------- | ------------------------------------------------------ |
-| `#start`                | Inicia sessão com contexto do plano — sugere keyword   |
-| `#end`                  | Consolida sessão — gera reflexão + texto para `make end` |
-| `#plan`                 | Consulta progresso das entregas da semana              |
-| `#explain [conceito]`   | Conceito completamente novo — introducao com analogias |
-| `#feynman [conceito]`   | Voce acha que entendeu — teste explicando              |
-| `#drill [skill]`        | Praticar procedimento 5-10x ate automatizar            |
-| `#quiz N [topico]`      | Retrieval practice rapido — 3-5 perguntas              |
-| `#srs-generator`        | Criar flashcards dinamicamente (individual ou batch)   |
-| `#directness [desafio]` | Construir projeto pratico real                         |
-| `#scaffold [projeto]`   | Gerar estrutura/boilerplate de projeto                 |
-| `#intuition [conceito]` | Entender o "por que" profundo                          |
-| `#debug`                | Bug dificil — guia socratico (nunca da a resposta)     |
-| `#feedback`             | Revisar e avaliar codigo escrito                       |
-| `#experiment`           | Comparar 3 solucoes diferentes                         |
-| `#zombie`               | Nao consegue comecar — Two-Minute Rule                 |
-| `#diffuse`              | Travou no problema — modo difuso                       |
-
-### @meta — Planejamento Estrategico
-
-Usado em `make plan` e para decomposicao de objetivos.
-
-| Keyword | Quando Usar |
-|---------|-------------|
-| `#decompose-goal [objetivo]` | Decompor objetivo em plano acionavel |
-| `#benchmark-test` | Criar teste de proficiencia mensuravel |
-| `#map-resources [topico]` | Curar recursos em 3 tiers |
-| `#create-weekly-plan semana N` | Gerar plano semanal |
-| `#update-plan semana [N]` | Registrar progresso |
-| `#adjust-plan [situação]` | Reajustar cronograma |
-| `#habit-stack` | Criar cadeia de habitos |
-
-### @review — Consultor Estrategico
-
-Analisa o framework e sugere melhorias. Uso esporadico.
+### @review — Auditoria do Framework
 
 | Keyword | Quando Usar |
 |---------|-------------|
@@ -345,6 +296,78 @@ Analisa o framework e sugere melhorias. Uso esporadico.
 | `#audit-quality` | Auditoria completa (executa todas acima) |
 | `#check-readiness [versao]` | Prontidao para release |
 | `#meta-review [arquivo]` | Revisa documento gerado pelo @review |
+
+---
+
+## 7.1. Dificuldade Adaptativa
+
+O sistema ajusta automaticamente a complexidade das perguntas baseado no seu histórico de acertos/erros.
+
+### Como Funciona
+
+| Nível | Critério | Comportamento |
+|-------|----------|---------------|
+| **Easy** | error_rate < 20% | Perguntas mais desafiadoras |
+| **Medium** | error_rate 20-40% | Perguntas balanceadas |
+| **Hard** | error_rate > 40% | Perguntas mais simples |
+
+### Skills com Dificuldade Adaptativa
+
+- **`#quiz`**: Ajusta complexidade das perguntas
+- **`#srs-generator review`**: Ajusta feedback e dicas
+
+### Ver Níveis de Dificuldade
+
+```bash
+./scripts/tutor-difficulty.sh report
+```
+
+---
+
+## 7. Comandos de Terminal (Atalhos)
+
+**Interface principal**: Keywords no OpenCode  
+**Interface secundária**: Atalhos de terminal (opcional)
+
+### Sessão Diária
+
+| Comando | Descrição | Equivalente |
+|---------|-----------|-------------|
+| `make start` | Iniciar sessão | `@tutor #start` |
+| `make end` | Encerrar sessão | `@tutor #end` |
+
+### Módulos
+
+| Comando | Descrição |
+|---------|-----------|
+| `make module` | Criar novo módulo |
+| `make switch` | Alternar módulo ativo |
+| `make plan` | Planejar semana |
+| `make resources` | Mapear recursos |
+
+### Revisão
+
+| Comando | Descrição |
+|---------|-----------|
+| `make review` | Revisar flashcards (SRS) |
+| `make retro` | Retrospectiva semanal |
+| `make break` | Pausa de 15 min |
+| `make drill-extra` | Overlearning |
+
+### Utilitários
+
+| Comando | Descrição |
+|---------|-----------|
+| `make status` | Ver streak e progresso |
+| `make analytics` | Ver analytics avançados |
+| `make skill-effectiveness` | Efetividade por técnica |
+| `make patterns` | Padrões de sessão |
+| `make dashboard` | Dashboard consolidado |
+| `make weaknesses` | Pontos fracos |
+| `make help` | Lista comandos |
+| `make setup` | Configuração inicial |
+| `make backup` | Backup dos dados |
+| `make archive` | Arquivar projeto |
 
 ---
 
@@ -366,9 +389,9 @@ Analisa o framework e sugere melhorias. Uso esporadico.
 │   Use pomodoro: 50 min foco + 10 min break                   │
 │   Ou: make break (15 min modo difuso - Oakley)               │
 ├──────────────────────────────────────────────────────────────┤
-│ x VOU ENCERRAR SEM LOGAR O QUE APRENDI                       │
-│   make end = streak + memoria consolidada                    │
-│   Nao logar = esquece 40% em 24h                             │
+│ x VOU ENCERRAR SEM SALVAR                                    │
+│   @tutor #end = streak + memoria consolidada                 │
+│   Nao salvar = esquece 40% em 24h                            │
 └──────────────────────────────────────────────────────────────┘
 ```
 
@@ -411,7 +434,7 @@ opencode run --agent @tutor "#drill binary search"
 
 **Streak nao atualiza?**
 ```bash
-./scripts/streak.sh reset  # Resetar stats
+./scripts/data.sh init  # Reinicializar dados
 ```
 
 ### Durante o Estudo
@@ -450,18 +473,18 @@ PRE-SESSAO:
 [ ] Materiais prontos | [ ] 1h disponivel
 
 ROTINA:
-make start -> make study -> make end
+@tutor #start -> @tutor #drill (ou #feynman, #directness) -> @tutor #end
 
 POS-SESSAO:
-[ ] Log salvo | [ ] Streak ok | [ ] Proxima marcada
+[ ] Sessao salva no CSV | [ ] Streak ok | [ ] Proxima marcada
 [ ] Dificeis no SRS
 
 SE TRAVAR: make break
-SE NAO CONSEGUIR COMECAR: #zombie
-SE NAO SABE O QUE FAZER: opcao 0 (Session)
+SE NAO CONSEGUIR COMECAR: @tutor #zombie
+SE NAO SABE O QUE FAZER: @tutor #start
 
 SEMANAL (domingo):
-make retro + make plan
+@meta #retro + @meta #create-weekly-plan
 ```
 
 ---

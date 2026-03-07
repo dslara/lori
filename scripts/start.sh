@@ -17,24 +17,6 @@ source "$(dirname "$0")/data.sh"
 init_data
 echo "$(date +%s)" > "$DATA_DIR/.session_start_time"
 
-# Criar diretório de logs
-if ! mkdir -p "$TOPIC_PATH/logs/daily"; then
-    print_error "Falha ao criar diretório de logs"
-    exit 1
-fi
-
-# Criar log diário se não existir
-if [ ! -f "$TOPIC_PATH/logs/daily/$TODAY.md" ]; then
-    safe_write "# 📅 $TODAY - $CURRENT_TOPIC" "$TOPIC_PATH/logs/daily/$TODAY.md" "overwrite" || exit 1
-    safe_write "" "$TOPIC_PATH/logs/daily/$TODAY.md" || exit 1
-    safe_write "## 🎯 Objetivo" "$TOPIC_PATH/logs/daily/$TODAY.md" || exit 1
-    safe_write "" "$TOPIC_PATH/logs/daily/$TODAY.md" || exit 1
-    safe_write "## 📝 Notas" "$TOPIC_PATH/logs/daily/$TODAY.md" || exit 1
-    safe_write "" "$TOPIC_PATH/logs/daily/$TODAY.md" || exit 1
-    safe_write "## ✅ Aprendizados" "$TOPIC_PATH/logs/daily/$TODAY.md" || exit 1
-    print_success "📝 Log criado: $TOPIC_PATH/logs/daily/$TODAY.md"
-fi
-
 echo ""
 
 echo -e "${PURPLE}🧠 Warm-up: iniciando sessão com contexto...${NC}"
@@ -42,7 +24,7 @@ echo ""
 
 if check_opencode; then
     WEEK_FILE=$(get_week_context)
-    RECENT_LOGS=$(get_recent_logs 3)
+    RECENT_SESSIONS=$(get_recent_sessions 3)
     SRS_PENDING=$(get_srs_pending)
 
     # Construir contexto estruturado
@@ -67,10 +49,10 @@ Nenhum plano disponível. Crie com: @meta #create-weekly-plan
 "
     fi
 
-    if [ -n "$RECENT_LOGS" ]; then
-        print_info "📝 Últimas sessões carregadas"
+    if [ -n "$RECENT_SESSIONS" ]; then
+        print_info "📝 Últimas sessões carregadas do DB"
         CONTEXT="${CONTEXT}## Últimas Sessões
-$RECENT_LOGS
+$RECENT_SESSIONS
 
 "
     else
