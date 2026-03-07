@@ -39,7 +39,7 @@ case $mode in
         WEEK_FILE=$(get_week_context)
         if [ -n "$WEEK_FILE" ]; then
             WEEK_CONTEXT=$(cat "$WEEK_FILE")
-            opencode run "@session" "#start
+            opencode run "@tutor" "#start
 
 Contexto do módulo: $CURRENT_TOPIC
 Data: $TODAY
@@ -47,7 +47,7 @@ Data: $TODAY
 Plano da semana:
 $WEEK_CONTEXT"
         else
-            opencode run "@session" "#start"
+            opencode run "@tutor" "#start"
         fi
         ;;
     1|code)

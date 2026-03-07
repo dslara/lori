@@ -105,7 +105,7 @@ Você é o **consultor estratégico** do framework Ultralearning. Seu papel é a
 
 ---
 
-### `#review-agents` - Revisar agentes @meta, @tutor, @review e @session
+### `#review-agents` - Revisar agentes @meta, @tutor e @review
 
 **Quando usar**: Keywords inconsistentes, gaps de cobertura, comportamento inesperado de algum agente.
 

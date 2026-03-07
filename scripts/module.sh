@@ -42,7 +42,7 @@ init_data
 # Desativar módulos anteriores
 sed -i 's/,true,/,false,/g' "$PROJECT_ROOT/data/modules.csv" 2>/dev/null || true
 # Adicionar novo módulo
-echo "$module_id,dani,$TOPIC_SLUG,true,active,$TODAY,," >> "$PROJECT_ROOT/data/modules.csv"
+echo "$module_id,$USER_ID,$TOPIC_SLUG,true,active,$TODAY,," >> "$PROJECT_ROOT/data/modules.csv"
 
 print_success "Módulo criado: $module_id-$TOPIC_SLUG"
 echo ""

@@ -68,9 +68,8 @@ make end     # Encerra, salva log, atualiza streak
 │  AGENTES (.opencode/agents/)                                │
 │  ════════════════════════════════════════════════════════   │
 │  @meta (primary) → Planejamento estratégico                 │
-│  @tutor (primary) → Execução de sessões                     │
+│  @tutor (primary) → Execução e orquestração de sessões      │
 │  @review (primary) → Auditoria do framework                 │
-│  @session (subagent) → Orquestração início/fim              │
 │                                                             │
 │  Carregam skills ON-DEMAND → reduzem tokens permanentes     │
 └─────────────────────────────────────────────────────────────┘
@@ -80,7 +79,8 @@ make end     # Encerra, salva log, atualiza streak
 ┌─────────────────────────────────────────────────────────────┐
 │  SKILLS (.opencode/skills/)                                 │
 │  ════════════════════════════════════════════════════════   │
-│  10 Skills carregadas sob demanda:                          │
+│  11 Skills carregadas sob demanda:                          │
+│  - session → Orquestrar início/fim de sessão                │
 │  - drill → Prática deliberada 5-10x                         │
 │  - feynman → Validar compreensão explicando                 │
 │  - directness → Projetos reais                              │
@@ -119,14 +119,14 @@ make end     # Encerra, salva log, atualiza streak
 | Agente | Modelo | Função |
 |--------|--------|--------|
 | **@meta** | GLM-5 | Planejamento estratégico, decomposição de objetivos |
-| **@tutor** | GLM-5 | Mentor socrático, quiz, drills, feedback |
+| **@tutor** | GLM-5 | Mentor socrático, quiz, drills, feedback, orquestração de sessões |
 | **@review** | GLM-5 | Revisão arquitetural, auditoria |
-| **@session** | opencode/glm-4.7 | Orquestrador de sessões — lightweight |
 
 ### Skills do @tutor
 
 | Skill | Keyword | Uso |
 |-------|---------|-----|
+| `session` | `#start` / `#end` / `#plan` | Orquestrar início/fim de sessão (usa small_model) |
 | `directness` | `#directness [desafio]` | Projeto prático guiado |
 | `drill` | `#drill [conceito]` | Exercícios repetitivos (5-10x) |
 | `feynman` | `#feynman [conceito]` | Explicar para validar compreensão |
@@ -173,13 +173,6 @@ make end     # Encerra, salva log, atualiza streak
 | `#audit-quality` | Auditoria completa (executa todas as anteriores) |
 | `#check-readiness [versão]` | Prontidão para release |
 | `#meta-review [arquivo]` | Revisa documento gerado pelo @review |
-
-### Keywords do @session
-| Keyword | Uso |
-|---------|-----|
-| `#start` | Inicia sessão com contexto do plano — sugere keyword do @tutor |
-| `#end` | Consolida sessão — gera reflexão + texto para `make end` |
-| `#plan` | Consulta progresso das entregas da semana |
 
 ---
 
@@ -244,7 +237,7 @@ Comece ridicularmente pequeno:
 ```
  ultralearning/
 ├── .opencode/
-│   ├── agents/           # @meta, @tutor, @review, @session
+│   ├── agents/           # @meta, @tutor, @review
 │   ├── skills/           # Skills carregadas on-demand
 │   └── opencode.json    # Config de modelos + agents
 ├── data/                # Base de dados local (CSV)
@@ -394,9 +387,8 @@ Baseado em **Ultralearning** de Scott Young:
 | Situação | Modelo | Por quê |
 |----------|--------|--------|
 | Default | GLM-5 | Melhor raciocínio |
-| @session | GLM-4.7 | Orquestração simples |
-| small_model | GLM-4.7 | Títulos, sumarização |
-| #zombie, #quiz | GLM-4.7 | Tarefas leves |
+| `#start`, `#end`, `#plan` | GLM-4.7 (small_model) | Orquestração simples — skill session |
+| `#zombie`, `#quiz`, `#diffuse` | GLM-4.7 (small_model) | Tarefas leves |
 
 ---
 

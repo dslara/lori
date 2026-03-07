@@ -2,7 +2,7 @@
 
 > Guia rápido para primeira sessão. Leia em 5 minutos, execute em 3.
 
-**Última atualização**: 2026-02-26
+**Última atualização**: 2026-03-07
 
 ---
 
@@ -11,9 +11,9 @@
 | Componente | Descrição |
 |------------|-----------|
 | **3 Abordagens** | Ultralearning + A Mind for Numbers + Atomic Habits |
-| **16 Comandos** | `make start`, `make study`, `make end` + 13 auxiliares |
-| **4 Agentes** | `@meta` (planejar) + `@tutor` (executar) + `@session` (orquestrar) + `@review` (melhorar) |
-| **24 Técnicas** | De `drill` até `procrastination-zombie` |
+| **17 Comandos** | `make start`, `make study`, `make end` + 14 auxiliares |
+| **3 Agentes** | `@meta` (planejar) + `@tutor` (executar + orquestrar) + `@review` (melhorar) |
+| **13 Skills** | De `#drill` até `#zombie` — carregadas on-demand pelo `@tutor` |
 
 ---
 
@@ -56,7 +56,7 @@ make end     # Encerra e salva progresso
 │       └────────────────────────────────────────────────────→│
 │                                                              │
   │  OPÇÕES DO make study:                                      │
-│  0. Session (@session) → Sugestão baseada no plano          │
+│  0. Session (#start)  → Sugestão baseada no plano          │
 │  1. Code (#directness) → Projeto prático                    │
 │  2. Drill (#drill) → Repetição de procedimentos             │
 │  3. Feynman (#feynman) → Explicar conceito                  │
@@ -98,9 +98,9 @@ graph LR
 
 | Comando | Quando Usar |
 |---------|-------------|
-| `make start` | Início da sessão — @session sugere atividade baseada no plano |
+| `make start` | Início da sessão — `#start` (skill session) sugere atividade baseada no plano |
 | `make study` | Loop de estudo (12 opções: 0–9, z, d) |
-| `make end` | Consolidar com @session + salvar log + atualizar streak |
+| `make end` | Consolidar com `#end` (skill session) + salvar log + atualizar streak |
 | `make review` | Revisar flashcards (SRS) |
 | `make break` | Travou? Pausa de 15 min (modo difuso) |
 | `make status` | Ver streak e progresso |

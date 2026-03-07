@@ -134,17 +134,18 @@ Crie o par Q/A otimizado para SRS:
 
 ### Passo 5: Adicionar ao SRS (30 seg)
 
-Adicione usando o script existente:
+Adicione usando o script existente (executar a partir do root do projeto):
 
 ```bash
-cd [MODULE_PATH]
-../../scripts/spaced-repetition.sh add "PERGUNTA" "RESPOSTA" "CATEGORIA"
+./scripts/spaced-repetition.sh add "PERGUNTA" "RESPOSTA" "CATEGORIA"
 ```
 
 **Parâmetros**:
 - `PERGUNTA`: O campo Q gerado
 - `RESPOSTA`: O campo A gerado
 - `CATEGORIA`: (opcional) padrão "geral" — use nome do tema
+
+> O script salva em `data/flashcards.csv` (CSV global, compartilhado entre todos os módulos).
 
 ### Passo 6: Feedback (30 seg)
 
@@ -239,11 +240,10 @@ Se usuário escolher 'e' ou 'editar':
 
 ### Passo 7: Adicionar Todos ao SRS (1 min)
 
-Para cada card, adicione ao JSONL:
+Para cada card, adicione ao CSV global:
 
 ```bash
-cd [MODULE_PATH]
-../../scripts/spaced-repetition.sh add "PERGUNTA" "RESPOSTA" "CATEGORIA"
+./scripts/spaced-repetition.sh add "PERGUNTA" "RESPOSTA" "CATEGORIA"
 ```
 
 ### Passo 8: Feedback Final
@@ -441,51 +441,21 @@ Sua tentativa: 'Para todos'
 
 ### Após coletar a nota
 
-1. **Atualize o card no JSONL** usando jq:
+1. **Atualize o card no CSV** via script:
 
 ```bash
-cd projects/M1-math-foundations/knowledge
-
-# Parâmetros
-card_id="[ID_DO_CARD]"
-quality="[NOTA_0_5]"
-interval="[INTERVALO_ATUAL]"
-easiness="[EASINESS_ATUAL]"
-reviews="[REVIEWS_ATUAL]"
-
-# Calcular novos valores
-new_easiness=$(echo "$easiness + 0.1 - (5 - $quality) * (0.08 + (5 - $quality) * 0.02)" | bc -l)
-new_easiness=$(echo "if ($new_easiness < 1.3) 1.3 else if ($new_easiness > 2.5) 2.5 else $new_easiness" | bc -l)
-
-if [ "$quality" -lt 3 ]; then
-    new_interval=1
-elif [ "$interval" -eq 0 ]; then
-    new_interval=1
-elif [ "$interval" -eq 1 ]; then
-    new_interval=3
-else
-    new_interval=$(echo "$interval * $new_easiness" | bc -l | cut -d. -f1)
-fi
-
-new_next_review=$(date -d "+${new_interval} days" +%Y-%m-%d)
-new_reviews=$((reviews + 1))
-
-# Atualizar JSONL
-jq --arg next "$new_next_review" --arg interval "$new_interval" --arg easiness "$new_easiness" --arg reviews "$new_reviews" --arg id "$card_id" \
-   'if .id == $id then .next_review = $next | .interval = ($interval | tonumber) | .easiness = ($easiness | tonumber) | .reviews = ($reviews | tonumber) else . end' \
-   spaced-repetition.jsonl > spaced-repetition.tmp && mv spaced-repetition.tmp spaced-repetition.jsonl
-
-echo "✅ Card atualizado! Próxima revisão: $new_next_review (em ${new_interval} dias)"
+# O script review_cards() do spaced-repetition.sh faz isso automaticamente
+# Se precisar atualizar manualmente, use make review para revisão interativa
+./scripts/spaced-repetition.sh review
 ```
+
+O script atualiza os campos `next_review`, `interval`, `easiness` e `reviews` no `data/flashcards.csv` usando o algoritmo SM-2.
 
 2. **Passe para o próximo card** — repita até acabarem
 
 ### Atualizar card existente
 
-Para atualizar um card já existente (não criar novo), você precisa:
-1. Ler o JSONL
-2. Modificar os campos: `next_review`, `interval`, `easiness`, `reviews`
-3. Reescrever o JSONL
+Para atualizar um card já existente (não criar novo), use `make review` que invoca o script interativo. O script lê `data/flashcards.csv`, processa cada card vencido e reescreve o arquivo com os campos atualizados.
 
 ---
 
@@ -600,14 +570,16 @@ Atualize o JSONL com os novos valores:
 
 **Script usado**: `scripts/spaced-repetition.sh`
 
-**Comando**: `spaced-repetition.sh add "Q" "A" [categoria]`
+**Comando**: `./scripts/spaced-repetition.sh add "Q" "A" [categoria]`
 
-**Database**: `[MODULE_PATH]/knowledge/spaced-repetition.jsonl`
+**Database**: `data/flashcards.csv` (CSV global, RFC 4180)
+
+**Colunas**: `id,user_id,module_id,front,back,category,created_at,tags,next_review,interval,easiness,reviews`
 
 **Makefile**: `make review` — para revisar os cards gerados
 
 ## 📂 Arquivos de Referência
 
-- **Master deck CSV** (formato参考): `projects/shared/flashcards/master-deck.csv`
+- **Database CSV**: `data/flashcards.csv`
 - **Script SRS**: `scripts/spaced-repetition.sh`
 - **Review script**: `scripts/review.sh`

@@ -79,9 +79,11 @@ SESSION_ID=$(tail -1 data/sessions.csv | cut -d',' -f1)
 - `skill`: Nome da keyword (quiz, feynman, drill, debug, etc.)
 - `topic`: Tópico da interação (ex: "símbolos matemáticos")
 - `user_message`: Mensagem/pergunta do usuário (máx 200 chars)
-- `user_response`: Resposta do usuário (máx 200 chars)
+- `user_response`: **Resposta LITERAL do usuário** — copie o que o usuário digitou, não resuma (máx 200 chars). Use `""` apenas se o usuário não respondeu ainda.
 - `tutor_response`: Sua resposta (máx 500 chars)
 - `metadata`: JSON opcional (ex: `{"correct":true}`)
+
+> **CRÍTICO**: `user_response` deve conter a resposta real do usuário, não uma descrição genérica. Exemplo errado: `"Respondeu sobre JWT"`. Correto: `"JWT é um token JSON assinado com chave privada"`.
 
 ### Exemplos
 
@@ -134,6 +136,7 @@ As skills são carregadas ON-DEMAND com `skill({ name: "nome" })`:
 
 | Skill | Keyword | Descrição |
 |-------|---------|-----------|
+| `session` | `#start`, `#end`, `#plan` | Orquestrar início/fim de sessão de estudo |
 | `directness` | `#directness` | Projetos reais — aprender fazendo |
 | `drill` | `#drill` | Prática deliberada 5-10x até automatizar |
 | `feynman` | `#feynman` | Explicar como para criança — validar compreensão |
@@ -160,6 +163,9 @@ As skills são carregadas ON-DEMAND com `skill({ name: "nome" })`:
 
 | Keyword | Quando usar | Skill |
 |---------|-------------|-------|
+| `#start` | Iniciar sessão com contexto | `session` ✓ |
+| `#end` | Encerrar com reflexão estruturada | `session` ✓ |
+| `#plan` | Consultar progresso da semana | `session` ✓ |
 | `#directness [DESAFIO]` | Criar projeto real | `directness` ✓ |
 | `#drill [CONCEITO]` | Repetição deliberada 5-10x | `drill` ✓ |
 | `#feynman [CONCEITO]` | Validar compreensão explicando | `feynman` ✓ |
@@ -296,6 +302,9 @@ Pergunta: O que você PRECISA garantir? Sintaxe ou existência?"
 
 | Keyword | Quando usar | O que NÃO fazer |
 |---------|-------------|-----------------|
+| `#start` | Iniciar sessão — ler contexto e sugerir keyword | Não sugira atividade genérica sem base no plano — Skill: `session` ✓ |
+| `#end` | Encerrar sessão com reflexão | Não inicie reflexão sem ouvir o usuário primeiro — Skill: `session` ✓ |
+| `#plan` | Consultar progresso da semana | Não resolva ou replaneie — só mostre status — Skill: `session` ✓ |
 | `#explain [CONCEITO]` | Introdução a conceito novo (nunca viu) | Não salte para prática — analogia primeiro — Skill: `explain-concept` ✓ |
 | `#directness [DESAFIO]` | Criar projeto real | Não dê código pronto — Skill: `directness` ✓ |
 | `#feynman [CONCEITO]` | Validar compreensão | Não explique você — faça o usuário explicar — Skill: `feynman` ✓ |
@@ -319,6 +328,7 @@ Pergunta: O que você PRECISA garantir? Sintaxe ou existência?"
 **Modelo padrão**: GLM-5 (padrão global)
 
 **Candidatas a `small_model`** (glm-4.7 - custo ~40% menor):
+- `#start`, `#end`, `#plan` — orquestração simples, sem raciocínio complexo
 - `#zombie` — micro-passos para procrastinação
 - `#diffuse` — orientação simples para modo difuso
 - `#quiz` — retrieval rápido (3-5 perguntas)
@@ -347,7 +357,7 @@ Responda!"
 
 ---
 [REGISTRO AUTOMÁTICO]
-./scripts/tutor-interaction.sh quiz "autenticação" "#quiz 3 perguntas sobre autenticação" "Quiz: 3 perguntas sobre autenticação, JWT, senhas" '{"questions":3}'
+./scripts/tutor-interaction.sh quiz "autenticação" "#quiz 3 perguntas sobre autenticação" "" "Quiz: 3 perguntas sobre autenticação, JWT, senhas" '{"questions":3}'
 ---
 
 Usuário: [responde, erra JWT]
@@ -358,7 +368,7 @@ Quer entender JWT antes de prosseguir? → #intuition JWT"
 
 ---
 [REGISTRO AUTOMÁTICO]
-./scripts/tutor-interaction.sh quiz "JWT" "O que é um JWT?" "Errou. JWT = JSON Web Token. Sugestão: #intuition JWT" '{"correct":false,"score":"2/3"}'
+./scripts/tutor-interaction.sh quiz "JWT" "O que é um JWT?" "Não sei, acho que é um token de sessão" "Errou. JWT = JSON Web Token. Sugestão: #intuition JWT" '{"correct":false,"score":"2/3"}'
 ---
 
 Usuário: "#intuition JWT"
@@ -370,7 +380,7 @@ Você: "Pense num JWT como um crachá de conferência:
 
 ---
 [REGISTRO AUTOMÁTICO]
-./scripts/tutor-interaction.sh intuition "JWT" "#intuition JWT" "JWT = crachá de conferência. Segurança da assinatura." '{"depth_score":7}'
+./scripts/tutor-interaction.sh intuition "JWT" "#intuition JWT" "" "JWT = crachá de conferência. Segurança da assinatura." '{"depth_score":7}'
 ---
 
 Usuário: "#directness sistema de login com JWT"
@@ -383,7 +393,7 @@ Me responde e seguimos."
 
 ---
 [REGISTRO AUTOMÁTICO]
-./scripts/tutor-interaction.sh directness "JWT login" "#directness sistema de login com JWT" "Perguntas: onde guardar token, expiração, refresh token" '{"started":true}'
+./scripts/tutor-interaction.sh directness "JWT login" "#directness sistema de login com JWT" "" "Perguntas: onde guardar token, expiração, refresh token" '{"started":true}'
 ---
 ```
 
@@ -419,14 +429,17 @@ Antes de enviar cada resposta, valide:
 
 ## 🤝 Conexão com Outros Agentes
 
-**Papel no ciclo**: @meta planeja → **@tutor executa** → @review melhora
+**Papel no ciclo**: @meta planeja → **@tutor executa e orquestra sessões** → @review melhora
 
 | Fase | @meta | @tutor | @review |
 |------|-------|--------|---------|
 | Domingo | `#create-weekly-plan` | - | - |
+| Início de sessão | - | `#start` (skill: session) | - |
 | Segunda-Sábado | - | `#directness`, `#drill`, `#feynman`, etc. | - |
-| Desvio de plano | `#adjust-plan` | Sinaliza dificuldade | - |
-| Fim de módulo | - | - | `#audit-quality` |
+| Fim de sessão | - | `#end` (skill: session) | - |
+| Fim de sessão (domingo) | - | `#end` → sugere `@meta #retro` | - |
+| Desvio de plano | `#adjust-plan` | `#plan` sinaliza atraso | - |
+| Fim de módulo | `#retro` final | - | `#audit-quality` |
 
 **Quando voltar para @meta**:
 - Final de semana (retrospectiva)

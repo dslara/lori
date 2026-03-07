@@ -12,6 +12,11 @@ print_info "📦 Módulo: $CURRENT_TOPIC"
 print_info "📅 Data: $TODAY"
 echo ""
 
+# Salvar timestamp de início para calcular duração no make end
+source "$(dirname "$0")/data.sh"
+init_data
+echo "$(date +%s)" > "$DATA_DIR/.session_start_time"
+
 # Criar diretório de logs
 if ! mkdir -p "$TOPIC_PATH/logs/daily"; then
     print_error "Falha ao criar diretório de logs"
@@ -78,7 +83,7 @@ Nenhuma sessão anterior registrada.
     CONTEXT="${CONTEXT}## SRS Pendente
 $SRS_PENDING"
 
-    opencode run "@session #start
+    opencode run "@tutor #start
 $CONTEXT"
 else
     print_warning "OpenCode não instalado. Quiz pulado."

@@ -41,13 +41,13 @@ if [ -z "$module_id" ]; then
     
     # Adicionar ao CSV
     init_data
-    echo "$module_id,dani,$topic_name,true,active,$(date +%Y-%m-%d),," >> "$PROJECT_ROOT/data/modules.csv"
+    echo "$module_id,$USER_ID,$topic_name,true,active,$(date +%Y-%m-%d),," >> "$PROJECT_ROOT/data/modules.csv"
     print_success "Módulo criado e ativado: $module_id-$topic_name"
 else
     # Atualizar is_active
     init_data
     # Remover antigo ativo
-    sed -i 's/,true,/false,/g' "$PROJECT_ROOT/data/modules.csv"
+    sed -i 's/,true,/,false,/g' "$PROJECT_ROOT/data/modules.csv"
     # Ativar novo
     sed -i "s/^$module_id,/&true,/" "$PROJECT_ROOT/data/modules.csv"
     print_success "Ativo: $module_id-$topic_name"

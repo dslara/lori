@@ -127,7 +127,7 @@ opencode run --agent @tutor "#zombie"
 │       └──────────────────────────────────────────────────->   │
 │                                                               │
 │  OPCOES DO make study:                                        │
-│  0. Session (@session) -> Sugestao baseada no plano           │
+│  0. Session (#start) -> Sugestao baseada no plano             │
 │  1. Code (#directness) -> Projeto pratico                     │
 │  2. Drill (#drill) -> Repeticao de procedimentos              │
 │  3. Feynman (#feynman) -> Explicar conceito                   │
@@ -150,7 +150,7 @@ make start
 ```
 
 O que acontece:
-- `@session` carrega o plano semanal e sugere atividade
+- `@tutor` com skill `session` carrega o plano semanal e sugere atividade
 - Quiz automatico testa o que voce estudou ontem (3 perguntas)
 - Ativa memoria antes de aprender conteudo novo
 
@@ -164,7 +164,7 @@ Escolha baseado no que precisa. Skills sao carregadas automaticamente:
 
 | Situação | Opção | Skill | Por quê |
 |----------|-------|-------|---------|
-| Nao sabe o que fazer hoje | 0. Session | — | @session le o plano e sugere |
+| Nao sabe o que fazer hoje | 0. Session | `session` | #start le o plano e sugere |
 | Conceito completamente novo | 7. Explain | `explain-concept` | Analogia primeiro |
 | Aprender fazendo | 1. Code | `directness` | Projeto real |
 | Praticar sintaxe/procedimento | 2. Drill | `drill` | Repetição = automatização |
@@ -177,7 +177,7 @@ Escolha baseado no que precisa. Skills sao carregadas automaticamente:
 | Sem vontade de estudar | z. Zombie | `zombie-mode` | Two-Minute Rule |
 | Travado ha >30min | d. Diffuse | — (inline) | Deixar cerebro processar |
 
-**Dica**: Se e sua primeira sessao no modulo, comece pela opcao **0 (Session)** — o @session vai ler seu plano semanal e sugerir a melhor atividade.
+**Dica**: Se e sua primeira sessao no modulo, comece pela opcao **0 (Session)** — o `#start` vai ler seu plano semanal e sugerir a melhor atividade.
 
 ### 3.3 End (5 min)
 
@@ -186,7 +186,7 @@ make end
 ```
 
 O que acontece:
-- `@session` consolida a sessao com reflexao estruturada
+- `@tutor #end` (skill session) consolida a sessao com reflexao estruturada
 - Voce anota o que aprendeu
 - Streak e atualizado automaticamente
 
@@ -289,14 +289,17 @@ Confirme antes de sair:
 
 ## 7. Keywords e Agentes
 
-O sistema tem 5 agentes AI que respondem a keywords especificas.
+O sistema tem 4 agentes AI que respondem a keywords especificas.
 
 ### @tutor — Mentor de Estudo
 
-O agente principal durante `make study`. Carrega skills on-demand.
+O agente principal durante `make study`. Carrega skills on-demand — incluindo a skill `session` para orquestração de início/fim de sessão.
 
 | Keyword                 | Quando Usar                                            |
 | ----------------------- | ------------------------------------------------------ |
+| `#start`                | Inicia sessão com contexto do plano — sugere keyword   |
+| `#end`                  | Consolida sessão — gera reflexão + texto para `make end` |
+| `#plan`                 | Consulta progresso das entregas da semana              |
 | `#explain [conceito]`   | Conceito completamente novo — introducao com analogias |
 | `#feynman [conceito]`   | Voce acha que entendeu — teste explicando              |
 | `#drill [skill]`        | Praticar procedimento 5-10x ate automatizar            |
@@ -324,16 +327,6 @@ Usado em `make plan` e para decomposicao de objetivos.
 | `#update-plan semana [N]` | Registrar progresso |
 | `#adjust-plan [situação]` | Reajustar cronograma |
 | `#habit-stack` | Criar cadeia de habitos |
-
-### @session — Orquestrador de Sessoes
-
-Invocado automaticamente por `make start` e `make end`.
-
-| Keyword | Quando Usar |
-|---------|-------------|
-| `#start` | Inicia sessao com contexto do plano — sugere keyword do @tutor |
-| `#end` | Consolida sessao — gera reflexao + texto para `make end` |
-| `#plan` | Consulta progresso das entregas da semana |
 
 ### @review — Consultor Estrategico
 

@@ -19,14 +19,14 @@ init_data() {
     mkdir -p "$DATA_DIR" || return 1
     
     [ ! -f "$DATA_DIR/users.csv" ] && echo "id,username,email,timezone,created_at,preferences" > "$DATA_DIR/users.csv"
-    [ ! -f "$DATA_DIR/modules.csv" ] && echo "id,user_id,name,status,started_at,completed_at,total_hours" > "$DATA_DIR/modules.csv"
+    [ ! -f "$DATA_DIR/modules.csv" ] && echo "id,user_id,name,is_active,status,started_at,completed_at,total_hours" > "$DATA_DIR/modules.csv"
     [ ! -f "$DATA_DIR/sessions.csv" ] && echo "id,user_id,module_id,date,duration_min,focus_score,notes" > "$DATA_DIR/sessions.csv"
     [ ! -f "$DATA_DIR/session_skills.csv" ] && echo "session_id,skill,duration_min,topic,notes,success_rating" > "$DATA_DIR/session_skills.csv"
-    [ ! -f "$DATA_DIR/flashcards.csv" ] && echo "id,user_id,module_id,front,back,created_at,tags" > "$DATA_DIR/flashcards.csv"
+    [ ! -f "$DATA_DIR/flashcards.csv" ] && echo "id,user_id,module_id,front,back,category,created_at,tags,next_review,interval,easiness,reviews" > "$DATA_DIR/flashcards.csv"
     [ ! -f "$DATA_DIR/reviews.csv" ] && echo "flashcard_id,reviewed_at,quality,next_review" > "$DATA_DIR/reviews.csv"
     [ ! -f "$DATA_DIR/insights.csv" ] && echo "date,user_id,metric,value,module_id" > "$DATA_DIR/insights.csv"
     [ ! -f "$DATA_DIR/goals.csv" ] && echo "id,user_id,module_id,description,target_date,status,progress" > "$DATA_DIR/goals.csv"
-    [ ! -f "$DATA_DIR/tutor_interactions.csv" ] && echo "id,session_id,skill,topic,user_message,tutor_response,timestamp,metadata" > "$DATA_DIR/tutor_interactions.csv"
+    [ ! -f "$DATA_DIR/tutor_interactions.csv" ] && echo "id,session_id,skill,topic,user_message,user_response,tutor_response,timestamp,metadata" > "$DATA_DIR/tutor_interactions.csv"
     
     return 0
 }

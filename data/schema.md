@@ -107,28 +107,44 @@ M2,dani,zig-foundations,false,paused,2026-02-15,2026-02-28,15.0
 
 ### flashcards.csv
 
-**Propósito**: Flashcards para Spaced Repetition System (SRS).
+**Propósito**: Flashcards para Spaced Repetition System (SRS) — inclui dados SM-2 para calcular intervalos.
+
+> **Nota**: O sistema SRS usa este CSV global (não JSONL por módulo). O script `scripts/spaced-repetition.sh` lê e escreve diretamente aqui.
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
-| `id` | TEXT (PK) | Identificador único (ex: F001) |
+| `id` | TEXT (PK) | Identificador único (timestamp + random) |
 | `user_id` | TEXT (FK) | Referência a users.id |
 | `module_id` | TEXT (FK) | Referência a modules.id |
-| `front` | TEXT | Frente do card |
-| `back` | TEXT | Verso do card |
+| `front` | TEXT | Frente do card (pergunta) |
+| `back` | TEXT | Verso do card (resposta) |
+| `category` | TEXT | Categoria (ex: symbols, conceito, geral) |
 | `created_at` | DATE | Data de criação |
 | `tags` | TEXT | Tags separadas por \| |
+| `next_review` | DATE | Data da próxima revisão (SM-2) |
+| `interval` | INT | Intervalo atual em dias (SM-2) |
+| `easiness` | REAL | Fator de facilidade (1.3–2.5, SM-2) |
+| `reviews` | INT | Total de revisões realizadas |
 
 **Exemplo**:
 ```csv
-F001,dani,M1,∀,Para todo (quantificador universal),2026-03-04,logic|symbols
+17251330005432,dani,M1,"O que significa ∀?","Para todo (quantificador universal)",symbols,2026-03-04,,2026-03-04,0,2.5,0
 ```
+
+**Algoritmo SRS (SM-2)**:
+- `quality` 0–2: `next_review` = +1 dia, `interval` = 1
+- `quality` 3+ (1ª revisão): `interval` = 1
+- `quality` 3+ (2ª revisão): `interval` = 3
+- `quality` 3+ (demais): `interval` = `interval * easiness`
+- `easiness` mínimo = 1.3, máximo = 2.5
 
 ---
 
 ### reviews.csv
 
-**Propósito**: Histórico de revisões SRS.
+**Propósito**: Histórico de revisões SRS (log de cada revisão individual).
+
+> **Nota**: Os dados de agendamento SM-2 (`next_review`, `interval`, `easiness`) ficam inline em `flashcards.csv`. O `reviews.csv` registra o histórico detalhado de cada revisão para analytics — atualmente não populado pelo script `spaced-repetition.sh` (dados suficientes no `flashcards.csv` para o fluxo atual).
 
 | Coluna | Tipo | Descrição |
 |--------|------|-----------|
@@ -139,13 +155,8 @@ F001,dani,M1,∀,Para todo (quantificador universal),2026-03-04,logic|symbols
 
 **Exemplo**:
 ```csv
-F001,2026-03-04,4,2026-03-08
+17251330005432,2026-03-04,4,2026-03-08
 ```
-
-**Algoritmo SRS (SM-2)**:
-- quality 0-2: next_review = +1 dia
-- quality 3-4: next_review = +3 dias
-- quality 5: next_review = +7 dias
 
 ---
 
@@ -272,8 +283,11 @@ Os agentes podem ler CSVs para obter contexto:
 # Últimas 5 sessões
 tail -5 data/sessions.csv
 
-# Flashcards vencidos para revisão
-grep "$(date +%Y-%m-%d)" data/reviews.csv
+# Flashcards vencidos para revisão (next_review <= hoje)
+./scripts/spaced-repetition.sh list
+
+# Estatísticas SRS
+./scripts/spaced-repetition.sh stats
 ```
 
 ### Escrita de Dados

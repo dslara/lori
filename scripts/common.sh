@@ -29,9 +29,9 @@ fi
 # Se PROJECT_ROOT ainda não estiver definido, usar diretório padrão
 : ${PROJECT_ROOT:=/home/dani/Work/dslara/ultralearning}
 
-# Ler módulo ativo de modules.csv (is_active=true)
+# Ler módulo ativo de modules.csv (is_active=true, independente do status)
 if [ -f "$PROJECT_ROOT/data/modules.csv" ]; then
-    active_line=$(grep ",true,active," "$PROJECT_ROOT/data/modules.csv" 2>/dev/null | head -1)
+    active_line=$(grep ",true," "$PROJECT_ROOT/data/modules.csv" 2>/dev/null | grep -v "^id," | head -1)
     if [ -n "$active_line" ]; then
         module_id=$(echo "$active_line" | cut -d',' -f1)
         module_name=$(echo "$active_line" | cut -d',' -f3)
