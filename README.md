@@ -36,14 +36,14 @@ Todas as funcionalidades são acessíveis via **keywords** no OpenCode:
 @tutor #srs-generator review # Revisar flashcards
 ```
 
-### Interface Secundária (Terminal, opcional)
+### Commands (No TUI do OpenCode)
 
-Atalhos para quem prefere terminal:
+Digite `/` no TUI para acessar os commands:
 
-```bash
-make start   # Atalho para @tutor #start
-make end     # Atalho para @tutor #end
-make status  # Ver métricas
+```
+/status      # Ver streak, sessões, módulo atual
+/analytics   # Ver analytics avançados
+/data init   # Inicializar estrutura de dados
 ```
 
 ---
@@ -54,7 +54,7 @@ make status  # Ver métricas
 
 | Keyword | Descrição | Skill |
 |---------|-----------|-------|
-| `#start` | Iniciar sessão com contexto | `session` |
+| `#start` | Iniciar sessão com contexto automático | `session` |
 | `#end` | Encerrar e salvar progresso | `session` |
 | `#plan` | Ver progresso da semana | `session` |
 | `#drill [conceito]` | Prática deliberada 5-10x | `drill` |
@@ -75,19 +75,16 @@ make status  # Ver métricas
 | `#retro` | Retrospectiva semanal | `retrospective` |
 | `#benchmark-test` | Definir critério de conclusão | `benchmarking` |
 
-### Comandos de Terminal (atalhos)
+### Commands & Utilitários
 
-| Comando | Descrição |
-|---------|-----------|
-| `make start` | Atalho para @tutor #start |
-| `make end` | Atalho para @tutor #end |
-| `make status` | Ver streak e métricas |
-| `make module` | Criar novo módulo |
-| `make switch` | Alternar módulo ativo |
-| `make plan` | Planejar semana |
-| `make review` | Revisar flashcards |
-| `make retro` | Retrospectiva semanal |
-| `make analytics` | Ver analytics avançados |
+| Command | Descrição | Quando Usar |
+|---------|-----------|-------------|
+| `/status` | Ver streak e métricas | Qualquer momento |
+| `/analytics` | Ver analytics avançados | Revisão semanal |
+| `/data` | Gerenciar dados | Setup/troubleshooting |
+| `make setup` | Configuração inicial | Primeira vez |
+| `make backup` | Backup dos dados | Periodicamente |
+| `make module` | Criar novo módulo | Novo tema de estudo |
 
 ---
 

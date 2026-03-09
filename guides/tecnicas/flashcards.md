@@ -199,19 +199,11 @@ nano knowledge/flashcards-source.csv
 cp knowledge/flashcards-source.csv ../shared/flashcards/by-module/M1-math.csv
 ```
 
-#### Passo 3: Sincronizar ao master-deck
-```bash
-cd ../shared/flashcards
- bash scripts/sync-flashcards.sh
-```
+#### Passo 3: Cards disponíveis para revisão
 
-**O que o script faz**:
-1. ✅ Cria backup (`master-deck.csv.backup`)
-2. ✅ Agrega cards de todos os módulos
-3. ✅ Remove duplicatas
-4. ✅ Mostra resumo
+Os cards criados via `@tutor #srs-generator` são salvos automaticamente em `data/flashcards.csv` e ficam disponíveis para revisão via `@tutor #srs-generator review`.
 
-**Output esperado**:
+**Para revisar**:
 ```
 🔄 Sincronizando flashcards ao master-deck...
 ✅ Backup criado: master-deck.csv.backup
@@ -431,12 +423,8 @@ nano knowledge/flashcards-source.csv
 ### Final do Dia (Sincronizar)
 
 ```bash
-# 6. Sincronizar cards novos ao master-deck
-cp knowledge/flashcards-source.csv ../shared/flashcards/by-module/M1-math.csv
- bash scripts/sync-flashcards.sh
-
-# 7. Finalizar sessão
-make end
+# 6. Finalizar sessão
+@tutor #end
 ```
 
 ---
@@ -546,12 +534,8 @@ nano knowledge/flashcards-source.csv
 ```
 
 ```bash
-# 4. Sincronizar
-cp knowledge/flashcards-source.csv ../shared/flashcards/by-module/M1-math.csv
- bash scripts/sync-flashcards.sh
-
-# 5. Finalizar
-make end
+# 4. Finalizar
+@tutor #end
 ```
 
 ---

@@ -1,13 +1,49 @@
 #!/bin/bash
 
 # review.sh - Spaced repetition (SRS)
-# Se executado via make (sem terminal), invoca @tutor para revisão socrática
+# Atualizado v2.0: Usa tools TypeScript ao invés de spaced-repetition.sh
 
 source "$(dirname "$0")/common.sh"
 
 # Função para verificar se tem terminal interativo
 has_interactive_terminal() {
     [ -t 0 ] || [ "${FORCE_INTERACTIVE:-}" = "1" ]
+}
+
+# Função para contar cards pendentes via data tool
+count_pending_cards() {
+    # Verificar se há cards pendentes contando linhas em flashcards.csv
+    # onde next_review <= hoje
+    local today=$(date +%Y-%m-%d)
+    local count=0
+    
+    if [ -f "$PROJECT_ROOT/data/flashcards.csv" ]; then
+        # Pular header e contar cards com next_review <= hoje
+        count=$(awk -F, -v today="$today" 'NR>1 && $9 <= today {count++} END {print count+0}' "$PROJECT_ROOT/data/flashcards.csv" 2>/dev/null || echo "0")
+    fi
+    
+    echo "${count:-0}"
+}
+
+# Função para listar cards pendentes (formato simples)
+list_pending_cards() {
+    local today=$(date +%Y-%m-%d)
+    
+    if [ -f "$PROJECT_ROOT/data/flashcards.csv" ]; then
+        echo "📅 Cards para revisar hoje:"
+        echo ""
+        
+        # Listar front dos cards pendentes
+        awk -F, -v today="$today" 'NR>1 && $9 <= today {print "• " $4}' "$PROJECT_ROOT/data/flashcards.csv" 2>/dev/null | head -20
+        
+        local total=$(count_pending_cards)
+        if [ "$total" -gt 20 ]; then
+            echo ""
+            echo "... e mais $((total - 20)) cards"
+        fi
+    else
+        echo "❌ Arquivo flashcards.csv não encontrado"
+    fi
 }
 
 # Função para invocar tutor para revisão socrática
@@ -18,19 +54,11 @@ invoke_tutor_review() {
         echo -e "${PURPLE}💭 Preparando revisão socrática com @tutor...${NC}"
         echo ""
         
-        # Listar cards pendentes primeiro
-        local cards_file=$(mktemp)
-        "$(dirname "$0")/spaced-repetition.sh" list > "$cards_file" 2>&1
-        
-        # Contar cards (procurando por ID no formato #número)
-        # Remove códigos de cor ANSI antes de contar
-        local clean_output=$(sed 's/\x1b\[[0-9;]*m//g' "$cards_file")
-        local card_count=$(grep -cE "^#[[:digit:]]+" <<< "$clean_output" 2>/dev/null || echo "0")
-        card_count=${card_count:-0}
+        # Contar cards pendentes
+        local card_count=$(count_pending_cards)
         
         if [ "$card_count" -eq 0 ]; then
             echo "Nenhum card para revisar hoje! 🎉"
-            rm "$cards_file"
             exit 0
         fi
         
@@ -46,15 +74,35 @@ invoke_tutor_review() {
             read
         fi
         
-        # Invocar tutor com os cards (sem thinking blocks)
+        # Invocar tutor com os cards
         opencode run --thinking=false '@tutor "#srs-generator review"' || {
-            print_warning "Falha ao invocar tutor. Mostrando cards..."
-            cat "$cards_file"
+            print_warning "Falha ao invocar tutor."
+            list_pending_cards
         }
-        rm "$cards_file"
     else
-        print_warning "OpenCode não instalado. Mostrando modo direto."
-        "$(dirname "$0")/spaced-repetition.sh" list
+        print_warning "OpenCode não instalado. Mostrando cards pendentes:"
+        list_pending_cards
+    fi
+}
+
+# Função para adicionar card (via data tool)
+add_card() {
+    local front="$1"
+    local back="$2"
+    local category="${3:-geral}"
+    
+    if [ -z "$front" ] || [ -z "$back" ]; then
+        print_error "Pergunta e resposta são obrigatórias"
+        return 1
+    fi
+    
+    # Usar data tool para criar flashcard
+    if check_opencode; then
+        echo "Criando flashcard via data tool..."
+        # O @tutor vai lidar com a criação quando usamos #srs-generator
+        opencode run "@tutor #srs-generator"
+    else
+        print_warning "OpenCode não instalado. Adicione manualmente via @tutor #srs-generator"
     fi
 }
 
@@ -79,7 +127,7 @@ opt=${opt:-2}
 
 case $opt in
     1)
-        "$(dirname "$0")/spaced-repetition.sh" list
+        list_pending_cards
         ;;
     2)
         invoke_tutor_review
@@ -87,10 +135,16 @@ case $opt in
     3)
         read -p "Pergunta: " q
         read -p "Resposta: " a
-        "$(dirname "$0")/spaced-repetition.sh" add "$q" "$a" "geral"
+        add_card "$q" "$a" "geral"
         ;;
     4)
-        "$(dirname "$0")/spaced-repetition.sh" stats
+        local count=$(count_pending_cards)
+        echo ""
+        echo "📊 Estatísticas SRS"
+        echo "=================="
+        echo "Cards pendentes hoje: $count"
+        echo ""
+        echo "Para estatísticas detalhadas, use: /analytics no TUI"
         ;;
     *)
         print_warning "Opção inválida"

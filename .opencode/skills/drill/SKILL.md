@@ -160,16 +160,16 @@ Tentativa 1: Pode consultar. Cronômetro ligado em 3... 2... 1... GO!"
 - Erros recorrentes identificados? → `make review` para adicionar flashcards
 - Não entendeu o conceito? → `#feynman` antes de continuar
 - Pronto para aplicar em contexto real? → `#directness` com projeto
-- Quer mais variação? → `make drill-extra` para overlearning
+- Quer mais variação? → `@tutor "#drill [conceito] variações"` para overlearning
 
 ## 📋 Makefile Integration
 
 **Comandos relacionados**:
-- `make drill-extra` — Overlearning: 5 variações de dificuldade
-- `make review` — Adicionar flashcards de pontos fracos
-- `make study` — Continuar sessão com outra técnica
+- `@tutor "#drill [conceito] variações"` — Overlearning: 5 variações de dificuldade
+- `@tutor #srs-generator` — Adicionar flashcards de pontos fracos
+- `@tutor #start` — Continuar sessão com outra técnica
 
 **Quando sugerir**:
-- Drill bem-sucedido → sugerir `make drill-extra` para overlearning
+- Drill bem-sucedido → sugerir `@tutor "#drill [conceito] variações"` para overlearning
 - Erros recorrentes → sugerir `make review` para criar flashcards
 - Skill automatizada → sugerir `#directness` para aplicar em projeto

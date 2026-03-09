@@ -1,0 +1,18 @@
+{
+  "name": "ultralearning-tools",
+  "version": "2.0.0",
+  "description": "Tools for the Ultralearning System - integrated with OpenCode",
+  "type": "module",
+  "dependencies": {
+    "@opencode-ai/plugin": "1.2.15",
+    "zod": "^4.1.8",
+    "csv-parse": "^5.5.0",
+    "csv-stringify": "^6.4.0",
+    "date-fns": "^3.0.0",
+    "glob": "^10.3.0"
+  },
+  "devDependencies": {
+    "@types/node": "^20.0.0",
+    "typescript": "^5.3.0"
+  }
+}

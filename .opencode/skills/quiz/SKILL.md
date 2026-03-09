@@ -45,17 +45,14 @@ Pergunte ao usuário:
 Ou use contexto da sessão:
 - "Vi que você estudou [conceito] ontem. Quiz sobre isso?"
 
-### Passo 1.5: Consultar dificuldade (automático, silencioso)
+### Passo 1.5: Consultar dificuldade (automático via tool)
 
-Execute antes de gerar perguntas:
+Antes de gerar perguntas, invoque a **tool `analytics`** com operação `getDifficultyLevel`:
+- Retorna: `difficultyLevel` (easy, medium, hard) baseado no error_rate recente
 
-```bash
-./scripts/tutor-difficulty.sh get "[tópico]" > /dev/null 2>&1
-```
-
-Isso retorna o nível de dificuldade:
+**Lógica de dificuldade**:
 - **Easy** (error_rate < 20%): Perguntas mais desafiadoras
-- **Medium** (error_rate 20-40%): Perguntas balanceadas  
+- **Medium** (error_rate 20-40%): Perguntas balanceadas
 - **Hard** (error_rate > 40%): Perguntas mais simples
 
 ### Passo 2: Gerar Perguntas (ajustado por dificuldade)
@@ -114,20 +111,31 @@ Você: [Feedback imediato]
 - Evita resposta impulsiva errada
 - Força retrieval ativo
 
-### Passo 3.5: Registrar interação (automático, silencioso)
+### Passo 3.5: Registrar interação (automático via tool)
 
-Após cada pergunta respondida, registre:
+Após cada pergunta respondida, invoque a **tool `data`** com operação `createInteraction`:
 
-```bash
-./scripts/tutor-interaction.sh quiz "[tópico]" "[pergunta]" "[resposta do usuário]" "[seu feedback]" '{"correct":true/false}'
-```
+**Parâmetros**:
+- `skill`: "quiz"
+- `topic`: tópico do quiz
+- `userMessage`: a pergunta
+- `userResponse`: resposta do usuário
+- `tutorResponse`: seu feedback
+- `metadata`: `{ "correct": true/false }`
 
 **Exemplo**:
-```bash
-./scripts/tutor-interaction.sh quiz "símbolos matemáticos" "O que significa ∀?" "Para todo" "Correto! ∀ é o quantificador universal" '{"correct":true}'
+```
+data.createInteraction({
+  skill: "quiz",
+  topic: "símbolos matemáticos",
+  userMessage: "O que significa ∀?",
+  userResponse: "Para todo",
+  tutorResponse: "Correto! ∀ é o quantificador universal",
+  metadata: { "correct": true }
+})
 ```
 
-Isso popula `tutor_interactions.csv` para cálculo de `error_rate`.
+Isso popula `tutor_interactions.csv` para cálculo de `error_rate` via analytics.
 
 ### Passo 4: Contabilizar e Dar Feedback (1 min)
 

@@ -33,52 +33,31 @@ Skill de orquestração para sessões de estudo. Remove a fricção entre script
 
 ### `#start` — Iniciar Sessão com Contexto
 
-**Passo 0: Executar script de setup (automático, silencioso)**
+**Passo 0: Carregar contexto completo (automático via tool)**
 
-Execute antes de responder:
+Invoque a tool `context` com operação `getFullContext`:
+- Carrega módulo ativo, sessões recentes, SRS pendente, plano da semana
+- Não requer scripts bash
 
-```bash
-./scripts/start.sh > /dev/null 2>&1 || {
-    echo "❌ Erro ao iniciar sessão. Verifique se há módulo ativo."
-    exit 1
+**Passo 1: Processar contexto**
+
+Com os dados retornados pela tool:
+
+- **Módulo ativo**: Exiba o nome sem perguntar ao usuário
+- **Streak**: Se ≥ 1, mostre `"🔥 [N] dias de streak!"` antes da sugestão
+- **SRS pendente**: Se houver cards para revisar, sugira `#srs-generator review` primeiro
+- **Error rates**: Se houver tópicos com error_rate > 0.3, sugira revisão (`#drill` ou `#feynman`) antes de avançar
+- **Sessões recentes**: Se houver continuidade no mesmo tópico, proponha continuar
+
+A tool retorna estrutura como:
+```json
+{
+  "currentModule": { "id": "M1", "name": "math-foundations" },
+  "recentSessions": [...],
+  "srsPending": { "count": 5, "cards": [...] },
+  "weekContext": { "file": "week-01.md", "weekNumber": 1 }
 }
 ```
-
-Isso:
-- Salva timestamp de início
-- Carrega contexto do DB
-- Prepara ambiente
-
-**Passo 1: Carregar contexto dos dados (automático)**
-
-Execute os comandos abaixo silenciosamente para ter contexto:
-
-```bash
-# Módulo ativo
-grep ",active," data/modules.csv | tail -1 | cut -d',' -f3
-
-# Streak e métricas recentes
-grep "streak\|focus_avg\|last_session" data/insights.csv | tail -5
-
-# Últimas 3 sessões
-tail -4 data/sessions.csv
-
-# Últimas 5 interações (para dar continuidade)
-./scripts/tutor-log.sh recent 5
-
-# Preferências do usuário (técnicas favoritas)
-grep "dani" data/users.csv | cut -d'"' -f2 | python3 -c "import sys,json; p=json.load(sys.stdin); print(p.get('daily_goal_min','60'),'min,', ','.join(p.get('techniques',[])))" 2>/dev/null || grep "dani" data/users.csv
-
-# Tópicos com maior taxa de erro (para priorizar revisão)
-grep "error_rate_" data/insights.csv | sort -t',' -k4 -rn | head -3
-```
-
-Use esses dados para:
-- Confirmar o módulo ativo sem perguntar ao usuário
-- Exibir streak se ≥ 1: `"🔥 [N] dias de streak!"` — antes da sugestão
-- Priorizar as técnicas preferidas do usuário (`techniques` em `users.csv`) na sugestão
-- Se houver interações recentes no mesmo tópico, propor continuidade em vez de começar do zero
-- Se houver tópicos com `error_rate > 0.3`, sugerir revisão desses tópicos como prioridade (`#drill` ou `#feynman`) antes de avançar no plano
 
 **Passo 1: Obter contexto do plano (1 min)**
 Pedir ao usuário o conteúdo de `week-{N}.md` ou o que planejou para hoje:
@@ -140,21 +119,28 @@ Com base no que o usuário relatou:
 - **Para o SRS**: perguntas candidatas a flashcard (2-3 itens)
 - **Próxima sessão**: o que ficou pendente
 
-**Passo 2: Executar script de persistência (automático)**
+**Passo 2: Persistir dados (automático via tools)**
 
-Após gerar reflexão, execute:
+Após gerar reflexão, invoque as tools:
 
-```bash
-./scripts/end.sh > /dev/null 2>&1 || {
-    echo "❌ Erro ao salvar sessão. Tente novamente."
-    exit 1
-}
+1. **Tool `data`** com operação `createSession`:
+   - Passa: moduleId, duration (estimado ou perguntado), focusScore (perguntado), notes (resumo)
+   - Retorna: sessionId
+
+2. **Tool `data`** com operação `updateStreak`:
+   - Atualiza streak automaticamente
+   - Retorna: novo streak, bestStreak, isNewRecord
+
+3. **Tool `analytics`** com operação `updateInsights`:
+   - Atualiza métricas calculadas
+
+**Exemplo de uso**:
 ```
-
-Isso:
-- Salva sessão no CSV
-- Atualiza streak
-- Gera analytics
+User: "Foquei 8/10, aprendi recursão e memoization"
+→ data.createSession({ moduleId: "M1", duration: 60, focusScore: 8, notes: "Recursão e memoization" })
+→ data.updateStreak()
+→ analytics.generateReport({ moduleId: "M1" })
+```
 
 **Passo 3: Detecção de domingo**
 Se for domingo, adicionar após a reflexão:
@@ -167,28 +153,24 @@ Se for domingo, adicionar após a reflexão:
 
 ### `#plan` — Consultar Progresso da Semana
 
-**Passo 0: Carregar métricas (automático)**
+**Passo 0: Carregar métricas (automático via tools)**
 
-Execute antes de responder:
+Invoque as tools:
 
-```bash
-# Skills usadas nos últimos 7 dias (detectar lacunas)
-cut -d',' -f3 data/tutor_interactions.csv | tail -20 | sort | uniq -c | sort -rn
+1. **Tool `analytics`** com operação `generateReport`:
+   - Retorna: total de sessões, tempo total, foco médio, técnicas usadas, error rates
 
-# Foco médio por sessão (últimas 5)
-tail -6 data/sessions.csv | cut -d',' -f6
+2. **Tool `data`** com operação `getSessions` com limit=10:
+   - Retorna: sessões recentes para calcular ritmo semanal
 
-# Skills usadas por sessão esta semana
-tail -10 data/session_skills.csv
-
-# Total de sessões e streak
-grep "streak\|total_sessions\|focus_avg" data/insights.csv | tail -5
-```
+3. **Tool `context`** com operação `getFullContext`:
+   - Retorna: contexto completo incluindo SRS pendente
 
 Use esses dados para:
-- Identificar skills **nunca usadas** esta semana e sugerir na seção "Sugestão de técnica"
-- Calcular foco médio real com base nos dados de sessões
-- Mostrar ritmo de estudo com números reais (não estimativas)
+- Identificar skills **nunca usadas** esta semana (via analytics.skills.distribution)
+- Calcular foco médio real (via analytics.module.avgFocus)
+- Mostrar ritmo de estudo com números reais (via analytics.general.totalSessions)
+- Sugerir revisão de SRS se houver cards pendentes
 
 **Passo 1: Solicitar arquivo**
 ```
@@ -304,17 +286,23 @@ Sábado disponível para benchmark — você está no tempo."
 
 ## 📋 Interface
 
-**Keywords são a interface principal**. Scripts são executados internamente.
+**Keywords são a interface principal**. Tools são invocadas automaticamente internamente.
 
 **Fluxo típico**:
 ```
 @tutor #start → [estuda com #drill, #feynman, etc.] → @tutor #end
 ```
 
-**Atalhos de terminal (opcional)**:
-- `make start` — atalho para script
-- `make end` — atalho para script
-- `make status` — ver métricas
+**Commands disponíveis** (digite `/` no TUI):
+- `/status` — ver métricas via tool `status`
+- `/analytics` — ver analytics via tool `analytics`
+- `/data` — gerenciar dados via tool `data`
+
+**Tools usadas internamente**:
+- `context.getFullContext` — carrega contexto da sessão
+- `data.createSession` — salva sessão
+- `data.updateStreak` — atualiza streak
+- `analytics.generateReport` — gera relatórios
 
 ## 🚀 Model Routing
 

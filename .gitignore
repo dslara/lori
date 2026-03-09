@@ -69,3 +69,5 @@ projects/*/logs/daily/*.md
 # !01-meta/active/**/resources.md
 .obsidian
 node_modules
+.opencode/package-lock.json
+bun.lock

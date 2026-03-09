@@ -179,8 +179,8 @@ Quer executar agora? Posso passar para @tutor."
 ## 📋 Makefile Integration
 
 **Comandos relacionados**:
-- `make plan` — Criar plano semanal que inclui benchmark
-- `make status` — Ver progresso geral
+- `@meta #create-weekly-plan` — Criar plano semanal que inclui benchmark
+- `/status` — Ver progresso geral
 
 **Quando sugerir**:
 - Benchmark criado → sugerir executar com `#drill` ou `#directness`

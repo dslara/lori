@@ -202,9 +202,9 @@ Quer que eu gere o learning-map.md completo?"
 ## 📋 Makefile Integration
 
 **Comandos relacionados**:
-- `make plan` — Planejar semana com @meta
-- `make resources` — Mapear recursos para o módulo
+- `@meta #create-weekly-plan` — Planejar semana
+- `@meta #map-resources` — Mapear recursos para o módulo
 
 **Quando sugerir**:
-- Learning map criado → sugerir `#map-resources` ou `make resources`
-- Pronto para começar → sugerir `make start`
+- Learning map criado → sugerir `@meta #map-resources`
+- Pronto para começar → sugerir `@tutor #start`

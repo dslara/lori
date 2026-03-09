@@ -184,20 +184,23 @@ M2,dani,zig-foundations,false,paused,2026-02-15,2026-02-28,15.0
 
 **Métricas de Analytics Avançados**:
 
-Calculadas pelos scripts em `scripts/`:
+Calculadas pelas **Tools TypeScript** em `.opencode/tools/`:
 
-| Métrica | Script | Descrição |
-|---------|--------|-----------|
-| **Taxa de acerto por skill** | `skill-effectiveness.sh` | % de acertos por técnica (quiz, feynman, drill) |
-| **Retenção por técnica** | `skill-effectiveness.sh` | Média de `easiness` por `category` em flashcards |
-| **Foco médio por técnica** | `skill-effectiveness.sh` | Média de `success_rating` por skill em session_skills |
-| **Velocidade** | `skill-effectiveness.sh` | Sessões até 3 acertos consecutivos por tópico |
-| **Melhor horário** | `patterns.sh` | Período com maior foco médio (manhã/tarde/noite) |
-| **Duração ideal** | `patterns.sh` | Bucket de duração com maior foco |
-| **Ponto de fadiga** | `patterns.sh` | Duração quando foco cai > 2 pontos |
-| **Melhor dia da semana** | `patterns.sh` | Dia com maior foco médio |
-| **Nível de dificuldade** | `tutor-difficulty.sh` | easy/medium/hard baseado em error_rate |
-| **Pontos fracos** | `weakness-analysis.sh` | Tópicos com error_rate > 0.3 |
+| Métrica | Tool | Operação | Descrição |
+|---------|------|----------|-----------|
+| **Taxa de acerto por skill** | `effectiveness` | `getSuccessRateBySkill` | % de acertos por técnica (quiz, feynman, drill) |
+| **Retenção por técnica** | `effectiveness` | `getRetentionByTechnique` | Média de `easiness` por `category` em flashcards |
+| **Foco médio por técnica** | `effectiveness` | `getFocusByTechnique` | Média de `success_rating` por skill em session_skills |
+| **Velocidade** | `effectiveness` | `getSpeed` | Sessões até 3 acertos consecutivos por tópico |
+| **Melhor horário** | `patterns` | `getBestPeriod` | Período com maior foco médio (manhã/tarde/noite) |
+| **Duração ideal** | `patterns` | `getIdealDuration` | Bucket de duração com maior foco |
+| **Ponto de fadiga** | `patterns` | `getFatiguePoint` | Duração quando foco cai > 2 pontos |
+| **Melhor dia da semana** | `patterns` | `getBestWeekday` | Dia com maior foco médio |
+| **Nível de dificuldade** | `analytics` | `getDifficultyLevel` | easy/medium/hard baseado em error_rate |
+| **Pontos fracos** | `weakness` | `identifyWeaknesses` | Tópicos com error_rate > 0.3 |
+| **Dashboard completo** | `dashboard` | `show` | Visão geral de todas as métricas |
+
+**Nota**: Scripts bash (`*.sh`) foram migrados para tools na v2.0. Veja `MIGRATION.md` para detalhes.
 
 **Exemplo**:
 ```csv

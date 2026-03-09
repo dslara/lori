@@ -32,7 +32,7 @@ metadata:
 ❌ **NÃO USE** para:
 - Bloqueio técnico real → use `#debug`
 - Falta de conhecimento → use `#explain`
-- Cansaço real → use pausa real (`make break`)
+- Cansaço real → use pausa real (`@tutor #diffuse`)
 
 ## Processo
 
@@ -130,15 +130,15 @@ Qual você escolhe? (pode escolher menor ainda)"
 ## Handoff
 
 - Começou e fluiu? → `#quiz` para aquecer ou técnica escolhida
-- Travou mesmo assim? → Verificar se é bloqueio técnico (`#debug`) ou cansaço (`make break`)
+- Travou mesmo assim? → Verificar se é bloqueio técnico (`#debug`) ou cansaço (`@tutor #diffuse`)
 - Conseguiu pouco progresso? → Tudo bem! Cada micro-passo conta.
 
 ## 📋 Makefile Integration
 
 **Comandos relacionados**:
-- `make study` — Continuar sessão após superar procrastinação
-- `make break` — Pausa real se for cansaço, não procrastinação
+- `@tutor #start` — Continuar sessão após superar procrastinação
+- `@tutor #diffuse` — Pausa real se for cansaço, não procrastinação
 
 **Quando sugerir**:
-- Funcionou e começou → sugerir `make study` para continuar
-- Descobriu que é cansaço → sugerir `make break`
+- Funcionou e começou → sugerir `@tutor #start` para continuar
+- Descobriu que é cansaço → sugerir `@tutor #diffuse`

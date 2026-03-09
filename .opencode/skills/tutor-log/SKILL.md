@@ -21,35 +21,61 @@ Registrar automaticamente as interações do tutor em `data/tutor_interactions.c
 
 ## Como Registrar
 
-### Opção 1: Script Bash (Recomendado)
+### Opção 1: Tool TypeScript (Recomendado v2.0)
 
-Use o script `scripts/tutor-interaction.sh`:
+Use a **tool `tutor-log`** com operação `logInteraction`:
 
-```bash
-./scripts/tutor-interaction.sh <skill> <topic> <user_message> <user_response> <tutor_response> [metadata]
+```typescript
+tutorLog.logInteraction({
+  sessionId: "2026-03-06-085708",
+  skill: "quiz",
+  topic: "símbolos matemáticos",
+  userMessage: "O que significa ∀?",
+  userResponse: "Para todo",
+  tutorResponse: "Correto! ∀ é o quantificador universal",
+  metadata: { "correct": true }
+})
 ```
 
 **Parâmetros**:
-- `session_id`: ID da sessão atual (formato: YYYY-MM-DD-HHMMSS)
+- `sessionId`: ID da sessão atual (formato: YYYY-MM-DD-HHMMSS)
 - `skill`: Nome da skill usada (quiz, feynman, drill, etc.)
 - `topic`: Tópico da interação (ex: "símbolos matemáticos", "recursão")
-- `user_message`: Mensagem/pergunta do usuário (máx 200 chars)
-- `user_response`: Resposta do usuário (máx 200 chars)
-- `tutor_response`: Sua resposta (máx 500 chars)
-- `metadata`: JSON opcional com dados extras
+- `userMessage`: Mensagem/pergunta do usuário (máx 200 chars)
+- `userResponse`: Resposta do usuário (máx 200 chars)
+- `tutorResponse`: Sua resposta (máx 500 chars)
+- `metadata`: Objeto JSON com dados extras
 
 **Exemplo**:
-```bash
-./scripts/tutor-interaction.sh quiz "símbolos matemáticos" "O que significa ∀?" "Para todo" "Correto! ∀ é o quantificador universal" '{"correct":true}'
+```typescript
+tutorLog.logInteraction({
+  sessionId: SESSION_ID,
+  skill: "quiz",
+  topic: "símbolos matemáticos",
+  userMessage: "O que significa ∀?",
+  userResponse: "Para todo",
+  tutorResponse: "Correto! ∀ é o quantificador universal",
+  metadata: { "correct": true }
+})
 ```
 
-### Opção 2: Append Direto
+### Opção 2: Via data tool (alternativa)
 
-Se não tiver acesso ao script, registre diretamente:
+Se precisar de mais controle, use a **tool `data`**:
 
-```bash
-echo "I$(date +%Y%m%d%H%M%S),<session_id>,<skill>,<topic>,\"<user_message>\",\"<user_response>\",\"<tutor_response>\",$(date -Iseconds),\"<metadata>\"" >> data/tutor_interactions.csv
+```typescript
+data.createInteraction({
+  sessionId: "2026-03-06-085708",
+  skill: "quiz",
+  topic: "símbolos matemáticos",
+  userMessage: "O que significa ∀?",
+  userResponse: "Para todo",
+  tutorResponse: "Correto! ∀ é o quantificador universal",
+  metadata: { "correct": true }
+})
 ```
+
+⚠️ **Nota**: O script bash `tutor-interaction.sh` foi removido na v2.0. Use as tools TypeScript.
 
 ## Formato do CSV
 
@@ -61,23 +87,55 @@ I20260306085731,2026-03-06-085708,quiz,símbolos matemáticos,"O que significa �
 ## Exemplos por Keyword
 
 ### #quiz
-```bash
-./scripts/tutor-interaction.sh quiz "símbolos matemáticos" "O que significa ∀?" "Para todo" "Correto! ∀ é o quantificador universal" '{"correct":true}'
+```typescript
+tutorLog.logInteraction({
+  sessionId: SESSION_ID,
+  skill: "quiz",
+  topic: "símbolos matemáticos",
+  userMessage: "O que significa ∀?",
+  userResponse: "Para todo",
+  tutorResponse: "Correto! ∀ é o quantificador universal",
+  metadata: { "correct": true }
+})
 ```
 
 ### #feynman
-```bash
-./scripts/tutor-interaction.sh feynman "recursão" "Explique recursão como para uma criança" "É quando uma função chama a si mesma" "Boa! E quando ela para?" '{"depth_score":7}'
+```typescript
+tutorLog.logInteraction({
+  sessionId: SESSION_ID,
+  skill: "feynman",
+  topic: "recursão",
+  userMessage: "Explique recursão como para uma criança",
+  userResponse: "É quando uma função chama a si mesma",
+  tutorResponse: "Boa! E quando ela para?",
+  metadata: { "depth_score": 7 }
+})
 ```
 
 ### #drill
-```bash
-./scripts/tutor-interaction.sh drill "Big O" "Qual a complexidade de n²?" "Quadrática" "Correto! Cresce muito rápido" '{"correct":true}'
+```typescript
+tutorLog.logInteraction({
+  sessionId: SESSION_ID,
+  skill: "drill",
+  topic: "Big O",
+  userMessage: "Qual a complexidade de n²?",
+  userResponse: "Quadrática",
+  tutorResponse: "Correto! Cresce muito rápido",
+  metadata: { "correct": true }
+})
 ```
 
 ### #debug
-```bash
-./scripts/tutor-interaction.sh debug "null pointer" "Por que recebo NullPointerException?" "O objeto está null" "Onde você inicializou?" '{"found":false}'
+```typescript
+tutorLog.logInteraction({
+  sessionId: SESSION_ID,
+  skill: "debug",
+  topic: "null pointer",
+  userMessage: "Por que recebo NullPointerException?",
+  userResponse: "O objeto está null",
+  tutorResponse: "Onde você inicializou?",
+  metadata: { "found": false }
+})
 ```
 
 ## Obter Session ID
@@ -108,18 +166,31 @@ O campo `metadata` pode conter:
 
 ## Consultar Histórico
 
-Para ver interações anteriores:
+Para ver interações anteriores, use a **tool `tutor-log`**:
 
-```bash
-# Por tópico
-./scripts/tutor-log.sh topic "símbolos matemáticos" 5
-
-# Por sessão
-./scripts/tutor-log.sh session "2026-03-06-085708"
-
-# Últimas 10
-./scripts/tutor-log.sh recent 10
+### Por tópico
+```typescript
+tutorLog.getInteractionsByTopic({
+  filterTopic: "símbolos matemáticos",
+  limit: 5
+})
 ```
+
+### Por sessão
+```typescript
+tutorLog.getInteractionsBySession({
+  sessionId: "2026-03-06-085708"
+})
+```
+
+### Últimas interações
+```typescript
+tutorLog.getRecentInteractions({
+  limit: 10
+})
+```
+
+⚠️ **Nota**: O script bash `tutor-log.sh` foi removido na v2.0. Use a tool TypeScript.
 
 ## Benefícios
 

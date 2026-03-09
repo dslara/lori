@@ -7,6 +7,130 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 
 ## [Não Publicado]
 
+### 🚀 Nova Arquitetura: Tools + Commands
+
+#### Breaking Changes
+- **Scripts bash removidos**: `data.sh`, `analytics.sh`, `status.sh`, `common.sh`
+- **Comandos `make` deprecados**: `make status`, `make analytics` (usar `/commands` no TUI)
+- **Nova interface**: Commands no TUI (`/status`, `/analytics`, `/data`)
+
+#### ✨ Added
+- **Tools TypeScript** (`.opencode/tools/`):
+  - `data` — CRUD completo nos CSVs com parsing robusto
+  - `context` — Contexto da sessão (módulo, sessões recentes, SRS)
+  - `analytics` — Cálculos de métricas e relatórios
+  - `status` — Resumo visual com progress bar
+- **Commands** (`.opencode/commands/`):
+  - `/status` — Status geral (streak, sessões, módulo)
+  - `/analytics` — Analytics detalhados
+  - `/data` — Gerenciamento de dados
+- **Integração automática**: `@tutor` invoca tools automaticamente
+- **Dependencies**: `csv-parse`, `csv-stringify`, `date-fns` para manipulação robusta
+
+#### 🔧 Improved
+- Parsing de CSV com `csv-parse` (mais robusto que grep/awk)
+- Manipulação de datas com `date-fns`
+- Error handling padronizado em todas as tools
+- Retornos tipados com Zod
+
+#### 📚 Documentation
+- `HOW_TO_USE.md` — Atualizado com novos commands
+- `README.md` — Nova arquitetura documentada
+- `guides/sistema-dados.md` — Reescrito para tools
+- `MIGRATION.md` — Guia de migração v1.x → v2.0
+
+### 🚀 Fase 2: Analytics Tools
+
+#### Breaking Changes
+- **Scripts bash removidos**: `weakness-analysis.sh`, `skill-effectiveness.sh`, `patterns.sh`, `dashboard.sh`
+- **Comandos `make` removidos**: `make skill-effectiveness`, `make patterns`, `make dashboard`, `make weaknesses`
+
+#### ✨ Added
+- **Analytics Tools** (`.opencode/tools/`):
+  - `weakness` — Identifica pontos fracos e sugere técnicas
+  - `effectiveness` — Calcula efetividade de cada técnica
+  - `patterns` — Analisa padrões (melhor horário, duração ideal, fadiga)
+  - `dashboard` — Dashboard consolidado (chama outras tools)
+- **Command** (`.opencode/commands/`):
+  - `/dashboard` — Visão geral completa
+- **Cache**: Todas as tools implementam cache de 5 minutos para performance
+
+#### 🔧 Improved
+- Agente `@tutor` atualizado para usar tools em vez de scripts
+- Análises mais rápidas com cache
+- Integração nativa entre tools (dashboard chama weakness, effectiveness, patterns)
+
+### 🚀 Fase 3: Tutor Log Tool
+
+#### Breaking Changes
+- **Script bash removido**: `tutor-log.sh` (substituído por tool)
+- **Script atualizado**: `review.sh` corrigido para usar `data` tool ao invés de `spaced-repetition.sh`
+
+#### ✨ Added
+- **Tool** (`.opencode/tools/`):
+  - `tutor-log` — Registrar e consultar interações do tutor
+    - `logInteraction` — Registrar nova interação
+    - `getInteractionsByTopic` — Buscar por tópico
+    - `getInteractionsBySession` — Buscar por sessão
+    - `getRecentInteractions` — Últimas N interações
+  - Cache: 5 minutos
+
+#### 📚 Documentation
+- `.opencode/skills/tutor-log/SKILL.md` — Atualizado para usar tool TypeScript
+- `.opencode/agents/tutor.md` — Referências atualizadas para tool
+
+### 🚀 Fase 4: Limpeza Final de Scripts
+
+#### Breaking Changes
+- **Scripts bash removidos**: `break.sh`, `drill-extra.sh`, `plan.sh`, `resources.sh`
+- **Comandos `make` removidos**: `make break`, `make drill-extra`, `make plan`, `make resources`
+
+#### Motivação
+Esses scripts eram apenas **wrappers** que chamavam agents. Agora o usuário deve usar agents diretamente:
+
+| Antigo | Novo |
+|--------|------|
+| `make break` | `@tutor #diffuse` |
+| `make drill-extra` | `@tutor "#drill [conceito] variações"` |
+| `make plan` | `@meta #create-weekly-plan` |
+| `make resources` | `@meta #map-resources` |
+
+#### 📚 Documentation
+- `HOW_TO_USE.md` — Atualizado com comandos novos
+- `.opencode/agents/tutor.md` — Referências atualizadas
+- `.opencode/skills/drill/SKILL.md` — Atualizado
+- `.opencode/skills/zombie-mode/SKILL.md` — Atualizado
+- `.opencode/skills/benchmarking/SKILL.md` — Atualizado
+- `.opencode/skills/decomposition/SKILL.md` — Atualizado
+- `guides/checklist.md` — Atualizado
+- `guides/quickstart.md` — Atualizado
+- `guides/tecnicas/decomposition.md` — Atualizado
+- `guides/principios/1-metalearning.md` — Atualizado
+- `.github/copilot-instructions.md` — Atualizado
+
+### 🚀 Fase 5: Remoção de Script Não Utilizado
+
+#### Breaking Changes
+- **Script bash removido**: `sync-flashcards.sh` (funcionalidade de sincronização com Anki não utilizada)
+- **Comando `make` removido**: `make sync-flashcards`
+
+#### Motivação
+O script `sync-flashcards.sh` criava um `master-deck.csv` agregando flashcards de todos os módulos para uso com Anki. Como a revisão de flashcards agora é feita diretamente via `@tutor #srs-generator review` usando os dados do `data/flashcards.csv`, esta funcionalidade tornou-se obsoleta.
+
+### 🚀 Atualização do Agente @review
+
+**Contexto**: O agente @review foi atualizado para refletir a nova arquitetura v2.0 (Tools TypeScript).
+
+#### Mudanças no Agente
+
+- **Contexto e Continuidade**: Atualizado para separar scripts de sistema vs tools
+- **#review-scripts**: Foca apenas nos 7 scripts de sistema (não mais em scripts de dados)
+- **#review-tools**: NOVA KEYWORD — Revisar as 9 Tools TypeScript
+- **#review-makefile**: Atualizado com contexto dos comandos removidos na migração
+- **#review-architecture**: Atualizado para refletir migração já concluída
+- **Exemplos de Interação**: Atualizado para remover referências a scripts removidos
+- **Quick Reference**: Adicionada `#review-tools`
+
 ## [3.1.0] - 2026-03-02
 
 ### Added

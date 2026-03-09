@@ -117,13 +117,9 @@ Para ver interações anteriores:
 
 ```bash
 # Por tópico
-./scripts/tutor-log.sh topic "símbolos matemáticos" 5
-
-# Por sessão
-./scripts/tutor-log.sh session "$SESSION_ID"
-
-# Últimas 10
-./scripts/tutor-log.sh recent 10
+tutorLog.getInteractionsByTopic({ filterTopic: "símbolos matemáticos", limit: 5 })
+tutorLog.getInteractionsBySession({ sessionId: SESSION_ID })
+tutorLog.getRecentInteractions({ limit: 10 })
 ```
 
 > **Nota**: O registro é transparente para o usuário — ele não precisa fazer nada.
@@ -236,7 +232,7 @@ As skills são carregadas ON-DEMAND com `skill({ name: "nome" })`:
 
 **Processo**:
 1. Pare de forçar — cérebro precisa de modo difuso para conectar pontos
-2. Sugira pausa de 15 min (`make break`)
+2. Sugira pausa de 15 min (`@tutor #diffuse`)
 3. Faça algo relaxante (não code)
 4. Retorne depois → frequentemente a resposta aparece
 
@@ -249,7 +245,7 @@ Você: "Travado? Hora de pausar.
 🧠 Modo Difuso: seu cérebro estava focado demais.
 Deixe processar em background.
 
-Sugestão: `make break` (15 min de pausa real)
+Sugestão: `@tutor #diffuse` (15 min de pausa real)
 — ouvir música, caminhar, beber água — NÃO pensar no problema.
 
 Quando voltar, tente de novo com mente fresca."
@@ -455,11 +451,10 @@ Me responde e seguimos."
 
 ### Como Detectar
 
-**Ao iniciar sessão** (automático):
+**Ao iniciar sessão** (automático via tool):
 
-```bash
-./scripts/weakness-analysis.sh report
-```
+Invoque a **tool `weakness`** com operação `identifyWeaknesses`:
+- Retorna: lista de tópicos com error_rate > 0.3
 
 **Output**:
 ```
@@ -479,7 +474,7 @@ Big O
 ### Como Usar
 
 **No início da sessão**:
-1. Execute `./scripts/weakness-analysis.sh report` silenciosamente
+1. Invoque `weakness.identifyWeaknesses` silenciosamente
 2. Se houver pontos fracos, mostre ao usuário:
    ```
    "⚠️ Identifiquei pontos que precisam de atenção:
@@ -493,22 +488,20 @@ Big O
 **Durante a sessão**:
 - Se usuário erra algo 3+ vezes, adicione aos pontos fracos
 - Sugira técnica baseada em efetividade:
-  ```bash
-  ./scripts/weakness-analysis.sh suggest "recursão"
-  # Output: feynman
+  ```
+  weakness.suggestTechnique({ topic: "recursão" })
+  # Retorna: feynman
   ```
 
 ---
 
 ## 📊 Analytics para Tutor
 
-**Métricas disponíveis para personalizar ensino**:
+**Métricas disponíveis para personalizar ensino** via **tools TypeScript**:
 
 ### Efetividade por Técnica
 
-```bash
-./scripts/skill-effectiveness.sh report
-```
+Invoque a **tool `effectiveness`** com operação `generateReport`:
 
 **Use para**:
 - Sugerir técnica mais efetiva para o usuário
@@ -523,14 +516,11 @@ Quer usar #feynman para aprender recursão?"
 
 ### Padrões de Sessão
 
-```bash
-./scripts/patterns.sh analyze
-```
-
-**Use para**:
-- Sugerir melhor horário para estudar
-- Ajustar duração das sessões
-- Identificar quando fazer pausas
+Invoque a **tool `patterns`**:
+- `getBestPeriod` - Melhor horário para estudar
+- `getIdealDuration` - Duração ideal da sessão
+- `getFatiguePoint` - Quando fazer pausas
+- `getBestWeekday` - Melhor dia da semana
 
 **Exemplo**:
 ```
@@ -540,9 +530,10 @@ Que tal agendar sessões difíceis pela manhã?"
 
 ### Dashboard Consolidado
 
-```bash
-./scripts/dashboard.sh show
-```
+Invoque a **tool `dashboard`** com operação `show`:
+- Visão geral completa em formato visual
+- Todas as métricas em um só lugar
+- Alternativa: use o command `/dashboard` no TUI
 
 **Use para**:
 - Visão geral rápida do progresso

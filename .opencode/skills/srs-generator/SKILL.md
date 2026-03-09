@@ -47,7 +47,7 @@ Gerar flashcards de spaced repetition automaticamente baseados:
 
 ❌ **NÃO USE** para:
 - Importar bulk de cards pré-definidos → use `import-cards.sh`
-- Revisar cards → use `make review` ou `#srs-generator review`
+- Revisar cards → use `@tutor #srs-generator review` (tool `data.getFlashcards`)
 - Validar compreensão → use `#feynman`
 
 ---
@@ -132,20 +132,27 @@ Crie o par Q/A otimizado para SRS:
 | Relação | "Lei de De Morgan: ¬(A ∧ B) = ?" | "¬A ∨ ¬B" |
 | Conversão | "Como traduzir ∀x ∈ arr : x > 0?" | "Todo elemento do array é positivo" |
 
-### Passo 5: Adicionar ao SRS (30 seg)
+### Passo 5: Adicionar ao SRS (via tool)
 
-Adicione usando o script existente (executar a partir do root do projeto):
-
-```bash
-./scripts/spaced-repetition.sh add "PERGUNTA" "RESPOSTA" "CATEGORIA"
-```
+Invoque a **tool `data`** com operação `createFlashcard`:
 
 **Parâmetros**:
-- `PERGUNTA`: O campo Q gerado
-- `RESPOSTA`: O campo A gerado
-- `CATEGORIA`: (opcional) padrão "geral" — use nome do tema
+- `front`: O campo Q gerado (pergunta)
+- `back`: O campo A gerado (resposta)
+- `category`: (opcional) nome do tema/módulo
+- `tags`: (opcional) array de tags
 
-> O script salva em `data/flashcards.csv` (CSV global, compartilhado entre todos os módulos).
+**Exemplo**:
+```
+data.createFlashcard({
+  front: "O que significa ∀?",
+  back: "Para todo (quantificador universal)",
+  category: "math-symbols",
+  tags: ["logic", "notation"]
+})
+```
+
+> A tool salva em `data/flashcards.csv` (CSV global, compartilhado entre todos os módulos).
 
 ### Passo 6: Feedback (30 seg)
 
@@ -154,7 +161,7 @@ Informe o usuário:
 ```
 ✅ Card adicionado!
 📅 Próxima revisão: hoje
-📊 Use 'make review' para revisar
+📊 Use `@tutor #srs-generator review` para revisar cards pendentes
 ```
 
 Ofereça opções:
@@ -238,12 +245,19 @@ Se usuário escolher 'e' ou 'editar':
 - Pergunta: "Qual card editar (número)?"
 - Depois: mostrar preview novamente
 
-### Passo 7: Adicionar Todos ao SRS (1 min)
+### Passo 7: Adicionar Todos ao SRS (via tool)
 
-Para cada card, adicione ao CSV global:
+Para cada card, invoque a **tool `data`** com operação `createFlashcard`:
 
-```bash
-./scripts/spaced-repetition.sh add "PERGUNTA" "RESPOSTA" "CATEGORIA"
+```
+for (const card of cards) {
+  data.createFlashcard({
+    front: card.question,
+    back: card.answer,
+    category: card.category,
+    tags: card.tags
+  })
+}
 ```
 
 ### Passo 8: Feedback Final
@@ -252,7 +266,7 @@ Para cada card, adicione ao CSV global:
 ✅ 7 cards adicionados ao SRS!
 
 📅 Todos disponíveis para revisão hoje
-📊 Use 'make review' para revisar
+📊 Use `@tutor #srs-generator review` para revisar cards pendentes
 ```
 
 ### Exemplo de Interação: Modo Batch
@@ -381,34 +395,23 @@ Quer criar outro card? (s/n)
 
 Este modo é invocado quando o usuário executa `#srs-generator review`.
 
-### Passo 0: Carregar cards pendentes (automático)
+### Passo 0: Carregar cards pendentes (via tool)
 
-Execute silenciosamente:
+Invoque a **tool `data`** com operação `getFlashcards`:
+- Retorna: lista de cards com `next_review <= hoje`
+- Use esses cards para a sessão de revisão
 
-```bash
-./scripts/review.sh > /dev/null 2>&1 || {
-    echo "❌ Erro ao carregar cards. Verifique se há cards pendentes."
-    exit 1
-}
-```
+### Passo 0.5: Consultar dificuldade (via tool)
 
-Isso lista os cards pendentes para revisão.
+Antes de mostrar cada card, invoque a **tool `analytics`** com operação `getErrorRateByTopic`:
+- Passe o `category` do card como `topic`
+- Use o error_rate para ajustar feedback:
 
-### Passo 0.5: Consultar dificuldade do card (automático)
-
-Antes de mostrar cada card, execute:
-
-```bash
-./scripts/tutor-difficulty.sh get "[categoria do card]" > /dev/null 2>&1
-```
-
-Use o nível para ajustar feedback:
-
-| Nível | Feedback | Dicas |
-|-------|----------|-------|
-| **Easy** | Minimal | "Correto!" ou "Tente de novo" |
-| **Medium** | Balanceado | "Correto! X significa Y" |
-| **Hard** | Detalhado | "Correto! X significa Y. Dica: [explicação extra]" |
+| Error Rate | Nível | Feedback | Dicas |
+|------------|-------|----------|-------|
+| < 20% | Easy | Minimal | "Correto!" ou "Tente de novo" |
+| 20-40% | Medium | Balanceado | "Correto! X significa Y" |
+| > 40% | Hard | Detalhado | "Correto! X significa Y. Dica: [explicação extra]" |
 
 **Exemplo**:
 - **Easy**: "✅ Correto!" (sem explicação extra)
@@ -476,34 +479,46 @@ Sua tentativa: 'Para todos'
 
 ### Após coletar a nota
 
-1. **Registre interação** (automático, silencioso):
+1. **Registre interação** (via tool):
 
-```bash
-./scripts/tutor-interaction.sh srs-generator "[categoria]" "[pergunta do card]" "[resposta do usuário]" "[resposta oficial]" '{"correct":true/false,"quality":N}'
+Invoque a **tool `data`** com operação `createInteraction`:
+
 ```
-
-**Exemplo**:
-```bash
-./scripts/tutor-interaction.sh srs-generator "symbols" "O que significa ∀?" "Para todos" "Para todo / Cada elemento sem exceção" '{"correct":false,"quality":2}'
+data.createInteraction({
+  skill: "srs-generator",
+  topic: cardCategory,
+  userMessage: cardQuestion,
+  userResponse: userAnswer,
+  tutorResponse: officialAnswer,
+  metadata: { 
+    "correct": quality >= 3, 
+    "quality": quality 
+  }
+})
 ```
 
 **Nota**: `correct` é `true` se quality ≥ 3, `false` se < 3.
 
-2. **Atualize o card no CSV** via script:
+2. **Atualize o card** (via tool):
 
-```bash
-# O script review_cards() do spaced-repetition.sh faz isso automaticamente
-# Se precisar atualizar manualmente, use make review para revisão interativa
-./scripts/spaced-repetition.sh review
+Invoque a **tool `data`** com operação `createReview`:
+
+```
+data.createReview({
+  flashcardId: cardId,
+  quality: quality
+  // A tool aplica algoritmo SM-2 automaticamente:
+  // - Atualiza next_review, interval, easiness, reviews
+})
 ```
 
-O script atualiza os campos `next_review`, `interval`, `easiness` e `reviews` no `data/flashcards.csv` usando o algoritmo SM-2.
+A tool `data.createReview` implementa o algoritmo SM-2 completo e atualiza os campos no `data/flashcards.csv`.
 
-2. **Passe para o próximo card** — repita até acabarem
+3. **Passe para o próximo card** — repita até acabarem
 
 ### Atualizar card existente
 
-Para atualizar um card já existente (não criar novo), use `make review` que invoca o script interativo. O script lê `data/flashcards.csv`, processa cada card vencido e reescreve o arquivo com os campos atualizados.
+Para revisar cards pendentes, use `@tutor #srs-generator review` que invoca as tools `data.getFlashcards` (lista pendentes) e `data.createReview` (atualiza cada card).
 
 ---
 
@@ -599,13 +614,12 @@ else:
 # Próxima data = hoje + new_interval dias
 ```
 
-### Passo 8: Atualizar Card
+### Passo 8: Atualizar Card (via tool)
 
-Atualize o JSONL com os novos valores:
-- `next_review`: data calculada
-- `interval`: new_interval
-- `easiness`: new_easiness
-- `reviews`: reviews + 1
+A **tool `data`** com operação `createReview` aplica o SM-2 automaticamente:
+- Calcula `new_easiness`, `new_interval`
+- Atualiza `next_review`, `interval`, `easiness`, `reviews`
+- Salva no `data/flashcards.csv`
 
 ### Passo 9: Feedback Final
 
@@ -616,18 +630,19 @@ Atualize o JSONL com os novos valores:
 
 ## 📋 Integração com Sistema
 
-**Script usado**: `scripts/spaced-repetition.sh`
-
-**Comando**: `./scripts/spaced-repetition.sh add "Q" "A" [categoria]`
+**Tools usadas**:
+- `data.createFlashcard` — criar cards
+- `data.getFlashcards` — listar cards pendentes
+- `data.createReview` — revisar cards (aplica SM-2)
 
 **Database**: `data/flashcards.csv` (CSV global, RFC 4180)
 
 **Colunas**: `id,user_id,module_id,front,back,category,created_at,tags,next_review,interval,easiness,reviews`
 
-**Makefile**: `make review` — para revisar os cards gerados
+**Commands**: `@tutor #srs-generator review` — para revisar os cards gerados
 
 ## 📂 Arquivos de Referência
 
 - **Database CSV**: `data/flashcards.csv`
-- **Script SRS**: `scripts/spaced-repetition.sh`
-- **Review script**: `scripts/review.sh`
+- **Tools**: `.opencode/tools/data.ts` (createFlashcard, getFlashcards, createReview)
+- **SRS Algorithm**: SM-2 implementado na tool `data.createReview`
