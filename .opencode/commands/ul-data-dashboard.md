@@ -1,5 +1,5 @@
 ---
-description: View comprehensive dashboard with all learning metrics
+description: View comprehensive dashboard with all learning metrics (/ul-data-dashboard)
 agent: tutor
 subtask: false
 ---
@@ -22,5 +22,5 @@ Include recommendations based on the data:
 - If ideal duration found, suggest optimizing session length
 
 **Usage:**
-- `/dashboard` - Show current week dashboard
-- `/dashboard month` - Show monthly dashboard (if supported)
+- `/ul-data-dashboard` - Show current week dashboard
+- `/ul-data-dashboard month` - Show monthly dashboard (if supported)

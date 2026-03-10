@@ -115,3 +115,40 @@ export function parseMetadata(metadataStr: string): any {
     return {};
   }
 }
+
+// === TUTOR LOGGING (Built-in) ===
+export async function logTutorInteraction(
+  dataDir: string,
+  sessionId: string,
+  skill: string,
+  topic: string,
+  userMessage: string,
+  userResponse: string = "",
+  tutorResponse: string = "",
+  metadata: Record<string, any> = {}
+): Promise<void> {
+  try {
+    const { format } = await import("date-fns");
+    const timestamp = new Date().toISOString();
+    const interactionId = `I${format(new Date(), "yyyyMMddHHmmss")}`;
+    
+    const interaction = {
+      id: interactionId,
+      session_id: sessionId,
+      skill: skill,
+      topic: sanitize(topic, 100),
+      user_message: sanitize(userMessage, 200),
+      user_response: sanitize(userResponse, 200),
+      tutor_response: sanitize(tutorResponse, 500),
+      timestamp,
+      metadata: JSON.stringify(metadata)
+    };
+    
+    const interactions = await readCSV<Record<string, string>>(`${dataDir}/tutor_interactions.csv`);
+    interactions.push(interaction);
+    await writeCSV(`${dataDir}/tutor_interactions.csv`, CSV_HEADERS.tutorInteractions, interactions);
+  } catch (error) {
+    // Silently fail - logging should not break main functionality
+    console.error("Failed to log interaction:", error);
+  }
+}

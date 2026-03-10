@@ -5,6 +5,65 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [3.0.0] - 2026-03-09
+
+### 🚀 Breaking Changes — Migração para Commands Unificados
+
+A interface completa do sistema foi migrada de **keywords para commands unificados**.
+
+#### Removido
+- **Todas as keywords**: `@tutor #*`, `@meta #*`, `@review #*`
+- **9 Skills eliminadas**: drill, feynman, quiz, explain-concept, zombie-mode, scaffold, retrospective, benchmarking, tutor-log
+- **Interface dispersa**: Não há mais separação entre @tutor, @meta e commands
+
+#### Adicionado — 22 Commands Unificados
+
+**Commands de Sessão (`/ul-study-*`):**
+- `/ul-study-start` — Iniciar sessão com contexto
+- `/ul-study-end` — Encerrar e salvar progresso  
+- `/ul-study-plan` — Ver progresso da semana
+
+**Commands de Prática (`/ul-practice-*`):**
+- `/ul-practice-drill` — Prática deliberada 5-10x
+- `/ul-practice-feynman` — Técnica Feynman
+- `/ul-practice-quiz` — Quiz adaptativo
+- `/ul-practice-project` — Projetos reais (wrapper para skill directness)
+
+**Commands de Aprendizado (`/ul-learn-*`):**
+- `/ul-learn-explain` — Introduzir conceito novo
+- `/ul-learn-debug` — Debug socrático (wrapper para skill debug-socratic)
+
+**Commands de Produtividade (`/ul-productivity-*`):**
+- `/ul-productivity-start` — Two-Minute Rule (antigo #zombie)
+- `/ul-productivity-break` — Modo difuso (antigo #diffuse)
+
+**Commands de Setup (`/ul-setup-*`):**
+- `/ul-setup-scaffold` — Criar estrutura de projeto
+
+**Commands de Memória (`/ul-memory-*`):**
+- `/ul-memory-create` — Criar flashcard
+- `/ul-memory-review` — Revisar flashcards (wrapper para skill srs-generator)
+
+**Commands de Planejamento (`/ul-plan-*`):**
+- `/ul-plan-decompose` — Decompor objetivo (wrapper para skill decomposition)
+- `/ul-plan-retro` — Retrospectiva semanal
+- `/ul-plan-benchmark` — Criar teste de proficiência
+- `/ul-plan-weekly` — Criar plano semanal
+
+#### Modificado
+- **Skill `session`**: Reduzida de ~313 para ~152 linhas (helpers apenas)
+- **Tutor-log**: Tornou-se função built-in nas tools (`logTutorInteraction`)
+- **Arquitetura**: Commands inline para lógica simples, skills apenas para complexidade
+
+#### Benefícios
+- Interface **100% unificada** via `/` no TUI
+- **64% menos skills** (14 → 5)
+- **Zero keywords** — apenas commands
+- **Mais intuitivo**: Nomes descritivos (`/ul-productivity-start` vs `#zombie`)
+- **Escalável**: Fácil adicionar novos commands
+
+---
+
 ## [Não Publicado]
 
 ### 🚀 Nova Arquitetura: Tools + Commands
@@ -12,7 +71,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
 #### Breaking Changes
 - **Scripts bash removidos**: `data.sh`, `analytics.sh`, `status.sh`, `common.sh`
 - **Comandos `make` deprecados**: `make status`, `make analytics` (usar `/commands` no TUI)
-- **Nova interface**: Commands no TUI (`/status`, `/analytics`, `/data`)
+- **Nova interface**: Commands no TUI (`/ul-data-status`, `/ul-data-analytics`, `/ul-data-manage`)
 
 #### ✨ Added
 - **Tools TypeScript** (`.opencode/tools/`):
@@ -21,9 +80,10 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
   - `analytics` — Cálculos de métricas e relatórios
   - `status` — Resumo visual com progress bar
 - **Commands** (`.opencode/commands/`):
-  - `/status` — Status geral (streak, sessões, módulo)
-  - `/analytics` — Analytics detalhados
-  - `/data` — Gerenciamento de dados
+  - `/ul-data-status` — Status geral (streak, sessões, módulo)
+  - `/ul-data-analytics` — Analytics detalhados
+  - `/ul-data-dashboard` — Dashboard consolidado
+  - `/ul-data-manage` — Gerenciamento de dados
 - **Integração automática**: `@tutor` invoca tools automaticamente
 - **Dependencies**: `csv-parse`, `csv-stringify`, `date-fns` para manipulação robusta
 
@@ -52,7 +112,7 @@ e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR
   - `patterns` — Analisa padrões (melhor horário, duração ideal, fadiga)
   - `dashboard` — Dashboard consolidado (chama outras tools)
 - **Command** (`.opencode/commands/`):
-  - `/dashboard` — Visão geral completa
+  - `/ul-data-dashboard` — Visão geral completa
 - **Cache**: Todas as tools implementam cache de 5 minutos para performance
 
 #### 🔧 Improved

@@ -533,7 +533,7 @@ Que tal agendar sessões difíceis pela manhã?"
 Invoque a **tool `dashboard`** com operação `show`:
 - Visão geral completa em formato visual
 - Todas as métricas em um só lugar
-- Alternativa: use o command `/dashboard` no TUI
+- Alternativa: use o command `/ul-data-dashboard` no TUI
 
 **Use para**:
 - Visão geral rápida do progresso

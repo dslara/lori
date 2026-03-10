@@ -1,5 +1,5 @@
 ---
-description: View advanced analytics and progress report
+description: View advanced analytics and progress report (/ul-data-analytics)
 agent: tutor
 subtask: false
 ---

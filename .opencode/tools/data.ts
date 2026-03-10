@@ -3,7 +3,7 @@ import { z } from "zod";
 import { format } from "date-fns";
 import { join } from "path";
 
-import { readCSV, writeCSV, initCSVDir, getUserId, CSV_HEADERS } from "./utils-csv.js";
+import { readCSV, writeCSV, initCSVDir, getUserId, CSV_HEADERS, logTutorInteraction } from "./utils-csv.js";
 import type { Session, Insight, Flashcard, Review, Interaction } from "./model-types.js";
 
 function getDataDir(context: any): string {
@@ -92,6 +92,18 @@ export default tool({
           const sessions = await readCSV<Session>(join(dataDir, "sessions.csv"));
           sessions.push(session);
           await writeCSV(join(dataDir, "sessions.csv"), CSV_HEADERS.sessions, sessions);
+          
+          // Log automático da interação
+          await logTutorInteraction(
+            dataDir,
+            sessionId,
+            "session",
+            args.moduleId,
+            "createSession",
+            "",
+            `Session created: ${args.duration}min, focus ${args.focusScore}/10`,
+            { operation: "createSession", moduleId: args.moduleId }
+          );
           
           return JSON.stringify({
             success: true,
@@ -310,6 +322,18 @@ export default tool({
           flashcards.push(flashcard);
           await writeCSV(join(dataDir, "flashcards.csv"), CSV_HEADERS.flashcards, flashcards);
           
+          // Log automático da interação
+          await logTutorInteraction(
+            dataDir,
+            "system",
+            "srs-generator",
+            args.category || "general",
+            "createFlashcard",
+            args.front,
+            "Flashcard created",
+            { flashcardId, category: args.category }
+          );
+          
           return JSON.stringify({
             success: true,
             data: { flashcardId, front: args.front }
@@ -379,6 +403,18 @@ export default tool({
           const reviews_list = await readCSV<Review>(join(dataDir, "reviews.csv"));
           reviews_list.push(review);
           await writeCSV(join(dataDir, "reviews.csv"), CSV_HEADERS.reviews, reviews_list);
+          
+          // Log automático da interação
+          await logTutorInteraction(
+            dataDir,
+            "system",
+            "srs-generator",
+            "review",
+            "createReview",
+            `Quality: ${quality}`,
+            `Next review in ${interval} days`,
+            { flashcardId: args.flashcardId, quality, interval }
+          );
           
           return JSON.stringify({
             success: true,

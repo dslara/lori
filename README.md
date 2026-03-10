@@ -20,20 +20,20 @@ Todas as funcionalidades são acessíveis via **keywords** no OpenCode:
 
 ```bash
 # Sessão de estudo
-@tutor #start              # Iniciar sessão com contexto
-@tutor #drill recursão     # Prática deliberada
-@tutor #feynman closures  # Validar compreensão
-@tutor #quiz 3 Big O       # Warm-up
-@tutor #end                # Encerrar e salvar progresso
+/ul-study-start              # Iniciar sessão com contexto
+/ul-practice-drill recursão     # Prática deliberada
+/ul-practice-feynman closures  # Validar compreensão
+/ul-practice-quiz 3 Big O       # Warm-up
+/ul-study-end                # Encerrar e salvar progresso
 
 # Planejamento
-@meta #decompose-goal "Aprender algoritmos"  # Decompor objetivo
-@meta #create-weekly-plan semana 1           # Criar plano semanal
-@meta #retro                                 # Retrospectiva semanal
+/ul-plan-decompose "Aprender algoritmos"  # Decompor objetivo
+/ul-plan-weekly 1           # Criar plano semanal
+/ul-plan-retro                                 # Retrospectiva semanal
 
 # Revisão
-@tutor #srs-generator       # Criar flashcard
-@tutor #srs-generator review # Revisar flashcards
+/ul-memory-create       # Criar flashcard
+/ul-memory-create review # Revisar flashcards
 ```
 
 ### Commands (No TUI do OpenCode)
@@ -41,9 +41,9 @@ Todas as funcionalidades são acessíveis via **keywords** no OpenCode:
 Digite `/` no TUI para acessar os commands:
 
 ```
-/status      # Ver streak, sessões, módulo atual
-/analytics   # Ver analytics avançados
-/data init   # Inicializar estrutura de dados
+/ul-data-status     # Ver streak, sessões, módulo atual
+/ul-data-analytics  # Ver analytics avançados
+/ul-data-manage init  # Inicializar estrutura de dados
 ```
 
 ---
@@ -79,8 +79,8 @@ Digite `/` no TUI para acessar os commands:
 
 | Command | Descrição | Quando Usar |
 |---------|-----------|-------------|
-| `/status` | Ver streak e métricas | Qualquer momento |
-| `/analytics` | Ver analytics avançados | Revisão semanal |
+| `/ul-data-status` | Ver streak e métricas | Qualquer momento |
+| `/ul-data-analytics` | Ver analytics avançados | Revisão semanal |
 | `/data` | Gerenciar dados | Setup/troubleshooting |
 | `make setup` | Configuração inicial | Primeira vez |
 | `make backup` | Backup dos dados | Periodicamente |

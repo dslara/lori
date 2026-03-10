@@ -1,5 +1,5 @@
 ---
-description: Manage system data (initialize, reset)
+description: Manage system data - initialize, reset (/ul-data-manage)
 agent: tutor
 subtask: false
 ---
@@ -8,7 +8,7 @@ Data management command for the Ultralearning System.
 
 ## Operations
 
-### /data init
+### /ul-data-manage init
 Initialize the CSV data structure. Creates all necessary files if they don't exist.
 
 Use this when:
@@ -16,7 +16,7 @@ Use this when:
 - After pulling the repository to a new machine
 - If data files are missing or corrupted
 
-### /data reset
+### /ul-data-manage reset
 ⚠️ WARNING: This deletes ALL data including sessions, streaks, flashcards, and progress!
 
 Use this when:
