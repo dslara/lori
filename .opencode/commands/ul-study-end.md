@@ -1,11 +1,15 @@
 ---
 description: Encerrar sessão e salvar progresso (/ul-study-end)
 agent: tutor
-subtask: false
+model: opencode-go/minimax-m2.5
 ---
 
 ## Uso
 /ul-study-end
+
+## Descrição
+
+Finaliza sessão de estudo com reflexão estruturada, salva progresso, atualiza streak e sugere próximos passos baseado no desempenho.
 
 ## Processo
 

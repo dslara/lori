@@ -1,7 +1,7 @@
 ---
 description: Revisar flashcards pendentes (/ul-memory-review)
 agent: tutor
-subtask: false
+model: opencode-go/glm-5
 ---
 
 ## Uso

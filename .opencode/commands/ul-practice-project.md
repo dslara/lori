@@ -1,8 +1,10 @@
 ---
 description: Aprender fazendo projetos reais (/ul-practice-project)
 agent: tutor
-subtask: false
+model: opencode-go/kimi-k2.5
 ---
+
+Argumento recebido: $ARGUMENTS (descrição do desafio)
 
 ## Uso
 /ul-practice-project [desafio]

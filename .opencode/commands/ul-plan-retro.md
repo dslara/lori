@@ -1,7 +1,7 @@
 ---
 description: Retrospectiva semanal - revisar e ajustar (/ul-plan-retro)
 agent: meta
-subtask: false
+model: opencode-go/minimax-m2.5
 ---
 
 ## Uso

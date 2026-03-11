@@ -1,26 +1,33 @@
 ---
-description: View comprehensive dashboard with all learning metrics (/ul-data-dashboard)
+description: Ver dashboard completo com métricas (/ul-data-dashboard)
 agent: tutor
-subtask: false
+model: opencode-go/kimi-k2.5
 ---
 
-Generate a comprehensive dashboard showing all learning metrics using the 'dashboard' tool with operation 'show'.
+## Descrição
 
-Display:
-- **Summary**: Streak, best streak, total sessions, weekly study time
-- **Effectiveness**: Most effective technique, least used technique
-- **Patterns**: Best period to study, ideal session duration
-- **Weaknesses**: Topics with error_rate > 0.3 and suggested techniques
+Exibe dashboard completo com todas as métricas de aprendizado: streak, sessões, técnicas mais efetivas, padrões de estudo e pontos fracos identificados.
 
-If user wants to compare periods, use operation 'compare' with appropriate period (week or month).
+## Uso
+/ul-data-dashboard
 
-Present the information in a visually appealing format with emojis and clear sections.
+Gere um dashboard abrangente mostrando todas as métricas de aprendizado usando a ferramenta 'dashboard' com a operação 'show'.
 
-Include recommendations based on the data:
-- If weaknesses found, suggest tackling them first
-- If best period identified, suggest scheduling difficult sessions then
-- If ideal duration found, suggest optimizing session length
+Exiba:
+- **Resumo**: Streak, melhor streak, total de sessões, tempo de estudo semanal
+- **Efetividade**: Técnica mais efetiva, técnica menos usada
+- **Padrões**: Melhor período para estudar, duração ideal de sessão
+- **Pontos Fracos**: Tópicos com taxa de erro > 0.3 e técnicas sugeridas
 
-**Usage:**
-- `/ul-data-dashboard` - Show current week dashboard
-- `/ul-data-dashboard month` - Show monthly dashboard (if supported)
+Se o usuário quiser comparar períodos, use a operação 'compare' com o período apropriado (semana ou mês).
+
+Apresente as informações em um formato visualmente atraente com emojis e seções claras.
+
+Inclua recomendações baseadas nos dados:
+- Se encontrar pontos fracos, sugira atacá-los primeiro
+- Se identificar o melhor período, sugira agendar sessões difíceis nesse horário
+- Se encontrar duração ideal, sugira otimizar o tamanho da sessão
+
+**Uso:**
+- `/ul-data-dashboard` - Mostra dashboard da semana atual
+- `/ul-data-dashboard month` - Mostra dashboard mensal (se suportado)

@@ -1,18 +1,25 @@
 ---
-description: Show current study status - streak, sessions, active module (/ul-data-status)
+description: Ver status atual - streak, sessões, módulo (/ul-data-status)
 agent: tutor
-subtask: false
+model: opencode-go/kimi-k2.5
 ---
 
-Show the user's current study status using the 'status' tool with formatStatus operation.
+## Descrição
 
-Display:
-- Current streak with visual progress bar
-- Best streak record  
-- Total sessions
-- Active module
-- Last session date
+Mostra status atual de estudo: streak atual, recorde, total de sessões, módulo ativo e data da última sessão.
 
-Present the information in a clear, motivating way. If the user has a good streak, celebrate it! If they haven't studied recently, encourage them gently.
+## Uso
+/ul-data-status
 
-If no data exists, suggest starting with @tutor #start.
+Mostre o status atual de estudo do usuário usando a ferramenta 'status' com a operação formatStatus.
+
+Exiba:
+- Streak atual com barra de progresso visual
+- Recorde de streak
+- Total de sessões
+- Módulo ativo
+- Data da última sessão
+
+Apresente as informações de forma clara e motivadora. Se o usuário tiver um bom streak, celebre! Se não estudou recentemente, encoraje-o gentilmente.
+
+Se não houver dados, sugira começar com /ul-study-start.

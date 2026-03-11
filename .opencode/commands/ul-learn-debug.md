@@ -1,8 +1,10 @@
 ---
 description: Debug socrático - guia para encontrar bugs (/ul-learn-debug)
 agent: tutor
-subtask: false
+model: opencode-go/kimi-k2.5
 ---
+
+Argumento recebido: $ARGUMENTS (descrição do problema)
 
 ## Uso
 /ul-learn-debug [descrição do problema]

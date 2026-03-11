@@ -1,7 +1,7 @@
 ---
 description: Modo difuso - pausa ativa quando travado (/ul-productivity-break)
 agent: tutor
-subtask: false
+model: opencode-go/minimax-m2.5
 ---
 
 ## Uso

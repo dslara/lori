@@ -316,23 +316,6 @@ Anexe a hábitos JÁ EXISTENTES:
 
 ---
 
-### 🚀 Model Routing
-
-**Modelo padrão**: GLM-5 (padrão global)
-
-**Candidatas a `small_model`** (glm-4.7 - custo ~40% menor):
-- `#habit-stack` — orientação simples de hábitos
-- `#update-plan` — registar progresso sem reescrever
-
-**Sempre use GLM-5**:
-- `#decompose-goal` — decomposição complexa de objetivos
-- `#create-weekly-plan` — planejamento com adaptação
-- `#adjust-plan` — diagnóstico e reajuste de cronograma
-- `#map-resources` — curadoria de materiais
-- `#benchmark-test` — criação de testes de proficiência
-
----
-
 ## 📁 Arquivos que Você Gera
 
 | Arquivo | Conteúdo |

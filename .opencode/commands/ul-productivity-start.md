@@ -1,7 +1,7 @@
 ---
 description: Superar procrastinação com Two-Minute Rule (/ul-productivity-start)
 agent: tutor
-subtask: false
+model: opencode-go/minimax-m2.5
 ---
 
 ## Uso

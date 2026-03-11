@@ -1,34 +1,41 @@
 ---
-description: Manage system data - initialize, reset (/ul-data-manage)
+description: Gerenciar dados - inicializar, resetar (/ul-data-manage)
 agent: tutor
-subtask: false
+model: opencode-go/kimi-k2.5
 ---
 
-Data management command for the Ultralearning System.
+## Descrição
 
-## Operations
+Gerencia dados do sistema Ultralearning: inicializa estrutura CSV ou reseta todos os dados. Use com cautela.
+
+## Uso
+/ul-data-manage [init|reset]
+
+Comando de gerenciamento de dados para o Sistema Ultralearning.
+
+## Operações
 
 ### /ul-data-manage init
-Initialize the CSV data structure. Creates all necessary files if they don't exist.
+Inicializa a estrutura de dados CSV. Cria todos os arquivos necessários se não existirem.
 
-Use this when:
-- Setting up the system for the first time
-- After pulling the repository to a new machine
-- If data files are missing or corrupted
+Use quando:
+- Configurando o sistema pela primeira vez
+- Após clonar o repositório em uma nova máquina
+- Se arquivos de dados estiverem faltando ou corrompidos
 
 ### /ul-data-manage reset
-⚠️ WARNING: This deletes ALL data including sessions, streaks, flashcards, and progress!
+⚠️ AVISO: Isso exclui TODOS os dados incluindo sessões, streaks, flashcards e progresso!
 
-Use this when:
-- Starting fresh with a clean slate
-- Testing the system (development only)
+Use quando:
+- Começando do zero com uma base limpa
+- Testando o sistema (apenas desenvolvimento)
 
-**Always confirm with the user before resetting data.**
+**Sempre confirme com o usuário antes de resetar dados.**
 
-## Available Operations
+## Operações Disponíveis
 
-Ask the user which operation they want to perform:
-- "init" - Initialize data structure
-- "reset" - Reset all data (requires confirmation)
+Pergunte ao usuário qual operação deseja realizar:
+- "init" - Inicializar estrutura de dados
+- "reset" - Resetar todos os dados (requer confirmação)
 
-Execute the appropriate operation using the 'data' tool.
+Execute a operação apropriada usando a ferramenta 'data'.

@@ -367,25 +367,6 @@ Pergunta: O que você PRECISA garantir? Sintaxe ou existência?"
 
 ---
 
-### 🚀 Model Routing
-
-**Modelo padrão**: GLM-5 (padrão global)
-
-**Candidatas a `small_model`** (glm-4.7 - custo ~40% menor):
-- `#start`, `#end`, `#plan` — orquestração simples, sem raciocínio complexo
-- `#zombie` — micro-passos para procrastinação
-- `#diffuse` — orientação simples para modo difuso
-- `#quiz` — retrieval rápido (3-5 perguntas)
-
-**Sempre use GLM-5**:
-- `#explain` — analogias e introduções complexas
-- `#directness` — projetos com código
-- `#feynman` — validação de compreensão
-- `#debug` — raciocínio sobre bugs
-- `#intuition` — explicações profundas
-
----
-
 ### Fluxo completo: do quiz ao projeto (com registro automático)
 
 Este exemplo mostra como as keywords se encadeiam naturalmente numa sessão, **incluindo registro automático de interações**:

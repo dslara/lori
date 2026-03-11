@@ -1,8 +1,10 @@
 ---
 description: Criar teste de proficiência mensurável (/ul-plan-benchmark)
 agent: meta
-subtask: false
+model: opencode-go/glm-5
 ---
+
+Argumento recebido: $ARGUMENTS (skill a ser testada)
 
 ## Uso
 /ul-plan-benchmark [skill]

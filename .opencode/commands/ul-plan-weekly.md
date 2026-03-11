@@ -1,7 +1,7 @@
 ---
 description: Criar plano semanal detalhado (/ul-plan-weekly)
 agent: meta
-subtask: false
+model: opencode-go/minimax-m2.5
 ---
 
 ## Uso

@@ -156,7 +156,7 @@ Digite `/` no TUI para acessar os commands:
 
 | Skill | Keyword | Uso |
 |-------|---------|-----|
-| `session` | `#start` / `#end` / `#plan` | Orquestrar início/fim de sessão (usa small_model) |
+| `session` | `/ul-study-start` / `/ul-study-end` / `/ul-study-plan` | Orquestrar início/fim de sessão (usa minimax-m2.5) |
 | `directness` | `#directness [desafio]` | Projeto prático guiado |
 | `drill` | `#drill [conceito]` | Exercícios repetitivos (5-10x) |
 | `feynman` | `#feynman [conceito]` | Explicar para validar compreensão |
@@ -357,14 +357,15 @@ O projeto arquivado mantém todo o histórico e pode ser consultado futuramente.
 
 ---
 
-## 💰 Custo Estimado (GLM-5 via opencode Zen)
+## 💰 Custo Estimado (Plano Go)
 
-| Modelo | Input | Output | Cached |
-|--------|-------|--------|--------|
-| **GLM-5** | $1.00/M | $3.20/M | $0.20/M |
-| **GLM-4.7** | $0.60/M | $2.20/M | $0.10/M |
+| Modelo | Uso | Preço |
+|--------|-----|-------|
+| **GLM-5** | Raciocínio complexo | Incluído no plano Go |
+| **Kimi K2.5** | Código e projetos | Incluído no plano Go |
+| **MiniMax M2.5** | Orquestração simples | Incluído no plano Go |
 
-**Economia vs Claude**: ~70% mais barato
+**Plano Go**: $10/mês com requests generosos
 
 - **Por sessão (1h)**: ~0.01€
 - **Por mês (30 dias)**: ~0.30€
@@ -414,13 +415,17 @@ Baseado em **Ultralearning** de Scott Young:
 | Makefile Integration | Não existia | Handoffs documentados |
 | Extensibilidade | +50 linhas no agente | Criar nova SKILL.md |
 
-### Model Routing
+### Modelos por Command
 
-| Situação | Modelo | Por quê |
-|----------|--------|--------|
-| Default | GLM-5 | Melhor raciocínio |
-| `#start`, `#end`, `#plan` | GLM-4.7 (small_model) | Orquestração simples — skill session |
-| `#zombie`, `#quiz`, `#diffuse` | GLM-4.7 (small_model) | Tarefas leves |
+Cada command define seu modelo ideal no frontmatter:
+
+| Categoria | Modelo | Commands | Justificativa |
+|-----------|--------|----------|---------------|
+| **Raciocínio complexo** | GLM-5 | `/ul-practice-drill`, `/ul-practice-feynman`, `/ul-learn-explain` | Análise, analogias, validação |
+| **Código e dados** | Kimi K2.5 | `/ul-practice-project`, `/ul-learn-debug`, `/ul-setup-scaffold`, `/ul-data-*` | Projetos, debug, estruturação |
+| **Orquestração simples** | MiniMax M2.5 | `/ul-study-*`, `/ul-productivity-*`, `/ul-plan-retro`, `/ul-plan-weekly` | Templates, orquestração, tarefas leves |
+
+**Padrão**: Verifique o campo `model` no arquivo `.opencode/commands/[command].md`
 
 ---
 

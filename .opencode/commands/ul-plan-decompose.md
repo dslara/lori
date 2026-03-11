@@ -1,8 +1,10 @@
 ---
 description: Decompor objetivo complexo em plano acionável (/ul-plan-decompose)
 agent: meta
-subtask: false
+model: opencode-go/glm-5
 ---
+
+Argumento recebido: $ARGUMENTS (objetivo a decompor)
 
 ## Uso
 /ul-plan-decompose [objetivo]

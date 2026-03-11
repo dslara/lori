@@ -1,11 +1,15 @@
 ---
 description: Ver progresso da semana e plano atual (/ul-study-plan)
 agent: tutor
-subtask: false
+model: opencode-go/minimax-m2.5
 ---
 
 ## Uso
 /ul-study-plan
+
+## Descrição
+
+Visualiza progresso da semana atual: tópicos concluídos, em andamento e pendentes, análise de técnicas usadas e sugestões de ajuste.
 
 ## Processo
 

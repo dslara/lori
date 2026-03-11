@@ -1,8 +1,10 @@
 ---
 description: Prática deliberada - repetir procedimento 5-10x (/ul-practice-drill)
 agent: tutor
-subtask: false
+model: opencode-go/glm-5
 ---
+
+Argumentos recebidos: $1 (conceito), $2 (variações)
 
 ## Uso
 /ul-practice-drill [conceito] [variações]

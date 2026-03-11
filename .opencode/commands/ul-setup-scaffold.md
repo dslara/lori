@@ -1,8 +1,10 @@
 ---
 description: Criar estrutura/boilerplate de projeto (/ul-setup-scaffold)
 agent: tutor
-subtask: false
+model: opencode-go/kimi-k2.5
 ---
+
+Argumento recebido: $ARGUMENTS (descrição do projeto)
 
 ## Uso
 /ul-setup-scaffold [projeto]

@@ -1,8 +1,10 @@
 ---
 description: Warm-up com quiz adaptativo (/ul-practice-quiz)
 agent: tutor
-subtask: false
+model: opencode-go/glm-5
 ---
+
+Argumentos recebidos: $1 (quantidade), $2 (tópico)
 
 ## Uso
 /ul-practice-quiz [N] [tópico]

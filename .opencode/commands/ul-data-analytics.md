@@ -1,44 +1,51 @@
 ---
-description: View advanced analytics and progress report (/ul-data-analytics)
+description: Ver relatório analítico avançado (/ul-data-analytics)
 agent: tutor
-subtask: false
+model: opencode-go/kimi-k2.5
 ---
 
-Generate a comprehensive analytics report using the 'analytics' tool with generateReport operation.
+## Descrição
 
-Present the following information in an organized way:
+Gera relatório analítico avançado com métricas de desempenho, padrões de estudo e recomendações personalizadas baseadas nos dados históricos.
 
-## 📊 Analytics Report
+## Uso
+/ul-data-analytics
 
-### General Metrics
-- Current streak and best streak
-- Total sessions completed
+Gere um relatório analítico abrangente usando a ferramenta 'analytics' com a operação generateReport.
 
-### Current Module Stats (if applicable)
-- Total study time
-- Average focus score
-- Number of sessions
+Apresente as seguintes informações de forma organizada:
 
-### SRS Progress
-- Flashcards reviewed today
-- Cards pending review
+## 📊 Relatório de Analytics
 
-### Skills & Techniques
-- Most used technique
-- Distribution of techniques used
+### Métricas Gerais
+- Streak atual e melhor streak
+- Total de sessões completadas
 
-### Performance by Topic
-- Error rates by topic (if available)
-- Recommendations for improvement
+### Estatísticas do Módulo Atual (se aplicável)
+- Tempo total de estudo
+- Pontuação média de foco
+- Número de sessões
 
-### Study Patterns
-- Weekday distribution (which days you study most)
-- Recommended difficulty level for next quiz
+### Progresso SRS
+- Flashcards revisados hoje
+- Cards pendentes de revisão
 
-### Recommendations
-Based on the data, suggest:
-1. Next activity type (drill, quiz, feynman, etc.)
-2. Difficulty level (easy, medium, hard)
-3. Areas to focus on
+### Habilidades e Técnicas
+- Técnica mais usada
+- Distribuição de técnicas utilizadas
 
-If user asks for specific module data, use the moduleId parameter.
+### Desempenho por Tópico
+- Taxas de erro por tópico (se disponível)
+- Recomendações de melhoria
+
+### Padrões de Estudo
+- Distribuição por dia da semana (quais dias estuda mais)
+- Nível de dificuldade recomendado para o próximo quiz
+
+### Recomendações
+Baseado nos dados, sugira:
+1. Próximo tipo de atividade (drill, quiz, feynman, etc.)
+2. Nível de dificuldade (fácil, médio, difícil)
+3. Áreas para focar
+
+Se o usuário pedir dados de um módulo específico, use o parâmetro moduleId.

@@ -1,8 +1,10 @@
 ---
 description: Validar compreensão explicando para criança de 12 anos (/ul-practice-feynman)
 agent: tutor
-subtask: false
+model: opencode-go/glm-5
 ---
+
+Argumento recebido: $ARGUMENTS (conceito a validar)
 
 ## Uso
 /ul-practice-feynman [conceito]

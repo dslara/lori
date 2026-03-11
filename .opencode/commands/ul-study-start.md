@@ -1,11 +1,15 @@
 ---
 description: Iniciar sessão de estudo com contexto automático (/ul-study-start)
 agent: tutor
-subtask: false
+model: opencode-go/minimax-m2.5
 ---
 
 ## Uso
 /ul-study-start
+
+## Descrição
+
+Inicia sessão de estudo carregando contexto automático (módulo ativo, streak, SRS pendente) e sugere atividades baseado nas prioridades atuais.
 
 ## Processo
 

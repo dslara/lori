@@ -1,8 +1,10 @@
 ---
 description: Introduzir conceito novo com analogias (/ul-learn-explain)
 agent: tutor
-subtask: false
+model: opencode-go/glm-5
 ---
+
+Argumento recebido: $ARGUMENTS (conceito a explicar)
 
 ## Uso
 /ul-learn-explain [conceito]
