@@ -5,6 +5,72 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
 e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [3.1.0] - 2026-03-10
+
+### 🚀 Breaking Changes — Migração Completa para TypeScript
+
+**Zero scripts bash** — 100% da lógica migrada para tools TypeScript.
+
+#### Removido
+- **Todos os scripts bash** (7 arquivos):
+  - `scripts/module.sh` → `/ul-module-create`
+  - `scripts/switch.sh` → `/ul-module-switch`
+  - `scripts/archive.sh` → `/ul-module-archive`
+  - `scripts/backup.sh` → `/ul-data-backup`
+  - `scripts/setup.sh` → `/ul-setup-check`
+  - `scripts/retro.sh` → `/ul-retro-weekly`
+  - `scripts/review.sh` → `/ul-memory-review`
+- **Dependências de bash**: `common.sh`, `data.sh` (não existiam mas eram referenciados)
+
+#### Adicionado — 4 Novas Tools TypeScript
+
+**`data.ts` (estendida)**:
+- `createModule` — Criar novo módulo com estrutura completa
+- `switchModule` — Alternar módulo ativo
+- `archiveModule` — Arquivar módulo finalizado
+- `createBackup` — Criar backup dos dados CSV
+
+**`setup.ts` (nova)**:
+- `checkDependencies` — Verificar jq, bc, opencode, bun
+- `initialize` — Criar estrutura de diretórios
+- `verify` — Verificar integridade do sistema
+
+**`retro.ts` (nova)**:
+- `getWeeklyStats` — Estatísticas automáticas da semana
+- `createRetro` — Criar retrospectiva com template
+- `listRetros` — Listar retrospectivas anteriores
+
+#### Adicionado — 6 Novos Commands
+
+**Commands de Módulos (`/ul-module-*`)**:
+- `/ul-module-create [nome]` — Criar novo módulo de estudo
+- `/ul-module-switch [nome]` — Alternar módulo ativo
+- `/ul-module-archive [nome]` — Arquivar módulo finalizado
+
+**Commands de Setup e Backup**:
+- `/ul-setup-check` — Verificar dependências do sistema
+- `/ul-data-backup` — Criar backup dos dados
+- `/ul-retro-weekly` — Criar retrospectiva semanal
+
+#### Modificado
+- **Makefile**: Atualizado para v3.0, todos targets redirecionam para commands
+- **README.md**: Tabela de commands expandida (24 → 29 commands)
+- **@tutor.md**: Tutoriais atualizados para usar tools TypeScript
+- **@meta.md**: Referências de keywords atualizadas
+- **Skills**: 20+ referências a keywords substituídas por commands
+
+#### Benefícios
+- ✅ **Zero dependência bash** — Portabilidade total
+- ✅ **Tipagem forte** — Erros em tempo de compilação
+- ✅ **Testes automatizados** — Confiabilidade (pendente)
+- ✅ **Error handling consistente** — Try/catch padronizado
+- ✅ **Interface unificada** — 100% via `/` no TUI
+
+#### Migração de Dados
+Não há migração de dados necessária. Todos os CSVs permanecem inalterados.
+
+---
+
 ## [3.0.0] - 2026-03-09
 
 ### 🚀 Breaking Changes — Migração para Commands Unificados

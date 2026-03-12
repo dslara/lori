@@ -1,6 +1,6 @@
 import { tool } from "@opencode-ai/plugin";
 import { z } from "zod";
-import { readFile } from "fs/promises";
+import { readFile } from "node:fs/promises";
 import { join } from "path";
 import { format } from "date-fns";
 

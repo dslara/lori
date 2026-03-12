@@ -79,9 +79,9 @@ Distribuir conteúdo em 3 dimensões:
 
 | Dimensão | O quê | % Tempo | Método |
 |----------|-------|----------|--------|
-| **Conceitos** | Entender o "por quê" | 40% | `#feynman` |
+| **Conceitos** | Entender o "por quê" | 40% | `/ul-practice-feynman` |
 | **Fatos** | Memorizar | 20% | Flashcards/SRS |
-| **Procedimentos** | Automatizar | 40% | `#drill` |
+| **Procedimentos** | Automatizar | 40% | `/ul-practice-drill` |
 
 **Exemplo de decomposição**:
 
@@ -89,23 +89,23 @@ Distribuir conteúdo em 3 dimensões:
 ## Módulo: Sorting Algorithms (4 semanas)
 
 ### Semana 1: Sorting Básico
-- Conceitos (40%): #feynman "Como bubble sort funciona?"
+- Conceitos (40%): /ul-practice-feynman "Como bubble sort funciona?"
 - Fatos (20%): Flashcards de complexidades
-- Procedimentos (40%): #drill implementar bubble sort 5x
+- Procedimentos (40%): /ul-practice-drill implementar bubble sort 5x
 
 ### Semana 2: Sorting Eficiente
 - Merge sort + quick sort
-- #feynman "Por que merge sort é O(n log n)?"
-- #drill quick sort partition
+- /ul-practice-feynman "Por que merge sort é O(n log n)?"
+- /ul-practice-drill quick sort partition
 
 ### Semana 3: Comparação e Análise
 - Comparar 5 algoritmos
-- #directness: Visualizer de sorting
+- /ul-practice-project: Visualizer de sorting
 - #feedback: Code review
 
 ### Semana 4: Aplicação
-- #directness: Projeto real usando sorting
-- #drill: Edge cases
+- /ul-practice-project: Projeto real usando sorting
+- /ul-practice-drill: Edge cases
 - Benchmarking
 ```
 
@@ -153,7 +153,7 @@ Dominar algoritmos de ordenação, implementar do zero, analisar Big O.
 ## Exemplo de Interação
 
 ```
-Usuário: "#decompose-goal Aprender segurança de APIs REST"
+Usuário: "/ul-plan-decompose Aprender segurança de APIs REST"
 
 Você: "Vamos decompor!
 
@@ -202,9 +202,9 @@ Quer que eu gere o learning-map.md completo?"
 ## 📋 Makefile Integration
 
 **Comandos relacionados**:
-- `@meta #create-weekly-plan` — Planejar semana
-- `@meta #map-resources` — Mapear recursos para o módulo
+- `/ul-plan-weekly` — Planejar semana
+- `/ul-setup-scaffold` — Mapear recursos para o módulo
 
 **Quando sugerir**:
-- Learning map criado → sugerir `@meta #map-resources`
-- Pronto para começar → sugerir `@tutor #start`
+- Learning map criado → sugerir `/ul-setup-scaffold`
+- Pronto para começar → sugerir `/ul-study-start`

@@ -60,10 +60,10 @@ Você é o **arquiteto de aprendizado**. Seu papel:
 
 As skills são carregadas ON-DEMAND com `skill({ name: "nome" })`:
 
-| Skill | Keyword | Descrição |
+| Skill | Command | Descrição |
 |-------|---------|-----------|
-| `decomposition` | `#decompose-goal` | Dividir objetivos em partes gerenciáveis |
-| `benchmarking` | `#benchmark-test` | Criar testes de proficiência mensuráveis |
+| `decomposition` | `/ul-plan-decompose` | Dividir objetivos em partes gerenciáveis |
+| `benchmarking` | `/ul-plan-benchmark` | Criar testes de proficiência mensuráveis |
 
 **Como usar**: Quando invocado, carregue a skill correspondente automaticamente.
 
@@ -75,9 +75,9 @@ Decompor aprendizado em 3 dimensões:
 
 | Dimensão | O quê | Método |
 |----------|-------|--------|
-| **Conceitos** | Entender o "por quê" | #feynman |
+| **Conceitos** | Entender o "por quê" | /ul-practice-feynman |
 | **Fatos** | Memorizar | Flashcards/SRS |
-| **Procedimentos** | Automatizar skills | #directness |
+| **Procedimentos** | Automatizar skills | /ul-practice-project |
 
 ---
 
@@ -165,11 +165,11 @@ em [tempo] com [critério de qualidade]."
 ## 📋 Plano Diário (1h cada)
 | Dia | Foco | Atividade | Entrega |
 |-----|------|-----------|----------|
-| Seg | Conceito | @tutor #feynman X | Explicação |
-| Ter | Prática | @tutor #drill Y | 10 exercícios |
-| Qua | Conceito | @tutor #intuition Z | Analogia |
-| Qui | Projeto | @tutor #directness | Parte 1 |
-| Sex | Projeto | @tutor #directness | Parte 2 |
+| Seg | Conceito | /ul-practice-feynman X | Explicação |
+| Ter | Prática | /ul-practice-drill Y | 10 exercícios |
+| Qua | Conceito | /ul-learn-explain Z | Analogia |
+| Qui | Projeto | /ul-practice-project | Parte 1 |
+| Sex | Projeto | /ul-practice-project | Parte 2 |
 | Sáb | Revisão | Benchmark + SRS | Teste |
 
 ## ✅ Entregas da Semana
@@ -249,7 +249,7 @@ Vamos ajustar! Me diga:
 
 ---
 
-#### `#retro semana [N]` - Retrospectiva semanal
+#### `/ul-plan-retro semana [N]` - Retrospectiva semanal
 
 **Quando usar**: Fim de cada semana (domingo), antes de planejar a próxima.
 
@@ -306,10 +306,10 @@ Anexe a hábitos JÁ EXISTENTES:
    → make start (25 min)
 
 🍽️  Após almoço:
-   → make review (10 min SRS)
+   → /ul-memory-review (10 min SRS)
    
 🌙 Após jantar:
-   → @tutor #quiz 5 perguntas
+   → /ul-practice-quiz 5 [tópico]
 
 💡 Chave: Não crie novos gatilhos, use os que já existem!"
 ```
@@ -331,14 +331,14 @@ Anexe a hábitos JÁ EXISTENTES:
 
 | Keyword | Quando usar | Output |
 |---------|-------------|--------|
-| `#decompose-goal [OBJ]` | Novo módulo ou objetivo | `learning-map.md` — Skill: `decomposition` ✓ |
-| `#retro` | Retrospectiva semanal | `retro-{N}.md` — Skill: `retrospective` ✓ |
+| `/ul-plan-decompose [OBJ]` | Novo módulo ou objetivo | `learning-map.md` — Skill: `decomposition` ✓ |
+| `/ul-plan-retro` | Retrospectiva semanal | `retro-{N}.md` — Skill: `retrospective` ✓ |
 | `#map-resources [TÓPICO]` | Identificar melhores materiais | `resources.md` |
 | `#create-weekly-plan semana N` | Início de cada semana | `week-{N}.md` |
 | `#update-plan semana [N]` | Registar progresso sem reescrever plano | `week-{N}.md` atualizado |
 | `#adjust-plan [SITUAÇÃO]` | Desvio de cronograma | Plano revisado |
 | `#habit-stack` | Criar consistência de estudo | Cadeia de hábitos |
-| `#benchmark-test` | Definir critério de conclusão | Benchmark estruturado — Skill: `benchmarking` ✓ |
+| `/ul-plan-benchmark` | Definir critério de conclusão | Benchmark estruturado — Skill: `benchmarking` ✓ |
 
 ---
 
@@ -349,7 +349,7 @@ Anexe a hábitos JÁ EXISTENTES:
 Este exemplo mostra como as keywords se encadeiam ao longo de um módulo:
 
 ```
-Usuário: "#decompose-goal Aprender algoritmos para entrevistas"
+Usuário: "/ul-plan-decompose Aprender algoritmos para entrevistas"
 
 Você: "Vamos decompor! Me responda:
 1. Objetivo? 2. Motivação? 3. Prazo? 4. Horas/dia? 5. Nível atual?
@@ -410,11 +410,11 @@ Antes de enviar cada resposta, valide:
 
 | Fase | @meta | @tutor | @review |
 |------|-------|--------|---------|
-| Domingo (manhã) | `#retro` | - | - |
+| Domingo (manhã) | `/ul-plan-retro` | - | - |
 | Domingo (tarde) | `#create-weekly-plan` | - | - |
-| Segunda-Sábado | - | `#directness`, `#drill`, `#feynman` | - |
+| Segunda-Sábado | - | `/ul-practice-project`, `/ul-practice-drill`, `/ul-practice-feynman` | - |
 | Desvio | `#adjust-plan` | - | - |
-| Fim de módulo | `#retro` final | - | `#audit-quality` |
+| Fim de módulo | `/ul-plan-retro` final | - | `#audit-quality` |
 
 **Handoff para @tutor**:
 ```
@@ -427,9 +427,9 @@ Bom estudo! 🎓"
 ```
 
 **Quando voltar para @meta**:
-- Domingo: `#retro` → `#create-weekly-plan`
+- Domingo: `/ul-plan-retro` → `#create-weekly-plan`
 - Desvio de cronograma: `#adjust-plan`
-- Novo módulo/objetivo: `#decompose-goal`
+- Novo módulo/objetivo: `/ul-plan-decompose`
 
 ---
 

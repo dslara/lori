@@ -16,75 +16,112 @@ Otimizado para aprendizado acelerado de Ciência da Computação.
 
 ### Interface Principal (OpenCode)
 
-Todas as funcionalidades são acessíveis via **keywords** no OpenCode:
+Todas as funcionalidades são acessíveis via **commands** no TUI do OpenCode:
 
 ```bash
 # Sessão de estudo
 /ul-study-start              # Iniciar sessão com contexto
-/ul-practice-drill recursão     # Prática deliberada
+/ul-practice-drill recursão  # Prática deliberada
 /ul-practice-feynman closures  # Validar compreensão
-/ul-practice-quiz 3 Big O       # Warm-up
+/ul-practice-quiz 3 Big O    # Warm-up
 /ul-study-end                # Encerrar e salvar progresso
 
 # Planejamento
 /ul-plan-decompose "Aprender algoritmos"  # Decompor objetivo
-/ul-plan-weekly 1           # Criar plano semanal
-/ul-plan-retro                                 # Retrospectiva semanal
+/ul-plan-weekly 1            # Criar plano semanal
+/ul-plan-retro               # Retrospectiva semanal
 
 # Revisão
-/ul-memory-create       # Criar flashcard
-/ul-memory-create review # Revisar flashcards
+/ul-memory-create            # Criar flashcard
+/ul-memory-review            # Revisar flashcards
+
+# Módulos
+/ul-module-create [nome]     # Criar novo módulo
+/ul-module-switch [nome]     # Alternar módulo ativo
+/ul-module-archive [nome]    # Arquivar módulo finalizado
 ```
 
-### Commands (No TUI do OpenCode)
+### Commands Disponíveis
 
-Digite `/` no TUI para acessar os commands:
+Digite `/` no TUI para acessar todos os commands:
 
-```
-/ul-data-status     # Ver streak, sessões, módulo atual
-/ul-data-analytics  # Ver analytics avançados
-/ul-data-manage init  # Inicializar estrutura de dados
-```
+#### Commands de Sessão (`/ul-study-*`)
 
----
+| Command | Descrição |
+|---------|-----------|
+| `/ul-study-start` | Iniciar sessão com contexto automático |
+| `/ul-study-end` | Encerrar sessão e salvar progresso |
+| `/ul-study-plan` | Ver progresso da semana e plano atual |
 
-## 📋 Keywords Disponíveis
+#### Commands de Prática (`/ul-practice-*`)
 
-### Sessão de Estudo (@tutor)
+| Command | Descrição |
+|---------|-----------|
+| `/ul-practice-drill [conceito]` | Prática deliberada 5-10x |
+| `/ul-practice-feynman [conceito]` | Validar compreensão explicando |
+| `/ul-practice-quiz N [tópico]` | Warm-up com quiz adaptativo |
+| `/ul-practice-project [desafio]` | Aprender fazendo projetos reais |
 
-| Keyword | Descrição | Skill |
-|---------|-----------|-------|
-| `#start` | Iniciar sessão com contexto automático | `session` |
-| `#end` | Encerrar e salvar progresso | `session` |
-| `#plan` | Ver progresso da semana | `session` |
-| `#drill [conceito]` | Prática deliberada 5-10x | `drill` |
-| `#feynman [conceito]` | Validar compreensão | `feynman` |
-| `#quiz N [tópico]` | Warm-up / retrieval | `quiz` |
-| `#directness [desafio]` | Projeto real | `directness` |
-| `#explain [conceito]` | Introduzir conceito novo | `explain-concept` |
-| `#debug` | Debug socrático | `debug-socratic` |
-| `#zombie` | Superar procrastinação | `zombie-mode` |
-| `#scaffold [projeto]` | Criar boilerplate | `scaffold` |
-| `#srs-generator` | Criar flashcards | `srs-generator` |
+#### Commands de Aprendizado (`/ul-learn-*`)
 
-### Planejamento (@meta)
+| Command | Descrição |
+|---------|-----------|
+| `/ul-learn-explain [conceito]` | Introduzir conceito novo com analogias |
+| `/ul-learn-debug` | Debug socrático - guia para encontrar bugs |
 
-| Keyword | Descrição | Skill |
-|---------|-----------|-------|
-| `#decompose-goal [OBJ]` | Decompor objetivo | `decomposition` |
-| `#retro` | Retrospectiva semanal | `retrospective` |
-| `#benchmark-test` | Definir critério de conclusão | `benchmarking` |
+#### Commands de Produtividade (`/ul-productivity-*`)
 
-### Commands & Utilitários
+| Command | Descrição |
+|---------|-----------|
+| `/ul-productivity-start` | Superar procrastinação (Two-Minute Rule) |
+| `/ul-productivity-break` | Modo difuso - pausa ativa quando travado |
 
-| Command | Descrição | Quando Usar |
-|---------|-----------|-------------|
-| `/ul-data-status` | Ver streak e métricas | Qualquer momento |
-| `/ul-data-analytics` | Ver analytics avançados | Revisão semanal |
-| `/data` | Gerenciar dados | Setup/troubleshooting |
-| `make setup` | Configuração inicial | Primeira vez |
-| `make backup` | Backup dos dados | Periodicamente |
-| `make module` | Criar novo módulo | Novo tema de estudo |
+#### Commands de Setup (`/ul-setup-*`)
+
+| Command | Descrição |
+|---------|-----------|
+| `/ul-setup-scaffold [projeto]` | Criar estrutura/boilerplate de projeto |
+| `/ul-setup-check` | Verificar dependências do sistema |
+
+#### Commands de Memória (`/ul-memory-*`)
+
+| Command | Descrição |
+|---------|-----------|
+| `/ul-memory-create` | Criar flashcards SRS |
+| `/ul-memory-review` | Revisar flashcards pendentes |
+
+#### Commands de Planejamento (`/ul-plan-*`)
+
+| Command | Descrição |
+|---------|-----------|
+| `/ul-plan-decompose [objetivo]` | Decompor objetivo complexo |
+| `/ul-plan-weekly [semana]` | Criar plano semanal detalhado |
+| `/ul-plan-retro` | Retrospectiva semanal |
+| `/ul-plan-benchmark [skill]` | Criar teste de proficiência mensurável |
+
+#### Commands de Módulos (`/ul-module-*`)
+
+| Command | Descrição |
+|---------|-----------|
+| `/ul-module-create [nome]` | Criar novo módulo de estudo |
+| `/ul-module-switch [nome]` | Alternar módulo ativo |
+| `/ul-module-archive [nome]` | Arquivar módulo finalizado |
+
+#### Commands de Dados (`/ul-data-*`)
+
+| Command | Descrição |
+|---------|-----------|
+| `/ul-data-status` | Ver streak, sessões, módulo atual |
+| `/ul-data-analytics` | Ver relatório analítico avançado |
+| `/ul-data-dashboard` | Ver dashboard completo com métricas |
+| `/ul-data-manage [op]` | Gerenciar dados (init, reset) |
+| `/ul-data-backup` | Criar backup dos dados |
+
+#### Commands de Revisão (`/ul-retro-*`)
+
+| Command | Descrição |
+|---------|-----------|
+| `/ul-retro-weekly` | Criar retrospectiva semanal |
 
 ---
 

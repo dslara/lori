@@ -1,6 +1,6 @@
 import { parse } from "csv-parse/sync";
 import { stringify } from "csv-stringify/sync";
-import { readFile, writeFile, access, mkdir } from "fs/promises";
+import { readFile, writeFile, access, mkdir } from "node:fs/promises";
 
 // === CSV HEADERS ===
 export const CSV_HEADERS = {

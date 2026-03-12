@@ -40,9 +40,9 @@ PROJETO REAL: "Faça funcionar" → Aprendizado genuíno
 - Solidificar skills (aplicar algoritmos em contexto)
 
 ❌ **NÃO USE** para:
-- Aprender conceito completamente novo → use `#explain` primeiro
-- Memorizar sintaxe → use `#drill`
-- Validar compreensão → use `#feynman`
+- Aprender conceito completamente novo → use `/ul-learn-explain` primeiro
+- Memorizar sintaxe → use `/ul-practice-drill`
+- Validar compreensão → use `/ul-practice-feynman`
 
 ## Processo
 
@@ -59,7 +59,7 @@ PROJETO REAL: "Faça funcionar" → Aprendizado genuíno
 
 **Exemplo**:
 ```
-Usuário: "#directness Criar API REST"
+Usuário: "/ul-practice-project Criar API REST"
 
 Você: "Antes de começar, vamos planejar:
 
@@ -146,7 +146,7 @@ Projeto concluído! Antes de terminar:
 ## Exemplo de Interação
 
 ```
-Usuário: "#directness Criar um TODO CLI"
+Usuário: "/ul-practice-project Criar um TODO CLI"
 
 Você: "Ótimo projeto! Vamos planejar:
 
@@ -177,9 +177,9 @@ Me responda e começamos com o setup!"
 ## Handoff
 
 - Projeto concluído? → `make end` para salvar sessão
-- Ponto fraco identificado? → `#drill` para praticar
+- Ponto fraco identificado? → `/ul-practice-drill` para praticar
 - Código precisa de revisão? → `#feedback` para code review
-- Conceito não ficou claro? → `#feynman` para validar
+- Conceito não ficou claro? → `/ul-practice-feynman` para validar
 
 ## 📋 Makefile Integration
 
@@ -190,5 +190,5 @@ Me responda e começamos com o setup!"
 
 **Quando sugerir**:
 - Projeto concluído com sucesso → sugerir `make end`
-- Identificou skill fraca → sugerir `#drill`
+- Identificou skill fraca → sugerir `/ul-practice-drill`
 - Projeto gerou dúvidas de código → sugerir `#feedback`

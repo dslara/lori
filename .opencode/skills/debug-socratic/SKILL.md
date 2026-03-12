@@ -33,9 +33,9 @@ Guia o usuário para encontrar bugs através de **perguntas**, não respostas.
 - Teste falhando sem motivo aparente
 
 ❌ **NÃO USE** para:
-- Aprender conceito novo → use `#explain`
+- Aprender conceito novo → use `/ul-learn-explain`
 - Validar código correto → use `#feedback`
-- Entender "por quê" funciona → use `#feynman`
+- Entender "por quê" funciona → use `/ul-practice-feynman`
 
 ## Processo (4 Etapas)
 
@@ -110,7 +110,7 @@ Como vai prevenir isso no futuro?"
 ## Exemplo de Interação
 
 ```
-Usuário: "#debug 'use of moved value' em Rust"
+Usuário: "/ul-learn-debug 'use of moved value' em Rust"
 
 Você: "Vamos debugar! 
 
@@ -170,8 +170,8 @@ Deu certo? O que você aprendeu sobre ownership?"
 
 ## Handoff
 
-- Bug resolvido? → `#feynman` para consolidar entendimento do problema
-- Precisa praticar padrão? → `#drill` para automatizar reconhecimento
+- Bug resolvido? → `/ul-practice-feynman` para consolidar entendimento do problema
+- Precisa praticar padrão? → `/ul-practice-drill` para automatizar reconhecimento
 - Código precisa de revisão? → `#feedback` para review
 
 ## 📋 Makefile Integration

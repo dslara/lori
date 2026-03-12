@@ -1,10 +1,15 @@
 import { tool } from "@opencode-ai/plugin";
 import { z } from "zod";
 import { format } from "date-fns";
-import { join } from "path";
+import { join, dirname, basename } from "path";
+import { mkdir, cp as copyFile, access } from "node:fs/promises";
+import { exec as execCallback } from "child_process";
+import { promisify } from "util";
 
 import { readCSV, writeCSV, initCSVDir, getUserId, CSV_HEADERS, logTutorInteraction } from "./utils-csv.js";
-import type { Session, Insight, Flashcard, Review, Interaction } from "./model-types.js";
+import type { Session, Insight, Flashcard, Review, Interaction, Module } from "./model-types.js";
+
+const exec = promisify(execCallback);
 
 function getDataDir(context: any): string {
   return join(context.worktree || context.directory, "data");
@@ -26,7 +31,11 @@ export default tool({
       "getFlashcards",
       "createReview",
       "createInteraction",
-      "resetAll"
+      "resetAll",
+      "createModule",
+      "switchModule",
+      "archiveModule",
+      "createBackup"
     ]).describe("Operation to perform"),
     
     moduleId: z.string().optional().describe("Module ID (e.g., M1, M2)"),
@@ -55,7 +64,9 @@ export default tool({
     userMessage: z.string().optional().describe("User message/question"),
     userResponse: z.string().optional().describe("User response/answer"),
     tutorResponse: z.string().optional().describe("Tutor response"),
-    metadata: z.object({}).passthrough().optional().describe("Additional metadata (JSON)")
+    metadata: z.object({}).passthrough().optional().describe("Additional metadata (JSON)"),
+    
+    moduleName: z.string().optional().describe("Module name (e.g., python-backend, rust-async)"),
   },
   
   async execute(args, context) {
@@ -452,7 +463,7 @@ export default tool({
         }
         
         case "resetAll": {
-          const { rm } = await import("fs/promises");
+          const { rm } = await import("node:fs/promises");
           try {
             await rm(dataDir, { recursive: true });
             await initCSVDir(dataDir);
@@ -467,6 +478,249 @@ export default tool({
               message: String(error)
             });
           }
+        }
+        
+        case "createModule": {
+          if (!args.moduleName) {
+            return JSON.stringify({ success: false, error: "MODULE_NAME_REQUIRED", message: "moduleName is required" });
+          }
+          
+          // Validar nome (kebab-case)
+          const moduleName = args.moduleName.toLowerCase().replace(/\s+/g, "-").replace(/[^a-z0-9-]/g, "");
+          
+          if (moduleName.length < 3 || moduleName.length > 50) {
+            return JSON.stringify({ success: false, error: "INVALID_MODULE_NAME", message: "Module name must be 3-50 characters" });
+          }
+          
+          // Gerar ID único
+          const moduleId = `M${format(new Date(), "MMddHHmmss")}`;
+          const projectDir = join(context.worktree || context.directory, "projects", `${moduleId}-${moduleName}`);
+          
+          // Criar diretórios
+          await mkdir(join(projectDir, "meta"), { recursive: true });
+          await mkdir(join(projectDir, "projects"), { recursive: true });
+          await mkdir(join(projectDir, "knowledge"), { recursive: true });
+          
+          // Criar README.md
+          const readme = `# 📦 ${args.moduleName}
+
+**Status**: 🟢 Ativo
+**Criado**: ${today}
+**Módulo ID**: ${moduleId}
+
+## 📂 Estrutura
+
+- \`meta/\` - Planejamento e retrospectivas
+- \`projects/\` - Projetos práticos
+- \`knowledge/\` - Notas e recursos
+
+## 🎯 Objetivo
+
+_Descreva aqui o objetivo deste módulo_
+
+## 📅 Progresso
+
+- Semana 1: _Em breve_
+
+## 📚 Recursos
+
+- Adicione recursos em \`meta/resources.md\`
+`;
+          await import("node:fs/promises").then(fs => fs.writeFile(join(projectDir, "README.md"), readme));
+          
+          // Carregar e atualizar modules.csv
+          const modules = await readCSV<Module>(join(dataDir, "modules.csv"));
+          
+          // Desativar outros módulos
+          modules.forEach(m => m.is_active = "false");
+          
+          // Adicionar novo módulo
+          modules.push({
+            id: moduleId,
+            user_id: userId,
+            name: moduleName,
+            is_active: "true",
+            status: "active",
+            started_at: today,
+            completed_at: "",
+            total_hours: ""
+          });
+          
+          await writeCSV(join(dataDir, "modules.csv"), CSV_HEADERS.modules, modules);
+          
+          return JSON.stringify({
+            success: true,
+            data: { 
+              moduleId, 
+              moduleName: `${moduleId}-${moduleName}`,
+              path: projectDir
+            }
+          });
+        }
+        
+        case "switchModule": {
+          const modules = await readCSV<Module>(join(dataDir, "modules.csv"));
+          
+          // Se não especificou nome, listar módulos
+          if (!args.moduleName) {
+            return JSON.stringify({
+              success: true,
+              data: {
+                modules: modules.map(m => ({
+                  id: m.id,
+                  name: m.name,
+                  status: m.status,
+                  is_active: m.is_active,
+                  started_at: m.started_at
+                })),
+                activeModule: modules.find(m => m.is_active === "true") || null
+              }
+            });
+          }
+          
+          // Buscar módulo pelo nome
+          const targetModule = modules.find(m => m.name === args.moduleName || m.id === args.moduleName);
+          
+          if (!targetModule) {
+            return JSON.stringify({ 
+              success: false, 
+              error: "MODULE_NOT_FOUND",
+              message: `Module "${args.moduleName}" not found. Available: ${modules.map(m => m.name).join(", ")}`
+            });
+          }
+          
+          // Desativar todos
+          modules.forEach(m => m.is_active = "false");
+          
+          // Ativar alvo
+          targetModule.is_active = "true";
+          
+          await writeCSV(join(dataDir, "modules.csv"), CSV_HEADERS.modules, modules);
+          
+          return JSON.stringify({
+            success: true,
+            data: { 
+              moduleId: targetModule.id, 
+              moduleName: targetModule.name,
+              status: targetModule.status
+            }
+          });
+        }
+        
+        case "archiveModule": {
+          if (!args.moduleName) {
+            return JSON.stringify({ success: false, error: "MODULE_NAME_REQUIRED", message: "moduleName is required" });
+          }
+          
+          const modules = await readCSV<Module>(join(dataDir, "modules.csv"));
+          const targetModule = modules.find(m => m.name === args.moduleName || m.id === args.moduleName);
+          
+          if (!targetModule) {
+            return JSON.stringify({ success: false, error: "MODULE_NOT_FOUND", message: `Module "${args.moduleName}" not found` });
+          }
+          
+          const projectDir = join(context.worktree || context.directory, "projects", `${targetModule.id}-${targetModule.name}`);
+          const archiveDir = join(context.worktree || context.directory, "archived", `${targetModule.id}-${targetModule.name}`, today);
+          
+          // Verificar se projeto existe
+          try {
+            await access(projectDir);
+          } catch {
+            return JSON.stringify({ success: false, error: "PROJECT_DIR_NOT_FOUND", message: `Project directory not found: ${projectDir}` });
+          }
+          
+          // Criar diretório de archive
+          await mkdir(dirname(archiveDir), { recursive: true });
+          
+          // Copiar projeto para archived/
+          await copyFile(projectDir, archiveDir, { recursive: true });
+          
+          // Criar template de relatório final
+          const reportTemplate = `# Relatório Final - ${targetModule.name}
+
+**Data de Conclusão**: ${today}
+**Módulo ID**: ${targetModule.id}
+
+## 📊 Resumo
+
+- **Data de Início**: ${targetModule.started_at}
+- **Tempo Total**: ${targetModule.total_hours || "N/A"} horas
+- **Status**: ✅ Completado
+
+## ✅ Conquistas
+
+_Liste as principais conquistas deste módulo_
+
+## 📚 Aprendizados
+
+_Quais foram os principais aprendizados?_
+
+## 🔧 Melhorias
+
+_O que poderia ser melhorado no próximo módulo?_
+
+## 📎 Links e Recursos
+
+- Adicione links relevantes
+
+## 🎯 Próximos Passos
+
+- [ ] Próximo módulo
+- [ ] Revisar flashcards
+`;
+          await import("node:fs/promises").then(fs => fs.writeFile(join(archiveDir, "relatorio-final.md"), reportTemplate));
+          
+          // Atualizar CSV
+          targetModule.is_active = "false";
+          targetModule.status = "completed";
+          targetModule.completed_at = today;
+          
+          await writeCSV(join(dataDir, "modules.csv"), CSV_HEADERS.modules, modules);
+          
+          return JSON.stringify({
+            success: true,
+            data: { 
+              archivedTo: archiveDir,
+              moduleId: targetModule.id,
+              moduleName: targetModule.name
+            }
+          });
+        }
+        
+        case "createBackup": {
+          const timestamp = format(new Date(), "yyyy-MM-dd_HHmmss");
+          const backupDir = join(context.worktree || context.directory, "backups", timestamp);
+          
+          // Criar diretório de backup
+          await mkdir(backupDir, { recursive: true });
+          
+          // Copiar data/
+          try {
+            await copyFile(dataDir, join(backupDir, "data"), { recursive: true });
+          } catch (error) {
+            // Se data/ não existe, ignorar
+          }
+          
+          // Criar tarball
+          const tarball = `${backupDir}.tar.gz`;
+          try {
+            await exec(`tar -czf "${tarball}" -C "${dirname(backupDir)}" "${basename(backupDir)}"`);
+          } catch (error) {
+            // Se tar falhar, continuar sem tarball
+            return JSON.stringify({
+              success: true,
+              data: { 
+                backupDir, 
+                tarball: null,
+                warning: "Tarball creation failed (tar not available), but directory backup succeeded"
+              }
+            });
+          }
+          
+          return JSON.stringify({
+            success: true,
+            data: { backupDir, tarball }
+          });
         }
         
         default:
