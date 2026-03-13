@@ -23,3 +23,17 @@ Exiba:
 Apresente as informações de forma clara e motivadora. Se o usuário tiver um bom streak, celebre! Se não estudou recentemente, encoraje-o gentilmente.
 
 Se não houver dados, sugira começar com /ul-study-start.
+
+## Integrações
+
+**Tools utilizadas:**
+- `status.getStatus` — Obtém dados brutos de status
+- `status.formatStatus` — Formata com emojis e barra de progresso
+- `data.getSessions` — Obtém sessões recentes
+- `context.getCurrentModule` — Obtém módulo ativo
+
+**Processo:**
+1. Invocar `status.getStatus` para obter streak, total de sessões, etc.
+2. Invocar `context.getCurrentModule` para obter módulo ativo
+3. Invocar `status.formatStatus` para formatar output visual
+4. Apresentar de forma motivadora

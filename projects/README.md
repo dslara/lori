@@ -15,7 +15,7 @@ Container de todos os projetos de aprendizado Ultralearning. Cada subdiretório 
 | [M7-compilers](M7-compilers/README.md) | Lexer, parser, interpreter | ⬜ |
 | [M8-capstone](M8-capstone/README.md) | Projeto capstone final | ⬜ |
 
-> Para criar um novo projeto: `make module`
+> Para criar um novo projeto: `/ul-module-create`
 
 ## Estrutura Esperada de um Projeto
 
@@ -47,7 +47,7 @@ projects/M1-math-foundations/projects/symbols-essentials/
 
 > **Nota**: Esta estrutura é para projetos de **estudo/revisão** (como M1). Para projetos de **código** (ex: M2-zig-foundations), use a estrutura padrão de projeto de código.
 
-**Para criar um sub-projeto**: Use `#scaffold` que automaticamente criará na estrutura adequada.
+**Para criar um sub-projeto**: Use `/ul-setup-scaffold` que automaticamente criará na estrutura adequada.
 
 ## Shared
 
@@ -63,11 +63,11 @@ A pasta `shared/` contém recursos transversais a múltiplos projetos:
 | `retrospectives/` | Retrospectivas trimestrais |
 | `archived/` | Projetos e arquivos encerrados |
 
-## Comandos
+## Commands
 
 ```bash
-make module   # Criar novo projeto
-make switch   # Trocar projeto ativo
-make start    # Iniciar sessão no projeto atual
-make status   # Ver status geral
+/ul-module-create [nome]  # Criar novo projeto
+/ul-module-switch [nome]  # Trocar projeto ativo
+/ul-study-start           # Iniciar sessão no projeto atual
+/ul-data-status           # Ver status geral
 ```

@@ -121,7 +121,7 @@ Tabela de atividades para sugestões:
 2. Coletar respostas
 3. Chamar analyzeGaps()
 4. Invocar saveSession()
-5. Se checkSunday() → Sugerir /ul-plan-retro
+5. Se checkSunday() → Sugerir /ul-retro-weekly
 ```
 
 ### /ul-study-plan

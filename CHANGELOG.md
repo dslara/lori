@@ -2,8 +2,159 @@
 
 Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 
-O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/),
-e este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
+O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
+Este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
+
+## [3.2.1] - 2026-03-12
+
+### 🔧 Refatoração — Consistência e Consolidação
+
+#### Adicionado
+- **Command `/ul-plan-weekly-create`**: Criar plano semanal (converte keyword `#create-weekly-plan`)
+- **Guia `guides/habit-stacking.md`**: Documentação completa de empilhamento de hábitos (Atomic Habits)
+- **Tool `insights.ts`**: Consolidação de 5 tools de análise em uma única tool unificada
+  - Substitui: `analytics.ts`, `effectiveness.ts`, `patterns.ts`, `weakness.ts`, `dashboard.ts`
+  - Cache inteligente: carrega dados uma única vez
+  - Todas as operações mantidas com nomes compatíveis
+
+#### Modificado
+- **`/ul-study-end`**: Adicionada funcionalidade de atualização automática do plano semanal
+  - Pergunta se completou entregas do plano
+  - Atualiza `week-*.md` automaticamente (marca checkboxes e adiciona notas)
+  - Elimina necessidade de `#update-plan` keyword
+- **Commands atualizados para usar `insights.ts`**: 8 commands migrados das tools antigas
+  - `/ul-study-start`: `analytics.getErrorRateByTopic` → `insights.getWeaknesses`
+  - `/ul-study-plan`: `analytics.generateReport`, `analytics.getErrorRateByTopic`, `analytics.getMostUsedSkill` → `insights.*`
+  - `/ul-study-end`: `analytics.generateReport` → `insights.generateReport`
+  - `/ul-plan-weekly`, `/ul-plan-adjust`, `/ul-memory-create`, `/ul-practice-quiz`, `/ul-memory-review`: todas as referências atualizadas
+- **Documentação de Skills no @tutor.md**:
+  - Corrigida lista de skills (5 reais + 6 commands inline)
+  - Removidas referências a skills inexistentes
+- **Padronização de frontmatter**: Removido colchete de `agent` em `srs-generator`
+- **Nomenclatura**: Atualizadas 50+ referências de `/ul-plan-retro` para `/ul-retro-weekly`
+- **Contagem de técnicas**: Atualizado de 23 para 24 (adicionado habit-stacking)
+
+#### Removido
+- **Command `/ul-plan-retro`**: Duplicado com `/ul-retro-weekly`
+- **Keywords @meta**: `#create-weekly-plan`, `#update-plan`, `#habit-stack` (convertidas ou removidas)
+
+#### Removido
+- **5 Tools legadas**: `analytics.ts`, `effectiveness.ts`, `patterns.ts`, `weakness.ts`, `dashboard.ts`
+  - Todas as referências atualizadas para usar `insights.ts`
+  - Redução de 1577 linhas → 500 linhas (-68%)
+
+#### Contexto
+Esta refatoração elimina duplicações e padroniza a documentação. Keywords órfãs foram convertidas em commands ou removidas. Skills inexistentes foram corretamente documentadas como commands inline. **Consolidação e limpeza das tools de análise**: 5 tools → 1 tool `insights.ts`, reduzindo complexidade e melhorando performance com cache unificado. Total de 35 arquivos modificados/criados/removidos.
+
+---
+
+## [3.2.0] - 2026-03-12
+
+### 🔧 Refatoração — Modularização de data.ts
+
+#### Adicionado
+- **Command `/ul-plan-adjust`**: Reajustar cronograma baseado em desvios
+- **Command `/ul-plan-resources`**: Mapear recursos de estudo em 3 tiers
+- **Seção "Keywords Avançadas" no README**: Documenta keywords internas dos agentes
+
+#### Modificado
+- **`data.ts`**: Refatorado em 6 módulos para melhor manutenção
+  - `data-session.ts`: Operações de sessão
+  - `data-module.ts`: Operações de módulo
+  - `data-flashcard.ts`: Operações de flashcard/SRS
+  - `data-insight.ts`: Operações de insights/streak
+  - `data-interaction.ts`: Operações de interação
+  - `data-core.ts`: Operações core (init, backup, reset)
+- **`tutor.md`**: Atualizado para usar `data.createInteraction` em vez de `tutorLog`
+- **`review.md`**: Atualizado lista de tools (removido `tutor-log.ts`)
+- **`HOW_TO_USE.md`**: Adicionado `/ul-plan-adjust` e `/ul-plan-resources` na tabela
+
+#### Removido
+- **`tutor-log.ts`**: Funcionalidade integrada em `data.ts`
+- **Keywords `#map-resources` e `#adjust-plan`**: Removidas do agente @meta (redundantes com os commands)
+
+#### Contexto
+Esta refatoração modulariza o arquivo `data.ts` (741 → ~226 linhas como facade), facilitando manutenção e testes. Tool `tutor-log` foi consolidada em `data.ts` para simplificar a arquitetura. Dois novos commands expõem keywords internas do @meta.
+
+**Total de arquivos modificados**: 12 arquivos
+
+---
+
+## [3.1.1] - 2026-03-11
+
+### 🔧 Corrigido — Consistência de Documentação
+
+#### Atualizado
+- **@review.md**:
+  - Contagem de commands corrigida: 22 → 29
+  - Keyword `#review-scripts` marcada como DESCONTINUADA
+  - Quick Reference atualizado
+  - Exemplos de interação atualizados para usar `#review-tools`
+- **@tutor.md**:
+  - Referências a `./scripts/tutor-*.sh` substituídas por tools TypeScript
+  - Exemplos de código atualizados para usar `tutorLog()` e `analytics.*`
+- **@meta.md**:
+  - Referências a `make start/study/end` atualizadas para commands `/ul-*`
+- **ul-review-audit.md**:
+  - Passo 5 (Revisão de Scripts) removido
+  - Passos renumerados (6→5, 7→6, 8→7)
+  - Contagem de commands atualizada: 22 → 29
+- **README.md**:
+  - Estrutura de diretórios atualizada (removido `scripts/`, `Makefile`)
+  - Tabela de pastas atualizada com `.opencode/commands/` e `.opencode/tools/`
+  - Seção "Agentes & Skills" reescrita para refletir arquitetura v3.0
+  - Workflow diário atualizado para usar commands `/ul-*`
+  - Referências a `make` removidas
+- **HOW_TO_USE.md**:
+  - Quick Start atualizado: `make setup` → `/ul-setup-check`
+  - Tabela de keywords substituída por tabela de commands
+  - Seção "Inline Keywords" removida
+  - Contagem de commands corrigida: 22 → 29
+  - Referências a `make` removidas
+  - Exemplos de troubleshooting atualizados
+- **reviews/README.md**:
+  - Tabela de tipos de revisão atualizada
+  - `#review-scripts` → `#review-tools` (scripts bash migrados)
+  - `#review-makefile` → `#review-commands`
+  - Comandos de geração atualizados para `/ul-review-audit`
+- **projects/README.md**:
+  - `make module` → `/ul-module-create`
+  - `make switch` → `/ul-module-switch`
+  - `make start` → `/ul-study-start`
+  - `make status` → `/ul-data-status`
+  - `#scaffold` → `/ul-setup-scaffold`
+- **archived/README.md**:
+  - `make archive` → `/ul-module-archive`
+- **planning/README.md**:
+  - Referência a Makefile removida da tabela de responsabilidades
+  - Comandos atualizados para `/ul-*`
+- **projects/M*/README.md** (8 arquivos):
+  - `make start` → `/ul-study-start`
+- **projects/M1-math-foundations/projects/symbols-essentials/**:
+  - `#srs-generator` → `/ul-memory-create`
+  - `make review` → `/ul-memory-review`
+  - `make study` → `/ul-practice-feynman`
+  - `#zombie` → `/ul-productivity-start`
+  - `#intuition` → `/ul-learn-explain`
+- **guides/sistema-dados.md**:
+  - `make backup` → `/ul-data-backup`
+- **guides/principios/*.md**:
+  - Todas as referências a `make start/study/end/retro` atualizadas
+- **guides/tecnicas/*.md**:
+  - Todas as referências a `make start/study/end/review/retro` atualizadas
+- **skills/*.md**:
+  - Referências a `make start/study/end/review` atualizadas
+- **data/schema.md**:
+  - `make backup` → `/ul-data-backup`
+- **MIGRATION.md**:
+  - `@tutor #start/#end` → `/ul-study-start/-end`
+
+#### Contexto
+Esta atualização remove TODAS as referências obsoletas a scripts bash, Makefile e keywords que foram migrados para commands unificados `/ul-*` e tools TypeScript. A documentação agora reflete corretamente a arquitetura v3.0.
+
+**Total de arquivos atualizados**: ~30 arquivos
+
+---
 
 ## [3.1.0] - 2026-03-10
 

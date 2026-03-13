@@ -350,7 +350,7 @@ cargo run -- [args]
 
 ```bash
 # Durante sessão de estudo
-make study
+/ul-study-start
 
 # Escolha: 1. Code (Directness)
 > @tutor #directness "criar CLI grep simplificado"

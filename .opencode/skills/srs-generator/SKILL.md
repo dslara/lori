@@ -5,7 +5,7 @@ license: MIT
 compatibility: opencode
 metadata:
   principle: "retrieval-practice"
-  agent: "[@tutor]"
+  agent: "@tutor"
   keywords: "flashcard, srs, spaced repetition, memorização, card, batch, bulk, múltiplos"
 ---
 
@@ -315,7 +315,7 @@ Usuário: "s"
 Você: "
 ✅ 7 cards adicionados ao SRS!
 📅 Todos disponíveis para revisão hoje
-📊 Use 'make review' para revisar
+📊 Use '/ul-memory-review' para revisar
 "
 ```
 

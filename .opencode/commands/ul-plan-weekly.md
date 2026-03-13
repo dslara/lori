@@ -4,6 +4,8 @@ agent: meta
 model: opencode-go/minimax-m2.5
 ---
 
+Argumento recebido: $ARGUMENTS (número da semana)
+
 ## Uso
 /ul-plan-weekly [semana]
 
@@ -17,7 +19,7 @@ Cria plano detalhado para a semana, distribuindo entregas e definindo foco diár
 
 Invocar tools:
 - `context.getWeekContext` — Contexto atual
-- `analytics.generateReport` — Ritmo recente
+- `insights.generateReport` — Ritmo recente
 - `context.getFullContext` — Módulo e metas
 
 ### Passo 2: Definir Foco da Semana
@@ -79,7 +81,7 @@ Sábado:
 • Buffer/revisão
 
 Domingo:
-• /ul-plan-retro
+• /ul-retro-weekly
 ```
 
 ### Passo 4: Balancear Técnicas
@@ -145,7 +147,7 @@ Verificar distribuição de técnicas:
 
 ### Domingo
 - [ ] Retrospectiva
-  - /ul-plan-retro
+  - /ul-retro-weekly
   - Ajustar próxima semana
 
 ## 📊 Métricas de Sucesso
@@ -240,7 +242,7 @@ Sábado:
 • Revisão extra
 
 Domingo:
-• /ul-plan-retro
+• /ul-retro-weekly
 
 ✅ Plano Criado!
 
@@ -266,11 +268,11 @@ Domingo:
 
 **Tools:**
 - `context.getWeekContext`
-- `analytics.generateReport`
-- `analytics.getErrorRateByTopic`
+- `insights.generateReport`
+- `insights.getWeaknesses`
 
 **Commands:**
-- `/ul-plan-retro` — Antes de criar novo plano
+- `/ul-retro-weekly` — Antes de criar novo plano
 - `/ul-study-start` — Começar a executar
 - `/ul-plan-decompose` — Se não tem learning-map
 

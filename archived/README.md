@@ -30,13 +30,13 @@ archived/
 
 ## Como Arquivar um Projeto
 
-### Método 1: Comando Make (Recomendado)
+### Método 1: Command (Recomendado)
 
 ```bash
-make archive
+/ul-module-archive [nome]
 ```
 
-Este comando irá:
+Este command irá:
 1. Verificar o módulo ativo em `projects/`
 2. Pedir confirmação do nome do projeto
 3. Mover todos os arquivos de `projects/[modulo]/` para `archived/[modulo]/[data]-[nome]/`

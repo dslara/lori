@@ -154,7 +154,7 @@ A skill implementa o algoritmo SM-2 padrão:
 **Tools utilizadas:**
 - `data.getFlashcards` — Busca cards pendentes
 - `data.createReview` — Registra cada revisão
-- `analytics.getErrorRateByTopic` — Sugere tópicos fracos
+- `insights.getWeaknesses` — Sugere tópicos fracos
 
 **Commands relacionados:**
 - `/ul-memory-create` — Criar novos flashcards

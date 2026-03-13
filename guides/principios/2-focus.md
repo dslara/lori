@@ -128,7 +128,7 @@ Implementa **Princípio #2 - Focus** do Ultralearning:
 4. Timer: Pomodoro 25 min
 5. Música: Lo-fi beats (ou silêncio)
 6. Respira fundo 3x
-7. Abre material: "make start"
+7. Abre material: "/ul-study-start"
 
 → Após 5-7 repetições, ritual AUTOMATIZA início
 ```
@@ -483,7 +483,7 @@ Tenta estudar conceito novo quando cansado
       | - Respira fundo 3x
       ↓
 10:00 | Pomodoro 1 (25 min) - FOCO TOTAL
-      | - make start (quiz de aquecimento)
+      | - /ul-study-start (quiz de aquecimento)
       | - Estuda conceito novo
       | - ZERO olhadas no celular
       | SE: Distração surgir
@@ -501,7 +501,7 @@ Tenta estudar conceito novo quando cansado
       | - Ou projeto
       ↓
 10:55 | Finalização (5 min)
-      | - make end (salva progresso)
+      | - /ul-study-end (salva progresso)
       | - Anota: O que funcionou?
       | - Anota: Quantas distrações?
       ↓

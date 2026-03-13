@@ -86,7 +86,7 @@ Ao terminar M5, voce deve conseguir:
 
 ```
 echo "M5-go-os-cpu" > .current-topic
-make start
+/ul-study-start
 ```
 
 Comece por `meta/phase-4-overview.md`, depois `meta/week-46-47-go-basics.md`.

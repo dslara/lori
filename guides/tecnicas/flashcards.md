@@ -161,7 +161,7 @@ front,back,module,difficulty,last_reviewed,next_review,interval_days
 
 ```bash
 # Durante sessão de estudo
-make study
+/ul-study-start
 
 # Opção: Criar flashcard
 > @tutor cria flashcard de "Big O notation"
@@ -225,7 +225,7 @@ Os cards criados via `@tutor #srs-generator` são salvos automaticamente em `dat
 
 ### Comando principal
 ```bash
-make review
+/ul-memory-review
 ```
 
 **O que acontece**:
@@ -270,7 +270,7 @@ Dia 22: Revisa (fácil) → próximo: 25 dias
 | **Fim de semana** | 2x/dia (manhã + noite) | 20-30 min |
 
 **Regra de ouro**: **Revisar ANTES de aprender conteúdo novo**
-- ✅ `make start` → Quiz + SRS → Aquece memória
+- ✅ `/ul-study-start` → Quiz + SRS → Aquece memória
 - ❌ Estudar novo conteúdo → SRS no fim (cansado)
 
 ---
@@ -387,13 +387,13 @@ nano knowledge/flashcards-source.csv
 
 ```bash
 # 1. Iniciar sessão
-make start
+/ul-study-start
 
 # 2. Quiz automático (3 perguntas do conteúdo anterior)
 # @tutor pergunta conceitos da última sessão
 
 # 3. SRS Review (10-15 min)
-make review
+/ul-memory-review
 
 # Agora sim, cérebro aquecido!
 ```
@@ -404,7 +404,7 @@ make review
 
 ```bash
 # 4. Estudar novo conteúdo
-make study
+/ul-study-start
 # Escolhe: 1. Code / 3. Feynman
 
 # 5. Encontrou fato importante? Cria flashcard!
@@ -434,8 +434,8 @@ nano knowledge/flashcards-source.csv
 ```bash
 # Sábado ou Domingo: apenas revisão, sem conteúdo novo
 
-make review    # 20-30 min de SRS
-make retro     # Retrospectiva semanal
+/ul-memory-review    # 20-30 min de SRS
+/ul-retro-weekly   # Retrospectiva semanal
 ```
 
 **Por quê funciona**:
@@ -488,7 +488,7 @@ make retro     # Retrospectiva semanal
    - ❌ Criando 50 cards de uma vez (não vai revisar)
 
 3. **Revise ANTES de aprender conteúdo novo**
-   - ✅ `make start` → SRS → Aquece memória
+   - ✅ `/ul-study-start` → SRS → Aquece memória
    - ❌ Estuda novo conteúdo → SRS cansado
 
 4. **Qualidade > Quantidade**
@@ -510,12 +510,12 @@ make retro     # Retrospectiva semanal
 # ─────────────
 
 # 1. Aquecer com revisão (10 min)
-make start
+/ul-study-start
 > Quiz de 3 perguntas (conteúdo Semana 1-2)
 > SRS: 15 cards para revisar
 
 # 2. Estudar novo conteúdo (40 min)
-make study
+/ul-study-start
 > Escolhe: "1. Code"
 > @tutor #intuition logaritmos
 > Assiste Khan Academy - Logarithms
@@ -546,7 +546,7 @@ nano knowledge/flashcards-source.csv
 # - 3-5 cards de ontem (intervalo curto)
 # - 10-15 cards mais antigos (intervalo maior)
 
-make start
+/ul-study-start
 > "log₂(128) = ?"
   Você responde mentalmente: "7"
   Sistema mostra resposta: "7"

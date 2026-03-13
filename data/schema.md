@@ -331,7 +331,7 @@ echo "2026-03-04-001,dani,M1,2026-03-04,60,7,\"SRS review\"" >> data/sessions.cs
 Os CSVs são incluídos no backup automático:
 
 ```bash
-make backup  # Inclui data/ no tarball
+/ul-data-backup  # Cria backup em backups/
 ```
 
 ---

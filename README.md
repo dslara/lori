@@ -12,7 +12,7 @@ Otimizado para aprendizado acelerado de Ciência da Computação.
 
 ## ⚡ Como Usar
 
-> **Guia completo**: [`HOW_TO_USE.md`](HOW_TO_USE.md) — Setup, rotina diária, keywords, troubleshooting.
+> **Guia completo**: [`HOW_TO_USE.md`](HOW_TO_USE.md) — Setup, rotina diária, commands, troubleshooting.
 
 ### Interface Principal (OpenCode)
 
@@ -29,7 +29,7 @@ Todas as funcionalidades são acessíveis via **commands** no TUI do OpenCode:
 # Planejamento
 /ul-plan-decompose "Aprender algoritmos"  # Decompor objetivo
 /ul-plan-weekly 1            # Criar plano semanal
-/ul-plan-retro               # Retrospectiva semanal
+/ul-retro-weekly             # Retrospectiva semanal
 
 # Revisão
 /ul-memory-create            # Criar flashcard
@@ -96,8 +96,10 @@ Digite `/` no TUI para acessar todos os commands:
 |---------|-----------|
 | `/ul-plan-decompose [objetivo]` | Decompor objetivo complexo |
 | `/ul-plan-weekly [semana]` | Criar plano semanal detalhado |
-| `/ul-plan-retro` | Retrospectiva semanal |
+| `/ul-retro-weekly` | Retrospectiva semanal |
 | `/ul-plan-benchmark [skill]` | Criar teste de proficiência mensurável |
+| `/ul-plan-adjust [situação]` | Reajustar cronograma |
+| `/ul-plan-resources [tópico]` | Mapear recursos em 3 tiers |
 
 #### Commands de Módulos (`/ul-module-*`)
 
@@ -131,117 +133,110 @@ Digite `/` no TUI para acessar todos os commands:
 
 ```
 ┌─────────────────────────────────────────────────────────────┐
-│  AGENTES (.opencode/agents/)                                │
+│  COMMANDS (.opencode/commands/)                             │
 │  ════════════════════════════════════════════════════════   │
-│  @meta (primary) → Planejamento estratégico                 │
-│  @tutor (primary) → Execução e orquestração de sessões      │
-│  @review (primary) → Auditoria do framework                 │
+│  29 commands /ul-* — Interface principal via TUI            │
 │                                                             │
-│  Carregam skills ON-DEMAND → reduzem tokens permanentes     │
+│  Cada command define:                                       │
+│  - agent: tutor, meta ou review                             │
+│  - model: glm-5, kimi-k2.5 ou minimax-m2.5                  │
 └─────────────────────────────────────────────────────────────┘
-                            │
-                            │ skill({ name: "drill" })
-                            ▼
+                             │
+                             │ Invocam
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│  TOOLS (.opencode/tools/)                                   │
+│  ════════════════════════════════════════════════════════   │
+│  13 tools TypeScript — Processamento de dados                │
+│                                                             │
+│  - data.ts (facade) — Delega para módulos                │
+│  - data-session.ts — Sessões                            │
+│  - data-module.ts — Módulos                              │
+│  - data-flashcard.ts — Flashcards/SRS                       │
+│  - data-insight.ts — Insights/streak                        │
+│  - data-interaction.ts — Interações                        │
+│  - data-core.ts — Core ops (init, backup)                    │
+│  - context.ts, insights.ts, status.ts                      │
+│  - retro.ts, setup.ts                                       │
+│                                                             │
+│  Cache de 5min • Tipagem Zod • CSV parsing                  │
+└─────────────────────────────────────────────────────────────┘
+                             │
+                             │ Carregam on-demand
+                             ▼
 ┌─────────────────────────────────────────────────────────────┐
 │  SKILLS (.opencode/skills/)                                 │
 │  ════════════════════════════════════════════════════════   │
-│  14 Skills carregadas sob demanda:                          │
-│  - session → Orquestrar início/fim de sessão                │
-│  - drill → Prática deliberada 5-10x                         │
-│  - feynman → Validar compreensão explicando                 │
+│  5 skills mantidas — Guias especializados                   │
+│                                                             │
+│  - session → Orquestrar sessões                             │
 │  - directness → Projetos reais                              │
-│  - explain-concept → Introduzir conceito novo               │
-│  - quiz → Retrieval practice rápido                         │
-│  - zombie-mode → Superar procrastinação                     │
 │  - debug-socratic → Guia socrático de bugs                  │
-│  - scaffold → Criar boilerplate                             │
-│  - srs-generator → Gerar flashcards SRS                     │
-│  - decomposition → Dividir objetivos (@meta)                │
-│  - retrospective → Retrospectiva semanal (@meta)           │
-│                                                             │
-│  Skills INVOCAM scripts internamente → interface unificada  │
-└─────────────────────────────────────────────────────────────┘
-                            │
-                            │ Handoff para
-                            ▼
-┌─────────────────────────────────────────────────────────────┐
-│  MAKEFILE & SCRIPTS                                         │
-│  ════════════════════════════════════════════════════════   │
-│  21 comandos make → 26 scripts bash                         │
-│                                                             │
-│  Scripts são a INTERFACE → Agentes executam o comportamento │
+│  - srs-generator → Gerar flashcards                         │
+│  - decomposition → Dividir objetivos                        │
 └─────────────────────────────────────────────────────────────┘
 ```
 
 ### Separação de Responsabilidades
 
-| Camada | Responsabilidade | Executa? |
+| Camada | Responsabilidade | Exemplos |
 |--------|------------------|----------|
-| **Skills** | Instruções de comportamento (O QUE) | ❌ Só sugerem |
-| **Agentes** | Executam comportamento com tools | ✅ Com permissions |
-| **Scripts** | Interface bash para usuário | ✅ |
+| **Commands** | Interface do usuário | `/ul-study-start`, `/ul-practice-drill` |
+| **Tools** | Processamento de dados | `data.ts`, `insights.ts`, `context.ts` |
+| **Skills** | Guias especializados | `directness`, `debug-socratic` |
+| **Agents** | Comportamento dos LLMs | `@tutor`, `@meta`, `@review` |
 
 ### Agentes
 
 | Agente | Modelo | Função |
 |--------|--------|--------|
-| **@meta** | GLM-5 | Planejamento estratégico, decomposição de objetivos |
-| **@tutor** | GLM-5 | Mentor socrático, quiz, drills, feedback, orquestração de sessões |
-| **@review** | GLM-5 | Revisão arquitetural, auditoria |
+| **@tutor** | GLM-5 / Kimi K2.5 / MiniMax M2.5 | Mentor socrático, quiz, drills, feedback |
+| **@meta** | GLM-5 / MiniMax M2.5 | Planejamento estratégico, decomposição |
+| **@review** | GLM-5 | Auditoria do framework |
 
-### Skills do @tutor
+### Skills Mantidas
 
-| Skill | Keyword | Uso |
-|-------|---------|-----|
-| `session` | `/ul-study-start` / `/ul-study-end` / `/ul-study-plan` | Orquestrar início/fim de sessão (usa minimax-m2.5) |
-| `directness` | `#directness [desafio]` | Projeto prático guiado |
-| `drill` | `#drill [conceito]` | Exercícios repetitivos (5-10x) |
-| `feynman` | `#feynman [conceito]` | Explicar para validar compreensão |
-| `explain-concept` | `#explain [conceito]` | Introdução a conceito novo |
-| `quiz` | `#quiz N [tópico]` | Retrieval practice rápido |
-| `scaffold` | `#scaffold [projeto]` | Criar estrutura base |
-| `debug-socratic` | `#debug` | Guia socrático de bugs |
-| `zombie-mode` | `#zombie` | Superar procrastinação |
-| `srs-generator` | `#srs-generator` | Criar e revisar flashcards |
-| `tutor-log` | (interno) | Registrar interações no CSV |
+| Skill | Command que invoca | Descrição |
+|-------|-------------------|-----------|
+| `session` | `/ul-study-*` | Orquestrar início/fim de sessão |
+| `directness` | `/ul-practice-project` | Guia socrático para projetos reais |
+| `debug-socratic` | `/ul-learn-debug` | Guia socrático para encontrar bugs |
+| `srs-generator` | `/ul-memory-create`, `/ul-memory-review` | Gerar flashcards dinamicamente |
+| `decomposition` | `/ul-plan-decompose` | Dividir objetivos complexos |
 
-**Outras keywords** (mantidas inline no agente):
-- `#experiment [conceito]` — Comparar 3 soluções diferentes
-- `#feedback` — Revisão de código
-- `#intuition [conceito]` — Entender o "por quê" profundo
-- `#diffuse` — Usar modo difuso quando travado
+### Commands por Agente
 
-### Skills do @meta
+| Agente | Commands |
+|--------|----------|
+| **@tutor** | `/ul-study-*`, `/ul-practice-*`, `/ul-learn-*`, `/ul-productivity-*`, `/ul-memory-*`, `/ul-setup-*`, `/ul-data-*` |
+| **@meta** | `/ul-plan-*`, `/ul-module-*`, `/ul-retro-*` |
+| **@review** | `/ul-review-*` |
 
-| Skill | Keyword | Uso |
-|-------|---------|-----|
-| `decomposition` | `#decompose-goal [objetivo]` | Decompor objetivo em plano acionável |
-| `benchmarking` | `#benchmark-test` | Criar teste de proficiência |
+### Keywords Avançadas
 
-**Outras keywords** (mantidas inline):
-- `#map-resources [tópico]` — Curar recursos em 3 tiers
-- `#create-weekly-plan semana N` — Gerar plano semanal
-- `#update-plan semana [N]` — Registar progresso
-- `#adjust-plan [situação]` — Reajustar cronograma
-- `#habit-stack` — Criar cadeia de hábitos
+Funcionalidades acessíveis via invocação direta do agente:
 
-### Keywords do @review (Consultor Estratégico)
+#### @meta - Planejamento
 
-**Papel**: Analisa o framework e **sugere** melhorias. Cria arquivos em `reviews/` quando pedido explicitamente.
+| Keyword | Descrição | Exemplo |
+|---------|-----------|---------|
+| `#update-plan semana N` | Registrar progresso | `@meta #update-plan semana 3` |
+| `#habit-stack` | Criar cadeia de hábitos | `@meta #habit-stack` |
 
-| Keyword | O que faz |
-|---------|-----------|
-| `#review-structure` | Analisa organização de pastas |
-| `#review-scripts` | Avalia qualidade dos scripts bash |
-| `#review-docs` | Verifica coerência da documentação |
-| `#review-makefile` | Revisa orquestração de comandos |
-| `#review-agents` | Analisa efetividade dos agentes |
-| `#review-consistency` | Verifica consistência geral |
-| `#review-architecture` | Análise arquitetural profunda |
-| `#review-costs` | Auditoria de otimização de tokens |
-| `#audit-quality` | Auditoria completa (executa todas as anteriores) |
-| `#check-readiness [versão]` | Prontidão para release |
-| `#meta-review [arquivo]` | Revisa documento gerado pelo @review |
+> **Nota**: As funcionalidades `#map-resources` e `#adjust-plan` agora são commands: `/ul-plan-resources` e `/ul-plan-adjust`
+
+#### @review - Auditoria
+
+| Keyword | Descrição | Exemplo |
+|---------|-----------|---------|
+| `#review-structure` | Estrutura do projeto | `@review #review-structure` |
+| `#review-tools` | Qualidade das tools | `@review #review-tools` |
+| `#review-docs` | Documentação | `@review #review-docs` |
+| `#review-commands` | Commands `/ul-*` | `@review #review-commands` |
+| `#review-agents` | Agentes | `@review #review-agents` |
+| `#review-skills` | Skills | `@review #review-skills` |
+| `#review-consistency` | Análise completa | `@review #review-consistency` |
+| `#review-costs` | Otimização de tokens | `@review #review-costs` |
 
 ---
 
@@ -251,26 +246,26 @@ Este sistema integra três abordagens complementares:
 
 | Abordagem | Autor | Foco | Implementação |
 |-----------|-------|------|---------------|
-| **Ultralearning** | Scott Young | Intensidade e imersão | 9 princípios + 23 técnicas |
+| **Ultralearning** | Scott Young | Intensidade e imersão | 9 princípios + 24 técnicas |
 | **A Mind for Numbers** | Dra. Barbara Oakley | Eficiência cognitiva | Chunking, Foco/Difuso, Overlearning |
 | **Atomic Habits** | James Clear | Consistência e rituais | Cue-Routine-Reward, Habit Stacking, Two-Minute Rule |
 
 ### Técnicas de James Clear (Atomic Habits)
 
 **Cue-Routine-Reward (Loop do Hábito):**
-Os comandos `make` implementam o loop completo:
+Os commands `/ul-*` implementam o loop completo:
 - **Cue**: Configurar ambiente (`environment-design.md`)
-- **Routine**: `make start` → `make study` → `make end`
-- **Reward**: Streak atualizado (`make status`)
+- **Routine**: `/ul-study-start` → `/ul-practice-*` → `/ul-study-end`
+- **Reward**: Streak atualizado (`/ul-data-status`)
 
 **Habit Stacking (Empilhamento):**
 Acople ao seu dia existente:
 ```bash
 # Após café da manhã:
-make start  # 25 min de estudo
+/ul-study-start  # 25 min de estudo
 
 # Após almoço:
-make review # SRS de 10 min
+/ul-memory-review # SRS de 10 min
 ```
 
 **Two-Minute Rule:**
@@ -304,31 +299,29 @@ Comece ridicularmente pequeno:
 ## 📁 Estrutura do Projeto
 
 ```
- ultralearning/
+ultralearning/
 ├── .opencode/
 │   ├── agents/           # @meta, @tutor, @review
-│   ├── skills/           # Skills carregadas on-demand
-│   └── opencode.json    # Config de modelos + agents
-├── data/                # Base de dados local (CSV)
-│   ├── sessions.csv     # Sessões diárias
-│   ├── insights.csv     # Métricas (streak, tempo, foco)
+│   ├── commands/         # 29 commands /ul-*
+│   ├── skills/           # 5 skills carregadas on-demand
+│   ├── tools/            # 9 tools TypeScript
+│   └── opencode.json     # Config de modelos + agents
+├── data/                 # Base de dados local (CSV)
+│   ├── sessions.csv      # Sessões diárias
+│   ├── insights.csv      # Métricas (streak, tempo, foco)
 │   ├── tutor_interactions.csv  # Memória do tutor
-│   ├── modules.csv     # Módulos de estudo
-│   └── schema.md       # Documentação do schema
-├── scripts/             # 26 scripts bash
-├── projects/            # Módulos de aprendizado
+│   ├── modules.csv       # Módulos de estudo
+│   └── schema.md         # Documentação do schema
+├── projects/             # Módulos de aprendizado
 │   ├── [modulo]/
 │   │   ├── meta/         # Planos ativos (learning-map, weeks)
-│   │   ├── meta/         # Planos ativos (learning-map, weeks)
-│   │   ├── planning/     # Planos de mudança do currículo
 │   │   ├── projects/     # Projetos práticos
 │   │   └── knowledge/    # Conceitos aprendidos
 │   └── shared/           # Recursos compartilhados
 │       └── planning/     # Planejamento multi-módulo
-├── guides/               # 9 princípios + 23 técnicas
+├── guides/               # 9 princípios + 24 técnicas
 ├── reviews/              # Revisões técnicas do framework
-├── planning/             # Propostas de mudança do FRAMEWORK
-└── Makefile              # 21 comandos
+└── planning/             # Propostas de mudança do FRAMEWORK
 ```
 
 O projeto está organizado em pastas especializadas:
@@ -336,27 +329,28 @@ O projeto está organizado em pastas especializadas:
 | Pasta | Propósito | Documentação |
 |-------|-----------|--------------|
 | `.opencode/agents/` | Agentes opencode com frontmatter YAML | — |
+| `.opencode/commands/` | 29 commands `/ul-*` (interface principal) | — |
+| `.opencode/tools/` | 9 tools TypeScript (processamento de dados) | — |
 | `.opencode/skills/` | Skills carregadas on-demand pelos agentes | [Template](.opencode/skills/_template-skill/SKILL.md) |
 | `data/` | Base de dados local (CSV) | [schema.md](data/schema.md) |
 | `projects/` | Módulos e projetos de aprendizado | [README](projects/README.md) |
 | `guides/` | Biblioteca de técnicas e princípios de aprendizado | [README](guides/README.md) |
-| `planning/` | Propostas de mudança do framework (scripts, agentes) | [README](planning/README.md) |
+| `planning/` | Propostas de mudança do framework | [README](planning/README.md) |
 | `reviews/` | Revisões técnicas do framework (consolidadas) | [README](reviews/README.md) |
 | `archived/` | Projetos finalizados e arquivados | [README](archived/README.md) |
-| `scripts/` | Scripts utilitários (26 scripts) | — |
 
 ### Separação de Planejamento
 
 | Domínio | Local |
 |---------|-------|
-| **Framework** (scripts, agentes, Makefile) | `planning/` |
+| **Framework** (commands, tools, agents) | `planning/` |
 | **Módulo específico** (currículo, migração de linguagem) | `projects/[modulo]/planning/` |
 | **Compartilhado** (múltiplos módulos) | `projects/shared/planning/` |
 | **Planos ativos** (learning-map, weeks, phases) | `projects/[modulo]/meta/` |
 
 ## 📦 Arquivamento de Projetos
 
-Quando um projeto é concluído, use `make archive` para:
+Quando um projeto é concluído, use `/ul-module-archive [nome]` para:
 - Mover todos os arquivos para `archived/[modulo]/[data]-[nome]/`
 - Preservar logs, código, conhecimento e metadados
 - Criar um relatório final de lições aprendidas
@@ -369,28 +363,26 @@ O projeto arquivado mantém todo o histórico e pode ser consultado futuramente.
 ## 🔥 Workflow Diário
 
 ```
-┌───────────────────────────────────────┐
-│  make start    (5 min)                │
-│  └── Quiz automático (3 perguntas)    │
-├───────────────────────────────────────┤
-│  make study    (50 min)               │
-│  ├── 0. Session   → Sugestão do plano │
-│  ├── 1. Code      → Projeto prático   │
-│  ├── 2. Drill     → Exercícios        │
-│  ├── 3. Feynman   → Explicar          │
-│  ├── 4. Scaffold  → Estrutura         │
-│  ├── 5. Experiment→ Comparar          │
-│  ├── 6. Feedback  → Revisar código    │
-│  ├── 7. Explain   → Introdução        │
-│  ├── 8. Intuition → Por quê           │
-│  ├── 9. Debug     → Debug socrático   │
-│  ├── z. Zombie    → Procrastinação    │
-│  └── d. Diffuse   → Modo difuso       │
-├───────────────────────────────────────┤
-│  make end      (5 min)                │
-│  └── Salva log + atualiza streak      │
-└───────────────────────────────────────┘
+┌───────────────────────────────────────────────┐
+│  /ul-study-start    (5 min)                   │
+│  └── Carrega contexto + sugere atividade      │
+├───────────────────────────────────────────────┤
+│  /ul-practice-*     (50 min)                  │
+│  ├── drill      → Exercícios repetitivos      │
+│  ├── feynman    → Explicar conceito           │
+│  ├── quiz       → Warm-up com perguntas       │
+│  └── project    → Projeto prático             │
+├───────────────────────────────────────────────┤
+│  /ul-study-end      (5 min)                   │
+│  └── Salva sessão + atualiza streak           │
+└───────────────────────────────────────────────┘
 ```
+
+**Alternativas durante a sessão**:
+- `/ul-learn-explain [conceito]` — Introduzir conceito novo
+- `/ul-learn-debug` — Debug socrático
+- `/ul-productivity-break` — Modo difuso quando travado
+- `/ul-productivity-start` — Superar procrastinação
 
 ---
 
@@ -427,30 +419,30 @@ Baseado em **Ultralearning** de Scott Young:
 
 ## 🏗️ Arquitetura & Design
 
-### Por que Skills?
+### Por que Commands Unificados?
 
-**Antes** (sem skills):
+**Antes** (v2.0 - keywords dispersas):
 ```
-@tutor: 584 linhas carregadas SEMPRE
-→ Mesmo se só vai usar #zombie (5 linhas relevantes)
-→ Tokens desperdiçados
+@tutor #drill, @tutor #feynman, @tutor #quiz...
+@meta #decompose-goal, @meta #create-weekly-plan...
+→ Interface fragmentada entre agentes
 ```
 
-**Depois** (com skills):
+**Depois** (v3.0 - commands unificados):
 ```
-@tutor: ~150 linhas (identity + quick reference)
-→ #drill invocado → skill carrega +130 linhas
-→ Tokens economizados em sessões simples
+/ul-practice-drill, /ul-practice-feynman, /ul-practice-quiz
+/ul-plan-decompose, /ul-plan-weekly
+→ Interface unificada via TUI
 ```
 
 ### Benefícios
 
 | Benefício | Antes | Depois |
 |-----------|-------|--------|
-| Manutenção | Editar agente (584 linhas) | Editar skill (130 linhas) |
-| Guias conectados | Não usados | Derivam de guides/ |
-| Makefile Integration | Não existia | Handoffs documentados |
-| Extensibilidade | +50 linhas no agente | Criar nova SKILL.md |
+| Interface | Keywords dispersas | Commands `/ul-*` unificados |
+| Dependências | Scripts bash | Tools TypeScript |
+| Tipagem | Nenhuma | Zod validation |
+| Portabilidade | Requer bash | 100% TypeScript |
 
 ### Modelos por Command
 
@@ -460,7 +452,7 @@ Cada command define seu modelo ideal no frontmatter:
 |-----------|--------|----------|---------------|
 | **Raciocínio complexo** | GLM-5 | `/ul-practice-drill`, `/ul-practice-feynman`, `/ul-learn-explain` | Análise, analogias, validação |
 | **Código e dados** | Kimi K2.5 | `/ul-practice-project`, `/ul-learn-debug`, `/ul-setup-scaffold`, `/ul-data-*` | Projetos, debug, estruturação |
-| **Orquestração simples** | MiniMax M2.5 | `/ul-study-*`, `/ul-productivity-*`, `/ul-plan-retro`, `/ul-plan-weekly` | Templates, orquestração, tarefas leves |
+| **Orquestração simples** | MiniMax M2.5 | `/ul-study-*`, `/ul-productivity-*`, `/ul-retro-weekly`, `/ul-plan-weekly` | Templates, orquestração, tarefas leves |
 
 **Padrão**: Verifique o campo `model` no arquivo `.opencode/commands/[command].md`
 

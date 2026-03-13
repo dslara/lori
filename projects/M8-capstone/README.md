@@ -94,7 +94,7 @@ Ao terminar M8, você deve conseguir:
 
 ```
 echo "M8-capstone" > .current-topic
-make start
+/ul-study-start
 ```
 
 Comece escolhendo seu projeto em `meta/week-71-84-capstone.md`. A decisao de projeto e a primeira entrega (Semana 71).

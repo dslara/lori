@@ -140,7 +140,7 @@ Projeto concluído! Antes de terminar:
 2. O que você faria diferente?
 3. Explique em 1 frase o que aprendeu.
 
-💡 Conceito difícil? Use `make review` → Adicionar flashcard
+💡 Conceito difícil? Use `/ul-memory-review` → Adicionar flashcard
 ```
 
 ## Exemplo de Interação
@@ -176,7 +176,7 @@ Me responda e começamos com o setup!"
 
 ## Handoff
 
-- Projeto concluído? → `make end` para salvar sessão
+- Projeto concluído? → `/ul-study-end` para salvar sessão
 - Ponto fraco identificado? → `/ul-practice-drill` para praticar
 - Código precisa de revisão? → `#feedback` para code review
 - Conceito não ficou claro? → `/ul-practice-feynman` para validar
@@ -184,11 +184,11 @@ Me responda e começamos com o setup!"
 ## 📋 Makefile Integration
 
 **Comandos relacionados**:
-- `make end` — Salvar sessão + atualizar streak
-- `make study` — Continuar com outra técnica
-- `make review` — Adicionar flashcards de conceitos aprendidos
+- `/ul-study-end` — Salvar sessão + atualizar streak
+- `/ul-study-start` — Continuar com outra técnica
+- `/ul-memory-review` — Adicionar flashcards de conceitos aprendidos
 
 **Quando sugerir**:
-- Projeto concluído com sucesso → sugerir `make end`
+- Projeto concluído com sucesso → sugerir `/ul-study-end`
 - Identificou skill fraca → sugerir `/ul-practice-drill`
 - Projeto gerou dúvidas de código → sugerir `#feedback`

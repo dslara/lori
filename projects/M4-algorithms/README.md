@@ -102,7 +102,7 @@ Ao terminar M4, você deve conseguir:
 
 ```
 echo "M4-algorithms" > .current-topic
-make start
+/ul-study-start
 ```
 
 Comece por `meta/phase-3-overview.md`, depois `meta/week-31-32-sorting-basic.md`.

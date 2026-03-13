@@ -50,7 +50,7 @@ Consulte [`archived/README.md`](./archived/README.md) para o histórico completo
 
 | Domínio | Local |
 |---------|-------|
-| **Framework** (scripts, agentes, Makefile, arquitetura) | `planning/` (esta pasta) |
+| **Framework** (commands, tools, agents, arquitetura) | `planning/` (esta pasta) |
 | **Projeto de estudo** (currículo, fases, migração de linguagem) | `projects/[modulo]/planning/` |
 | **Guias compartilhados** | `projects/shared/planning/` |
 | **Planos ativos do projeto** | `projects/[modulo]/meta/` |
@@ -100,10 +100,12 @@ Usando o agente `@review`:
 
 ```bash
 # Análise arquitetural que identifica necessidade de mudança
-opencode run --agent @review "#review-architecture"
+/ul-review-audit
+# Ou via keyword interna:
+# @review #review-architecture
 
 # Auditoria completa que pode gerar recomendações
-opencode run --agent @review "#audit-quality"
+# @review #review-costs
 ```
 
 O @review recomenda mudanças através de análise, mas **não gera automaticamente** propostas ou planos. O fluxo é:

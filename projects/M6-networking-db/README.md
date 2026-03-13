@@ -93,7 +93,7 @@ Ao terminar M6, você deve conseguir:
 
 ```
 echo "M6-networking-db" > .current-topic
-make start
+/ul-study-start
 ```
 
 Comece por `meta/phase-5-overview.md`, depois `meta/week-56-57-tcp-ip.md`.

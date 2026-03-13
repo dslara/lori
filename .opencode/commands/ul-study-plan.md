@@ -18,8 +18,8 @@ Visualiza progresso da semana atual: tópicos concluídos, em andamento e penden
 Invocar tools:
 1. `context.getWeekContext` — Plano da semana
 2. `context.getRecentSessions` — Sessões recentes
-3. `analytics.generateReport` — Métricas gerais
-4. `analytics.getErrorRateByTopic` — Tópicos fracos
+3. `insights.generateReport` — Métricas gerais consolidadas
+4. `insights.getWeaknesses` — Tópicos fracos
 
 ### Passo 2: Apresentar Progresso
 
@@ -72,7 +72,7 @@ Se error_rate > 0.3 em algum tópico:
 ### Passo 6: Próximos Passos
 
 Sugerir baseado no estado atual:
-- Se atrasado → `/ul-plan-retro` ou `/ul-plan-weekly`
+- Se atrasado → `/ul-retro-weekly` ou `/ul-plan-weekly`
 - Se tópicos fracos → `/ul-practice-drill`
 - Se SRS pendente → `/ul-memory-review`
 - Se no ritmo → Continuar com `/ul-study-start`
@@ -116,20 +116,20 @@ Você está no tempo! Sábado é ideal para o benchmark.
 **Tools utilizadas:**
 - `context.getWeekContext` — Plano da semana
 - `context.getRecentSessions` — Histórico
-- `analytics.generateReport` — Métricas gerais
-- `analytics.getErrorRateByTopic` — Tópicos fracos
-- `analytics.getMostUsedSkill` — Distribuição de técnicas
+- `insights.generateReport` — Métricas gerais consolidadas
+- `insights.getWeaknesses` — Tópicos fracos
+- `insights.getEffectiveness` — Efetividade e distribuição de técnicas
 
 **Commands relacionados:**
 - `/ul-study-start` — Iniciar sessão
 - `/ul-practice-drill` — Praticar tópicos fracos
 - `/ul-memory-review` — Revisar SRS pendente
-- `/ul-plan-retro` — Ajustar se atrasado
+- `/ul-retro-weekly` — Ajustar se atrasado
 - `/ul-plan-weekly` — Replanejar semana
 
 ## Handoff
 
-- Usuário atrasado → `/ul-plan-retro` ou `/ul-plan-weekly`
+- Usuário atrasado → `/ul-retro-weekly` ou `/ul-plan-weekly`
 - Tópicos fracos identificados → `/ul-practice-drill`
 - Quer mudar ritmo → `/ul-plan-weekly`
 - Tudo certo → `/ul-study-start`

@@ -271,7 +271,7 @@ no meio (checkpoint) e no final
 **Commands:**
 - `/ul-practice-drill` — Praticar para benchmark
 - `/ul-practice-project` — Preparar com projetos
-- `/ul-plan-retro` — Discutir resultados
+- `/ul-retro-weekly` — Discutir resultados
 
 ---
 

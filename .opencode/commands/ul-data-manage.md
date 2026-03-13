@@ -4,9 +4,7 @@ agent: tutor
 model: opencode-go/kimi-k2.5
 ---
 
-## Descrição
-
-Gerencia dados do sistema Ultralearning: inicializa estrutura CSV ou reseta todos os dados. Use com cautela.
+Argumento recebido: $ARGUMENTS (init|reset)
 
 ## Uso
 /ul-data-manage [init|reset]
@@ -38,4 +36,21 @@ Pergunte ao usuário qual operação deseja realizar:
 - "init" - Inicializar estrutura de dados
 - "reset" - Resetar todos os dados (requer confirmação)
 
-Execute a operação apropriada usando a ferramenta 'data'.
+## Integrações
+
+**Tools utilizadas:**
+- `data-core.initDataDir` — Inicializa estrutura de dados (operação `init`)
+- `data-core.resetAllData` — Reseta todos os dados (operação `reset`)
+- `data-core.createBackup` — Cria backup antes de operações destrutivas
+
+**Processo:**
+1. Se operação for `init`: Invocar `data-core.initDataDir`
+2. Se operação for `reset`: 
+   - Confirmar com usuário (irreversível)
+   - Opcional: Criar backup automático via `data-core.createBackup`
+   - Invocar `data-core.resetAllData`
+3. Reportar resultado da operação
+
+---
+
+Execute a operação apropriada usando as ferramentas acima.

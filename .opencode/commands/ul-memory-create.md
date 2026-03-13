@@ -268,7 +268,7 @@ c) Voltar ao estudo → /ul-study-start"
 
 **Tools utilizadas:**
 - `data.createFlashcard` — Persiste no CSV
-- `analytics.getErrorRateByTopic` — Sugere tópicos fracos
+- `insights.getWeaknesses` — Sugere tópicos fracos
 
 **Commands relacionados:**
 - `/ul-memory-review` — Revisar cards criados

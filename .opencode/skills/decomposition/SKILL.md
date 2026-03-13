@@ -196,7 +196,7 @@ Quer que eu gere o learning-map.md completo?"
 
 ## Handoff
 
-- Plano criado? → `#map-resources` para curar materiais
+- Plano criado? → `/ul-plan-resources [tópico]` para curar materiais
 - Próximo passo claro? → Usuário pode começar semestre/dia
 
 ## 📋 Makefile Integration

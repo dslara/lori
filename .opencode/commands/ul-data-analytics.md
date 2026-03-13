@@ -11,7 +11,21 @@ Gera relatório analítico avançado com métricas de desempenho, padrões de es
 ## Uso
 /ul-data-analytics
 
-Gere um relatório analítico abrangente usando a ferramenta 'analytics' com a operação generateReport.
+## Integrações
+
+**Tools utilizadas:**
+- `insights.generateReport` — Gera relatório completo consolidado
+- `insights.getSummary` — Resumo geral (streak, tempo, foco)
+- `insights.getEffectiveness` — Efetividade por técnica
+- `insights.getPatterns` — Padrões de estudo
+- `insights.getWeaknesses` — Pontos fracos
+
+**Processo:**
+1. Invocar `insights.generateReport` para obter relatório completo
+2. Se usuário pedir módulo específico, passar `moduleId` como parâmetro
+3. Apresentar todas as seções do relatório de forma organizada
+
+---
 
 Apresente as seguintes informações de forma organizada:
 

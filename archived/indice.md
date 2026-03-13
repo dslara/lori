@@ -88,4 +88,4 @@ Ao arquivar um novo projeto, adicione-o a esta lista:
 
 ---
 
-*Use `make archive` para arquivar um projeto automaticamente*
+*Use `/ul-module-archive [nome]` para arquivar um projeto automaticamente*

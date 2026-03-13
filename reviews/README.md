@@ -41,18 +41,20 @@ Exemplos:
 
 ### Tipos de Revisões
 
-| Tipo | Descrição | Keyword |
+| Tipo | Descrição | Command |
 |------|-----------|---------|
-| **audit** | Auditoria completa de qualidade | `#audit-quality` |
+| **audit** | Auditoria completa de qualidade | `/ul-review-audit` |
 | **structure** | Organização de pastas e arquivos | `#review-structure` |
-| **scripts** | Qualidade dos scripts bash | `#review-scripts` |
+| **tools** | Qualidade das tools TypeScript | `#review-tools` |
 | **docs** | Coerência da documentação | `#review-docs` |
-| **makefile** | Comandos e orquestração | `#review-makefile` |
+| **commands** | Consistência dos commands `/ul-*` | `#review-commands` |
 | **agents** | Efetividade dos agentes | `#review-agents` |
 | **consistency** | Consistência geral | `#review-consistency` |
 | **architecture** | Análise arquitetural | `#review-architecture` |
 | **costs** | Otimização de tokens | `#review-costs` |
 | **consolidated** | Análise consolidada de múltiplas reviews | `#meta-review` |
+
+> **Nota**: `#review-scripts` foi descontinuado na v3.1 — scripts bash foram migrados para tools TypeScript.
 
 ---
 
@@ -72,28 +74,23 @@ Consulte [`archived/README.md`](./archived/README.md) para o histórico completo
 
 ## Como Gerar Revisões Técnicas
 
-Usando o agente `@review`:
+Usando o agente `@review` via commands:
 
 ```bash
-# Revisão específica
-opencode run --agent @review "#review-scripts"
-opencode run --agent @review "#review-agents"
-opencode run --agent @review "#review-docs"
-
 # Auditoria completa (todas as revisões)
-opencode run --agent @review "#audit-quality"
+/ul-review-audit
 
-# Análise arquitetural
-opencode run --agent @review "#review-architecture"
-
-# Otimização de custos
-opencode run --agent @review "#review-costs"
-
-# Verificar prontidão para release
-opencode run --agent @review "#check-readiness 3.0.0"
-
-# Meta-revisão de documento
-opencode run --agent @review "#meta-review [arquivo]"
+# Revisões específicas (via keywords internas do @review)
+# Digite no TUI do OpenCode:
+# @review #review-structure
+# @review #review-tools
+# @review #review-docs
+# @review #review-commands
+# @review #review-agents
+# @review #review-architecture
+# @review #review-costs
+# @review #check-readiness 3.0.0
+# @review #meta-review [arquivo]
 ```
 
 ---

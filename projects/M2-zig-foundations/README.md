@@ -102,7 +102,7 @@ Ao terminar M2, você deve conseguir:
 
 ```
 echo "M2-zig-foundations" > .current-topic
-make start
+/ul-study-start
 ```
 
 Comece por `meta/phase-1-overview.md`, depois `meta/week-07-zig-setup.md`.

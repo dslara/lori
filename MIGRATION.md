@@ -40,9 +40,9 @@ make analytics
 /ul-data-analytics  # Ver analytics
 /ul-data-manage init  # Inicializar dados
 
-# Sessões via @tutor (com tools automáticas)
-@tutor #start    # Carrega contexto automaticamente
-@tutor #end      # Salva dados automaticamente
+# Sessões via commands (com tools automáticas)
+/ul-study-start    # Carrega contexto automaticamente
+/ul-study-end      # Salva dados automaticamente
 ```
 
 ---

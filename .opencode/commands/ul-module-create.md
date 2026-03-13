@@ -4,6 +4,8 @@ agent: meta
 model: opencode-go/glm-5
 ---
 
+Argumento recebido: $ARGUMENTS (nome do módulo)
+
 ## Uso
 /ul-module-create [nome]
 

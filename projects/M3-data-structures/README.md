@@ -110,7 +110,7 @@ Ao terminar M3, você deve conseguir:
 
 ```
 echo "M3-data-structures" > .current-topic
-make start
+/ul-study-start
 ```
 
 Comece por `meta/phase-2-overview.md`, depois `meta/week-18-graphs-intro.md`.

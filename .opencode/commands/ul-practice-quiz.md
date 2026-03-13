@@ -34,7 +34,7 @@ Quiz de 3-5 perguntas para retrieval practice. Dificuldade adaptativa baseada no
 
 ### Passo 2: Calcular Dificuldade
 
-Invocar tool `analytics.getDifficultyLevel`:
+Invocar tool `insights.getDifficultyLevel`:
 - **Easy**: error_rate < 20%
 - **Medium**: error_rate 20-40%
 - **Hard**: error_rate > 40%
@@ -227,9 +227,9 @@ canal.
 ## Integrações
 
 **Tools utilizadas:**
-- `analytics.getDifficultyLevel` — Determina dificuldade
+- `insights.getDifficultyLevel` — Determina dificuldade
 - `data.createInteraction` — Registra cada resposta
-- `analytics.getErrorRateByTopic` — Identifica tópicos fracos
+- `insights.getWeaknesses` — Identifica tópicos fracos
 
 **Commands relacionados:**
 - `/ul-study-start` — Sugere quiz como warm-up

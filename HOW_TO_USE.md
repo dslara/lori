@@ -1,8 +1,8 @@
 # Como Usar o Ultralearning System
 
-> Guia completo para estudar com o framework. Do primeiro `make setup` ao dominio de CS Fundamentals.
+> Guia completo para estudar com o framework. Do primeiro `/ul-setup-check` ao dominio de CS Fundamentals.
 
-**Última atualização**: 2026-03-08
+**Última atualização**: 2026-03-11
 
 ---
 
@@ -26,11 +26,11 @@
 3 passos para comecar. 5 minutos de setup, 1 hora de estudo.
 
 ```bash
-# 1. Configuração inicial (1x só)
-make setup
+# 1. Verificar dependências (1x só)
+/ul-setup-check
 
 # 2. Criar seu primeiro modulo
-make module
+/ul-module-create
 # Digite o tema: ex "python-basics"
 
 # 3. (Opcional) Planejar com @meta
@@ -61,12 +61,6 @@ Confirme antes de comecar:
   ```bash
   opencode --version
   # Deve retornar versao (ex: 0.5.1)
-  ```
-
-- [ ] **Make disponivel** (opcional)
-  ```bash
-  make help
-  # Deve listar atalhos de terminal
   ```
 
 - [ ] **Modulo ativo definido**
@@ -118,23 +112,24 @@ Se score < 7:
 │                                                               │
 │  START (5 min)              STUDY (50 min)            END     │
 │  ┌──────────┐              ┌──────────────┐        ┌───────┐  │
-│  │ @tutor   │──────────────│  #feynman    │────────│@tutor │  │
-│  │  #start  │  Contexto    │  #drill      │        │ #end  │  │
-│  └──────────┘              │  #directness │        └───────┘  │
-│       |                    │  #quiz       │        5 min      │
+│  │ /ul-     │──────────────│ /ul-practice │────────│ /ul-  │  │
+│  │  study-  │  Contexto    │   -drill     │        │ study │  │
+│  │  start   │              │   -feynman   │        │ -end  │  │
+│  └──────────┘              │   -project   │        └───────┘  │
+│       |                    │   -quiz      │        5 min      │
 │       |                    └──────────────┘                   │
 │       └──────────────────────────────────────────────────->   │
 │                                                               │
-│  KEYWORDS DISPONIVEIS:                                        │
-│  #drill -> Repeticao de procedimentos                         │
-│  #feynman -> Explicar conceito                                │
-│  #quiz -> Warm-up rapido                                      │
-│  #directness -> Projeto pratico                               │
-│  #explain -> Introducao a conceito novo                       │
-│  #debug -> Debug socratico                                    │
-│  #zombie -> Superar procrastinação                            │
-│  #scaffold -> Estrutura base                                  │
-│  #srs-generator -> Criar flashcards                           │
+│  COMMANDS DISPONIVEIS:                                        │
+│  /ul-practice-drill -> Repeticao de procedimentos             │
+│  /ul-practice-feynman -> Explicar conceito                    │
+│  /ul-practice-quiz -> Warm-up rapido                          │
+│  /ul-practice-project -> Projeto pratico                      │
+│  /ul-learn-explain -> Introducao a conceito novo              │
+│  /ul-learn-debug -> Debug socratico                           │
+│  /ul-productivity-start -> Superar procrastinação             │
+│  /ul-setup-scaffold -> Estrutura base                         │
+│  /ul-memory-create -> Criar flashcards                        │
 │                                                               │
 └───────────────────────────────────────────────────────────────┘
 ```
@@ -153,19 +148,19 @@ O que acontece:
 
 ### 3.2 Study (50 min)
 
-Escolha uma keyword baseado no que precisa:
+Escolha um command baseado no que precisa:
 
-| Situação | Keyword | Skill | Por quê |
-|----------|---------|-------|---------|
-| Conceito completamente novo | `#explain [conceito]` | `explain-concept` | Analogia primeiro |
-| Aprender fazendo | `#directness [desafio]` | `directness` | Projeto real |
-| Praticar sintaxe/procedimento | `#drill [conceito]` | `drill` | Repetição = automatização |
-| Revisar conceito | `#feynman [conceito]` | `feynman` | Se nao explica, nao entendeu |
-| Warm-up rapido | `#quiz N [tópico]` | `quiz` | Retrieval practice |
-| Comecar projeto novo | `#scaffold [projeto]` | `scaffold` | Estrutura pronta |
-| Bug dificil | `#debug` | `debug-socratic` | Guia socratico |
-| Sem vontade de estudar | `#zombie` | `zombie-mode` | Two-Minute Rule |
-| Criar flashcard | `#srs-generator` | `srs-generator` | Memorização |
+| Situação | Command | Por quê |
+|----------|---------|---------|
+| Conceito completamente novo | `/ul-learn-explain [conceito]` | Analogia primeiro |
+| Aprender fazendo | `/ul-practice-project [desafio]` | Projeto real |
+| Praticar sintaxe/procedimento | `/ul-practice-drill [conceito]` | Repetição = automatização |
+| Revisar conceito | `/ul-practice-feynman [conceito]` | Se nao explica, nao entendeu |
+| Warm-up rapido | `/ul-practice-quiz N [tópico]` | Retrieval practice |
+| Comecar projeto novo | `/ul-setup-scaffold [projeto]` | Estrutura pronta |
+| Bug dificil | `/ul-learn-debug` | Guia socratico |
+| Sem vontade de estudar | `/ul-productivity-start` | Two-Minute Rule |
+| Criar flashcard | `/ul-memory-create` | Memorização |
 
 **Exemplos**:
 ```bash
@@ -196,7 +191,7 @@ O que acontece:
 ### Domingo (30 min)
 
 ```bash
-/ul-plan-retro    # Retrospectiva: o que funcionou? O que nao?
+/ul-retro-weekly  # Retrospectiva: o que funcionou? O que nao?
 /ul-plan-weekly N  # Planejar proxima semana
 ```
 
@@ -209,11 +204,28 @@ O que acontece:
 
 ### Checklist Semanal
 
-- [ ] **Retrospectiva feita** (`/ul-plan-retro`)
+- [ ] **Retrospectiva feita** (`/ul-retro-weekly`)
 - [ ] **Plano da semana criado** (`/ul-plan-weekly`)
 - [ ] **Streak mantido** — 7 dias seguidos? (`/ul-data-status`)
 - [ ] **SRS revisado** — minimo 3x na semana (`/ul-memory-create review`)
 - [ ] **Projetos avancando** — algum projeto pratico em andamento?
+
+### 💡 Dica: Criar Hábitos Automáticos
+
+**Problema**: Dificuldade para manter consistência?
+
+**Solução**: Use [Habit Stacking](guides/habit-stacking.md) de James Clear (Atomic Habits):
+
+```
+"Após [HÁBITO EXISTENTE], eu vou [ESTUDAR]"
+
+Exemplos:
+☕ Após café da manhã → /ul-study-start (25 min)
+🍽️  Após almoço → /ul-memory-review (10 min)
+🌙 Após jantar → /ul-practice-quiz 5 [tópico]
+```
+
+**Chave**: Não crie novos gatilhos. Use os que já existem.
 
 ---
 
@@ -282,6 +294,7 @@ Confirme antes de sair:
 
 | Command | Quando Usar | Descrição |
 |---------|-------------|-----------|
+| `/ul-setup-check` | Primeira vez | Verificar dependências do sistema |
 | `/ul-setup-scaffold [projeto]` | Novo projeto | Criar estrutura com TODOs |
 
 ### Commands de Memória (/ul-memory-*)
@@ -296,9 +309,11 @@ Confirme antes de sair:
 | Command | Quando Usar | Descrição |
 |---------|-------------|-----------|
 | `/ul-plan-decompose [objetivo]` | Decompor meta | Framework 3D (invoca skill decomposition) |
-| `/ul-plan-retro` | Fim de semana | Retrospectiva semanal |
+| `/ul-retro-weekly` | Fim de semana | Retrospectiva semanal |
 | `/ul-plan-benchmark [skill]` | Criar teste | 3 níveis de proficiência |
 | `/ul-plan-weekly [N]` | Início de semana | Criar plano detalhado |
+| `/ul-plan-adjust [situação]` | Desvio de cronograma | Reajustar plano |
+| `/ul-plan-resources [tópico]` | Novo tópico | Mapear recursos em 3 tiers |
 
 ### Commands de Dados (/ul-data-*)
 
@@ -308,23 +323,13 @@ Confirme antes de sair:
 | `/ul-data-analytics` | Analytics | Relatório completo de métricas |
 | `/ul-data-dashboard` | Dashboard | Visão geral consolidada |
 | `/ul-data-manage` | Gerenciar dados | Init ou reset dos CSVs |
-
-### Inline Keywords (Complementares)
-
-Estas keywords podem ser usadas dentro de sessões ativas:
-
-| Keyword | Quando Usar |
-|---------|-------------|
-| `#intuition [conceito]` | Entender o "por quê" profundo |
-| `#feedback` | Revisar código específico |
-| `#experiment [conceito]` | Comparar múltiplas abordagens |
-| `#diffuse` | Ativar modo difuso rapidamente |
+| `/ul-data-backup` | Backup | Criar backup dos dados |
 
 ---
 
 ## 7. Commands no TUI do OpenCode
 
-Digite `/` no TUI do OpenCode para acessar os 22 commands disponíveis.
+Digite `/` no TUI do OpenCode para acessar os 29 commands disponíveis.
 
 ### Interface Unificada: Todos os Commands `/ul-*`
 
@@ -395,15 +400,6 @@ O sistema ajusta automaticamente baseado no seu histórico:
 - `/ul-practice-quiz`: Ajusta complexidade das perguntas
 - `/ul-memory-review`: Ajusta feedback baseado no erro por tópico
 
-### Utilitários (Terminal - Opcional)
-
-| Comando | Descrição |
-|---------|-----------|
-| `make setup` | Configuração inicial |
-| `make backup` | Backup dos dados |
-| `make module` | Criar novo módulo |
-| `make switch` | Alternar módulo ativo |
-
 ---
 
 ## Como Funciona a Nova Arquitetura
@@ -414,23 +410,22 @@ O sistema ajusta automaticamente baseado no seu histórico:
 ├─────────────────────────────────────────────────────────────┤
 │  Commands (digite / no TUI)                                 │
 │  ├── /ul-data-status     → Tool status.ts                   │
-│  ├── /ul-data-analytics  → Tool analytics.ts                │
-│  ├── /ul-data-dashboard  → Tool dashboard.ts                │
+│  ├── /ul-data-analytics  → Tool insights.ts                 │
+│  ├── /ul-data-dashboard  → Tool insights.ts                 │
 │  └── /ul-data-manage     → Tool data.ts                     │
 ├─────────────────────────────────────────────────────────────┤
 │  Agents (@tutor, @meta)                                     │
 │  └── Invocam tools automaticamente                          │
 ├─────────────────────────────────────────────────────────────┤
 │  Tools TypeScript (.opencode/tools/)                        │
-│  ├── data.ts         → CRUD nos CSVs                        │
+│  ├── data.ts         → CRUD nos CSVs (facade)               │
+│  ├── data-*.ts       → Módulos especializados (6)           │
 │  ├── context.ts      → Contexto da sessão                   │
-│  ├── analytics.ts    → Métricas e cálculos                  │
+│  ├── insights.ts     → Análises consolidadas (metrics)      │
 │  ├── status.ts       → Formatação visual                    │
-│  ├── weakness.ts     → Identifica pontos fracos             │
-│  ├── effectiveness.ts→ Efetividade por técnica              │
-│  ├── patterns.ts     → Padrões de estudo                    │
-│  ├── dashboard.ts    → Dashboard consolidado                │
-│  └── tutor-log.ts    → Registro de interações               │
+│  ├── retro.ts        → Retrospectivas                       │
+│  ├── setup.ts        → Setup e dependências                 │
+│  └── utils-csv.ts    → Utilitários CSV                      │
 ├─────────────────────────────────────────────────────────────┤
 │  Dados (CSV)                                                │
 │  └── data/*.csv (mesmo formato)                             │
@@ -473,8 +468,8 @@ O sistema ajusta automaticamente baseado no seu histórico:
 
 1. **Consistencia > Intensidade**: 1h/dia todo dia > 5h no fim de semana
 2. **Nao releia, recupere**: Quiz diario forca memoria ativa (retrieval practice)
-3. **Projetos reais**: Nao fique so em tutoriais — use `#directness`
-4. **Seja honesto**: Se nao entendeu, use `#feynman` para testar
+3. **Projetos reais**: Nao fique so em tutoriais — use `/ul-practice-project`
+4. **Seja honesto**: Se nao entendeu, use `/ul-practice-feynman` para testar
 5. **Mantenha o streak**: A gamificação funciona — `/ul-data-status` para acompanhar
 
 ---
@@ -485,7 +480,7 @@ O sistema ajusta automaticamente baseado no seu histórico:
 
 **Modulo nao encontrado?**
 ```bash
-make switch  # Lista modulos disponiveis
+/ul-module-switch  # Lista modulos disponiveis
 ```
 
 **Quiz nao funciona?**
@@ -501,9 +496,6 @@ opencode --version
 ```bash
 # Verifique se as skills existem
 ls .opencode/skills/*/SKILL.md
-
-# Teste manual
-opencode run --agent @tutor "#drill binary search"
 ```
 
 **Streak nao atualiza?**
@@ -526,12 +518,12 @@ opencode run --agent @tutor "#drill binary search"
 
 **Erros recorrentes no drill?**
 ```bash
-@tutor "#drill [conceito] 5 variações"  # Overlearning
+/ul-practice-drill [conceito]  # Continue praticando (overlearning)
 ```
 
 **Procrastinando?**
 ```bash
-opencode run --agent @tutor "#zombie"
+/ul-productivity-start
 # Ou consulte: guides/tecnicas/procrastination-zombie.md
 ```
 
@@ -547,18 +539,18 @@ PRE-SESSAO:
 [ ] Materiais prontos | [ ] 1h disponivel
 
 ROTINA:
-/ul-study-start -> /ul-practice-drill (ou #feynman, #directness) -> /ul-study-end
+/ul-study-start -> /ul-practice-drill (ou feynman, project) -> /ul-study-end
 
 POS-SESSAO:
 [ ] Sessao salva no CSV | [ ] Streak ok | [ ] Proxima marcada
 [ ] Dificeis no SRS
 
-SE TRAVAR: /ul-productivity-break (ou use a técnica de modo difuso)
+SE TRAVAR: /ul-productivity-break
 SE NAO CONSEGUIR COMECAR: /ul-productivity-start
 SE NAO SABE O QUE FAZER: /ul-study-start
 
 SEMANAL (domingo):
-/ul-plan-retro + /ul-plan-weekly
+/ul-retro-weekly + /ul-plan-weekly
 ```
 
 ---
@@ -602,9 +594,9 @@ cat data/insights.csv
 | Interações do tutor | `tutor_interactions.csv` | Tool tutor-log.ts |
 | Flashcards revisados | `reviews.csv` | Tool data.ts (SM-2) |
 | Técnicas usadas | `session_skills.csv` | Tool data.ts |
-| Pontos fracos | `insights.csv` | Tool weakness.ts |
-| Efetividade | Calculado em tempo real | Tool effectiveness.ts |
-| Padrões | Calculado em tempo real | Tool patterns.ts |
+| Pontos fracos | `insights.csv` | Tool insights.ts |
+| Efetividade | Calculado em tempo real | Tool insights.ts |
+| Padrões | Calculado em tempo real | Tool insights.ts |
 
 ### Analytics Disponíveis
 
@@ -632,7 +624,7 @@ cat data/insights.csv
 ### Backup
 
 ```bash
-make backup
+/ul-data-backup
 ```
 
 Cria backup de todos os dados em `backups/`.
@@ -649,10 +641,10 @@ Apos dominar a rotina basica:
 
 1. **Aprofunde nos principios**: Explore os [9 principios](guides/principios/) do Ultralearning
 2. **Domine as tecnicas**: Consulte o [indice de tecnicas](guides/indice.md) (23 tecnicas)
-3. **Planeje com estrategia**: Use `@meta` com `#decompose-goal` para quebrar objetivos grandes
+3. **Planeje com estrategia**: Use `/ul-plan-decompose` para quebrar objetivos grandes
 4. **Acompanhe o progresso**: Use [`/ul-data-analytics`](guides/sistema-dados.md) para ver métricas
 5. **Entenda os dados**: Leia [Sistema de Dados](guides/sistema-dados.md) para entender como os dados são salvos
 
 ---
 
-*Feito para aprender melhor. Comece agora com `make setup`.*
+*Feito para aprender melhor. Comece agora com `/ul-setup-check`.*

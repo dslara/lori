@@ -101,7 +101,7 @@ Se preferir entender antes de praticar:
 
 **Tools utilizadas:**
 - `context.getFullContext` — Carrega contexto completo
-- `analytics.getErrorRateByTopic` — Identifica tópicos fracos
+- `insights.getWeaknesses` — Identifica tópicos fracos
 - `data.getFlashcards` — Verifica SRS pendente
 
 **Commands relacionados:**
@@ -115,7 +115,7 @@ Se preferir entender antes de praticar:
 
 - Usuário aceita sugestão → Redireciona para command apropriado
 - Usuário quer planejar → `/ul-plan-weekly`
-- Usuário está atrasado → `/ul-plan-retro` para ajustar
+- Usuário está atrasado → `/ul-retro-weekly` para ajustar
 
 ---
 

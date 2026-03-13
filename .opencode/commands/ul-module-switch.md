@@ -4,6 +4,8 @@ agent: meta
 model: opencode-go/glm-5
 ---
 
+Argumento recebido: $ARGUMENTS (nome ou ID do módulo, opcional)
+
 ## Uso
 /ul-module-switch [nome]
 

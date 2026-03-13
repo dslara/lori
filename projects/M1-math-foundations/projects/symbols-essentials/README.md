@@ -73,15 +73,11 @@ cat projects/M1-math-foundations/projects/symbols-essentials/practice/symbols-dr
 
 ---
 
-### Passo 3: Gerar Flashcards com SRS Generator (5 min)
+### Passo 3: Gerar Flashcards (5 min)
 
 ```bash
-# Use a keyword #srs-generator para criar cards dinamicamente
-# Opção 1: Modo batch (cria múltiplos cards de uma vez)
-#srs-generator batch
-
-# Opção 2: Modo individual (cria um card por vez)
-#srs-generator
+# Use o command para criar cards dinamicamente
+/ul-memory-create
 ```
 
 **O que acontece**:
@@ -92,8 +88,7 @@ cat projects/M1-math-foundations/projects/symbols-essentials/practice/symbols-dr
 
 **Verificar cards criados**:
 ```bash
-make review
-# Escolha: 1 (Ver cards para hoje)
+/ul-memory-review
 ```
 
 ---
@@ -102,8 +97,7 @@ make review
 
 **Rotina diária até 100% de recall**:
 ```bash
-make review
-# Escolha: 2 (Sessão de revisão)
+/ul-memory-review
 ```
 
 **Sistema SM-2**:
@@ -130,10 +124,8 @@ cat projects/M1-math-foundations/projects/symbols-essentials/practice/symbols-dr
 ### Passo 6: Validação Feynman (10 min)
 
 ```bash
-# Use o modo Feynman para validar compreensão
-make study
-# Escolha: 3 (Feynman)
-# Conceito: símbolos matemáticos
+# Use o command Feynman para validar compreensão
+/ul-practice-feynman "símbolos matemáticos"
 ```
 
 **Você deve conseguir explicar**:
@@ -168,8 +160,7 @@ Você completou este projeto quando:
 
 **Ver estatísticas SRS**:
 ```bash
-make review
-# Escolha: 4 (Estatísticas)
+/ul-memory-review
 ```
 
 ---
@@ -195,9 +186,9 @@ Após concluir este projeto:
 
 ## 💡 Dicas
 
-- **Errou algo?** → Adicione ao SRS imediatamente
-- **Travado?** → Use `#zombie` para destravar
-- **Quer aprofundar?** → Use `#intuition` em um símbolo específico
+- **Errou algo?** → Adicione ao SRS imediatamente (`/ul-memory-create`)
+- **Travado?** → Use `/ul-productivity-start` para destravar
+- **Quer aprofundar?** → Use `/ul-learn-explain` em um símbolo específico
 
 ---
 

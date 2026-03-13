@@ -194,14 +194,14 @@ Tornar mensurável
 **Commands relacionados:**
 - `/ul-study-start` — Começar a executar o plano
 - `/ul-plan-weekly` — Criar detalhes da semana
-- `/ul-plan-retro` — Ajustar plano se necessário
+- `/ul-retro-weekly` — Ajustar plano se necessário
 - `/ul-plan-benchmark` — Definir critérios de conclusão
 
 ## Handoff
 
 - Plano criado → `/ul-study-start` para começar
 - Quer ajustar cronograma → `/ul-plan-weekly`
-- Fim de semana → `/ul-plan-retro` para avaliar
+- Fim de semana → `/ul-retro-weekly` para avaliar
 
 ---
 

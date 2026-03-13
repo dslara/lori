@@ -85,7 +85,7 @@ Ao terminar M1, você deve conseguir:
 
 ```
 echo "M1-math-foundations" > .current-topic
-make start
+/ul-study-start
 ```
 
 Comece por `meta/phase-0-overview.md` para o contexto completo, depois siga `week-01-notation-logic.md`.

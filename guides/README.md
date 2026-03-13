@@ -10,6 +10,7 @@ guides/
 ├── indice.md                   # Navegação completa
 ├── workflow.mmd                # Diagrama visual
 ├── sistema-dados.md            # Sistema de dados (CSV)
+├── habit-stacking.md           # Empilhamento de hábitos (Atomic Habits)
 ├── principios/                 # 9 princípios do Ultralearning
 └── tecnicas/                   # 23 técnicas práticas
 ```
@@ -57,6 +58,7 @@ Implementações práticas organizadas por princípio:
 - [focused-diffuse.md](./tecnicas/focused-diffuse.md) - Modos focado/difuso
 - [timeboxing.md](./tecnicas/timeboxing.md) - Timeboxing
 - [procrastination-zombie.md](./tecnicas/procrastination-zombie.md) - Modo Zumbi
+- [habit-stacking.md](./habit-stacking.md) - Empilhamento de hábitos
 
 ### #3 Directness
 - [directness.md](./tecnicas/directness.md) - Aprender fazendo

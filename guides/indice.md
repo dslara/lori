@@ -58,6 +58,7 @@ Este sistema está organizado em:
 - [timeboxing.md](tecnicas/timeboxing.md) - Gestão de tempo flexível
 - [focused-diffuse.md](tecnicas/focused-diffuse.md) - Modos focado/difuso
 - [procrastination-zombie.md](tecnicas/procrastination-zombie.md) - Modo Zumbi
+- [habit-stacking.md](habit-stacking.md) - Empilhamento de hábitos
 
 **#3 Directness:**
 - [directness.md](tecnicas/directness.md) - Projetos reais

@@ -88,59 +88,11 @@ Decompor aprendizado em 3 dimensões:
 
 ---
 
-### Keywords Inline (sem skill dedicada)
+### Commands de Planejamento
 
-#### `#map-resources [TÓPICO]` - Mapear recursos em 3 tiers
+#### `/ul-plan-weekly-create semana [N]` - Criar plano semanal
 
-**Quando usar**: Identificar os melhores materiais de estudo para um tópico.
-
-**Critérios de seleção (80/20)**:
-- ✅ Prático (hands-on > teoria)
-- ✅ Atualizado (últimos 2 anos)
-- ✅ Bem avaliado (reviews positivos)
-- ✅ Gratuito ou custo-benefício
-- ❌ Evitar: cursos muito longos, conteúdo desatualizado, teoria sem prática
-
-**Regra de ouro**: Máximo 3 recursos Tier 1. Menos é mais.
-
-**Critério de diversificação** — os 3 slots devem ser complementares:
-1. 📖 **Conceito** → docs oficial / tutorial teórico
-2. 🔨 **Prática** → projeto guiado / exercícios
-3. 📚 **Referência** → documentação completa / cheatsheet
-
-**Output**: `{módulo}/meta/resources.md`
-```markdown
-# 📚 Recursos: [TÓPICO]
-
-## 🥇 Tier 1 - Comece aqui (máx 3)
-1. **[Nome]**
-   - Link: [url]
-   - Tipo: [docs/tutorial/curso]
-   - Tempo: Xh
-   - Custo: Grátis/X€
-   - Por quê: [razão específica]
-
-| Slot | Recurso | Por quê |
-|------|---------|---------|
-| 📖 Conceito | [Nome] | [razão] |
-| 🔨 Prática | [Nome] | [razão] |
-| 📚 Referência | [Nome] | [razão] |
-
-## 🥈 Tier 2 - Aprofundamento
-[...]
-
-## 🥉 Tier 3 - Avançado
-[...]
-
-## ⚠️ Evitar
-- [Recurso X] - Motivo: [desatualizado/muito teórico/etc]
-```
-
----
-
-#### `#create-weekly-plan semana [N]` - Gerar plano semanal
-
-**Quando usar**: Início de cada semana de estudo.
+**Quando usar**: Início de cada semana de estudo (geralmente domingo à tarde).
 
 **⚠️ Antes de criar**: Leia a semana anterior (`week-{N-1}.md`) e a última retro (`retro-*.md`). Ajuste o ritmo se necessário.
 
@@ -185,71 +137,7 @@ em [tempo] com [critério de qualidade]."
 
 ---
 
-#### `#adjust-plan [SITUAÇÃO]` - Reajustar cronograma
-
-**Quando usar**:
-- Atrasado mais de 1 semana
-- Tópico mais difícil que esperado
-- Mudança de disponibilidade
-- Percebeu gap de conhecimento
-
-**⚠️ Antes de ajustar**: Leia `retro-*.md` para entender padrões anteriores.
-
-**Perguntas para diagnóstico**:
-```
-Vamos ajustar! Me diga:
-1. Semana atual: [planejada] vs [real]
-2. O que causou o desvio?
-   - [ ] Tópico difícil
-   - [ ] Menos tempo disponível
-   - [ ] Falta de pré-requisito
-   - [ ] Outro: ___
-3. Qual sua preferência?
-   - A) Estender prazo (+X semanas)
-   - B) Cortar conteúdo não-essencial
-   - C) Intensificar (+horas/dia)
-```
-
-**Opções de ajuste**:
-
-| Situação | Ação | Trade-off |
-|----------|------|----------|
-| Atrasado 1-2 dias | Recuperar no sábado | Sem benchmark |
-| Atrasado 1 semana | Estender +1 semana | Prazo maior |
-| Tópico difícil | Dividir em 2 semanas | Ritmo menor |
-| Menos tempo | Focar só em Tier 1 | Menos profundidade |
-| Gap de conhecimento | Inserir semana de fundamentos | Reordenar plano |
-
-**Output**: Plano revisado com justificativa.
-
----
-
-#### `#update-plan semana [N]` - Registar Progresso
-
-**Quando usar**: Marcar entregas como completas, adicionar notas de progresso ou atualizar o status do plano **sem** reescrever nem reajustar o cronograma.  
-**Diferença de `#adjust-plan`**: `#update-plan` = registar o que aconteceu; `#adjust-plan` = mudar o que vai acontecer.
-
-**Processo**:
-1. Ler `week-{N}.md` atual
-2. Pedir ao usuário o estado de cada entrega
-3. Atualizar checkboxes e adicionar nota de progresso
-4. Se completou >100% → sugerir `#adjust-plan` para aumentar desafio; se <60% → sugerir `#adjust-plan` para reajustar
-
-**Output**: `{módulo}/meta/week-{N}.md` atualizado
-```markdown
-## ✅ Entregas da Semana
-- [x] Projeto: API REST        ← completado
-- [x] Drill: 10 exercícios     ← completado
-- [ ] SRS: 20 cards novos      ← 12/20
-- [ ] Benchmark: 80% sucesso   ← ainda não feito
-
-## 📝 Notas de Progresso
-- [data] Dificuldade em autenticação JWT — dedicar +30min amanhã
-```
-
----
-
-#### `/ul-plan-retro semana [N]` - Retrospectiva semanal
+#### `/ul-retro-weekly` - Retrospectiva semanal
 
 **Quando usar**: Fim de cada semana (domingo), antes de planejar a próxima.
 
@@ -257,7 +145,7 @@ Vamos ajustar! Me diga:
 1. Ler `week-{N}.md` → verificar entregas completadas
 2. Perguntar: O que funcionou? O que não funcionou? O que mudar?
 3. Identificar padrões (ex: "sempre atraso em quintas")
-4. Alimentar o próximo `#create-weekly-plan`
+4. Alimentar o próximo `/ul-plan-weekly-create`
 
 **Output**: `{módulo}/meta/retro-{N}.md`
 ```markdown
@@ -285,37 +173,6 @@ Vamos ajustar! Me diga:
 
 ---
 
-#### `#habit-stack` - Empilhamento de Hábitos
-
-**Quando usar**: Criar cadeia de hábitos automáticos para consistência de estudo.
-
-> **Nota**: Esta keyword não gera arquivo por design — é orientação pontual sobre como criar hábitos usando o princípio de empilhamento (James Clear, Atomic Habits). Não gera output persistido.
-
-**Princípio**: Acople estudo a hábitos existentes (James Clear, Atomic Habits).
-
-**Exemplo**:
-```
-Usuário: "Como criar consistência?"
-
-Você:
-"🔗 Habit Stacking:
-
-Anexe a hábitos JÁ EXISTENTES:
-
-☕ Após café da manhã:
-   → make start (25 min)
-
-🍽️  Após almoço:
-   → /ul-memory-review (10 min SRS)
-   
-🌙 Após jantar:
-   → /ul-practice-quiz 5 [tópico]
-
-💡 Chave: Não crie novos gatilhos, use os que já existem!"
-```
-
----
-
 ## 📁 Arquivos que Você Gera
 
 | Arquivo | Conteúdo |
@@ -329,15 +186,13 @@ Anexe a hábitos JÁ EXISTENTES:
 
 ## 📎 Quick Reference
 
-| Keyword | Quando usar | Output |
+| Command | Quando usar | Output |
 |---------|-------------|--------|
 | `/ul-plan-decompose [OBJ]` | Novo módulo ou objetivo | `learning-map.md` — Skill: `decomposition` ✓ |
-| `/ul-plan-retro` | Retrospectiva semanal | `retro-{N}.md` — Skill: `retrospective` ✓ |
-| `#map-resources [TÓPICO]` | Identificar melhores materiais | `resources.md` |
-| `#create-weekly-plan semana N` | Início de cada semana | `week-{N}.md` |
-| `#update-plan semana [N]` | Registar progresso sem reescrever plano | `week-{N}.md` atualizado |
-| `#adjust-plan [SITUAÇÃO]` | Desvio de cronograma | Plano revisado |
-| `#habit-stack` | Criar consistência de estudo | Cadeia de hábitos |
+| `/ul-retro-weekly` | Retrospectiva semanal | `retro-{N}.md` |
+| `/ul-plan-weekly-create semana N` | Início de cada semana | `week-{N}.md` |
+| `/ul-plan-resources [TÓPICO]` | Identificar melhores materiais | `resources.md` |
+| `/ul-plan-adjust [SITUAÇÃO]` | Desvio de cronograma | Plano revisado |
 | `/ul-plan-benchmark` | Definir critério de conclusão | Benchmark estruturado — Skill: `benchmarking` ✓ |
 
 ---
@@ -358,7 +213,7 @@ Você: "Vamos decompor! Me responda:
 ---
 
 [Domingo da semana 3]
-Usuário: "#create-weekly-plan semana 3"
+Usuário: "/ul-plan-weekly-create semana 3"
 
 Você: "[Lê week-02.md: 3/5 entregas completadas. Retro: recursão difícil]
 📅 Semana 3: Árvores e Grafos
@@ -368,7 +223,7 @@ Ajuste: -1 tópico novo, +1 dia de reforço em recursão.
 ---
 
 [Quinta-feira, atrasado]
-Usuário: "#adjust-plan perdi 2 dias essa semana"
+Usuário: "/ul-plan-adjust perdi 2 dias essa semana"
 
 Você: "Vamos ajustar! O que causou o desvio?
 [→ opções: recuperar sábado / cortar conteúdo não-essencial / estender semana]
@@ -410,25 +265,25 @@ Antes de enviar cada resposta, valide:
 
 | Fase | @meta | @tutor | @review |
 |------|-------|--------|---------|
-| Domingo (manhã) | `/ul-plan-retro` | - | - |
-| Domingo (tarde) | `#create-weekly-plan` | - | - |
+| Domingo (manhã) | `/ul-retro-weekly` | - | - |
+| Domingo (tarde) | `/ul-plan-weekly-create` | - | - |
 | Segunda-Sábado | - | `/ul-practice-project`, `/ul-practice-drill`, `/ul-practice-feynman` | - |
-| Desvio | `#adjust-plan` | - | - |
-| Fim de módulo | `/ul-plan-retro` final | - | `#audit-quality` |
+| Desvio | `/ul-plan-adjust` | - | - |
+| Fim de módulo | `/ul-retro-weekly` final | - | `#audit-quality` |
 
 **Handoff para @tutor**:
 ```
 "Plano criado! Para executar, use:
-- make start → Quiz de aquecimento
-- make study → Escolha a atividade do dia
-- make end → Salvar progresso
+- /ul-study-start → Quiz de aquecimento
+- /ul-study-start → Escolha a atividade do dia
+- /ul-study-end → Salvar progresso
 
 Bom estudo! 🎓"
 ```
 
 **Quando voltar para @meta**:
-- Domingo: `/ul-plan-retro` → `#create-weekly-plan`
-- Desvio de cronograma: `#adjust-plan`
+- Domingo: `/ul-retro-weekly` → `/ul-plan-weekly-create`
+- Desvio de cronograma: `/ul-plan-adjust`
 - Novo módulo/objetivo: `/ul-plan-decompose`
 
 ---

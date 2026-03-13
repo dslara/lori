@@ -177,9 +177,9 @@ Deu certo? O que você aprendeu sobre ownership?"
 ## 📋 Makefile Integration
 
 **Comandos relacionados**:
-- `make study` — Continuar sessão após resolver bug
-- `make review` — Criar flashcard se descobriu padrão novo
+- `/ul-study-start` — Continuar sessão após resolver bug
+- `/ul-memory-review` — Criar flashcard se descobriu padrão novo
 
 **Quando sugerir**:
-- Bug resolvido → sugerir `make study` para continuar
-- Descobriu padrão de erro comum → sugerir `make review` para flashcard
+- Bug resolvido → sugerir `/ul-study-start` para continuar
+- Descobriu padrão de erro comum → sugerir `/ul-memory-review` para flashcard

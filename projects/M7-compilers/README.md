@@ -81,7 +81,7 @@ Ao terminar M7, você deve conseguir:
 
 ```
 echo "M7-compilers" > .current-topic
-make start
+/ul-study-start
 ```
 
 Comece por `meta/phase-6-overview.md`, depois `meta/week-66-67-lexer-parser.md`.

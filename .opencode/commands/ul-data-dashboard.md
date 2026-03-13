@@ -28,6 +28,19 @@ Inclua recomendações baseadas nos dados:
 - Se identificar o melhor período, sugira agendar sessões difíceis nesse horário
 - Se encontrar duração ideal, sugira otimizar o tamanho da sessão
 
+## Integrações
+
+**Tools utilizadas:**
+- `insights.showDashboard` — Gera dashboard visual consolidado
+- `insights.comparePeriods` — Compara com período anterior (se solicitado)
+
+**Processo:**
+1. Invocar `insights.showDashboard` para obter métricas consolidadas
+2. Formatar output com emojis e seções visuais
+3. Se usuário pedir comparação, invocar `insights.comparePeriods`
+
+---
+
 **Uso:**
 - `/ul-data-dashboard` - Mostra dashboard da semana atual
 - `/ul-data-dashboard month` - Mostra dashboard mensal (se suportado)

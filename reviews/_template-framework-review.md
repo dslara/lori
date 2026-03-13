@@ -20,6 +20,44 @@ Exemplo:
 
 ---
 
+## 🔗 Matriz de Dependências *(se aplicável)*
+
+[Incluir apenas em revisões de arquitetura, consistência ou auditoria completa]
+
+### Commands → Tools
+
+| Command | Tools Usadas | Frequência |
+|---------|-------------|------------|
+| [command] | [tool1, tool2] | [Alta/Média/Baixa] |
+
+### Commands → Skills
+
+| Command | Skill Invocada | Via |
+|---------|---------------|-----|
+| [command] | [skill] | skill tool |
+
+### Tools → Tools
+
+| Tool | Depende de | Tipo |
+|------|-----------|------|
+| [tool] | [outra tool] | Importação |
+
+### Análise de Acoplamento
+
+**Tools Sobrecarregadas**:
+- [tool]: usada por N commands (⚠️ alto acoplamento)
+
+**Tools Subutilizadas**:
+- [tool]: usada por 1 command
+
+**Skills Mais Usadas**:
+- [skill]: N commands
+
+**Skills Subutilizadas**:
+- [skill]: 0 commands (❓ keyword only?)
+
+---
+
 ## ✅ Coerência com Projeto
 
 [O aspecto analisado segue os padrões e convenções do projeto?]
