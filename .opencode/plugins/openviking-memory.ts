@@ -1281,8 +1281,8 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
 
         log("ERROR", "event", "OpenCode session error", {
           session_id: sessionId,
-          error: safeStringify(event.error),
-          session_info: safeStringify(event.properties?.info)
+          error: safeStringify(event.properties?.error),
+          session_info: safeStringify(event.properties)
         })
 
         // Optionally commit session to preserve work
@@ -1291,7 +1291,7 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
           log("INFO", "event", "Attempting to commit session after error", {
             opencode_session: sessionId,
             openviking_session: mapping.ovSessionId,
-            session_info: safeStringify(event.properties?.info)
+            session_info: safeStringify(event.properties)
           })
           await flushPendingMessages(sessionId, mapping, config)
 
@@ -1319,7 +1319,8 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
         const sessionId = message.sessionID
         const messageId = message.id
         const role = message.role
-        const finish = message.finish
+        const isAssistantMessage = role === "assistant"
+        const isCompletedAssistant = isAssistantMessage && "time" in message && message.time && "completed" in message.time && message.time.completed !== undefined
 
         // Check if we have a session mapping
         const mapping = sessionMap.get(sessionId)
@@ -1343,21 +1344,20 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
               role: role,
             })
           }
-        } else if (role === "assistant" && finish === "stop") {
+        } else if (isAssistantMessage && isCompletedAssistant) {
           mapping.messageRoles.set(messageId, role)
 
           log("DEBUG", "message", `${role} message completed and role stored`, {
             session_id: sessionId,
             message_id: messageId,
             role: role,
-            finish: finish,
           })
         }
 
         await flushPendingMessages(sessionId, mapping, config)
 
         // For assistant messages: log when fully completed (with tokens/cost)
-        if (role === "assistant" && message.time?.completed) {
+        if (isAssistantMessage && message.time?.completed) {
           log("DEBUG", "message", "Assistant message fully completed", {
             session_id: sessionId,
             message_id: messageId,
@@ -1546,8 +1546,8 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
         },
         async execute(args, context) {
           let sessionId = args.session_id
-          if (!sessionId && context.session?.id) {
-            const mapping = sessionMap.get(context.session.id)
+          if (!sessionId && context.sessionID) {
+            const mapping = sessionMap.get(context.sessionID)
             if (mapping) {
               sessionId = mapping.ovSessionId
             }
@@ -1556,7 +1556,7 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
           log("INFO", "memcommit", "Committing session", {
             requested_session_id: args.session_id,
             resolved_session_id: sessionId,
-            opencode_session_id: context.session?.id,
+            opencode_session_id: context.sessionID,
           })
 
           if (!sessionId) {
@@ -1564,12 +1564,12 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
           }
 
           try {
-            const mapping = context.session?.id ? sessionMap.get(context.session.id) : undefined
+            const mapping = context.sessionID ? sessionMap.get(context.sessionID) : undefined
             const resolvedMapping = mapping?.ovSessionId === sessionId ? mapping : undefined
 
             if (resolvedMapping) {
               await flushPendingMessages(
-                context.session?.id ?? sessionId,
+                context.sessionID ?? sessionId,
                 resolvedMapping,
                 config,
               )
@@ -1578,7 +1578,7 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
             if (resolvedMapping?.commitInFlight) {
               const task = await waitForCommitCompletion(
                 resolvedMapping,
-                context.session?.id ?? sessionId,
+                context.sessionID ?? sessionId,
                 config,
                 context.abort,
               )
@@ -1609,7 +1609,7 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
 
             const taskId = await startBackgroundCommit(
               tempMapping,
-              context.session?.id ?? sessionId,
+              context.sessionID ?? sessionId,
               config,
             )
             if (!taskId) {
@@ -1618,7 +1618,7 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
 
             const task = await waitForCommitCompletion(
               tempMapping,
-              context.session?.id ?? sessionId,
+              context.sessionID ?? sessionId,
               config,
               context.abort,
             )
@@ -1688,12 +1688,12 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
 
             // Auto-inject session_id if not provided
             let sessionId = args.session_id
-            if (!sessionId && context.session?.id) {
-              const mapping = sessionMap.get(context.session.id)
+            if (!sessionId && context.sessionID) {
+              const mapping = sessionMap.get(context.sessionID)
               if (mapping) {
                 sessionId = mapping.ovSessionId
                 log("INFO", "memsearch", "Auto-injected session context", {
-                  opencode_session: context.session.id,
+                  opencode_session: context.sessionID,
                   openviking_session: sessionId,
                 })
               }
@@ -1735,17 +1735,6 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
         },
       ),
     },
-
-    stop: async () => {
-      // Flush any pending debounced save
-      if (saveTimer) {
-        clearTimeout(saveTimer)
-        await saveSessionMap()
-      }
-      // Stop auto-commit scheduler
-      stopAutoCommit()
-      log("INFO", "plugin", "OpenViking Memory Plugin stopped")
-    }
   }
 }
 

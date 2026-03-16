@@ -19,13 +19,14 @@ services:
   openviking:
     image: ghcr.io/volcengine/openviking:v0.2.5
     container_name: ultralearning-openviking
+    command: ["openviking-server", "--host", "0.0.0.0"]
     ports:
       - "1933:1933"
     volumes:
-      - ./openviking/ov.conf:/app/ov.conf
-      - ./openviking/data:/app/data
+      - ${HOME}/.openviking/ov.conf:/app/ov.conf
+      - ${HOME}/.openviking/data:/app/data
     environment:
-      - OPENCODE_GO_API_KEY=${OPENCODE_GO_API_KEY}
+      - OPENVIKING_API_KEY=${OPENVIKING_API_KEY}
     depends_on:
       - ollama
     healthcheck:

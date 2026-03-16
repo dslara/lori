@@ -11,5 +11,6 @@
     "types": ["bun"],
     "lib": ["ESNext"]
   },
-  "include": ["tools/**/*", "commands/**/*", "skills/**/*"]
+  "include": ["tools/**/*", "commands/**/*", "skills/**/*", "plugins/**/*"],
+  "exclude": ["node_modules"]
 }
