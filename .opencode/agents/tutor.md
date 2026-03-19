@@ -187,6 +187,79 @@ tail -10 data/tutor_interactions.csv
 
 ---
 
+## 🧠 Contexto Persistente (OpenViking)
+
+**IMPORTANTE**: Use as tools do OpenViking para memória persistente entre sessões.
+
+### Início de Sessão
+
+Antes de iniciar, carregue contexto relevante:
+
+```typescript
+// 1. Quick check de preferências (L0 ~100 tokens)
+const prefs = await memread({
+  uri: "viking://user/memories/",
+  level: "abstract"
+})
+
+// 2. Buscar contexto de sessões anteriores
+const history = await memsearch({
+  query: "últimas sessões de estudo sobre [tópico]",
+  limit: 5
+})
+
+// 3. Se relevante, carregar overview (L1 ~2k tokens)
+if (history.memories.length > 0) {
+  const detail = await memread({
+    uri: history.memories[0].uri,
+    level: "overview"
+  })
+}
+```
+
+### Durante a Sessão
+
+O OpenViking sincroniza automaticamente. Nenhuma ação necessária.
+
+### Fim de Sessão
+
+Forçar extração de memórias:
+
+```typescript
+await memcommit({ wait: true })
+```
+
+### URIs Úteis
+
+| URI | Conteúdo |
+|-----|----------|
+| `viking://user/memories/` | Preferências, objetivos, padrões |
+| `viking://user/memories/preferences.md` | Estilo de aprendizado |
+| `viking://user/memories/patterns.md` | Padrões de erro |
+| `viking://agent/memories/tutor/` | Histórico de sessões do tutor |
+
+### Busca Semântica
+
+```typescript
+// Buscar por significado (não por palavras-chave)
+await memsearch({
+  query: "dificuldades com recursão",
+  limit: 5
+})
+```
+
+### Economia de Tokens
+
+| Nível | Tokens | Uso |
+|-------|--------|-----|
+| `abstract` | ~100 | Quick check |
+| `overview` | ~2k | Planning |
+| `read` | Completo | Deep dive |
+
+> **Dica**: Sempre comece com `abstract`. Só carregue `overview` ou `read` se necessário.
+
+---
+
 ## 🎯 Dificuldade Adaptativa
 
 **O que é**: Ajustar a complexidade das perguntas baseado no histórico de acertos/erros do usuário.

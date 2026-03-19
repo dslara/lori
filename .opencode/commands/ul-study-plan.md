@@ -1,7 +1,7 @@
 ---
 description: Ver progresso da semana e plano atual (/ul-study-plan)
 agent: tutor
-model: opencode-go/minimax-m2.5
+model: opencode-go/glm-5
 ---
 
 ## Uso
@@ -9,17 +9,39 @@ model: opencode-go/minimax-m2.5
 
 ## Descrição
 
-Visualiza progresso da semana atual: tópicos concluídos, em andamento e pendentes, análise de técnicas usadas e sugestões de ajuste.
+Visualiza progresso da semana atual: tópicos concluídos, em andamento e pendentes, análise de técnicas usadas e sugestões de ajuste. Dados carregados via OpenViking.
 
 ## Processo
 
 ### Passo 1: Carregar Dados
 
-Invocar tools:
-1. `context.getWeekContext` — Plano da semana
-2. `context.getRecentSessions` — Sessões recentes
-3. `insights.generateReport` — Métricas gerais consolidadas
-4. `insights.getWeaknesses` — Tópicos fracos
+Usar OpenViking tools:
+
+```typescript
+// 1. Carregar plano da semana
+const weekPlan = await memread({
+  uri: "viking://user/projects/[module]/meta/week-*.md",
+  level: "read"
+})
+
+// 2. Buscar sessões recentes
+const sessions = await memsearch({
+  query: "sessões recentes semana atual",
+  limit: 20
+})
+
+// 3. Buscar métricas gerais
+const insights = await memread({
+  uri: "viking://user/memories/insights.md",
+  level: "read"
+})
+
+// 4. Buscar pontos fracos
+const weaknesses = await memsearch({
+  query: "padrões de erro tópicos fracos",
+  limit: 5
+})
+```
 
 ### Passo 2: Apresentar Progresso
 
@@ -59,7 +81,7 @@ Calcular:
 
 ### Passo 5: Tópicos Fracos
 
-Se error_rate > 0.3 em algum tópico:
+Se encontrar padrões de erro:
 ```
 ⚠️ Pontos de atenção:
 • [Tópico A]: error_rate 45%
@@ -111,14 +133,23 @@ Você está no tempo! Sábado é ideal para o benchmark.
 3. Criar flashcards para padrões de erro → /ul-memory-create"
 ```
 
+## Estrutura OpenViking
+
+Os dados são buscados de:
+
+| Dado | URI OpenViking |
+|------|---------------|
+| Plano da semana | `viking://user/projects/[module]/meta/week-*.md` |
+| Sessões recentes | `memsearch({ query: "sessões recentes" })` |
+| Insights | `viking://user/memories/insights.md` |
+| Pontos fracos | `memsearch({ query: "padrões de erro" })` |
+
 ## Integrações
 
-**Tools utilizadas:**
-- `context.getWeekContext` — Plano da semana
-- `context.getRecentSessions` — Histórico
-- `insights.generateReport` — Métricas gerais consolidadas
-- `insights.getWeaknesses` — Tópicos fracos
-- `insights.getEffectiveness` — Efetividade e distribuição de técnicas
+**Tools OpenViking utilizadas:**
+- `memread` — Carregar plano e insights
+- `memsearch` — Buscar sessões e padrões de erro
+- `membrowse` — Navegar estrutura (opcional)
 
 **Commands relacionados:**
 - `/ul-study-start` — Iniciar sessão
@@ -136,4 +167,4 @@ Você está no tempo! Sábado é ideal para o benchmark.
 
 ---
 
-*Command: /ul-study-plan — Visão geral do progresso semanal*
+*Command: /ul-study-plan — Visão geral do progresso semanal via OpenViking*

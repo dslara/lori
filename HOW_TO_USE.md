@@ -2,7 +2,9 @@
 
 > Guia completo para estudar com o framework. Do primeiro `/ul-setup-check` ao dominio de CS Fundamentals.
 
-**Última atualização**: 2026-03-11
+**Última atualização**: 2026-03-17
+
+> **🧠 Memória Persistente**: O sistema agora usa **OpenViking** para memória entre sessões. Os agentes lembram conversas anteriores, preferências e padrões de erro automaticamente. Veja [Integração OpenViking](#memória-persistente-openviking).
 
 ---
 
@@ -437,6 +439,76 @@ O sistema ajusta automaticamente baseado no seu histórico:
 - ✅ Contexto automático carregado pelo `/ul-study-start`
 - ✅ Dados salvos automaticamente pelo `/ul-study-end`
 - ✅ Analytics em tempo real via `/ul-data-analytics`
+
+---
+
+## Memória Persistente (OpenViking)
+
+> **Novo na v3.2**: O sistema agora usa OpenViking para memória entre sessões.
+
+### O que mudou?
+
+Antes, cada sessão do LLM começava do zero — o @tutor não lembrava conversas anteriores, preferências ou padrões de erro. Agora:
+
+- **@tutor lembra** conversas anteriores automaticamente
+- **@meta considera** histórico de planejamento
+- **@review compara** com auditorias anteriores
+
+### Como funciona
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    OPENVIKING SERVER                        │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  viking://user/memories/                              │  │
+│  │  ├── preferences/  → Estilo de aprendizado           │  │
+│  │  ├── events/       → Marcos e decisões               │  │
+│  │  └── entities/     → Projetos, conceitos, pessoas    │  │
+│  └───────────────────────────────────────────────────────┘  │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  viking://agent/memories/                            │  │
+│  │  ├── tutor/   → Casos e padrões do @tutor           │  │
+│  │  ├── meta/    → Histórico de planejamento           │  │
+│  │  └── review/  → Auditorias anteriores               │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Hierarquia de Contexto (L0/L1/L2)
+
+O OpenViking carrega contexto de forma hierárquica para economizar tokens:
+
+| Nível | Tokens | Uso |
+|-------|--------|-----|
+| **L0 (abstract)** | ~100 | Quick check — ver se é relevante |
+| **L1 (overview)** | ~2k | Planning — visão geral |
+| **L2 (read)** | Completo | Deep dive — detalhes |
+
+**Economia**: -70% a -90% de tokens comparado a carregar tudo.
+
+### Configuração
+
+O OpenViking está configurado em `~/.openviking/` (global) para compartilhar entre projetos:
+
+```bash
+# Verificar se está rodando
+docker-compose ps
+
+# Deve mostrar:
+# ultralearning-ollama       (healthy)
+# ultralearning-openviking   (healthy)
+```
+
+### Comandos Úteis
+
+| Comando | Descrição |
+|---------|-----------|
+| `docker-compose ps` | Verificar status dos containers |
+| `docker-compose logs -f openviking` | Ver logs |
+| `docker-compose restart` | Reiniciar servidos |
+| `curl http://localhost:1933/health` | Health check |
+
+Mais detalhes: [`planning/proposta-openviking-integration-2026-03-13.md`](planning/proposta-openviking-integration-2026-03-13.md)
 
 ---
 

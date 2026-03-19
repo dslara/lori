@@ -1,17 +1,39 @@
 ---
 description: Ver status atual - streak, sessões, módulo (/ul-data-status)
 agent: tutor
-model: opencode-go/kimi-k2.5
+model: opencode-go/glm-5
 ---
 
 ## Descrição
 
-Mostra status atual de estudo: streak atual, recorde, total de sessões, módulo ativo e data da última sessão.
+Mostra status atual de estudo: streak atual, recorde, total de sessões, módulo ativo e data da última sessão via OpenViking.
 
 ## Uso
 /ul-data-status
 
-Mostre o status atual de estudo do usuário usando a ferramenta 'status' com a operação formatStatus.
+## Processo
+
+Carregar informações via OpenViking:
+
+```typescript
+// 1. Carregar perfil do usuário
+const profile = await memread({
+  uri: "viking://user/memories/profile.md",
+  level: "read"
+})
+
+// 2. Buscar sessões recentes
+const sessions = await memsearch({
+  query: "sessões de estudo recentes",
+  limit: 5
+})
+
+// 3. Buscar streak e métricas
+const insights = await memsearch({
+  query: "streak métricas estudo",
+  limit: 3
+})
+```
 
 Exiba:
 - Streak atual com barra de progresso visual
@@ -22,18 +44,62 @@ Exiba:
 
 Apresente as informações de forma clara e motivadora. Se o usuário tiver um bom streak, celebre! Se não estudou recentemente, encoraje-o gentilmente.
 
-Se não houver dados, sugira começar com /ul-study-start.
+Se não houver dados (OpenViking vazio), sugira começar com `/ul-study-start`.
+
+## Output
+
+```
+📊 Status de Estudo
+
+🔥 Streak: 15 dias (recorde: 23 dias)
+███████████████░░░░░░░ 65%
+
+📚 Módulo: go-os-cpu
+   Iniciado: 2026-03-01
+   Sessões: 12
+   Tempo total: 8h 30min
+
+📅 Última sessão: Ontem (45 min)
+   Foco: 8/10
+   
+💡 Dica: Você está numa sequência boa! Mantenha assim.
+```
+
+Se streak quebrado:
+```
+📊 Status de Estudo
+
+⚠️ Streak: 0 dias (quebrou há 3 dias)
+   Recorde: 5 dias
+
+📚 Módulo: math-foundations
+
+📅 Última sessão: 3 dias atrás
+
+💡 Não desanime! Uma sessão rápida já conta.
+   → /ul-study-start para retomar
+```
+
+## Estrutura OpenViking
+
+Os dados são buscados de:
+
+| Dado | URI OpenViking |
+|------|---------------|
+| Perfil/Streak | `viking://user/memories/profile.md` |
+| Sessões recentes | `memsearch({ query: "sessões recentes" })` |
+| Métricas | `memsearch({ query: "métricas streak" })` |
 
 ## Integrações
 
-**Tools utilizadas:**
-- `status.getStatus` — Obtém dados brutos de status
-- `status.formatStatus` — Formata com emojis e barra de progresso
-- `data.getSessions` — Obtém sessões recentes
-- `context.getCurrentModule` — Obtém módulo ativo
+**Tools OpenViking utilizadas:**
+- `memread` — Carregar perfil
+- `memsearch` — Buscar sessões e métricas
 
-**Processo:**
-1. Invocar `status.getStatus` para obter streak, total de sessões, etc.
-2. Invocar `context.getCurrentModule` para obter módulo ativo
-3. Invocar `status.formatStatus` para formatar output visual
-4. Apresentar de forma motivadora
+**Commands relacionados:**
+- `/ul-study-start` — Iniciar sessão
+- `/ul-data-analytics` — Ver relatório detalhado
+
+---
+
+*Command: /ul-data-status — Status rápido via OpenViking*

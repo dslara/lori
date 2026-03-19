@@ -3,13 +3,18 @@
  *
  * Exposes OpenViking's semantic memory capabilities as tools for AI agents.
  * Supports user profiles, preferences, entities, events, cases, and patterns.
+ * 
+ * Contributed by: littlelory@convolens.net
+ * GitHub: https://github.com/convolens
+ * We are building Enterprise AI assistant for consumer brands，with process awareness and memory,
+ * Serving product development to pre-launch lifecycle
+ * Copyright 2026 Convolens.
  */
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin"
 import { tool } from "@opencode-ai/plugin"
-//import { mkdirSync, appendFileSync, existsSync, promises } from "node:fs/promises"
 import { mkdirSync, appendFileSync, existsSync, promises, readFileSync } from "node:fs"
-import { dirname, join } from "path";
+import { dirname, join } from "node:path";
 import { fileURLToPath } from "url"
 
 const z = tool.schema
@@ -335,6 +340,10 @@ interface TaskResult {
   error?: string | null
 }
 
+type CommitStartResult =
+  | { mode: "background"; taskId: string }
+  | { mode: "completed"; result: CommitResult }
+
 const DEFAULT_CONFIG: OpenVikingConfig = {
   endpoint: "http://localhost:1933",
   apiKey: "",
@@ -358,9 +367,9 @@ function loadConfig(): OpenVikingConfig {
         ...fileConfig,
         autoCommit: fileConfig.autoCommit
           ? {
-              ...DEFAULT_CONFIG.autoCommit,
-              ...fileConfig.autoCommit,
-            }
+            ...DEFAULT_CONFIG.autoCommit,
+            ...fileConfig.autoCommit,
+          }
           : DEFAULT_CONFIG.autoCommit
             ? { ...DEFAULT_CONFIG.autoCommit }
             : undefined,
@@ -370,8 +379,8 @@ function loadConfig(): OpenVikingConfig {
       }
 
       // Environment variable takes precedence over config file
-      if (process.env.OPENVIKING_API_KEY) {
-        config.apiKey = process.env.OPENVIKING_API_KEY
+      if (process.env.OPENVIKING_SERVER_API_KEY) {
+        config.apiKey = process.env.OPENVIKING_SERVER_API_KEY
       }
 
       return config
@@ -387,8 +396,8 @@ function loadConfig(): OpenVikingConfig {
       ? { ...DEFAULT_CONFIG.autoCommit }
       : undefined,
   }
-  if (process.env.OPENVIKING_API_KEY) {
-    config.apiKey = process.env.OPENVIKING_API_KEY
+  if (process.env.OPENVIKING_SERVER_API_KEY) {
+    config.apiKey = process.env.OPENVIKING_SERVER_API_KEY
   }
   if (config.autoCommit) {
     config.autoCommit.intervalMinutes = getAutoCommitIntervalMinutes(config)
@@ -608,7 +617,7 @@ async function ensureOpenVikingSession(
       const response = await makeRequest<OpenVikingResponse<SessionResult>>(config, {
         method: "GET",
         endpoint: `/api/v1/sessions/${knownSessionId}`,
-        timeoutMs: 5000,
+        timeoutMs: 30000,
       })
       const result = unwrapResponse(response)
       if (result) {
@@ -632,7 +641,7 @@ async function ensureOpenVikingSession(
       method: "POST",
       endpoint: "/api/v1/sessions",
       body: {},
-      timeoutMs: 5000,
+      timeoutMs: 30000,
     })
 
     const sessionId = unwrapResponse(createResponse)?.session_id
@@ -678,7 +687,7 @@ async function findRunningCommitTaskId(
     const response = await makeRequest<OpenVikingResponse<TaskResult[]>>(config, {
       method: "GET",
       endpoint: `/api/v1/tasks?task_type=session_commit&resource_id=${encodeURIComponent(ovSessionId)}&limit=10`,
-      timeoutMs: 5000,
+      timeoutMs: 30000,
     })
     const tasks = unwrapResponse(response) ?? []
     const runningTask = tasks.find((task) => task.status === "pending" || task.status === "running")
@@ -696,6 +705,100 @@ function clearCommitState(mapping: SessionMapping): void {
   mapping.commitInFlight = false
   mapping.commitTaskId = undefined
   mapping.commitStartedAt = undefined
+}
+
+let backgroundCommitSupported: boolean | null = null
+const COMMIT_TIMEOUT_MS = 180000
+
+async function detectBackgroundCommitSupport(config: OpenVikingConfig): Promise<boolean> {
+  if (backgroundCommitSupported !== null) {
+    return backgroundCommitSupported
+  }
+
+  const headers: Record<string, string> = {}
+  if (config.apiKey) {
+    headers["X-API-Key"] = config.apiKey
+  }
+
+  try {
+    const response = await fetch(`${config.endpoint}/api/v1/tasks?limit=1`, {
+      method: "GET",
+      headers,
+      signal: AbortSignal.timeout(3000),
+    })
+    backgroundCommitSupported = response.ok
+  } catch {
+    backgroundCommitSupported = false
+  }
+
+  log(
+    "INFO",
+    "session",
+    backgroundCommitSupported
+      ? "Detected background commit API support"
+      : "Detected legacy synchronous commit API",
+    { endpoint: config.endpoint },
+  )
+  return backgroundCommitSupported
+}
+
+async function finalizeCommitSuccess(
+  mapping: SessionMapping,
+  opencodeSessionId: string,
+  config: OpenVikingConfig,
+): Promise<void> {
+  mapping.lastCommitTime = Date.now()
+  mapping.capturedMessages.clear()
+  clearCommitState(mapping)
+  debouncedSaveSessionMap()
+
+  await flushPendingMessages(opencodeSessionId, mapping, config)
+
+  if (mapping.pendingCleanup) {
+    sessionMap.delete(opencodeSessionId)
+    sessionMessageBuffer.delete(opencodeSessionId)
+    await saveSessionMap()
+    log("INFO", "session", "Cleaned up session mapping after commit completion", {
+      openviking_session: mapping.ovSessionId,
+      opencode_session: opencodeSessionId,
+    })
+  }
+}
+
+async function runSynchronousCommit(
+  mapping: SessionMapping,
+  opencodeSessionId: string,
+  config: OpenVikingConfig,
+  abortSignal?: AbortSignal,
+): Promise<CommitResult> {
+  mapping.commitInFlight = true
+  mapping.commitTaskId = undefined
+  mapping.commitStartedAt = Date.now()
+  debouncedSaveSessionMap()
+
+  try {
+    const response = await makeRequest<OpenVikingResponse<CommitResult>>(config, {
+      method: "POST",
+      endpoint: `/api/v1/sessions/${mapping.ovSessionId}/commit`,
+      timeoutMs: Math.max(config.timeoutMs, COMMIT_TIMEOUT_MS),
+      abortSignal,
+    })
+    const result = unwrapResponse(response)
+
+    log("INFO", "session", "OpenViking synchronous commit completed", {
+      openviking_session: mapping.ovSessionId,
+      opencode_session: opencodeSessionId,
+      memories_extracted: result?.memories_extracted ?? 0,
+      archived: result?.archived ?? false,
+    })
+
+    await finalizeCommitSuccess(mapping, opencodeSessionId, config)
+    return result
+  } catch (error: any) {
+    clearCommitState(mapping)
+    debouncedSaveSessionMap()
+    throw error
+  }
 }
 
 async function flushPendingMessages(
@@ -764,9 +867,25 @@ async function startBackgroundCommit(
   mapping: SessionMapping,
   opencodeSessionId: string,
   config: OpenVikingConfig,
-): Promise<string | null> {
+  abortSignal?: AbortSignal,
+): Promise<CommitStartResult | null> {
   if (mapping.commitInFlight && mapping.commitTaskId) {
-    return mapping.commitTaskId
+    return { mode: "background", taskId: mapping.commitTaskId }
+  }
+
+  const supportsBackgroundCommit = await detectBackgroundCommitSupport(config)
+  if (!supportsBackgroundCommit) {
+    try {
+      const result = await runSynchronousCommit(mapping, opencodeSessionId, config, abortSignal)
+      return { mode: "completed", result }
+    } catch (error: any) {
+      log("ERROR", "session", "Failed to run synchronous commit", {
+        openviking_session: mapping.ovSessionId,
+        opencode_session: opencodeSessionId,
+        error: error.message,
+      })
+      return null
+    }
   }
 
   try {
@@ -774,6 +893,7 @@ async function startBackgroundCommit(
       method: "POST",
       endpoint: `/api/v1/sessions/${mapping.ovSessionId}/commit?wait=false`,
       timeoutMs: 5000,
+      abortSignal,
     })
     const data = unwrapResponse(response)
     const taskId = data?.task_id
@@ -791,7 +911,7 @@ async function startBackgroundCommit(
       opencode_session: opencodeSessionId,
       task_id: taskId,
     })
-    return taskId
+    return { mode: "background", taskId }
   } catch (error: any) {
     if (error.message?.includes("already has a commit in progress")) {
       const taskId = await findRunningCommitTaskId(mapping.ovSessionId, config)
@@ -805,7 +925,24 @@ async function startBackgroundCommit(
           opencode_session: opencodeSessionId,
           task_id: taskId,
         })
-        return taskId
+        return { mode: "background", taskId }
+      }
+    }
+
+    if (
+      error.message?.includes("Request timeout") ||
+      error.message?.includes("background task id")
+    ) {
+      backgroundCommitSupported = false
+      try {
+        const result = await runSynchronousCommit(mapping, opencodeSessionId, config, abortSignal)
+        return { mode: "completed", result }
+      } catch (fallbackError: any) {
+        log("ERROR", "session", "Failed to fall back to synchronous commit", {
+          openviking_session: mapping.ovSessionId,
+          opencode_session: opencodeSessionId,
+          error: fallbackError.message,
+        })
       }
     }
 
@@ -828,24 +965,14 @@ async function pollCommitTaskOnce(
   }
 
   if (!mapping.commitTaskId) {
-    const recoveredTaskId = await findRunningCommitTaskId(mapping.ovSessionId, config)
-    if (!recoveredTaskId) {
-      log("ERROR", "session", "Commit marked in-flight without task id; clearing state", {
-        openviking_session: mapping.ovSessionId,
-        opencode_session: opencodeSessionId,
-      })
-      clearCommitState(mapping)
-      debouncedSaveSessionMap()
-      return "unknown"
-    }
-    mapping.commitTaskId = recoveredTaskId
+    return "running"
   }
 
   try {
     const response = await makeRequest<OpenVikingResponse<TaskResult>>(config, {
       method: "GET",
       endpoint: `/api/v1/tasks/${mapping.commitTaskId}`,
-      timeoutMs: 5000,
+      timeoutMs: 30000,
     })
     const task = unwrapResponse(response)
 
@@ -865,22 +992,7 @@ async function pollCommitTaskOnce(
         archived,
       })
 
-      mapping.lastCommitTime = Date.now()
-      mapping.capturedMessages.clear()
-      clearCommitState(mapping)
-      debouncedSaveSessionMap()
-
-      await flushPendingMessages(opencodeSessionId, mapping, config)
-
-      if (mapping.pendingCleanup) {
-        sessionMap.delete(opencodeSessionId)
-        sessionMessageBuffer.delete(opencodeSessionId)
-        await saveSessionMap()
-        log("INFO", "session", "Cleaned up session mapping after commit completion", {
-          openviking_session: mapping.ovSessionId,
-          opencode_session: opencodeSessionId,
-        })
-      }
+      await finalizeCommitSuccess(mapping, opencodeSessionId, config)
 
       return task.status
     }
@@ -931,14 +1043,18 @@ async function waitForCommitCompletion(
       throw new Error("Operation aborted")
     }
 
-    if (!mapping.commitInFlight || !mapping.commitTaskId) {
+    if (!mapping.commitInFlight) {
       return null
+    }
+    if (!mapping.commitTaskId) {
+      await sleep(500, abortSignal)
+      continue
     }
 
     const response = await makeRequest<OpenVikingResponse<TaskResult>>(config, {
       method: "GET",
       endpoint: `/api/v1/tasks/${mapping.commitTaskId}`,
-      timeoutMs: 5000,
+      timeoutMs: 30000,
       abortSignal,
     })
     const task = unwrapResponse(response)
@@ -947,12 +1063,7 @@ async function waitForCommitCompletion(
       const memoriesExtracted = task.result?.memories_extracted ?? 0
       const archived = task.result?.archived ?? false
 
-      mapping.lastCommitTime = Date.now()
-      mapping.capturedMessages.clear()
-      clearCommitState(mapping)
-      debouncedSaveSessionMap()
-
-      await flushPendingMessages(opencodeSessionId, mapping, config)
+      await finalizeCommitSuccess(mapping, opencodeSessionId, config)
 
       log("INFO", "memcommit", "Background commit completed while waiting", {
         openviking_session: mapping.ovSessionId,
@@ -1052,7 +1163,7 @@ async function addMessageToSession(
       method: "POST",
       endpoint: `/api/v1/sessions/${ovSessionId}/messages`,
       body: { role, content },
-      timeoutMs: 5000,
+      timeoutMs: 30000,
     })
     unwrapResponse(response)
 
@@ -1319,8 +1430,7 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
         const sessionId = message.sessionID
         const messageId = message.id
         const role = message.role
-        const isAssistantMessage = role === "assistant"
-        const isCompletedAssistant = isAssistantMessage && "time" in message && message.time && "completed" in message.time && message.time.completed !== undefined
+        const finish = role === "assistant" ? (message as any).finish : undefined
 
         // Check if we have a session mapping
         const mapping = sessionMap.get(sessionId)
@@ -1344,20 +1454,21 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
               role: role,
             })
           }
-        } else if (isAssistantMessage && isCompletedAssistant) {
+        } else if (role === "assistant" && finish === "stop") {
           mapping.messageRoles.set(messageId, role)
 
           log("DEBUG", "message", `${role} message completed and role stored`, {
             session_id: sessionId,
             message_id: messageId,
             role: role,
+            finish: finish,
           })
         }
 
         await flushPendingMessages(sessionId, mapping, config)
 
         // For assistant messages: log when fully completed (with tokens/cost)
-        if (isAssistantMessage && message.time?.completed) {
+        if (role === "assistant" && message.time?.completed) {
           log("DEBUG", "message", "Assistant message fully completed", {
             session_id: sessionId,
             message_id: messageId,
@@ -1607,13 +1718,28 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
               sendingMessages: new Set(),
             }
 
-            const taskId = await startBackgroundCommit(
+            const commitStart = await startBackgroundCommit(
               tempMapping,
               context.sessionID ?? sessionId,
               config,
+              context.abort,
             )
-            if (!taskId) {
+            if (!commitStart) {
               throw new Error("Failed to start background commit")
+            }
+
+            if (commitStart.mode === "completed") {
+              return JSON.stringify(
+                {
+                  message: `Memory extraction complete: ${commitStart.result.memories_extracted ?? 0} memories extracted`,
+                  session_id: commitStart.result.session_id ?? sessionId,
+                  status: commitStart.result.status ?? "completed",
+                  memories_extracted: commitStart.result.memories_extracted ?? 0,
+                  archived: commitStart.result.archived ?? false,
+                },
+                null,
+                2,
+              )
             }
 
             const task = await waitForCommitCompletion(
@@ -1629,7 +1755,7 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
                   message: "Commit is still processing in the background",
                   session_id: sessionId,
                   status: "accepted",
-                  task_id: taskId,
+                  task_id: commitStart.taskId,
                 },
                 null,
                 2,
@@ -1734,7 +1860,7 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
           },
         },
       ),
-    },
+    }
   }
 }
 

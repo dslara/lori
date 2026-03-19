@@ -3,7 +3,7 @@
 **Data**: 2026-03-13  
 **Versão atual**: v3.2.0  
 **Proponente**: Agente @brainstorm  
-**Status**: 🟢 Implementação Concluída  
+**Status**: ✅ Implementação Concluída  
 **Prioridade**: 🟡 Média
 
 ---
@@ -184,6 +184,7 @@ services:
 - Embeddings: Ollama local com `nomic-embed-text` (768d) - grátis
 - VLM: OpenCode Go (`glm-5`)
 - Modelo baixado automaticamente no primeiro startup
+- **Config GLOBAL**: Dados e config em `~/.openviking/` (não em`./openviking/`) — permite compartilhar entre projetos
 
 **Tarefas**:
 
@@ -276,8 +277,8 @@ services:
 **Entregáveis**:
 - [x] OpenViking server rodando em Docker (v0.2.5)
 - [x] Ollama container com modelo `nomic-embed-text` baixado
-- [x] Configuração válida em `./openviking/ov.conf`
-- [x] Dados persistidos em `./openviking/data/`
+- [x] Configuração válida em `~/.openviking/ov.conf` (GLOBAL)
+- [x] Dados persistidos em `~/.openviking/data/` (GLOBAL)
 - [x] Script de entrada automática `ollama-entrypoint.sh`
 
 **Critérios de sucesso**:
@@ -325,11 +326,11 @@ services:
 **Entregáveis**:
 - [x] Plugin instalado em `.opencode/plugins/`
 - [x] Configuração válida
-- [x] Skill `openviking-context` criada
+- [x] ~~Skill `openviking-context` criada~~ — Não necessária (ver Fase 3)
 
 **Critérios de sucesso**:
 - [x] Tools `memsearch`, `memread`, `membrowse`, `memcommit` disponíveis
-- [x] Skill documentada com exemplos
+- [x] Plugin documentado com exemplos
 
 ---
 
@@ -342,53 +343,18 @@ services:
 - [x] Atualizar @tutor para usar memória persistente
 - [x] Atualizar @meta para usar histórico de planejamento
 - [x] Atualizar @review para usar histórico de auditorias
-- [x] Criar skill `openviking-context` para uso comum
+- [x] ~~Criar skill `openviking-context`~~ — **Não necessário**
+  > Documentação inline nos agentes + skill `session` cobrem o uso. Skill separada seria redundante.
 
 **Entregáveis**:
 - [x] Agentes atualizados com seção "Contexto Persistente (OpenViking)"
-- [x] Skill `openviking-context/SKILL.md` criada
-- [x] Fluxo de contexto documentado
+- [x] ~~Skill `openviking-context/SKILL.md`~~ — Não criada (desnecessária)
+- [x] Fluxo de contexto documentado nos agentes
 
 **Critérios de sucesso**:
 - [x] @tutor carrega contexto anterior automaticamente
 - [x] @meta considera histórico de planejamento
 - [x] @review compara com auditorias anteriores
-  2. `memread` de `viking://agent/memories/review/`
-  3. Comparar com auditorias anteriores
-  ```
-
-- [ ] Criar skill `openviking-context` para uso comum
-  ```markdown
-  // .opencode/skills/openviking-context/SKILL.md
-  
-  ---
-  name: openviking-context
-  description: Carrega contexto do OpenViking para sessão
-  ---
-  
-  ## Uso
-  
-  Este skill é carregado automaticamente pelos agentes para:
-  - Carregar contexto hierárquico (L0/L1/L2)
-  - Buscar memórias relevantes
-  - Navegar estrutura de contexto
-  
-  ## Fluxo
-  
-  1. Carregar L0 (abstract) para quick check
-  2. Se relevante, carregar L1 (overview)
-  3. Se necessário, carregar L2 (full content)
-  ```
-
-**Entregáveis**:
-- Agentes atualizados para usar OpenViking
-- Skill `openviking-context` criada
-- Fluxo de contexto documentado
-
-**Critérios de sucesso**:
-- @tutor carrega contexto anterior automaticamente
-- @meta considera histórico de planejamento
-- @review compara com auditorias anteriores
 
 ---
 
@@ -511,8 +477,8 @@ const full = await memread({
 - Esforço de implementação razoável
 
 **Condições para aprovação**:
-- [ ] OpenViking server instalado e funcionando
-- [ ] Testes de integração passando
+- [x] OpenViking server instalado e funcionando
+- [x] Testes de integração passando
 
 ---
 
@@ -520,34 +486,34 @@ const full = await memread({
 
 ### Preparação
 
-- [ ] Criar `docker-compose.yml`
-- [ ] Criar `openviking/ov.conf`
-- [ ] Criar `.env` com API keys
-- [ ] Executar `docker-compose up -d`
+- [x] Criar `docker-compose.yml` (config GLOBAL: `~/.openviking/`)
+- [x] ~~Criar `openviking/ov.conf`~~ — Config GLOBAL em `~/.openviking/ov.conf`
+- [x] Criar `.env` com API keys
+- [x] Executar `docker-compose up -d`
 
 ### Implementação
 
-- [ ] Fase 1: Setup Docker concluída
-- [ ] Fase 2: Instalação do plugin concluída
-- [ ] Fase 3: Integração com agentes concluída
+- [x] Fase 1: Setup Docker concluída
+- [x] Fase 2: Instalação do plugin concluída
+- [x] Fase 3: Integração com agentes concluída
 
 ### Validação
 
-- [ ] `docker-compose ps` mostra container "healthy"
-- [ ] `curl http://localhost:1933/health` retorna OK
-- [ ] Tools `memsearch`, `memread`, `membrowse`, `memcommit` disponíveis
+- [x] `docker-compose ps` mostra container "healthy"
+- [x] `curl http://localhost:1933/health` retorna OK
+- [x] Tools `memsearch`, `memread`, `membrowse`, `memcommit` disponíveis
 - [ ] Testes manuais passando
-- [ ] @tutor carrega contexto anterior
-- [ ] @meta considera histórico
-- [ ] @review compara auditorias
-- [ ] Tokens reduzidos em >50%
+- [ ] @tutor carrega contexto anterior (validação pendente)
+- [ ] @meta considera histórico (validação pendente)
+- [ ] @review compara auditorias (validação pendente)
+- [ ] Tokens reduzidos em >50% (validação pendente)
 
 ### Release
 
 - [ ] Documentação atualizada
 - [ ] HOW_TO_USE.md atualizado com Docker
 - [ ] README.md atualizado
-- [ ] `docker-compose.yml` incluído no repositório
+- [x] `docker-compose.yml` incluído no repositório
 - [ ] Commit com tag de versão
 
 ---
@@ -594,8 +560,10 @@ _Commentário sobre a proposta_
 
 ### Decisões Registradas
 
-1. **[Data]**: Decisão sobre usar opencode-memory-plugin vs implementação própria
-2. **[Data]**: Decisão sobre Docker vs instalação local
+1. **2026-03-13**: Decisão sobre usar opencode-memory-plugin vs implementação própria → ✅ Plugin escolhido
+2. **2026-03-13**: Decisão sobre Docker vs instalação local → ✅ Docker escolhido
+3. **2026-03-17**: Configuração GLOBAL (`~/.openviking/`) vs LOCAL (`./openviking/`) → ✅ GLOBAL (compartilha entre projetos)
+4. **2026-03-17**: Skill `openviking-context` →❌ Não criada (documentação inline nos agentes + skill `session` é suficiente)
 
 ---
 
@@ -615,16 +583,19 @@ _Commentário sobre a proposta_
 
 ### Estrutura de Diretórios (Docker)
 
+> **Nota**: Configuração GLOBAL em `~/.openviking/` (compartilhado entre projetos)
+
 ```
-ultralearning/
-├── docker-compose.yml          # Docker Compose config
-├── .env                        # API keys (não versionar)
-├── openviking/
-│   ├── ov.conf                 # Configuração do servidor
-│   └── data/                   # Dados persistidos
-│       ├── resources/          # Recursos indexados
-│       ├── user/               # Memórias do usuário
-│       └── agent/              # Memórias dos agentes
+~/.openviking/                    # Config GLOBAL (compartilhado entre projetos)
+├── ov.conf                       # Configuração do servidor
+└── data/                         # Dados persistidos
+    ├── resources/                # Recursos indexados
+    ├── user/                     # Memórias do usuário
+    └── agent/                    # Memórios dos agentes
+
+ultralearning/                    # Projeto individual
+├── docker-compose.yml            # Docker Compose config
+├── .env                          # API keys (não versionar)
 ├── .opencode/
 │   ├── agents/
 │   ├── commands/

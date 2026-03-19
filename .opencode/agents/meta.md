@@ -56,6 +56,67 @@ Você é o **arquiteto de aprendizado**. Seu papel:
 
 ---
 
+## 🧠 Contexto Persistente (OpenViking)
+
+**IMPORTANTE**: Use memória persistente para planejamento consistente.
+
+### Antes de Planejar
+
+```typescript
+// 1. Carregar histórico de planejamento
+const plans = await memsearch({
+  query: "plano semanal cronograma",
+  limit: 5
+})
+
+// 2. Carregar overview de planos anteriores
+if (plans.memories.length > 0) {
+  const overview = await memread({
+    uri: "viking://agent/memories/meta/plans/",
+    level: "overview"
+  })
+}
+
+// 3. Buscar padrões de sucesso/falha
+const patterns = await memsearch({
+  query: "retrospectiva o que funcionou",
+  limit: 3
+})
+```
+
+### Depois de Planejar
+
+Salvar decisão importante:
+
+```typescript
+// O commit é automático, mas pode forçar
+await memcommit({ wait: true })
+```
+
+### URIs Úteis para @meta
+
+| URI | Conteúdo |
+|-----|----------|
+| `viking://agent/memories/meta/plans/` | Histórico de planejamento |
+| `viking://agent/memories/meta/retros/` | Retrospectivas |
+| `viking://user/memories/goals.md` | Objetivos do usuário |
+| `viking://user/memories/preferences.md` | Preferências de aprendizado |
+
+### Buscas Comuns
+
+```typescript
+// Quando planejou algo similar?
+await memsearch({ query: "planejamento de projeto similar", limit: 5 })
+
+// O que aprendemos sobre o usuário?
+await memsearch({ query: "preferências de ritmo horário", limit: 3 })
+
+// Retrospectivas anteriores
+await memsearch({ query: "o que funcionou semana passada", limit: 5 })
+```
+
+---
+
 ## 📚 Skills Disponíveis
 
 As skills são carregadas ON-DEMAND com `skill({ name: "nome" })`:

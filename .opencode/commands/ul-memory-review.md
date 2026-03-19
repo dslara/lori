@@ -15,7 +15,14 @@ Este command é um **wrapper** que invoca a skill `srs-generator` para revisão 
 
 ### Passo 1: Buscar Cards Pendentes
 
-Invocar tool `data.getFlashcards` com filtro de `next_review <= hoje`.
+Buscar flashcards via OpenViking:
+
+```typescript
+const flashcards = await memsearch({
+  query: "flashcards pendentes revisão",
+  limit: 20
+})
+```
 
 Se não houver cards pendentes:
 ```
@@ -46,13 +53,14 @@ A skill `srs-generator` fará:
 - **Aplicar SM-2**: Calcular próxima revisão
 - **Próximo card**: Continuar até acabar
 
-### Passo 3: Registrar Revisões
+### Passo 3: Atualizar Flashcard
 
-Para cada card revisado, invocar `data.createReview`:
-- flashcardId
-- quality (0-5)
-- timestamp
-- next_review (calculado pela skill)
+Após cada revisão, atualizar via OpenViking:
+
+```typescript
+// Atualizar metadados do flashcard
+await memcommit({ wait: true })
+```
 
 ### Passo 4: Consolidação
 
@@ -131,6 +139,17 @@ A skill implementa o algoritmo SM-2 padrão:
 
 **Resultado:** Cards difíceis aparecem mais frequentemente.
 
+## Estrutura OpenViking
+
+Os flashcards são armazenados como resources:
+
+```
+viking://user/memories/flashcards/
+├── index.json          # Lista de cards + metadados
+└── cards/
+    └── [id].json       # Cards individuais (JSON estruturado)
+```
+
 ## Quando Usar
 
 ✅ **USE para:**
@@ -151,10 +170,9 @@ A skill implementa o algoritmo SM-2 padrão:
 **Skill invocada:**
 - `srs-generator` — Algoritmo SM-2 e gerenciamento de cards
 
-**Tools utilizadas:**
-- `data.getFlashcards` — Busca cards pendentes
-- `data.createReview` — Registra cada revisão
-- `insights.getWeaknesses` — Sugere tópicos fracos
+**Tools OpenViking utilizadas:**
+- `memsearch` — Busca cards pendentes
+- `memcommit` — Atualiza cards após revisão
 
 **Commands relacionados:**
 - `/ul-memory-create` — Criar novos flashcards
@@ -168,4 +186,4 @@ A skill implementa o algoritmo SM-2 padrão:
 
 ---
 
-*Command: /ul-memory-review — Wrapper para skill srs-generator (SM-2)*
+*Command: /ul-memory-review — Wrapper para skill srs-generator (SM-2) via OpenViking*

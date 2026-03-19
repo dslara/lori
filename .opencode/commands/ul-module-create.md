@@ -10,7 +10,7 @@ Argumento recebido: $ARGUMENTS (nome do módulo)
 /ul-module-create [nome]
 
 ## Descrição
-Cria novo módulo de estudo com estrutura completa de diretórios e arquivos iniciais.
+Cria novo módulo de estudo com estrutura completa de diretórios e arquivos iniciais via OpenViking.
 
 ## Processo
 
@@ -22,22 +22,35 @@ Cria novo módulo de estudo com estrutura completa de diretórios e arquivos ini
 
 ### Passo 2: Criar Estrutura
 
-Gerar ID único (M + timestamp) e criar diretórios:
+Gerar ID único (M + timestamp) e criar estrutura via OpenViking:
 
+```typescript
+// Criar estrutura de projeto
+await membrowse({
+  uri: "viking://user/projects/",
+  view: "list"
+})
+
+// Atualizar perfil com novo módulo ativo
+await memcommit({ wait: true })
 ```
-projects/
-  M03101430-python-backend/
-    meta/            # Planejamento e retrospectivas
-    projects/        # Projetos práticos
-    knowledge/       # Notas e recursos
-    README.md        # Documentação inicial
+
+**Estrutura OpenViking:**
+```
+viking://user/projects/
+└── M03101430-python-backend/
+    ├── meta/
+    │   ├── week-01.md      # Plano da semana 1
+    │   └── retro-week-1.md  # Retrospectiva (quando houver)
+    ├── projects/           # Projetos práticos
+    ├── knowledge/          # Notas e recursos
+    └── README.md           # Documentação inicial
 ```
 
-### Passo 3: Atualizar Sistema
+### Passo 3: Atualizar Perfil
 
-- Desativar outros módulos em `modules.csv`
-- Adicionar novo módulo como ativo
-- Criar README.md com template
+- Atualizar `profile.md` com novo módulo como ativo
+- Registrar timestamp de criação
 
 ### Passo 4: Oferecer Próximos Passos
 
@@ -74,7 +87,7 @@ Sistema:
 
 ✓ Nome validado: python-basics
 ✓ ID gerado: M03101430
-✓ Estrutura criada: projects/M03101430-python-basics/
+✓ Estrutura criada: viking://user/projects/M03101430-python-basics/
 ✓ README.md inicial criado
 ✓ Módulo marcado como ativo
 
@@ -95,7 +108,7 @@ Sistema:
 
 ✓ Nome convertido: machine-learning
 ✓ ID gerado: M03101545
-✓ Estrutura criada: projects/M03101545-machine-learning/
+✓ Estrutura criada: viking://user/projects/M03101545-machine-learning/
 
 📦 Módulo: M03101545-machine-learning"
 ```
@@ -107,13 +120,39 @@ Sistema:
 - ID único baseado em timestamp
 - Módulo anterior é desativado automaticamente
 
-## Integração com Tools
+## Estrutura OpenViking
 
-Este command invoca:
-- `data.createModule` - Criar estrutura e atualizar CSV
+Novo módulo é criado como:
+
+```
+viking://user/projects/
+└── M{id}-{name}/
+    ├── meta/
+    │   └── week-01.md
+    ├── projects/
+    ├── knowledge/
+    └── README.md
+```
+
+Perfil atualizado em:
+
+```
+viking://user/memories/profile.md
+→ current_module: M{id}-{name}
+```
+
+## Integração com OpenViking
+
+Este command usa:
+- `membrowse` — Verificar estrutura existente
+- `memcommit` — Persistir novo módulo e atualizar perfil
 
 ## Ver Também
 
 - `/ul-module-switch` - Alternar entre módulos
 - `/ul-module-archive` - Arquivar módulo finalizado
 - `/ul-plan-decompose` - Planejar objetivos do módulo
+
+---
+
+*Command: /ul-module-create — Criar módulo via OpenViking*

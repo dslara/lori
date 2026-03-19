@@ -162,6 +162,26 @@ Digite `/` no TUI para acessar todos os commands:
 │  Cache de 5min • Tipagem Zod • CSV parsing                  │
 └─────────────────────────────────────────────────────────────┘
                              │
+                             │ Persistent memory
+                             ▼
+┌─────────────────────────────────────────────────────────────┐
+│  OPENVIKING (Memória Persistente)                           │
+│  ════════════════════════════════════════════════════════   │
+│  viking://user/memories/                                    │
+│  ├── preferences/  → Estilo de aprendizado                  │
+│  ├── events/       → Marcos e decisões                      │
+│  └── entities/     → Projetos, conceitos                    │
+│                                                             │
+│  viking://agent/memories/                                   │
+│  ├── tutor/   → Casos e padrões do @tutor                   │
+│  ├── meta/    → Histórico de planejamento                   │
+│  └── review/  → Auditorias anteriores                        │
+│                                                             │
+│  L0 (abstract) ~100 tokens → Quick check                     │
+│  L1 (overview) ~2k tokens → Planning                        │
+│  L2 (full) → Deep dive                                       │
+└─────────────────────────────────────────────────────────────┘
+                             │
                              │ Carregam on-demand
                              ▼
 ┌─────────────────────────────────────────────────────────────┐
@@ -305,8 +325,9 @@ ultralearning/
 │   ├── commands/         # 29 commands /ul-*
 │   ├── skills/           # 5 skills carregadas on-demand
 │   ├── tools/            # 9 tools TypeScript
+│   ├── plugins/          # Plugins OpenCode (OpenViking)
 │   └── opencode.json     # Config de modelos + agents
-├── data/                 # Base de dados local (CSV)
+├── data/                 # Base de dados local (CSV) — Backup
 │   ├── sessions.csv      # Sessões diárias
 │   ├── insights.csv      # Métricas (streak, tempo, foco)
 │   ├── tutor_interactions.csv  # Memória do tutor
@@ -321,8 +342,12 @@ ultralearning/
 │       └── planning/     # Planejamento multi-módulo
 ├── guides/               # 9 princípios + 24 técnicas
 ├── reviews/              # Revisões técnicas do framework
-└── planning/             # Propostas de mudança do FRAMEWORK
+├── planning/             # Propostas de mudança do FRAMEWORK
+├── docker-compose.yml    # OpenViking + Ollama
+└── .env                  # API keys (não versionar)
 ```
+
+> **Nota**: A memória persistente agora é gerenciada pelo OpenViking em `~/.openviking/` (global). Os CSVs em `data/` são mantidos como backup.
 
 O projeto está organizado em pastas especializadas:
 

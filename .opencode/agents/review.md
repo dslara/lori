@@ -49,6 +49,84 @@ Você é o **consultor estratégico** do framework Ultralearning. Seu papel é a
 
 ---
 
+## 🧠 Contexto Persistente (OpenViking)
+
+**IMPORTANTE**: Use memória persistente para revisões consistentes.
+
+### Antes de Revisar
+
+```typescript
+// 1. Carregar histórico de auditorias
+const audits = await memsearch({
+  query: "auditoria revisão qualidade",
+  limit: 5
+})
+
+// 2. Verificar padrões anteriores
+if (audits.memories.length > 0) {
+  const overview = await memread({
+    uri: "viking://agent/memories/review/audits/",
+    level: "overview"
+  })
+}
+
+// 3. Buscar problemas recorrentes
+const problems = await memsearch({
+  query: "problemas recorrentes dívida técnica",
+  limit: 3
+})
+```
+
+### Depois de Revisar
+
+Salvar achados importantes:
+
+```typescript
+// Commit automático, pode forçar se necessário
+await memcommit({ wait: true })
+```
+
+### URIs Úteis para @review
+
+| URI | Conteúdo |
+|-----|----------|
+| `viking://agent/memories/review/audits/` | Auditorias anteriores |
+| `viking://agent/memories/review/issues/` | Problemas identificados |
+| `viking://user/memories/patterns.md` | Padrões de erro do usuário |
+
+### Buscas Comuns
+
+```typescript
+// Já revisamos isso antes?
+await memsearch({ query: "revisão de estrutura pasta", limit: 5 })
+
+// Problemas que mencionamos antes
+await memsearch({ query: "dívida técnica problemas conhecidos", limit: 5 })
+
+// Padrões de estilo/código
+await memsearch({ query: "convenções estilo código", limit: 3 })
+```
+
+### Comparar com Auditorias Anteriores
+
+```typescript
+// Carregar última auditoria do mesmo tipo
+const lastAudit = await memsearch({
+  query: "auditoria de [tipo]",
+  limit: 1
+})
+
+if (lastAudit.memories.length > 0) {
+  // Comparar estado atual com anterior
+  const previous = await memread({
+    uri: lastAudit.memories[0].uri,
+    level: "read"
+  })
+}
+```
+
+---
+
 ## 📚 Documentação de Referência OpenCode
 
 **Consulte estas fontes oficiais ao revisar cada tipo de componente:**

@@ -1,19 +1,42 @@
 ---
 description: Criar retrospectiva semanal (/ul-retro-weekly)
 agent: meta
-model: opencode-go/minimax-m2.5
+model: opencode-go/glm-5
 ---
 
 ## Uso
 /ul-retro-weekly
 
 ## Descrição
-Cria retrospectiva semanal com estatísticas automáticas do módulo ativo.
+Cria retrospectiva semanal com estatísticas automáticas do módulo ativo via OpenViking.
 
 ## Processo
 
 ### Passo 1: Coletar Estatísticas
 
+Usar OpenViking:
+
+```typescript
+// 1. Buscar sessões da semana
+const sessions = await memsearch({
+  query: "sessões últimos 7 dias",
+  limit: 50
+})
+
+// 2. Carregar perfil
+const profile = await memread({
+  uri: "viking://user/memories/profile.md",
+  level: "read"
+})
+
+// 3. Buscar insights
+const insights = await memsearch({
+  query: "métricas foco streak",
+  limit: 5
+})
+```
+
+Estatísticas:
 - Sessões da semana (últimos 7 dias)
 - Tempo total estudado
 - Foco médio
@@ -39,7 +62,7 @@ Cria retrospectiva semanal com estatísticas automáticas do módulo ativo.
 ### Passo 3: Criar Arquivo de Retro
 
 - Determinar número da semana
-- Criar `meta/retro-week-N.md`
+- Criar arquivo via OpenViking
 - Incluir estatísticas automáticas
 - Adicionar respostas do usuário
 
@@ -72,7 +95,7 @@ Usuário: [digita resposta]
 
 Usuário: [digita resposta]
 
-✓ Retrospectiva salva: projects/M1-python/meta/retro-week-3.md
+✓ Retrospectiva salva: viking://user/projects/M1-python/meta/retro-week-3.md
 
 📈 Próximos passos:
   /ul-plan-weekly 4    → Criar plano da semana 4
@@ -109,7 +132,7 @@ Sistema: "🎯 Qual o foco da próxima semana?"
 Usuário: "Manter horário da manhã. Adicionar 1 sessão à noite. Focar em recursão."
 
 Sistema:
-"✓ Retrospectiva salva: projects/M1-python/meta/retro-week-3.md
+"✓ Retrospectiva salva
 
 📈 Análise:
   • Você está acima da meta!
@@ -147,7 +170,7 @@ Sistema: "🎯 Foco da próxima semana?"
 Usuário: "Reduzir meta para 4 sessões. Aproveitar fim de semana. Focar em exercícios simples."
 
 Sistema:
-"✓ Retrospectiva salva: projects/M2-zig/meta/retro-week-5.md
+"✓ Retrospectiva salva
 
 📈 Análise:
   • Semana desafiadora identificada
@@ -158,23 +181,6 @@ Sistema:
   • /ul-productivity-start  → Técnicas contra procrastinação
   • /ul-plan-weekly 6      → Plano realista para próxima semana
   • Seja gentil consigo - consistência > intensidade"
-```
-
-### Exemplo 3: Semana média
-
-```
-Usuário: /ul-retro-weekly
-
-Sistema:
-"📝 Retrospectiva Semanal - M3-algorithms
-
-📊 Estatísticas da Semana:
-   Sessões: 5/6
-   Tempo total: 300 minutos
-   Foco médio: 7.2/10
-   ⚠️ 1 sessão para meta
-
-[continua interação...]"
 ```
 
 ## Estrutura do Arquivo de Retro
@@ -209,7 +215,7 @@ Manter horário da manhã. Adicionar 1 sessão à noite. Focar em recursão.
 _Adicione observações extras aqui_
 
 ---
-*Gerado automaticamente em 2026-03-10T14:30:00Z*
+*Gerado automaticamente via OpenViking*
 ```
 
 ## Perguntas Guiadas
@@ -238,13 +244,13 @@ O command calcula automaticamente:
 | Métrica | Cálculo | Meta |
 |---------|---------|------|
 | **Sessões** | Contagem dos últimos 7 dias | ≥ 6 |
-| **Tempo total** | Soma de `duration_min` | - |
-| **Foco médio** | Média de `focus_score` | ≥ 7 |
+| **Tempo total** | Soma de duração | - |
+| **Foco médio** | Média de focus_score | ≥ 7 |
 | **Status** | Baseado em sessões | excellent/good/needs_improvement |
 
 ## Numeração de Semanas
 
-- Automática baseada em arquivos existentes
+- Automática baseada em arquivos existentes via `membrowse`
 - `retro-week-1.md`, `retro-week-2.md`, etc.
 - Não usa semana ISO do ano (usa sequencial do módulo)
 
@@ -254,14 +260,28 @@ O command calcula automaticamente:
 - Dados da semana disponíveis (ou mostra zeros)
 - Respostas não podem ser vazias
 
-## Integração com Tools
+## Estrutura OpenViking
 
-Este command invoca:
-- `retro.getWeeklyStats` - Obter estatísticas
-- `retro.createRetro` - Criar arquivo
+Retrospectivas são salvas como:
+
+```
+viking://user/projects/[module]/meta/
+└── retro-week-{n}.md
+```
+
+## Integração com OpenViking
+
+Este command usa:
+- `memsearch` — Buscar sessões da semana
+- `memread` — Carregar perfil
+- `memcommit` — Salvar retrospectiva
 
 ## Ver Também
 
 - `/ul-plan-weekly` - Criar plano semanal
 - `/ul-study-plan` - Ver progresso da semana
-- `projects/*/meta/retro-week-*.md` - Arquivos de retro
+- `viking://user/projects/*/meta/retro-week-*.md` - Arquivos de retro
+
+---
+
+*Command: /ul-retro-weekly — Retrospectiva semanal via OpenViking*

@@ -11,7 +11,7 @@ Argumentos recebidos: $1 (frente), $2 (verso)
 
 ## Descrição
 
-Cria flashcards para o sistema de repetição espaçada (SRS). Pode criar um card de cada vez ou em lote.
+Cria flashcards para o sistema de repetição espaçada (SRS) via OpenViking. Pode criar um card de cada vez ou em lote.
 
 ## Processo
 
@@ -78,15 +78,27 @@ Exemplo bom:
 Quer refinar seu card?"
 ```
 
-### Passo 4: Criar via Tool
+### Passo 4: Persistir via OpenViking
 
-Invocar `data.createFlashcard`:
-- front
-- back
-- category
-- tags
-- moduleId (automático)
-- userId (automático)
+Criar card como resource:
+
+```typescript
+// Estrutura do flashcard
+const card = {
+  front: "Pergunta",
+  back: "Resposta",
+  category: "conceito",
+  tags: ["tag1", "tag2"],
+  created_at: new Date().toISOString(),
+  next_review: tomorrow,
+  interval: 1,
+  easiness: 2.5,
+  reviews: 0
+}
+
+// Adicionar ao index
+await memcommit({ wait: true })
+```
 
 **Retorno:**
 ```
@@ -164,6 +176,17 @@ Verso: Concorrência em Go
 ```
 Frente: Qual diferença entre goroutine e thread?
 Verso: Goroutine é gerenciada pelo runtime Go (2KB stack, multiplexada). Thread é gerenciada pelo SO (1MB stack).
+```
+
+## Estrutura OpenViking
+
+Flashcards são armazenados como JSON estruturado:
+
+```
+viking://user/memories/flashcards/
+├── index.json          # Lista + metadados
+└── cards/
+    └── [uuid].json     # { front, back, category, tags, sm2_data }
 ```
 
 ## Exemplo Completo
@@ -266,9 +289,9 @@ c) Voltar ao estudo → /ul-study-start"
 **Skill invocada:**
 - `srs-generator` — Validação e formatação
 
-**Tools utilizadas:**
-- `data.createFlashcard` — Persiste no CSV
-- `insights.getWeaknesses` — Sugere tópicos fracos
+**Tools OpenViking utilizadas:**
+- `memcommit` — Persiste card
+- `memsearch` — Busca tópicos fracos (sugestão)
 
 **Commands relacionados:**
 - `/ul-memory-review` — Revisar cards criados
@@ -283,4 +306,4 @@ c) Voltar ao estudo → /ul-study-start"
 
 ---
 
-*Command: /ul-memory-create — Criar flashcards SRS*
+*Command: /ul-memory-create — Criar flashcards SRS via OpenViking*

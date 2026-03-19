@@ -10,22 +10,40 @@ Argumento recebido: $ARGUMENTS (nome ou ID do módulo, opcional)
 /ul-module-switch [nome]
 
 ## Descrição
-Lista módulos disponíveis ou ativa um módulo específico como atual.
+
+Lista módulos disponíveis ou ativa um módulo específico como atual via OpenViking.
 
 ## Processo
 
 ### Sem Parâmetro: Listar Módulos
 
-1. Ler `modules.csv`
+1. Buscar projetos via OpenViking:
+```typescript
+const projects = await membrowse({
+  uri: "viking://user/projects/",
+  view: "list"
+})
+
+const profile = await memread({
+  uri: "viking://user/memories/profile.md",
+  level: "read"
+})
+```
+
 2. Mostrar todos os módulos com status
 3. Indicar qual está ativo
 
 ### Com Parâmetro: Ativar Módulo
 
 1. Buscar módulo pelo nome ou ID
-2. Desativar módulo atual
-3. Ativar módulo especificado
-4. Confirmar mudança
+2. Atualizar perfil:
+```typescript
+// Atualizar perfil com novo módulo ativo
+// (presume que isso será feito via memcommit automático)
+await memcommit({ wait: true })
+```
+
+3. Confirmar mudança
 
 ## Parâmetros
 
@@ -130,13 +148,33 @@ Use um dos nomes acima ou crie novo: /ul-module-create go-web"
 - Pode usar nome completo ou ID
 - Case-insensitive para busca
 
-## Integração com Tools
+## Estrutura OpenViking
 
-Este command invoca:
-- `data.switchModule` - Listar ou ativar módulo
+Os módulos são armazenados como projetos:
+
+```
+viking://user/projects/
+├── M1-math-foundations/
+│   ├── meta/
+│   │   └── week-01.md
+│   └── projects/
+├── M2-python-backend/
+└── profile.md → current_module: M1
+```
+
+## Integração com OpenViking
+
+Este command usa:
+- `membrowse` — Listar projetos disponíveis
+- `memread` — Ler perfil atual
+- `memcommit` — Atualizar perfil (opcional, automático)
 
 ## Ver Também
 
 - `/ul-module-create` - Criar novo módulo
 - `/ul-module-archive` - Arquivar módulo finalizado
 - `/ul-data-status` - Ver status do módulo atual
+
+---
+
+*Command: /ul-module-switch — Alternar módulo ativo via OpenViking*

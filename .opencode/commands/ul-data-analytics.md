@@ -1,29 +1,45 @@
 ---
 description: Ver relatório analítico avançado (/ul-data-analytics)
 agent: tutor
-model: opencode-go/kimi-k2.5
+model: opencode-go/glm-5
 ---
 
 ## Descrição
 
-Gera relatório analítico avançado com métricas de desempenho, padrões de estudo e recomendações personalizadas baseadas nos dados históricos.
+Gera relatório analítico avançado com métricas de desempenho, padrões de estudo e recomendações personalizadas via OpenViking.
 
 ## Uso
 /ul-data-analytics
 
-## Integrações
+## Processo
 
-**Tools utilizadas:**
-- `insights.generateReport` — Gera relatório completo consolidado
-- `insights.getSummary` — Resumo geral (streak, tempo, foco)
-- `insights.getEffectiveness` — Efetividade por técnica
-- `insights.getPatterns` — Padrões de estudo
-- `insights.getWeaknesses` — Pontos fracos
+Carregar dados via OpenViking:
 
-**Processo:**
-1. Invocar `insights.generateReport` para obter relatório completo
-2. Se usuário pedir módulo específico, passar `moduleId` como parâmetro
-3. Apresentar todas as seções do relatório de forma organizada
+```typescript
+// 1. Carregar insights agregados
+const insights = await memread({
+  uri: "viking://user/memories/insights.md",
+  level: "read"
+})
+
+// 2. Buscar padrões de estudo
+const patterns = await memsearch({
+  query: "padrões de estudo",
+  limit: 10
+})
+
+// 3. Buscar pontos fracos
+const weaknesses = await memsearch({
+  query: "padrões de erro tópicos fracos",
+  limit: 5
+})
+
+// 4. Buscar sessões recentes
+const sessions = await memsearch({
+  query: "sessões recentes desempenho",
+  limit: 20
+})
+```
 
 ---
 
@@ -62,4 +78,29 @@ Baseado nos dados, sugira:
 2. Nível de dificuldade (fácil, médio, difícil)
 3. Áreas para focar
 
-Se o usuário pedir dados de um módulo específico, use o parâmetro moduleId.
+Se o usuário pedir dados de um módulo específico, busque especificamente.
+
+## Estrutura OpenViking
+
+Os dados são buscados de:
+
+| Dado | URI OpenViking |
+|------|---------------|
+| Insights agregados | `viking://user/memories/insights.md` |
+| Padrões | `memsearch({ query: "padrões" })` |
+| Pontos fracos | `memsearch({ query: "erros" })` |
+| Sessões | `memsearch({ query: "sessões" })` |
+
+## Integrações
+
+**Tools OpenViking utilizadas:**
+- `memread` — Carregar insights
+- `memsearch` — Buscar padrões, erros, sessões
+
+**Commands relacionados:**
+- `/ul-data-status` — Status rápido
+- `/ul-study-plan` — Ver plano
+
+---
+
+*Command: /ul-data-analytics — Relatório detalhado via OpenViking*

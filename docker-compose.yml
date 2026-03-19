@@ -6,10 +6,15 @@ services:
       - "11434:11434"
     volumes:
       - ollama_data:/root/.ollama
-      - ./ollama-entrypoint.sh:/entrypoint.sh:ro
-    entrypoint: ["/bin/bash", "/entrypoint.sh"]
+    entrypoint: ["/bin/bash", "-c"]
+    command:
+      - |
+        ollama serve &
+        sleep 5
+        ollama pull qwen3-embedding:4b || true
+        wait
     healthcheck:
-      test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:11434/api/tags || exit 1"]
+      test: ["CMD-SHELL", "ollama list || exit 1"]
       interval: 30s
       timeout: 5s
       retries: 3
@@ -25,14 +30,13 @@ services:
     volumes:
       - ${HOME}/.openviking/ov.conf:/app/ov.conf
       - ${HOME}/.openviking/data:/app/data
-    environment:
-      - OPENVIKING_API_KEY=${OPENVIKING_API_KEY}
     depends_on:
-      - ollama
+      ollama:
+        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "curl -fsS http://127.0.0.1:1933/health || exit 1"]
       interval: 30s
-      timeout: 5s
+      timeout: 15s
       retries: 3
       start_period: 30s
     restart: unless-stopped

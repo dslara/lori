@@ -11,20 +11,50 @@ metadata:
 
 ## Helpers de Contexto
 
-Funções auxiliares para carregar e interpretar contexto de sessão.
+Funções auxiliares para carregar e interpretar contexto de sessão via OpenViking.
 
-### processContext(fullContext)
+### loadContext()
 
-Processa o retorno de `context.getFullContext` e retorna sugestões estruturadas:
+Carrega contexto completo usando OpenViking tools:
+
+```typescript
+// 1. Carregar perfil do usuário
+const profile = await memread({
+  uri: "viking://user/memories/profile.md",
+  level: "read"
+})
+
+// 2. Buscar sessões recentes
+const sessions = await memsearch({
+  query: "sessões de estudo recentes",
+  limit: 5
+})
+
+// 3. Buscar flashcards pendentes
+const flashcards = await memsearch({
+  query: "flashcards pendentes revisão",
+  limit: 10
+})
+
+// 4. Buscar padrões de erro (pontos fracos)
+const weaknesses = await memsearch({
+  query: "padrões de erro tópicos fracos",
+  limit: 5
+})
+```
+
+Retorna:
 
 ```typescript
 {
-  currentModule: string,
-  streak: number,
-  hasSRSPending: boolean,
-  srsCount: number,
-  weakTopics: string[],  // error_rate > 0.3
-  recentActivity: string,
+  profile: {
+    currentModule: string,
+    streak: number,
+    preferences: object
+  },
+  recentSessions: Session[],
+  srsPending: { count: number, cards: Flashcard[] },
+  weakTopics: string[],
   suggestion: {
     primary: string,
     reason: string,
@@ -38,6 +68,26 @@ Processa o retorno de `context.getFullContext` e retorna sugestões estruturadas
 2. Se weakTopics > 0 → Sugerir drill/feynman
 3. Se continuidade → Sugerir mesma atividade
 4. Default → Perguntar objetivo
+
+### processContext(context)
+
+Processa o contexto carregado e retorna sugestões estruturadas:
+
+```typescript
+{
+  currentModule: string,
+  streak: number,
+  hasSRSPending: boolean,
+  srsCount: number,
+  weakTopics: string[],
+  recentActivity: string,
+  suggestion: {
+    primary: string,
+    reason: string,
+    alternative: string
+  }
+}
+```
 
 ### formatHeader(context)
 
@@ -72,10 +122,18 @@ Analisa respostas e retorna ações sugeridas:
 
 ### saveSession(metadata)
 
-Invoca sequência de tools para salvar sessão:
-1. `data.createSession` - Cria registro
-2. `data.updateStreak` - Atualiza streak
-3. `analytics.generateReport` - Atualiza métricas
+O OpenViking sincroniza automaticamente as mensagens. Para criar estruturas específicas:
+
+**Persistir sessão estruturada:**
+```typescript
+// O memcommit pode ser chamado explicitamente para forçar persistência
+await memcommit({ wait: true })
+
+// Para criar estruturas específicas, usar padrões de URI:
+// viking://user/memories/sessions/2026-03-13-*.json
+// viking://user/memories/insights.md
+// viking://user/memories/flashcards/index.json
+```
 
 **Parâmetros:**
 - moduleId: string
@@ -103,15 +161,38 @@ Tabela de atividades para sugestões:
 | Procrastinando | `/ul-productivity-start` |
 | Travado >30min | `/ul-productivity-break` |
 
+## Estrutura OpenViking
+
+O sistema usa a seguinte estrutura de memórias:
+
+```
+viking://user/memories/
+├── profile.md              # Perfil, módulo ativo, streak, preferências
+├── insights.md            # Métricas agregadas
+├── patterns.md            # Padrões de erro
+├── sessions/              # Sessões de estudo (auto-sync)
+│   └── 2026-03-13-*.json  # Metadados estruturados
+└── flashcards/            # Flashcards/SRS
+    └── index.json         # Lista + metadados
+
+viking://user/projects/
+└── M1-math-foundations/
+    └── meta/
+        └── week-01.md
+```
+
 ## Exemplo de Uso (por Commands)
 
 ### /ul-study-start
 
 ```
-1. Invocar context.getFullContext
-2. Chamar processContext()
-3. Apresentar formatHeader() + sugestão
-4. Aguardar escolha do usuário
+1. Chamar loadContext() para carregar contexto
+2. Usar memread("viking://user/memories/profile.md")
+3. Usar memsearch({ query: "sessões recentes" })
+4. Usar memsearch({ query: "flashcards pendentes" })
+5. Processar com processContext()
+6. Apresentar formatHeader() + sugestão
+7. Aguardar escolha do usuário
 ```
 
 ### /ul-study-end
@@ -120,27 +201,26 @@ Tabela de atividades para sugestões:
 1. Apresentar reflectionQuestions()
 2. Coletar respostas
 3. Chamar analyzeGaps()
-4. Invocar saveSession()
+4. Chamar memcommit({ wait: true }) para persistir
 5. Se checkSunday() → Sugerir /ul-retro-weekly
 ```
 
 ### /ul-study-plan
 
 ```
-1. Invocar analytics.generateReport
-2. Invocar context.getWeekContext
+1. Usar memsearch({ query: "progresso semanal" })
+2. Usar memread("viking://user/memories/insights.md")
 3. Apresentar progresso formatado
 4. Sugerir próximos passos baseado em weakTopics
 ```
 
 ## Integrações
 
-**Tools utilizadas:**
-- `context.getFullContext`
-- `data.createSession`
-- `data.updateStreak`
-- `analytics.generateReport`
-- `analytics.getErrorRateByTopic`
+**Tools OpenViking utilizadas:**
+- `memread` — Carregar memórias específicas
+- `memsearch` — Buscar contexto relevante
+- `membrowse` — Navegar estrutura
+- `memcommit` — Persistir sessão
 
 **Commands que usam esta skill:**
 - `/ul-study-start`
@@ -149,4 +229,4 @@ Tabela de atividades para sugestões:
 
 ---
 
-*Skill session v2.0 — Helpers para commands de estudo*
+*Skill session v3.0 — Helpers para commands de estudo usando OpenViking*

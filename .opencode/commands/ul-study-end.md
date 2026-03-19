@@ -1,7 +1,7 @@
 ---
 description: Encerrar sessão, salvar progresso e atualizar plano semanal (/ul-study-end)
 agent: tutor
-model: opencode-go/minimax-m2.5
+model: opencode-go/glm-5
 ---
 
 ## Uso
@@ -9,7 +9,7 @@ model: opencode-go/minimax-m2.5
 
 ## Descrição
 
-Finaliza sessão de estudo com reflexão estruturada, salva progresso, atualiza streak e sugere próximos passos baseado no desempenho.
+Finaliza sessão de estudo com reflexão estruturada, salva progresso via OpenViking e sugere próximos passos baseado no desempenho.
 
 ## Processo
 
@@ -29,20 +29,21 @@ Com base nas respostas:
 - **Se desafio recorrente** → Sugerir mais prática (`/ul-practice-drill`)
 - **Se foco < 5** → Sugerir técnica pomodoro ou pausa
 
-### Passo 3: Persistência Automática
+### Passo 3: Persistência via OpenViking
 
-Invocar tools:
-1. `data.createSession` — Cria registro da sessão
-2. `data.updateStreak` — Atualiza streak
-3. `insights.generateReport` — Atualiza métricas consolidadas
-4. *(built-in)* `logTutorInteraction` — Registra interação
+O OpenViking sincroniza automaticamente. Para persistência explícita:
 
-**Dados salvos:**
-- moduleId
-- duration (minutos)
-- focusScore (1-10)
-- notes (resumo do aprendizado)
-- técnicas utilizadas
+```typescript
+// Forçar persistência imediata
+await memcommit({ wait: true })
+```
+
+**Dados capturados automaticamente:**
+- moduleId (do perfil)
+- Duração (calculada automaticamente)
+- Foco (nota fornecida)
+- Notas (resumo do aprendizado)
+- Timestamp
 
 ### Passo 4: Atualização do Plano Semanal (Opcional)
 
@@ -60,28 +61,10 @@ Você completou alguma entrega hoje?
 ```
 
 **Se usuário completou entrega:**
-1. Determinar semana atual (baseado em `week-*.md` existente)
-2. Atualizar arquivo `week-{N}.md`:
-   - Marcar checkbox correspondente: `[x]`
-   - Adicionar nota de progresso com data
-   - Registrar tempo gasto
-
-**Exemplo de atualização:**
-```markdown
-## ✅ Entregas da Semana
-- [x] Projeto: API REST        ← completado em 2026-03-12
-- [x] Drill: 10 exercícios     ← 8/10 (60 min)
-- [ ] SRS: 20 cards novos      ← em andamento
-- [ ] Benchmark: 80% sucesso   ← ainda não feito
-
-## 📝 Notas de Progresso
-- 2026-03-12: Finalizado autenticação JWT no projeto. 
-  Tempo: 45 min de codificação + 15 min de testes.
-```
-
-**Se não completou entrega:**
-- Pular etapa sem salvar nada no plano
-- Continuar para consolidação
+1. Buscar plano atual: `memread("viking://user/projects/[module]/meta/week-*.md")`
+2. Atualizar arquivo usando `membrowse` + escrita
+3. Marcar checkbox correspondente: `[x]`
+4. Adicionar nota de progresso com data
 
 ### Passo 5: Consolidação
 
@@ -150,14 +133,22 @@ Sistema:
    Sugestão: Continuar memoization antes de avançar"
 ```
 
+## Estrutura OpenViking
+
+Os dados são persistidos automaticamente via session hooks:
+
+| Dado | URI OpenViking |
+|------|---------------|
+| Sessão atual | Sincronizado automaticamente |
+| Perfil/Streak | `viking://user/memories/profile.md` |
+| Insights | Extraído por `memcommit` |
+
 ## Integrações
 
-**Tools utilizadas:**
-- `data.createSession` — Salva sessão
-- `data.updateStreak` — Atualiza streak
-- `insights.generateReport` — Atualiza métricas consolidadas
-- `context.getWeekContext` — Obtém plano da semana atual
-- `utils-csv.logTutorInteraction` — Registra automaticamente
+**Tools OpenViking utilizadas:**
+- `memcommit` — Forçar persistência (opcional, automático)
+- `memread` — Ler plano da semana
+- `membrowse` — Navegar estrutura de projetos
 
 **Commands relacionados:**
 - `/ul-study-start` — Iniciar nova sessão
@@ -174,4 +165,4 @@ Sistema:
 
 ---
 
-*Command: /ul-study-end — Consolidação, persistência e atualização de plano*
+*Command: /ul-study-end — Consolidação e persistência via OpenViking*

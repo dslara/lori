@@ -1,7 +1,7 @@
 ---
 description: Iniciar sessão de estudo com contexto automático (/ul-study-start)
 agent: tutor
-model: opencode-go/minimax-m2.5
+model: opencode-go/glm-5
 ---
 
 ## Uso
@@ -9,17 +9,39 @@ model: opencode-go/minimax-m2.5
 
 ## Descrição
 
-Inicia sessão de estudo carregando contexto automático (módulo ativo, streak, SRS pendente) e sugere atividades baseado nas prioridades atuais.
+Inicia sessão de estudo carregando contexto automático (módulo ativo, streak, SRS pendente) via OpenViking e sugere atividades baseado nas prioridades atuais.
 
 ## Processo
 
 ### Passo 1: Carregar Contexto (automático)
-Invocar tool `context.getFullContext`:
-- Módulo ativo
-- Streak atual  
-- SRS pendente
-- Sessões recentes
-- Error rates por tópico
+
+Usar OpenViking tools para carregar contexto:
+
+```typescript
+// 1. Carregar perfil do usuário
+const profile = await memread({
+  uri: "viking://user/memories/profile.md",
+  level: "read"
+})
+
+// 2. Buscar sessões recentes
+const sessions = await memsearch({
+  query: "sessões de estudo recentes",
+  limit: 5
+})
+
+// 3. Buscar flashcards pendentes
+const flashcards = await memsearch({
+  query: "flashcards pendentes revisão",
+  limit: 10
+})
+
+// 4. Buscar padrões de erro (pontos fracos)
+const weaknesses = await memsearch({
+  query: "padrões de erro tópicos fracos",
+  limit: 5
+})
+```
 
 ### Passo 2: Processar e Apresentar
 
@@ -39,8 +61,8 @@ Ou prefere: [alternativa]
 
 **Prioridades:**
 1. Se SRS pendente → Sugerir `/ul-memory-review`
-2. Se error_rate > 0.3 → Sugerir `/ul-practice-drill`
-3. Se continuidade → Sugerir mesma atividade anterior
+2. Se weakTopics > 0 (padrões de erro encontrados) → Sugerir `/ul-practice-drill`
+3. Se continuidade (sessão anterior existe) → Sugerir mesma atividade
 4. Default → Perguntar objetivo
 
 **Mapeamento de atividades:**
@@ -84,7 +106,7 @@ Ou prefere aquecer primeiro? → /ul-practice-quiz 3 autenticação"
 Usuário: /ul-study-start
 
 Sistema:
-"Não tem o week.md à mão? Sem problema.
+"Não tem contexto salvo? Sem problema.
 O que planejou fazer hoje? (tópico + tipo de atividade)"
 
 Usuário: "quero praticar recursão, tenho 45 minutos"
@@ -97,12 +119,41 @@ Se preferir entender antes de praticar:
 → /ul-learn-explain recursão → depois /ul-practice-feynman recursão"
 ```
 
+## Estrutura OpenViking
+
+O contexto é carregado de:
+
+| Dado | Tool OpenViking |
+|------|----------------|
+| Perfil do usuário | `memread("viking://user/memories/profile.md")` |
+| Sessões recentes | `memsearch({ query: "sessões recentes" })` |
+| Flashcards pendentes | `memsearch({ query: "flashcards pendentes" })` |
+| Padrões de erro | `memsearch({ query: "padrões de erro" })` |
+| Plano da semana | `memread("viking://user/projects/[module]/meta/week-*.md")` |
+
+Se o arquivo/plano não existir, perguntar ao usuário.
+
+## Fallback se OpenViking Indisponível
+
+Se `memread` ou `memsearch` falharem, usar fallback interativo:
+
+```
+"Não consegui carregar contexto do OpenViking.
+
+Me conte:
+1. Qual módulo está estudando?
+2. O que fez na última sessão?
+3. Tem flashcards pendentes?
+
+Vou te ajudar a planejar a sessão."
+```
+
 ## Integrações
 
-**Tools utilizadas:**
-- `context.getFullContext` — Carrega contexto completo
-- `insights.getWeaknesses` — Identifica tópicos fracos
-- `data.getFlashcards` — Verifica SRS pendente
+**Tools OpenViking utilizadas:**
+- `memread` — Carregar perfil e planos
+- `memsearch` — Buscar sessões, flashcards, padrões
+- `membrowse` — Navegar estrutura de projetos (opcional)
 
 **Commands relacionados:**
 - `/ul-study-end` — Encerrar sessão
@@ -110,6 +161,10 @@ Se preferir entender antes de praticar:
 - `/ul-memory-review` — Revisar flashcards
 - `/ul-practice-*` — Práticas sugeridas
 - `/ul-learn-*` — Aprendizado sugerido
+
+**Skills utilizadas:**
+- `openviking-context` — Carregar contexto hierárquico
+- `session` — Processar contexto
 
 ## Handoff
 
@@ -119,4 +174,4 @@ Se preferir entender antes de praticar:
 
 ---
 
-*Command: /ul-study-start — Início de sessão com contexto inteligente*
+*Command: /ul-study-start — Início de sessão com contexto inteligente via OpenViking*

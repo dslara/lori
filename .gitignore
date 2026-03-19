@@ -71,3 +71,5 @@ projects/*/logs/daily/*.md
 node_modules
 .opencode/package-lock.json
 bun.lock
+.env
+.opencode/plugins/openviking-session-map.json
