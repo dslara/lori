@@ -636,11 +636,16 @@ O sistema salva automaticamente seus dados em arquivos CSV para acompanhamento e
 ```
 data/
 ├── sessions.csv              # Suas sessões diárias
+├── session_skills.csv        # Técnicas usadas por sessão
 ├── insights.csv             # Métricas (streak, tempo, foco)
-├── tutor_interactions.csv   # Histórico de interações com o tutor
+├── flashcards.csv           # Flashcards SRS
+├── reviews.csv              # Histórico SRS
 ├── modules.csv              # Módulos de estudo
+├── users.csv                # Metadados do usuário
 └── schema.md               # Documentação completa
 ```
+
+> **Nota**: Preferências do usuário estão em OpenViking (`viking://user/default/memories/preferences/`), não em CSV.
 
 ### Verificando Seus Dados
 
@@ -663,9 +668,9 @@ cat data/insights.csv
 | Streak | `insights.csv` | `/ul-study-end` (tool data.ts) |
 | Tempo de estudo | `sessions.csv` | `/ul-study-end` (tool data.ts) |
 | Foco (1-10) | `sessions.csv` | `/ul-study-end` (tool data.ts) |
-| Interações do tutor | `tutor_interactions.csv` | Tool tutor-log.ts |
-| Flashcards revisados | `reviews.csv` | Tool data.ts (SM-2) |
 | Técnicas usadas | `session_skills.csv` | Tool data.ts |
+| Acertos/Erros | `session_skills.correct` | Derivado de `success_rating >= 6` |
+| Flashcards revisados | `reviews.csv` | Tool data.ts (SM-2) |
 | Pontos fracos | `insights.csv` | Tool insights.ts |
 | Efetividade | Calculado em tempo real | Tool insights.ts |
 | Padrões | Calculado em tempo real | Tool insights.ts |

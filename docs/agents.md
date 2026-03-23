@@ -154,9 +154,10 @@ Digite `/` no TUI para acessar todos os commands:
 │  - data-module.ts — Módulos                              │
 │  - data-flashcard.ts — Flashcards/SRS                       │
 │  - data-insight.ts — Insights/streak                        │
-│  - data-interaction.ts — Interações                        │
 │  - data-core.ts — Core ops (init, backup)                    │
-│  - context.ts, insights.ts, status.ts                      │
+│  - context.ts, context-hybrid.ts — Contexto + OpenViking    │
+│  - openviking-utils.ts — Descoberta dinâmica de ID          │
+│  - insights.ts, status.ts                                   │
 │  - retro.ts, setup.ts                                       │
 │                                                             │
 │  Cache de 5min • Tipagem Zod • CSV parsing                  │
@@ -311,7 +312,7 @@ ultralearning/
 ├── data/                 # Base de dados local (CSV)
 │   ├── sessions.csv      # Sessões diárias
 │   ├── insights.csv      # Métricas (streak, tempo, foco)
-│   ├── tutor_interactions.csv  # Memória do tutor
+│   ├── session_skills.csv # Técnicas por sessão
 │   ├── modules.csv       # Módulos de estudo
 │   └── schema.md         # Documentação do schema
 ├── projects/             # Módulos de aprendizado

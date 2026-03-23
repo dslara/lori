@@ -5,6 +5,45 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 Este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [3.3.0] - 2026-03-20
+
+### 🔧 Arquitetura de Dados Híbrida — Consolidação
+
+#### Adicionado
+- **`openviking-utils.ts`**: Utilitários para descoberta dinâmica de ID do agente OpenViking
+- **`context-hybrid.ts`**: Tool que integra CSV + OpenViking com descoberta dinâmica de ID
+- **Campo `correct` em `session_skills.csv`**: Derivado de `success_rating >= 6`
+- **Campo `preferences_source` em `users.csv`**: Indica fonte de preferências (`openviking`)
+
+#### Removido
+- **`tutor_interactions.csv`**: Dados migrados para `session_skills.csv` (métricas) e OpenViking `cases/` (contexto)
+- **`data-interaction.ts`**: Funcionalidade removida (era redundante com `session_skills`)
+- **Função `logTutorInteraction()`** em `utils-csv.ts`: Removida
+- **Operação `createInteraction`** da tool `data`: Removida
+
+#### Modificado
+- **`utils-csv.ts`**: Removido `tutorInteractions` dos headers
+- **`session_skills.csv`**: Adicionado campo `correct` (bool, derivado de success_rating >= 6)
+- **`insights.ts`**: Usa `session_skills` para métricas (era `tutor_interactions`)
+- **`users.csv`**: Campo `preferences` renomeado para `preferences_source`
+- **Documentação atualizada**: README.md, docs/tools.md, docs/agents.md, docs/openviking-migration.md, guides/sistema-dados.md
+- **Commands atualizados para usar `session_skills` ou `memcommit()`**:
+  - `/ul-practice-quiz`
+  - `/ul-practice-drill`
+  - `/ul-practice-feynman`
+  - `/ul-practice-project`
+  - `/ul-learn-debug`
+  - `/ul-plan-decompose`
+- **Skills atualizadas**: `srs-generator/SKILL.md`
+
+#### Migração
+- Dados de `tutor_interactions.csv` foram migrados para:
+  - **Métricas**: `session_skills.csv` (campo `correct`)
+  - **Contexto conversacional**: OpenViking `cases/` (via `memcommit()`)
+- Preferências de `users.preferences` movidas para OpenViking `preferences/`
+
+---
+
 ## [3.2.1] - 2026-03-12
 
 ### 🔧 Refatoração — Consistência e Consolidação

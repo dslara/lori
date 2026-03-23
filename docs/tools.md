@@ -77,7 +77,6 @@ export default async function data(params) {
 | `data-module.ts` | createModule, switchModule, archiveModule | Módulos de aprendizado |
 | `data-flashcard.ts` | createFlashcard, getFlashcards, createReview | Flashcards SRS |
 | `data-insight.ts` | updateInsight, getInsight, updateStreak | Métricas e streak |
-| `data-interaction.ts` | createInteraction | Interações do tutor |
 | `data-core.ts` | initCSVDir, createBackup, resetAllData | Operações core |
 
 ---
@@ -131,9 +130,6 @@ const modules = await data({
 - `getAllInsights` - Listar todas as métricas
 - `updateStreak` - Atualizar streak
 - `getStreak` - Obter streak atual
-
-#### Interactions
-- `createInteraction` - Registrar interação do tutor
 
 #### Core
 - `initCSVDir` - Inicializar estrutura de dados
@@ -536,7 +532,7 @@ status({ operation: "getStatus" })
 | `flashcards.csv` | id, user_id, module_id, front, back, category, created_at, tags, next_review, interval, easiness, reviews | data-flashcard |
 | `reviews.csv` | flashcard_id, reviewed_at, quality, next_review | data-flashcard |
 | `insights.csv` | date, user_id, metric, value, module_id | data-insight |
-| `tutor_interactions.csv` | id, session_id, skill, topic, user_message, user_response, tutor_response, timestamp, metadata | data-interaction |
+| `session_skills.csv` | session_id, skill, duration_min, topic, notes, success_rating, correct | data-session |
 
 ---
 
@@ -563,17 +559,9 @@ if (srs.count > 0) {
   console.log(`Você tem ${srs.count} cards pendentes`);
 }
 
-// 3. Durante a sessão: registrar interação
-await data({
-  operation: "createInteraction",
-  sessionId: "S20260313-001",
-  skill: "quiz",
-  topic: "recursão",
-  userMessage: "O que é caso base?",
-  userResponse: "Condição de parada",
-  tutorResponse: "Correto!",
-  metadata: { correct: true }
-});
+// 3. Durante a sessão: skills são registradas em session_skills.csv
+// O campo 'correct' é derivado de success_rating >= 6
+// Registrou automaticamente via memcommit() no final da sessão
 
 // 4. Encerrar sessão (/ul-study-end)
 const session = await data({

@@ -1,2 +1,2 @@
-id,username,email,timezone,created_at,preferences
-dani,dani,,America/Sao_Paulo,2026-03-01,"{""daily_goal_min"":60,""techniques"":[""drill"",""feynman""]}"
+id,username,email,timezone,created_at,preferences_source
+dani,dani,,America/Sao_Paulo,2026-03-01,openviking

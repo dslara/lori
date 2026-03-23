@@ -25,7 +25,8 @@ planning/
 | Arquivo | Status |
 |---------|--------|
 | `analise-framework-2026-03-13.md` | ✅ Análise completa |
-| `proposta-openviking-integration-2026-03-13.md` | 🟡 Proposta |
+| `proposta-openviking-integration-2026-03-13.md` | ✅ Implementada |
+| `proposta-arquitetura-dados-hibrida-2026-03-19.md` | 🟡 Proposta (Revisada v8) |
 | `proposta-base-dados-csv-2026-03-06.md` | ✅ Implementada |
 | `exemplo-registro-automatico-tutor.md` | ✅ Documentação |
 

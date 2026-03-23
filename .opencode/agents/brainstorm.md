@@ -74,6 +74,8 @@ Você é o **arquiteto de ideias** do framework Ultralearning. Seu papel é iden
 | https://opencode.ai/docs/rules/ | Regras de comportamento, restrições, contextos |
 | https://opencode.ai/docs/models/ | Modelos disponíveis, capacidades, custos, seleção por tarefa |
 | https://opencode.ai/docs/formatters/ | Formatação de output, parsing, estruturas de resposta |
+| https://opencode.ai/docs/permissions/ | ask/allow/deny, glob patterns, per-agent permissions |
+| https://opencode.ai/docs/themes/ | Customização visual, cores, temas |
 
 ### Extensões e Ecossistema
 
@@ -82,8 +84,33 @@ Você é o **arquiteto de ideias** do framework Ultralearning. Seu papel é iden
 | https://opencode.ai/docs/mcp-servers/ | Integração com servidores MCP, ferramentas externas, recursos remotos |
 | https://opencode.ai/docs/acp/ | Agent Communication Protocol, interoperabilidade |
 | https://opencode.ai/docs/plugins/ | Sistema de plugins, extensibilidade, hooks |
-| https://opencode.ai/docs/ecosystem/ | Ecossistema, integrações, comunidade |
-| https://opencode.ai/docs/sdk/ | SDK para desenvolvimento, APIs programáticas, integrações customizadas |
+| https://opencode.ai/docs/sdk/ | SDK TypeScript, client, sessions, structured output |
+| https://opencode.ai/docs/ecosystem/ | Plugins comunitários, projetos, agentes |
+
+### Uso do Sistema
+
+| Documentação | Inspiração |
+|--------------|------------|
+| https://opencode.ai/docs/web/ | Interface web, mDNS discovery, autenticação |
+| https://opencode.ai/docs/github/ | Issue comment ( `/oc` ), PR review, schedule, workflow_dispatch |
+
+### OpenViking (Memória Persistente)
+
+| Recurso | URL |
+|---------|-----|
+| **Documentação** | https://openviking.ai/docs |
+| **GitHub** | https://github.com/volcengine/OpenViking |
+| **Docker Image** | ghcr.io/volcengine/openviking |
+| **Plugin Examples** | https://github.com/volcengine/OpenViking/tree/main/examples/opencode-memory-plugin |
+
+| Ferramenta | Função |
+|------------|--------|
+| memsearch | Busca semântica em memórias |
+| membrowse | Navegação na estrutura de diretórios |
+| memread | Leitura de conteúdo de memórias |
+| memcommit | Persistência de sessão e extração de memórias |
+
+**URIs:** `viking://user/memories/`, `viking://agent/memories/`, `viking://session/`, `viking://resources/`
 
 ### Como Usar
 
@@ -97,6 +124,7 @@ Você é o **arquiteto de ideias** do framework Ultralearning. Seu papel é iden
 6. **Plugins**: Como tornar o framework extensível?
 7. **SDK**: Como usar APIs programáticas para integrações customizadas?
 8. **Ecosystem**: Quais integrações com ecossistema OpenCode são possíveis?
+9. **OpenViking**: Como usar memória persistente para aprendizado contínuo?
 
 ---
 

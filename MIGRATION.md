@@ -84,7 +84,7 @@ make analytics
 
 | Tool | Operações Principais |
 |------|---------------------|
-| **data.ts** | init, createSession, getSessions, updateInsight, getStreak, updateStreak, createFlashcard, getFlashcards, createReview, createInteraction, resetAll |
+| **data.ts** | init, createSession, getSessions, updateInsight, getStreak, updateStreak, createFlashcard, getFlashcards, createReview, resetAll |
 | **context.ts** | getCurrentModule, getRecentSessions, getWeekContext, getSRSPending, getProjectInfo, getFullContext |
 | **analytics.ts** | getTotalTime, getAvgFocus, getSessionsByWeekday, getMostUsedSkill, getErrorRateByTopic, getFlashcardsReviewed, generateReport, getDifficultyLevel |
 | **status.ts** | getStatus, formatStatus (com progress bar) |

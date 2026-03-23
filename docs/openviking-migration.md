@@ -1,7 +1,11 @@
 # Migração CSV → OpenViking
 
 **Data**: 2026-03-13  
-**Status**: Em andamento (Core completo, commands secundários pendentes)
+**Status**: ~~Em andamento~~ **Supersed pela Arquitetura Híbrida (2026-03-20)**
+
+> ⚠️ **Nota**: Este documento descreve uma migração completa para OpenViking que foi **substituída** pela **Arquitetura de Dados Híbrida** (ver `planning/proposta-arquitetura-dados-hibrida-2026-03-19.md`).
+>
+> A arquitetura final mantém **CSVs para dados estruturados** (sessões, módulos, flashcards) e usa **OpenViking para memória semântica** (preferências, padrões, cases).
 
 ## Resumo
 
@@ -131,7 +135,7 @@ data/
 ├── flashcards.csv      # Backup (não usado)
 ├── reviews.csv         # Backup (não usado)
 ├── insights.csv        # Backup (não usado)
-├── tutor_interactions.csv  # Backup (não usado)
+├── session_skills.csv  # Métricas por técnica (inclui campo 'correct')
 └── users.csv           # Backup (não usado)
 ```
 
