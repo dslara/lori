@@ -14,7 +14,6 @@ data/
 ├── reviews.csv            # Histórico de revisões SRS
 ├── insights.csv           # Métricas agregadas
 ├── goals.csv              # Metas do usuário
-├── tutor_interactions.csv # Memória das interações
 └── schema.md              # Este arquivo
 ```
 
@@ -31,12 +30,16 @@ data/
 | `email` | TEXT | Email (opcional) |
 | `timezone` | TEXT | Timezone do usuário |
 | `created_at` | DATE | Data de criação |
-| `preferences` | JSON | Preferências em JSON |
+| `preferences_source` | TEXT | Fonte de preferências: 'openviking' |
 
 **Exemplo**:
 ```csv
-dani,dani,,America/Sao_Paulo,2026-03-01,"{""daily_goal_min"":60}"
+dani,dani,,America/Sao_Paulo,2026-03-01,openviking
 ```
+
+> **Nota**: Preferências foram movidas para OpenViking.
+> Usar `memread('viking://user/default/memories/preferences/')` para acessar.
+> Ver `planning/proposta-arquitetura-dados-hibrida-2026-03-19.md` para detalhes.
 
 ---
 
@@ -230,29 +233,6 @@ Calculadas pelas **Tools TypeScript** em `.opencode/tools/`:
 **Exemplo**:
 ```csv
 G1,dani,M1,Completar fundamentos matemáticos,2026-04-30,in_progress,0.25
-```
-
----
-
-### tutor_interactions.csv
-
-**Propósito**: Memória das interações com o tutor.
-
-| Coluna | Tipo | Descrição |
-|--------|------|-----------|
-| `id` | TEXT (PK) | Identificador único (ex: I001) |
-| `session_id` | TEXT (FK) | Referência a sessions.id |
-| `skill` | TEXT | Técnica usada |
-| `topic` | TEXT | Tópico discutido |
-| `user_message` | TEXT | Mensagem/pergunta do usuário |
-| `user_response` | TEXT | Resposta do usuário (se houver) |
-| `tutor_response` | TEXT | Resposta do tutor |
-| `timestamp` | DATETIME | Timestamp da interação |
-| `metadata` | JSON | Metadados em JSON |
-
-**Exemplo**:
-```csv
-I001,2026-03-04-001,quiz,símbolos matemáticos,"O que significa ∀?","Para todo","Correto! ∀ é o quantificador universal",2026-03-04T10:15:00,"{""correct"":true}"
 ```
 
 ---

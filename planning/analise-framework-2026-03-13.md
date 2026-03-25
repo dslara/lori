@@ -4,7 +4,8 @@
 **Versão analisada**: v3.2.0  
 **Agente**: @brainstorm  
 **Tipo**: Análise completa (gaps, features, performance, integrações, competição)  
-**Status**: ✅ Concluída
+**Status**: ✅ Concluída (atualizado pós-OpenViking em 2026-03-19)  
+**Nota**: Seção de atualização pós-OpenViking adicionada ao final
 
 ---
 
@@ -414,5 +415,89 @@ Análise completa do framework Ultralearning System v3.2.0 identificando lacunas
 
 ---
 
-*Análise gerada pelo agente @brainstorm*  
-*Metodologia: #brainstorm-gaps + #brainstorm-features + #brainstorm-performance + #brainstorm-integration + #brainstorm-compete*
+---
+
+## 🔄 Atualização Pós-OpenViking (2026-03-19)
+
+**Nota**: Esta seção foi adicionada após a integração do OpenViking para refletir o estado atual do framework.
+
+### Lacunas Resolvidas pelo OpenViking
+
+| Lacuna Original | Como Foi Resolvido |
+|-----------------|-------------------|
+| **3. Sem Memória Entre Sessões do LLM** | ✅ **RESOLVIDO** - OpenViking fornece memória persistente via `viking://agent/{id}/memories/cases/` |
+| **@tutor: Sem memória entre sessões** | ✅ **RESOLVIDO** - OpenViking cases/ armazena problemas resolvidos |
+| **@tutor: Não aprende estilo** | ✅ **RESOLVIDO** - OpenViking preferences/ armazena preferências |
+| **Cache de Contexto** | ✅ **RESOLVIDO** - OpenViking tem níveis L0/L1/L2 |
+
+### Lacunas que Permanecem
+
+| Lacuna | Prioridade | Status |
+|--------|------------|--------|
+| **1. Sem Onboarding Guiado** | Crítica | ❌ Pendente |
+| **2. Sem Feedback Visual** | Alta | ❌ Pendente |
+| **4. Sem Integração Calendário** | Média | ❌ Pendente |
+| **5. Sem Modo Offline** | Baixa | ❌ Pendente |
+
+### Novas Lacunas Identificadas (pós-OpenViking)
+
+| Lacuna | Prioridade | Descrição |
+|--------|------------|-----------|
+| **Integração CSV ↔ OpenViking** | Crítica | Dados duplicados (`users.preferences` vs `preferences/`), sem sincronização |
+| **ID do Agente Hardcoded** | Alta | URIs como `viking://agent/ffb1327b18bf/` não são portáteis |
+| **Contexto Não Usa OpenViking** | Alta | `context.ts` não carrega memória semântica do OpenViking |
+| **Fallback para CSV** | Média | Sistema frágil se OpenViking indisponível |
+| **tutor_interactions.csv Redundante** | Média | Duplicado com `session_skills.csv` e OpenViking cases/ |
+
+### Features Impactadas pelo OpenViking
+
+| Feature | Impacto | Como OpenViking Afeta |
+|---------|---------|----------------------|
+| **Auto-sugestão de Atividade** | Melhorado | Pode usar `memsearch()` em `patterns/` para contexto inteligente |
+| **Análise de Padrões de Estudo** | Simplificado | OpenViking já extrai padrões automaticamente via `memcommit()` |
+| **Memória do Tutor** | Resolvido | OpenViking `cases/` fornece memória entre sessões |
+| **Personalização** | Resolvido | OpenViking `preferences/` armazena estilo do usuário |
+
+### Proposta de Integração Híbrida
+
+Ver documento: `planning/proposta-arquitetura-dados-hibrida-2026-03-19.md`
+
+**Resumo da Proposta**:
+- Consolidar preferências em OpenViking (fonte única)
+- Eliminar `tutor_interactions.csv` (redundante)
+- Integrar `context.ts` com OpenViking via `memread()` e `memsearch()`
+- Descobrir ID do agente dinamicamente via `membrowse()`
+- Implementar fallback para quando OpenViking indisponível
+
+### Estado Atualizado (v3.3.0)
+
+| Componente | Quantidade | Status | Observações |
+|------------|------------|--------|-------------|
+| **Commands** | 30 | ✅ Completos | Sem mudanças |
+| **Tools TypeScript** | 14 | ⚠️ Precisa integração | `context.ts` não usa OpenViking |
+| **Skills** | 5 + template | ✅ Bem documentadas | Sem mudanças |
+| **Agents** | 4 + template | ⚠️ Precisa integração | Não carregam OpenViking |
+| **OpenViking** | 1 plugin | ✅ Integrado | Memória persistente ativa |
+
+### Métricas de Sucesso Atualizadas
+
+| Métrica | Valor Anterior | Valor Atual | Meta |
+|---------|-----------------|--------------|------|
+| Memória entre sessões | Nenhuma | OpenViking ativo | Persistência total |
+| Preferências do usuário | CSV JSON duplicado | OpenViking + CSV | Fonte única (OpenViking) |
+| Contexto carregado | CSV apenas | CSV apenas | CSV + OpenViking híbrido |
+| Busca semântica | Não disponível | Disponível | Integrar em commands |
+
+### Próximos Passos Prioritários
+
+| # | Ação | Esforço | Prioridade |
+|---|------|---------|------------|
+| 1 | Implementar `context-hybrid.ts` | 1 semana | Crítica |
+| 2 | Consolidar preferências em OpenViking | 2 dias | Alta |
+| 3 | Eliminar `tutor_interactions.csv` | 2 dias | Média |
+| 4 | Implementar descoberta dinâmica de ID | 1 dia | Média |
+| 5 | Implementar fallback para CSV | 1 dia | Média |
+
+---
+
+*Atualização adicionada após integração do OpenViking*
