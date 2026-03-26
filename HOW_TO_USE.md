@@ -512,6 +512,101 @@ Mais detalhes: [`planning/proposta-openviking-integration-2026-03-13.md`](planni
 
 ---
 
+## Contexto Híbrido (CSV + OpenViking)
+
+> **Novo na v3.3**: O sistema agora usa contexto híbrido para máxima flexibilidade.
+
+### Arquitetura de Dados
+
+```
+┌─────────────────────────────────────────────────────────────┐
+│                    DADOS ESTRUTURADOS (CSV)                 │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  sessions.csv        → Sessões de estudo               │  │
+│  │  session_skills.csv  → Métricas por técnica            │  │
+│  │  flashcards.csv      → Flashcards SRS                  │  │
+│  │  insights.csv        → Streak, métricas                │  │
+│  │  modules.csv         → Progresso de módulos            │  │
+│  └───────────────────────────────────────────────────────┘  │
+│                     ↓ context-hybrid.ts ↓                   │
+│  ┌───────────────────────────────────────────────────────┐  │
+│  │  OpenViking                                            │  │
+│  │  ├── preferences/   → Estilo de aprendizado            │  │
+│  │  ├── entities/      → Conceitos aprendidos             │  │
+│  │  └── cases/         → Contexto conversacional          │  │
+│  └───────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────┘
+```
+
+### Como Usar
+
+```typescript
+// Contexto completo (CSV + OpenViking)
+const context = await contextHybrid({ operation: "getFullContext" });
+
+// Contexto de sessão (mais leve)
+const session = await contextHybrid({ operation: "getSessionContext" });
+
+// Preferências do usuário
+const prefs = await contextHybrid({ operation: "getUserPreferences" });
+```
+
+### Fallback
+
+Se OpenViking indisponível, o sistema continua funcionando:
+
+```typescript
+// CSV funciona mesmo sem OpenViking
+const result = await contextHybrid({ operation: "getFullContext" });
+// {
+//   success: true,
+//   data: { sessions: [...], flashcards: [...] },
+//   warnings: ["OpenViking not available"]
+// }
+```
+
+---
+
+## Memória Automática
+
+### Sincronização ao Final da Sessão
+
+O `/ul-study-end` automaticamente sincroniza memória:
+
+```
+1. Salvar sessão no CSV (sessions.csv)
+2. Salvar skills usadas (session_skills.csv)
+3. Atualizar streak (insights.csv)
+4. Commitar memória no OpenViking ← NOVO
+5. Retornar resumo
+```
+
+### O que é Salvo Automaticamente
+
+| Dado | Onde | Como |
+|------|------|------|
+| Sessão | `sessions.csv` | CSV |
+| Técnicas | `session_skills.csv` | CSV (campo `correct`) |
+| Streak | `insights.csv` | CSV |
+| Preferências | OpenViking `preferences/` | `memcommit()` |
+| Conceitos | OpenViking `entities/` | `memcommit()` |
+| Casos | OpenViking `cases/` | `memcommit()` |
+
+### Verificar Memória
+
+```bash
+# Ver preferências
+membrowse "viking://user/default/memories/preferences/"
+
+# Ver conceitos aprendidos
+membrowse "viking://user/default/memories/entities/"
+
+# Ver casos do tutor
+membrowse "viking://agent/{id}/memories/cases/"
+```
+
+---
+
 ## 8. Armadilhas Comuns e Dicas
 
 ### NAO COMECE SE:
