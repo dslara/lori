@@ -479,25 +479,11 @@ Sua tentativa: 'Para todos'
 
 ### Após coletar a nota
 
-1. **Registre interação** (via tool):
+1. **Registre na sessão** (via tool):
 
-Invoque a **tool `data`** com operação `createInteraction`:
+A interação é automaticamente registrada em `session_skills.csv` quando a sessão termina via `memcommit()`. O campo `correct` é derivado de `success_rating >= 6`.
 
-```
-data.createInteraction({
-  skill: "srs-generator",
-  topic: cardCategory,
-  userMessage: cardQuestion,
-  userResponse: userAnswer,
-  tutorResponse: officialAnswer,
-  metadata: { 
-    "correct": quality >= 3, 
-    "quality": quality 
-  }
-})
-```
-
-**Nota**: `correct` é `true` se quality ≥ 3, `false` se < 3.
+Para métricas de eficácia do SRS, o `data.createReview` já reg istra o histórico.
 
 2. **Atualize o card** (via tool):
 
