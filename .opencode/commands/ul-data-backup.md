@@ -131,7 +131,6 @@ backups/
       flashcards.csv
       insights.csv
       reviews.csv
-      tutor_interactions.csv
       session_skills.csv
       goals.csv
       users.csv
