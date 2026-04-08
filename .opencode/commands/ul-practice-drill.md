@@ -159,13 +159,14 @@ Pronto? Digite 'começar' quando quiser iniciar o cronômetro."
 ## Integrações
 
 **Tools utilizadas:**
-- `data.createInteraction` — Registra cada tentativa
 - `data.createFlashcard` — Cria cards para erros
 
 **Commands relacionados:**
 - `/ul-practice-feynman` — Se não entende o por que
 - `/ul-memory-create` — Para padrões de erro
 - `/ul-study-end` — Ao finalizar sessão
+
+**Nota**: As interações são registradas automaticamente em `session_skills.csv` via `memcommit()` no final da sessão.
 
 ## Handoff
 

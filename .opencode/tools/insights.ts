@@ -3,8 +3,8 @@ import { z } from "zod";
 import { join } from "path";
 import { format, subDays, getDay, parseISO } from "date-fns";
 
-import { readCSV, getUserId, getCacheKey, getFromCache, setCache, parseMetadata } from "./utils-csv.js";
-import type { Session, SessionSkill, Insight, Review, Interaction, Flashcard } from "./model-types.js";
+import { readCSV, getUserId, getCacheKey, getFromCache, setCache } from "./utils-csv.js";
+import type { Session, SessionSkill, Insight, Review, Flashcard } from "./model-types.js";
 
 // ============================================================================
 // TYPES
@@ -59,7 +59,6 @@ let cachedData: {
   sessions: Session[];
   insights: Insight[];
   reviews: Review[];
-  interactions: Interaction[];
   flashcards: Flashcard[];
   sessionSkills: SessionSkill[];
 } | null = null;
@@ -71,11 +70,10 @@ async function loadAllData(dataDir: string, userId: string): Promise<typeof cach
     return cachedData;
   }
   
-  const [sessions, insights, reviews, interactions, flashcards, sessionSkills] = await Promise.all([
+  const [sessions, insights, reviews, flashcards, sessionSkills] = await Promise.all([
     readCSV<Session>(join(dataDir, "sessions.csv")),
     readCSV<Insight>(join(dataDir, "insights.csv")),
     readCSV<Review>(join(dataDir, "reviews.csv")),
-    readCSV<Interaction>(join(dataDir, "tutor_interactions.csv")),
     readCSV<Flashcard>(join(dataDir, "flashcards.csv")),
     readCSV<SessionSkill>(join(dataDir, "session_skills.csv"))
   ]);
@@ -85,7 +83,6 @@ async function loadAllData(dataDir: string, userId: string): Promise<typeof cach
     sessions: sessions.filter(s => s.user_id === userId),
     insights: insights.filter(i => i.user_id === userId),
     reviews,
-    interactions,
     flashcards: flashcards.filter(f => f.user_id === userId),
     sessionSkills
   };
@@ -156,22 +153,22 @@ function analyzeSummary(data: typeof cachedData, days: number = 30) {
 
 function analyzeEffectiveness(data: typeof cachedData, days: number = 30) {
   const cutoffDate = subDays(new Date(), days);
+  const userSessionIds = new Set(data!.sessions.map(s => s.id));
   
-  // Success rate by skill
+  // Success rate by skill - derived from session_skills
   const skillStats: Record<string, { correct: number; total: number }> = {};
-  for (const interaction of data!.interactions) {
-    const metadata = parseMetadata(interaction.metadata);
-    if (typeof metadata.correct !== "boolean") continue;
+  for (const skill of data!.sessionSkills) {
+    if (!userSessionIds.has(skill.session_id)) continue;
     
-    const skill = interaction.skill?.toLowerCase().trim();
-    if (!skill) continue;
+    const skillName = skill.skill?.toLowerCase().trim();
+    if (!skillName) continue;
     
-    const date = new Date(interaction.timestamp);
-    if (date < cutoffDate) continue;
+    const rating = parseInt(skill.success_rating) || 0;
+    const correct = rating >= 6;
     
-    if (!skillStats[skill]) skillStats[skill] = { correct: 0, total: 0 };
-    skillStats[skill].total++;
-    if (metadata.correct) skillStats[skill].correct++;
+    if (!skillStats[skillName]) skillStats[skillName] = { correct: 0, total: 0 };
+    skillStats[skillName].total++;
+    if (correct) skillStats[skillName].correct++;
   }
   
   const topSkills = Object.entries(skillStats)
@@ -205,7 +202,6 @@ function analyzeEffectiveness(data: typeof cachedData, days: number = 30) {
   }
   
   // Most and least used
-  const userSessionIds = new Set(data!.sessions.map(s => s.id));
   const skillCount: Record<string, number> = {};
   for (const skill of data!.sessionSkills) {
     if (!userSessionIds.has(skill.session_id)) continue;
@@ -332,6 +328,7 @@ function analyzePatterns(data: typeof cachedData, days: number = 30) {
 
 function analyzeWeaknesses(data: typeof cachedData, threshold: number = 0.3, days: number = 7) {
   const cutoffDate = subDays(new Date(), days);
+  const userSessionIds = new Set(data!.sessions.map(s => s.id));
   
   // From insights (error_rate_* metrics)
   const errorRates: Record<string, { rate: number; attempts: number }> = {};
@@ -348,16 +345,12 @@ function analyzeWeaknesses(data: typeof cachedData, threshold: number = 0.3, day
     } catch { continue; }
   }
   
-  // Count attempts from interactions
-  for (const interaction of data!.interactions) {
-    const metadata = parseMetadata(interaction.metadata);
-    if (typeof metadata.correct !== "boolean") continue;
+  // Count attempts from session_skills
+  for (const skill of data!.sessionSkills) {
+    if (!userSessionIds.has(skill.session_id)) continue;
     
-    const topic = interaction.topic?.toLowerCase().trim();
+    const topic = skill.topic?.toLowerCase().trim();
     if (!topic || !errorRates[topic]) continue;
-    
-    const date = new Date(interaction.timestamp);
-    if (date < cutoffDate) continue;
     
     errorRates[topic].attempts++;
   }
@@ -541,19 +534,17 @@ export default tool({
         }
         
         case "getDifficultyLevel": {
-          const interactions = data!.interactions.filter(i => {
-            const date = new Date(i.timestamp);
-            return date >= subDays(new Date(), 7);
-          });
+          const userSessionIds = new Set(data!.sessions.map(s => s.id));
+          const recentSkills = data!.sessionSkills.filter(s => userSessionIds.has(s.session_id));
           
           let totalCorrect = 0;
           let totalQuestions = 0;
           
-          for (const interaction of interactions) {
-            const metadata = parseMetadata(interaction.metadata);
-            if (typeof metadata.correct !== "boolean") continue;
+          for (const skill of recentSkills) {
+            const rating = parseInt(skill.success_rating) || 0;
+            if (rating === 0) continue;
             totalQuestions++;
-            if (metadata.correct) totalCorrect++;
+            if (rating >= 6) totalCorrect++;
           }
           
           let difficultyLevel: "easy" | "medium" | "hard" = "medium";

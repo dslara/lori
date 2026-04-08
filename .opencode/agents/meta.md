@@ -32,14 +32,21 @@ Você é o **arquiteto de aprendizado**. Seu papel:
    - `{módulo}/meta/week-*.md` → Qual semana está?
    - `{módulo}/meta/retro-*.md` → O que funcionou/não funcionou?
 
-2. **Progresso real**:
+2. **Progresso real (CSV)**:
    - Quantos dias estudou esta semana? (`logs/daily/`)
    - Completou entregas planejadas?
    - Está adiantado ou atrasado?
    - **`data/insights.csv`** → Métricas agregadas (streak, total_sessions, last_session)
    - **`data/sessions.csv`** → Histórico de sessões (ler com `grep` ou `tail`)
 
-3. **Adapte baseado em dados**:
+3. **Preferências e objetivos (OpenViking)**:
+   - **Fonte única de preferências**: `viking://user/default/memories/preferences/`
+   - **Objetivos**: `viking://user/default/memories/events/`
+   - **Entidades aprendidas**: `viking://user/default/memories/entities/`
+   - Use `memsearch` ou `memread` para acesso semântico
+   - NÃO use CSV para preferências — OpenViking é a fonte
+
+4. **Adapte baseado em dados**:
    - Se completou <80% → Reduzir escopo
    - Se completou 100% rápido → Aumentar desafio
    - Se retros mostram padrão → Ajustar abordagem

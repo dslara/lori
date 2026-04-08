@@ -4,15 +4,14 @@ import { readFile, writeFile, access, mkdir } from "node:fs/promises";
 
 // === CSV HEADERS ===
 export const CSV_HEADERS = {
-  users: ["id", "username", "email", "timezone", "created_at", "preferences"],
+  users: ["id", "username", "email", "timezone", "created_at", "preferences_source"],
   modules: ["id", "user_id", "name", "is_active", "status", "started_at", "completed_at", "total_hours"],
   sessions: ["id", "user_id", "module_id", "date", "duration_min", "focus_score", "notes"],
-  sessionSkills: ["session_id", "skill", "duration_min", "topic", "notes", "success_rating"],
+  sessionSkills: ["session_id", "skill", "duration_min", "topic", "notes", "success_rating", "correct"],
   flashcards: ["id", "user_id", "module_id", "front", "back", "category", "created_at", "tags", "next_review", "interval", "easiness", "reviews"],
   reviews: ["flashcard_id", "reviewed_at", "quality", "next_review"],
   insights: ["date", "user_id", "metric", "value", "module_id"],
-  goals: ["id", "user_id", "module_id", "description", "target_date", "status", "progress"],
-  tutorInteractions: ["id", "session_id", "skill", "topic", "user_message", "user_response", "tutor_response", "timestamp", "metadata"]
+  goals: ["id", "user_id", "module_id", "description", "target_date", "status", "progress"]
 };
 
 // === CACHE GLOBAL ===
@@ -77,8 +76,7 @@ export async function initCSVDir(dataDir: string): Promise<void> {
     { name: "flashcards.csv", headers: CSV_HEADERS.flashcards },
     { name: "reviews.csv", headers: CSV_HEADERS.reviews },
     { name: "insights.csv", headers: CSV_HEADERS.insights },
-    { name: "goals.csv", headers: CSV_HEADERS.goals },
-    { name: "tutor_interactions.csv", headers: CSV_HEADERS.tutorInteractions }
+    { name: "goals.csv", headers: CSV_HEADERS.goals }
   ];
   
   for (const file of files) {
@@ -88,7 +86,7 @@ export async function initCSVDir(dataDir: string): Promise<void> {
     } catch {
       await writeCSV(filePath, file.headers, []);
     }
-  }
+}
 }
 
 // === GENERAL HELPERS ===
@@ -113,42 +111,5 @@ export function parseMetadata(metadataStr: string): any {
     return JSON.parse(metaStr);
   } catch {
     return {};
-  }
-}
-
-// === TUTOR LOGGING (Built-in) ===
-export async function logTutorInteraction(
-  dataDir: string,
-  sessionId: string,
-  skill: string,
-  topic: string,
-  userMessage: string,
-  userResponse: string = "",
-  tutorResponse: string = "",
-  metadata: Record<string, any> = {}
-): Promise<void> {
-  try {
-    const { format } = await import("date-fns");
-    const timestamp = new Date().toISOString();
-    const interactionId = `I${format(new Date(), "yyyyMMddHHmmss")}`;
-    
-    const interaction = {
-      id: interactionId,
-      session_id: sessionId,
-      skill: skill,
-      topic: sanitize(topic, 100),
-      user_message: sanitize(userMessage, 200),
-      user_response: sanitize(userResponse, 200),
-      tutor_response: sanitize(tutorResponse, 500),
-      timestamp,
-      metadata: JSON.stringify(metadata)
-    };
-    
-    const interactions = await readCSV<Record<string, string>>(`${dataDir}/tutor_interactions.csv`);
-    interactions.push(interaction);
-    await writeCSV(`${dataDir}/tutor_interactions.csv`, CSV_HEADERS.tutorInteractions, interactions);
-  } catch (error) {
-    // Silently fail - logging should not break main functionality
-    console.error("Failed to log interaction:", error);
   }
 }

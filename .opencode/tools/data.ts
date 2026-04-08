@@ -3,13 +3,13 @@ import { z } from "zod";
 import { format } from "date-fns";
 import { join } from "path";
 
-import { getUserId } from "./utils-csv.js";
+import { getUserId, readCSV } from "./utils-csv.js";
 import { createSession, getSessions } from "./data-session.js";
 import { updateInsight, getInsight, getAllInsights, getStreak, updateStreak } from "./data-insight.js";
 import { createFlashcard, getFlashcards, createReview } from "./data-flashcard.js";
-import { createInteraction } from "./data-interaction.js";
 import { createModule, switchModule, archiveModule } from "./data-module.js";
 import { initDataDir, resetAllData, createBackup } from "./data-core.js";
+import type { SessionSkill } from "./model-types.js";
 
 function getDataDir(context: any): string {
   return join(context.worktree || context.directory, "data");
@@ -22,6 +22,7 @@ export default tool({
       "init",
       "createSession",
       "getSessions",
+      "getSessionSkills",
       "updateInsight",
       "getInsight",
       "getAllInsights",
@@ -30,7 +31,6 @@ export default tool({
       "createFlashcard",
       "getFlashcards",
       "createReview",
-      "createInteraction",
       "resetAll",
       "createModule",
       "switchModule",
@@ -57,14 +57,6 @@ export default tool({
     
     flashcardId: z.string().optional().describe("Flashcard ID"),
     quality: z.number().min(0).max(5).optional().describe("Review quality (0-5, SM-2)"),
-    
-    sessionId: z.string().optional().describe("Session ID"),
-    skill: z.string().optional().describe("Skill used (e.g., drill, quiz)"),
-    topic: z.string().optional().describe("Topic of interaction"),
-    userMessage: z.string().optional().describe("User message/question"),
-    userResponse: z.string().optional().describe("User response/answer"),
-    tutorResponse: z.string().optional().describe("Tutor response"),
-    metadata: z.object({}).passthrough().optional().describe("Additional metadata (JSON)"),
     
     moduleName: z.string().optional().describe("Module name (e.g., python-backend, rust-async)"),
   },
@@ -93,6 +85,14 @@ export default tool({
             filterModuleId: args.filterModuleId,
             limit: args.limit
           });
+        
+        case "getSessionSkills": {
+          const skills = await readCSV<SessionSkill>(join(dataDir, "session_skills.csv"));
+          return JSON.stringify({
+            success: true,
+            data: { skills }
+          });
+        }
         
         case "updateInsight":
           if (!args.metric || args.value === undefined) {
@@ -141,17 +141,6 @@ export default tool({
           return await createReview(dataDir, {
             flashcardId: args.flashcardId,
             quality: args.quality
-          });
-        
-        case "createInteraction":
-          return await createInteraction(dataDir, {
-            sessionId: args.sessionId,
-            skill: args.skill,
-            topic: args.topic,
-            userMessage: args.userMessage,
-            userResponse: args.userResponse,
-            tutorResponse: args.tutorResponse,
-            metadata: args.metadata
           });
         
         case "resetAll":

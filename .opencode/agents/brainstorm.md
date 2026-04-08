@@ -44,9 +44,18 @@ Você é o **arquiteto de ideias** do framework Ultralearning. Seu papel é iden
    - `planning/` → Propostas já existentes (arquivadas e ativas)
    - `reviews/archived/` → Revisões anteriores do framework
 
-3. **Documentação externa**:
-   - OpenCode Docs (agents, skills, tools, commands)
-   - Modelos disponíveis: GLM-5, Kimi K2.5, MiniMax M2.5
+3. **Padrões do sistema (OpenViking)**:
+   ```typescript
+   // Descobrir URI do agente dinamicamente
+   const patternsUri = await getAgentMemoryUri('patterns');
+   // Vê: "viking://agent/{id}/memories/patterns/"
+   
+   // Carregar padrões do framework
+   const patterns = await memread({
+     uri: patternsUri,
+     level: "overview"
+   });
+   ```
 
 > **Regra**: Nunca proponha algo que já foi implementado ou arquivado em `planning/`.
 

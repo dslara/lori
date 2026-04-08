@@ -123,7 +123,7 @@ Apresentar resultados:
 • Criar flashcard → /ul-memory-create
 ```
 
-Invocar `data.createInteraction` para cada resposta (registra acertos/erros).
+As interações do quiz são registradas automaticamente em `session_skills.csv`via `memcommit()` no final da sessão.
 
 ## Exemplo Completo
 
@@ -228,7 +228,6 @@ canal.
 
 **Tools utilizadas:**
 - `insights.getDifficultyLevel` — Determina dificuldade
-- `data.createInteraction` — Registra cada resposta
 - `insights.getWeaknesses` — Identifica tópicos fracos
 
 **Commands relacionados:**

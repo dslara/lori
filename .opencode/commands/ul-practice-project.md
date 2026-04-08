@@ -47,11 +47,7 @@ A skill `directness` fará:
 
 ### Passo 4: Acompanhamento
 
-O command permanece ativo enquanto a skill executa.
-Registrar checkpoints via tools:
-- Início do projeto → `data.createInteraction`
-- Cada milestone → `data.createInteraction`
-- Conclusão → `data.createSession` (via /ul-study-end)
+O command permanece ativo enquanto a skill executa. O progresso é salvo automaticamente via `memcommit()` no final da sessão.
 
 ## Exemplo de Interação
 
@@ -103,7 +99,6 @@ Vamos criar a estrutura base. Você já tem o Go instalado?
 - `directness` — Guia socrático de projetos
 
 **Tools utilizadas:**
-- `data.createInteraction` — Registra checkpoints
 - `context.getProjectInfo` — Contexto do projeto
 
 **Commands relacionados:**

@@ -53,27 +53,40 @@ Você é o **consultor estratégico** do framework Ultralearning. Seu papel é a
 
 **IMPORTANTE**: Use memória persistente para revisões consistentes.
 
+### Ferramentas Disponíveis
+
+```typescript
+// Utilitários para descoberta dinâmica de URIs
+import { getAgentId, getAgentBaseUri, getAgentMemoryUri } from "./openviking-utils.js";
+
+// Contexto híbrido (CSV + OpenViking)
+import contextHybrid from "./context-hybrid.js";
+```
+
 ### Antes de Revisar
 
 ```typescript
-// 1. Carregar histórico de auditorias
+// 1. Descobrir URI do agente dinamicamente
+const agentUri = await getAgentBaseUri();
+// Retorna: "viking://agent/ffb1327b18bf/memories/"
+
+// 2. Carregar histórico de auditorias
 const audits = await memsearch({
   query: "auditoria revisão qualidade",
+  target_uri: `${agentUri}patterns/`,
   limit: 5
 })
 
-// 2. Verificar padrões anteriores
-if (audits.memories.length > 0) {
-  const overview = await memread({
-    uri: "viking://agent/memories/review/audits/",
-    level: "overview"
-  })
-}
+// 3. Verificar padrões anteriores do framework
+const patterns = await memread({
+  uri: `${agentUri}patterns/`,
+  level: "overview"
+})
 
-// 3. Buscar problemas recorrentes
-const problems = await memsearch({
-  query: "problemas recorrentes dívida técnica",
-  limit: 3
+// 4. Verificar skills validadas
+const skills = await memread({
+  uri: `${agentUri}skills/`,
+  level: "overview"
 })
 ```
 
@@ -82,47 +95,33 @@ const problems = await memsearch({
 Salvar achados importantes:
 
 ```typescript
-// Commit automático, pode forçar se necessário
 await memcommit({ wait: true })
 ```
 
-### URIs Úteis para @review
+### URIs Dinâmicas
 
-| URI | Conteúdo |
-|-----|----------|
-| `viking://agent/memories/review/audits/` | Auditorias anteriores |
-| `viking://agent/memories/review/issues/` | Problemas identificados |
-| `viking://user/memories/patterns.md` | Padrões de erro do usuário |
+| URI | Como obter |
+|-----|------------|
+| `viking://agent/{id}/memories/patterns/` | `getAgentMemoryUri('patterns')` |
+| `viking://agent/{id}/memories/skills/` | `getAgentMemoryUri('skills')` |
+| `viking://agent/{id}/memories/tools/` | `getAgentMemoryUri('tools')` |
+| `viking://user/default/memories/` | Fixo - usar diretamente |
 
 ### Buscas Comuns
 
 ```typescript
 // Já revisamos isso antes?
-await memsearch({ query: "revisão de estrutura pasta", limit: 5 })
-
-// Problemas que mencionamos antes
-await memsearch({ query: "dívida técnica problemas conhecidos", limit: 5 })
-
-// Padrões de estilo/código
-await memsearch({ query: "convenções estilo código", limit: 3 })
-```
-
-### Comparar com Auditorias Anteriores
-
-```typescript
-// Carregar última auditoria do mesmo tipo
-const lastAudit = await memsearch({
-  query: "auditoria de [tipo]",
-  limit: 1
+await memsearch({ 
+  query: "revisão de estrutura pasta", 
+  target_uri: `${await getAgentBaseUri()}patterns/`,
+  limit: 5 
 })
 
-if (lastAudit.memories.length > 0) {
-  // Comparar estado atual com anterior
-  const previous = await memread({
-    uri: lastAudit.memories[0].uri,
-    level: "read"
-  })
-}
+// Padrões do framework
+await memread({
+  uri: `${await getAgentBaseUri()}patterns/`,
+  level: "overview"
+})
 ```
 
 ---
@@ -187,9 +186,10 @@ if (lastAudit.memories.length > 0) {
 - `data-module.ts` — Modules
 - `data-flashcard.ts` — Flashcards
 - `data-insight.ts` — Insights
-- `data-interaction.ts` — Interactions
 - `data-core.ts` — Core ops (init, backup)
 - `context.ts` — Contexto da sessão
+- `context-hybrid.ts` — Contexto híbrido (CSV + OpenViking)
+- `openviking-utils.ts` — Utilitários OpenViking
 - `insights.ts` — **Tool unificada** (consolida analytics, effectiveness, patterns, weakness, dashboard)
 - `status.ts` — Resumo visual
 - `retro.ts` — Retrospectivas

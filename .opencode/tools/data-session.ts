@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { join } from "path";
-import { readCSV, writeCSV, getUserId, CSV_HEADERS, logTutorInteraction } from "./utils-csv.js";
+import { readCSV, writeCSV, getUserId, CSV_HEADERS } from "./utils-csv.js";
 import type { Session } from "./model-types.js";
 
 export async function createSession(
@@ -29,17 +29,6 @@ export async function createSession(
   const sessions = await readCSV<Session>(join(dataDir, "sessions.csv"));
   sessions.push(session);
   await writeCSV(join(dataDir, "sessions.csv"), CSV_HEADERS.sessions, sessions);
-  
-  await logTutorInteraction(
-    dataDir,
-    sessionId,
-    "session",
-    args.moduleId,
-    "createSession",
-    "",
-    `Session created: ${args.duration}min, focus ${args.focusScore}/10`,
-    { operation: "createSession", moduleId: args.moduleId }
-  );
   
   return JSON.stringify({
     success: true,

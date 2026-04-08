@@ -1,6 +1,6 @@
 import { format } from "date-fns";
 import { join } from "path";
-import { readCSV, writeCSV, getUserId, CSV_HEADERS, logTutorInteraction } from "./utils-csv.js";
+import { readCSV, writeCSV, getUserId, CSV_HEADERS } from "./utils-csv.js";
 import type { Flashcard, Review } from "./model-types.js";
 
 export async function createFlashcard(
@@ -35,17 +35,6 @@ export async function createFlashcard(
   const flashcards = await readCSV<Flashcard>(join(dataDir, "flashcards.csv"));
   flashcards.push(flashcard);
   await writeCSV(join(dataDir, "flashcards.csv"), CSV_HEADERS.flashcards, flashcards);
-  
-  await logTutorInteraction(
-    dataDir,
-    "system",
-    "srs-generator",
-    args.category || "general",
-    "createFlashcard",
-    args.front,
-    "Flashcard created",
-    { flashcardId, category: args.category }
-  );
   
   return JSON.stringify({
     success: true,
@@ -121,17 +110,6 @@ export async function createReview(
   const reviewsList = await readCSV<Review>(join(dataDir, "reviews.csv"));
   reviewsList.push(review);
   await writeCSV(join(dataDir, "reviews.csv"), CSV_HEADERS.reviews, reviewsList);
-  
-  await logTutorInteraction(
-    dataDir,
-    "system",
-    "srs-generator",
-    "review",
-    "createReview",
-    `Quality: ${quality}`,
-    `Next review in ${interval} days`,
-    { flashcardId: args.flashcardId, quality, interval }
-  );
   
   return JSON.stringify({
     success: true,

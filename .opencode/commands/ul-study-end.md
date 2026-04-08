@@ -31,11 +31,20 @@ Com base nas respostas:
 
 ### Passo 3: Persistência via OpenViking
 
-O OpenViking sincroniza automaticamente. Para persistência explícita:
+**Obrigatório:** Chamar `memcommit()` para persistir a sessão:
 
 ```typescript
-// Forçar persistência imediata
+// 1. Salvar sessão no CSV
+await data({ operation: "createSession", ... })
+
+// 2. Commitar memória automaticamente (CRÍTICO)
 await memcommit({ wait: true })
+
+// 3. Retornar resultado
+return JSON.stringify({
+  success: true,
+  message: "Sessão salva e memória sincronizada"
+})
 ```
 
 **Dados capturados automaticamente:**
@@ -44,6 +53,11 @@ await memcommit({ wait: true })
 - Foco (nota fornecida)
 - Notas (resumo do aprendizado)
 - Timestamp
+
+**OpenViking extrai automaticamente:**
+- Preferências de aprendizado
+- Conceitos aprendidos (entities)
+- Padrões de erro/franqueza**
 
 ### Passo 4: Atualização do Plano Semanal (Opcional)
 

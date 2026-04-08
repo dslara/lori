@@ -61,11 +61,7 @@ A skill `debug-socratic` fará:
 
 ### Passo 3: Registro
 
-Invocar `data.createInteraction`:
-- Tipo: "debug_session"
-- Bug encontrado
-- Causa raiz
-- Solução aplicada
+O progresso do debug é registrado automaticamente via `memcommit()` no final da sessão.
 
 ### Passo 4: Consolidação
 
@@ -219,7 +215,6 @@ Código corrigido:
 - `debug-socratic` — Guia socrático de debugging
 
 **Tools utilizadas:**
-- `data.createInteraction` — Registra sessão de debug
 - `context.getFullContext` — Contexto do projeto
 
 **Commands relacionados:**

@@ -188,7 +188,6 @@ Tornar mensurável
 - `decomposition` — Framework 3D e geração de hierarquias
 
 **Tools utilizadas:**
-- `data.createInteraction` — Registra decomposição
 - `context.getFullContext` — Contexto atual
 
 **Commands relacionados:**

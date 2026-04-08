@@ -179,13 +179,14 @@ Você entendeu recursão:
 ## Integrações
 
 **Tools utilizadas:**
-- `data.createInteraction` — Registra explicação
 - `data.createFlashcard` — Salva analogia boa
 
 **Commands relacionados:**
 - `/ul-learn-explain` — Se não consegue explicar (aprender primeiro)
 - `/ul-practice-drill` — Se já entendeu, praticar
 - `/ul-memory-create` — Salvar analogias em flashcards
+
+**Nota**: As interações são registradas automaticamente em `session_skills.csv` via `memcommit()` no final da sessão.
 
 ## Handoff
 

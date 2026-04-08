@@ -7,7 +7,7 @@ export interface User {
   email: string;
   timezone: string;
   created_at: string;
-  preferences: string;
+  preferences_source: string;
 }
 
 export interface Module {
@@ -38,6 +38,7 @@ export interface SessionSkill {
   topic: string;
   notes: string;
   success_rating: string;
+  correct?: string; // "true" or "false", derived from success_rating >= 6
 }
 
 export interface Flashcard {
