@@ -508,7 +508,7 @@ docker-compose ps
 | `docker-compose restart` | Reiniciar servidos |
 | `curl http://localhost:1933/health` | Health check |
 
-Mais detalhes: [`planning/proposta-openviking-integration-2026-03-13.md`](planning/proposta-openviking-integration-2026-03-13.md)
+Mais detalhes: [`planning/proposta-openviking-integration-2026-03-13.md`](proposta-openviking-integration-2026-03-13.md)
 
 ---
 

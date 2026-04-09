@@ -54,19 +54,19 @@ Exemplos:
 | **costs** | Otimização de tokens | `#review-costs` |
 | **consolidated** | Análise consolidada de múltiplas reviews | `#meta-review` |
 
-> **Nota**: `#review-scripts` foi descontinuado na v3.1 — scripts bash foram migrados para tools TypeScript.
-
 ---
 
 ## Revisão Ativa
 
-- Nehuma Revisão Ativa
+  - 4 problemas críticos/alto identificados
+  - 3 problemas da revisão anterior não resolvidos
+  - 2 novos problemas críticos descobertos
 
 ---
 
 ## Revisões Arquivadas
 
-Revisões supersedidas ou implementadas ficam em `archived/`.
+Revisões arquivadas ou implementadas ficam em `archived/`.
 
 Consulte [`archived/README.md`](./archived/README.md) para o histórico completo.
 
@@ -109,15 +109,6 @@ Usando o agente `@review` via commands:
 | **Gerado por** | Humano | Agente @review |
 | **Convenção** | `review-v{X.Y}.md` | `[tipo]-[desc]-YYYY-MM-DD-v{X.Y.Z}.md` |
 | **Público** | Estudante revisando progresso | Mantenedor revisando qualidade |
-
----
-
-## Histórico de Consolidacões
-
-| Data | Documento | Reviews Analisadas | Veredito |
-|------|-----------|-------------------|----------|
-| 2026-03-02 | `pendencias-consolidadas-2026-03-02-v1.0.0.md` | — | Pendências consolidadas (reviews + planning) |
-| 2026-02-28 | `consolidated-analysis-2026-02-28-v1.0.0.md` | 14 | 9.1/10, 83% resolvidos |
 
 ---
 

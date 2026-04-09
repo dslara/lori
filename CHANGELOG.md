@@ -5,6 +5,30 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 Este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [3.4.0] - 2026-04-08
+
+### 🔧 Revisão de Consistência — Ações Implementadas
+
+#### Adicionado
+- **Agente @brainstorm**: Configurado em `opencode.json` com `temperature: 0.7`
+- **Operações migradas para `context-hybrid.ts`**: `getWeekContext`, `getSRSPending`, `getProjectInfo`, `getCurrentModule`
+- **Documentação de model routing**: `docs/model-routing.md`
+- **Frontmatter em skills**: `openviking-context` e `session` agora têm frontmatter completo
+- **VERSION atualizado**: `3.2.0` → `3.3.0`
+
+#### Modificado
+- **`ul-plan-weekly`**: Consolidado com `ul-plan-weekly-create` (objetivo SMART + revisão semana anterior + tools context-hybrid)
+- **`context-hybrid.ts`**: Adicionadas 4 operações (`getWeekContext`, `getSRSPending`, `getProjectInfo`, `getCurrentModule`)
+- **Referências atualizadas**: Commands e agentes atualizados de `context.` para `context-hybrid.`
+- **Referências atualizadas**: `ul-plan-weekly-create` → `ul-plan-weekly` em todos os agentes
+- **`#audit-quality`**: Substituída por `/ul-review-audit` em @meta e @tutor
+
+#### Removido
+- **`ul-plan-weekly-create.md`**: Consolidado em `ul-plan-weekly.md`
+- **`context.ts`**: Depreciado (renomeado para `context.ts.deprecated`)
+
+---
+
 ## [3.3.0] - 2026-03-20
 
 ### 🔧 Arquitetura de Dados Híbrida — Consolidação

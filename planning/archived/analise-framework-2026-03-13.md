@@ -402,10 +402,10 @@ Análise completa do framework Ultralearning System v3.2.0 identificando lacunas
 ## 🔗 Referências
 
 ### Documentação Interna
-- [README.md](../README.md) — Visão geral do sistema
-- [HOW_TO_USE.md](../HOW_TO_USE.md) — Guia de uso
-- [reviews/archived/audit-complete-2026-03-13-v3.2.1.md](../reviews/archived/audit-complete-2026-03-13-v3.2.1.md) — Última auditoria
-- [data/schema.md](../data/schema.md) — Schema dos CSVs
+- [README.md](README.md) — Visão geral do sistema
+- [HOW_TO_USE.md](HOW_TO_USE.md) — Guia de uso
+- [reviews/archived/audit-complete-2026-03-13-v3.2.1.md](audit-complete-2026-03-13-v3.2.1.md) — Última auditoria
+- [data/schema.md](data/schema.md) — Schema dos CSVs
 
 ### Sistemas Comparados
 - [Anki](https://apps.ankiweb.net/) — SRS

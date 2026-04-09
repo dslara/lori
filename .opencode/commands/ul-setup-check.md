@@ -1,7 +1,7 @@
 ---
 description: Verificar dependências do sistema (/ul-setup-check)
 agent: tutor
-model: opencode-go/glm-5
+model: opencode-go/minimax-m2.5
 ---
 
 ## Uso

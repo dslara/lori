@@ -1,7 +1,7 @@
 ---
 description: Criar plano semanal detalhado (/ul-plan-weekly)
 agent: meta
-model: opencode-go/minimax-m2.5
+model: opencode-go/glm-5
 ---
 
 Argumento recebido: $ARGUMENTS (número da semana)
@@ -11,18 +11,22 @@ Argumento recebido: $ARGUMENTS (número da semana)
 
 ## Descrição
 
-Cria plano detalhado para a semana, distribuindo entregas e definindo foco diário.
+Cria plano semanal detalhado com objetivo SMART, cronograma diário e entregas mensuráveis. Analisa semana anterior para ajustar ritmo.
 
 ## Processo
 
-### Passo 1: Contexto
+### Passo 1: Carregar Contexto
 
 Invocar tools:
-- `context.getWeekContext` — Contexto atual
-- `insights.generateReport` — Ritmo recente
-- `context.getFullContext` — Módulo e metas
+- `context-hybrid.getSessionContext` — Sessões recentes e streak
+- `insights.generateReport` — Ritmo recente e efetividade
+- `insights.getWeaknesses` — Tópicos fracos
 
-### Passo 2: Definir Foco da Semana
+**Se existe semana anterior**, ler contextos:
+- `context-hybrid.getRelevantSessions` (query: "semana passada") — O que funcionou/não funcionou
+- Verificar métricas: completou <60%? → Reduzir escopo. 80-100%? → Manter ritmo. >100%? → Aumentar desafio.
+
+### Passo 2: Definir Objetivo SMART
 
 Perguntar:
 ```
@@ -34,6 +38,7 @@ Contexto:
 • Módulo atual: [nome]
 • Progresso: [X]%
 • Tópicos pendentes: [lista]
+[• Semana anterior: X/Y entregas (Z%) — ajuste: ...]
 
 Opções:
 a) Continuar tópico atual: [tópico]
@@ -42,12 +47,24 @@ c) Revisar tópicos fracos
    ([lista de tópicos com error_rate > 30%])
 d) Preparar para benchmark
 
-Escolha: __________"
+Objetivo SMART:
+• Específico (não 'estudar Go')
+• Mensurável (como saber se conseguiu?)
+• Atingível (realista para 6 dias)
+• Relevante (para seu objetivo maior)
+• Temporal (esta semana apenas)
+
+Exemplo: 'Implementar autenticação JWT em API'
 ```
 
 ### Passo 3: Distribuir Entregas
 
 Baseado no foco e ritmo do usuário:
+
+**Estrutura recomendada**:
+- **Segunda-Quarta**: Conceitos + prática guiada
+- **Quinta-Sexta**: Projeto prático (directness)
+- **Sábado**: Benchmark + revisão
 
 ```
 "⏱️ Seu ritmo médio: [X] horas/semana
@@ -57,31 +74,28 @@ Distribuindo entregas:
 
 📅 CRONOGRAMA:
 
-Segunda:
+Segunda (2h):
 • [Entrega 1]
 • Técnica sugerida: [drill/feynman/etc]
-• Tempo: [X]h
 
-Terça:
+Terça (2h):
 • [Entrega 2]
-• Técnica sugerida: [...]
-• Tempo: [X]h
 
-Quarta:
+Quarta (2h):
 • [Entrega 3]
-...
 
-Quinta:
-...
+Quinta (2h):
+• [Entrega 4] — Projeto prático
 
-Sexta:
-...
+Sexta (2h):
+• [Entrega 5] — Projeto prático
 
 Sábado:
 • Buffer/revisão
+• SRS review
 
 Domingo:
-• /ul-retro-weekly
+• /ul-retro-weekly"
 ```
 
 ### Passo 4: Balancear Técnicas
@@ -101,54 +115,31 @@ Verificar distribuição de técnicas:
 ### Passo 5: Gerar Arquivo week-[N].md
 
 ```markdown
-# Semana [N] - [Foco]
+# 📅 Semana [N]: [TEMA]
 
-## 📋 Overview
-- **Período:** [data] a [data]
-- **Foco:** [tema principal]
-- **Meta de tempo:** [X] horas
-- **Entregas:** [N] tarefas
+## 📊 Revisão Semana Anterior
+- Completado: [X]/[Y] entregas ([Z]%)
+- Dificuldades: [se houver]
+- Ajuste: [se necessário]
 
-## 🎯 Objetivos
-1. [Objetivo 1]
-2. [Objetivo 2]
-3. [Objetivo 3]
+## 🎯 Objetivo SMART
+"[Objetivo específico e mensurável]"
 
-## 📅 Cronograma
+## 📋 Plano Diário (1h cada)
+| Dia | Foco | Atividade | Entrega |
+|-----|------|-----------|----------|
+| Seg | [Tipo] | /[command] [tema] | [Resultado] |
+| Ter | [Tipo] | /[command] [tema] | [Resultado] |
+| Qua | [Tipo] | /[command] [tema] | [Resultado] |
+| Qui | [Tipo] | /[command] [tema] | [Resultado] |
+| Sex | [Tipo] | /[command] [tema] | [Resultado] |
+| Sáb | Revisão | Benchmark + SRS | Teste |
 
-### Segunda-feira
-- [ ] [Entrega 1]
-  - Técnica: [drill/feynman/etc]
-  - Tempo estimado: [X]h
-  - Recursos: [links]
-
-### Terça-feira
-- [ ] [Entrega 2]
-  - Técnica: [...]
-  - Tempo estimado: [X]h
-
-### Quarta-feira
-- [ ] [Entrega 3]
-  ...
-
-### Quinta-feira
-- [ ] [Entrega 4]
-  ...
-
-### Sexta-feira
-- [ ] [Entrega 5]
-  ...
-
-### Sábado
-- [ ] Buffer/Revisão
-  - Revisar o que ficou pendente
-  - Praticar tópicos fracos
-  - SRS review
-
-### Domingo
-- [ ] Retrospectiva
-  - /ul-retro-weekly
-  - Ajustar próxima semana
+## ✅ Entregas da Semana
+- [ ] Projeto: [nome específico]
+- [ ] Drill: [X] exercícios
+- [ ] SRS: [Y] cards novos
+- [ ] Benchmark: [Z]% sucesso
 
 ## 📊 Métricas de Sucesso
 - [ ] 80%+ das entregas concluídas
@@ -159,6 +150,10 @@ Verificar distribuição de técnicas:
 ## 🚨 Riscos e Mitigações
 - **Risco:** [possível problema]
   - **Mitigação:** [solução]
+
+## 🔗 Recursos
+- Tier 1: [recurso principal]
+- Referência: [docs]
 
 ## 📝 Notas
 [ espaço para anotações durante a semana ]
@@ -174,10 +169,11 @@ Verificar distribuição de técnicas:
 📊 Resumo:
 • [N] entregas distribuídas
 • [X] horas estimadas
-• Balanceamento de técnicas
-• Buffer no sábado
+• Balanceamento de técnicas ✅
+• Buffer no sábado ✅
 
 🎯 Foco: [tema]
+🎯 Objetivo SMART: [objetivo]
 
 🚀 Próximo passo:
 → /ul-study-start para começar
@@ -196,15 +192,18 @@ Contexto:
 • Módulo: M1-math-foundations
 • Progresso: 45%
 • Ritmo: 8h/semana
+• Semana 4: 4/5 entregas (80%) — recursão difícil
 
 Qual foco desta semana?
 
 a) Continuar: Recursão
 b) Novo: Programação Dinâmica
 c) Revisar: Ponteiros (error_rate 40%)
-d) Preparar: Benchmark de algoritmos"
+d) Preparar: Benchmark de algoritmos
 
-Usuário: "a) Continuar recursão"
+🎯 Qual seu objetivo SMART para esta semana?"
+
+Usuário: "a) Dominar recursão e implementar BST"
 
 Sistema:
 "⏱️ Disponibilidade esta semana?"
@@ -214,39 +213,20 @@ Usuário: "10 horas"
 Sistema:
 "Distribuindo entregas:
 
-📅 SEMANA 5 - Recursão
+📅 SEMANA 5 - Recursão e BST
 
-Segunda (2h):
-• Drill: 10 problemas de recursão básica
-• Técnica: /ul-practice-drill
+| Dia | Foco | Atividade | Entrega |
+|-----|------|-----------|----------|
+| Seg | Conceito | /ul-practice-feynman "Recursão" | Explicação 5 linhas |
+| Ter | Prática | /ul-practice-drill "recursão em árvores" | 5 exercícios |
+| Qua | Conceito | /ul-learn-explain "BST" | Analogia |
+| Qui | Projeto | /ul-practice-project "BST básico" | Inserção + busca |
+| Sex | Projeto | /ul-practice-project "BST completo" | Travessias |
+| Sáb | Revisão | Benchmark + SRS | Teste 80%+ |
 
-Terça (2h):
-• Feynman: Explicar recursão
-• Técnica: /ul-practice-feynman
+📊 Técnicas balanceadas: 1 Feynman, 1 Drill, 2 Project, 1 Explain
 
-Quarta (2h):
-• Projeto: Implementar busca binária
-• Técnica: /ul-practice-project
-
-Quinta (2h):
-• Quiz: Testar compreensão
-• SRS review
-• Técnica: /ul-practice-quiz + /ul-memory-review
-
-Sexta (2h):
-• Debug: Resolver problemas de recursão
-• Técnica: /ul-learn-debug
-
-Sábado:
-• Buffer para o que atrasar
-• Revisão extra
-
-Domingo:
-• /ul-retro-weekly
-
-✅ Plano Criado!
-
-📄 week-05.md gerado
+✅ Plano salvo em: week-05.md
 
 🚀 Começar segunda?
 → /ul-study-start"
@@ -256,25 +236,27 @@ Domingo:
 
 ✅ **USE:**
 - Domingo (próxima semana)
-- Após retrospectiva
+- Após retrospectiva (`/ul-retro-weekly`)
 - Início de nova fase
 - Quando mudar de direção
 
 ❌ **NÃO USE:**
-- No meio da semana (ajuste manual)
+- No meio da semana (use `/ul-plan-adjust`)
 - Sem contexto do módulo
 
 ## Integrações
 
 **Tools:**
-- `context.getWeekContext`
-- `insights.generateReport`
-- `insights.getWeaknesses`
+- `context-hybrid.getSessionContext` — Sessões e streak
+- `context-hybrid.getRelevantSessions` — Contexto da semana anterior
+- `insights.generateReport` — Ritmo e efetividade
+- `insights.getWeaknesses` — Tópicos fracos
 
 **Commands:**
 - `/ul-retro-weekly` — Antes de criar novo plano
 - `/ul-study-start` — Começar a executar
 - `/ul-plan-decompose` — Se não tem learning-map
+- `/ul-plan-adjust` — Ajustar plano durante a semana
 
 ---
 

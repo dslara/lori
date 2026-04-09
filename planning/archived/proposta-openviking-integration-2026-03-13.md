@@ -526,7 +526,7 @@ const full = await memread({
 - [OpenViking Docker Hub](https://github.com/volcengine/OpenViking/pkgs/container/openviking)
 - [OpenViking Docs](https://www.openviking.ai/docs)
 - [opencode-memory-plugin](https://github.com/volcengine/OpenViking/tree/main/examples/opencode-memory-plugin)
-- [planning/analise-framework-2026-03-13.md](./analise-framework-2026-03-13.md) - Análise que identificou a lacuna
+- [planning/analise-framework-2026-03-13.md](analise-framework-2026-03-13.md) - Análise que identificou a lacuna
 
 ### Docker
 

@@ -1,3 +1,16 @@
+---
+name: "openviking-context"
+description: "Documentação de referência para ferramentas OpenViking (memsearch, memread, membrowse, memcommit). Não é invocada via command — serve como referência para agentes."
+license: MIT
+compatibility: opencode
+metadata:
+  principle: "memória persistente"
+  agent: "@tutor @meta @review @brainstorm"
+  keywords: "openviking, memsearch, memread, membrowse, memcommit, memória, contexto"
+---
+
+> **Nota**: Esta skill é de referência documental, não executável via command. É carregada automaticamente pelos agentes para consulta sobre as ferramentas OpenViking.
+
 # OpenViking Context Skill
 
 Carrega contexto hierárquico do OpenViking para sessões.
@@ -32,8 +45,9 @@ await memsearch({
 **Parâmetros**:
 - `query`: Texto da busca (obrigatório)
 - `limit`: Máximo de resultados (padrão: 10)
-- `session_id`: Filtrar por sessão específica (opcional)
-- `mode`: "fast" (busca rápida) ou "deep" (busca profunda)
+- `target_uri`: Limitar busca a URI específica (opcional, ex: `viking://user/memories/`)
+- `mode`: "auto", "fast" ou "deep" (opcional)
+- `score_threshold`: Score mínimo de relevância (opcional)
 
 ### memread - Ler Conteúdo
 

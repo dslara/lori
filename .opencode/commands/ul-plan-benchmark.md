@@ -1,7 +1,7 @@
 ---
 description: Criar teste de proficiência mensurável (/ul-plan-benchmark)
 agent: meta
-model: opencode-go/glm-5
+model: opencode-go/glm-5.1
 ---
 
 Argumento recebido: $ARGUMENTS (skill a ser testada)

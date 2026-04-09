@@ -1,7 +1,7 @@
 ---
 description: Ver relatório analítico avançado (/ul-data-analytics)
 agent: tutor
-model: opencode-go/glm-5
+model: opencode-go/kimi-k2.5
 ---
 
 ## Descrição

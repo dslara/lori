@@ -1,7 +1,7 @@
 ---
 description: Arquivar módulo finalizado (/ul-module-archive)
 agent: meta
-model: opencode-go/glm-5
+model: opencode-go/minimax-m2.5
 ---
 
 Argumento recebido: $ARGUMENTS (nome ou ID do módulo)

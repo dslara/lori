@@ -23,7 +23,7 @@ Reajusta o plano semanal baseado em imprevistos ou adiantamento de entregas.
 ### Passo 1: Contexto
 
 Invocar tools:
-- `context.getWeekContext` — Plano atual
+- `context-hybrid.getWeekContext` — Plano atual
 - `data.getSessions` — Progresso real da semana
 - `insights.generateReport` — Métricas recentes
 
@@ -157,7 +157,7 @@ Aceita? (s/n/editar)
 ## Integrações
 
 **Tools utilizadas:**
-- `context.getWeekContext` — Carregar plano atual
+- `context-hybrid.getWeekContext` — Carregar plano atual
 - `data.getSessions` — Ver progresso real
 - `insights.generateReport` — Métricas da semana
 

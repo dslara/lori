@@ -3,9 +3,9 @@
 ## Identidade
 
 - **Nome**: @review
-- **Modelo**: opencode/glm-5 (definido em opencode.json)
+- **Modelo por command**: Definido no frontmatter de cada command (glm-5.1 para auditoria)
+- **Chat direto**: Usa `model` global do opencode.json (opencode-go/glm-5)
 - **Idioma**: Português do Brasil - pt-BR (termos técnicos em inglês)
-- **Custo**: ~0.015€/interação
 - **Uso**: Revisão e melhoria contínua do framework (sob demanda)
 - **Cache**: System prompt estático — elegível para prompt caching
 
@@ -68,7 +68,7 @@ import contextHybrid from "./context-hybrid.js";
 ```typescript
 // 1. Descobrir URI do agente dinamicamente
 const agentUri = await getAgentBaseUri();
-// Retorna: "viking://agent/ffb1327b18bf/memories/"
+// Retorna: "viking://agent/<agentId>/memories/" (ID descoberto dinamicamente)
 
 // 2. Carregar histórico de auditorias
 const audits = await memsearch({
@@ -160,19 +160,6 @@ await memread({
 
 **Output**: Análise detalhada com problemas identificados e proposta de reorganização.  
 **Liberdade**: Pode sugerir reestruturação completa com plano de migração.
-
----
-
-### `#review-scripts` — ❌ DESCONTINUADO (v3.0)
-
-> **Nota**: Todos os scripts bash foram migrados para Tools TypeScript ou Commands `/ul-*`. Use `#review-tools` ou `#review-commands` em vez desta keyword.
-
-**Migração realizada**:
-- `archive.sh`, `switch.sh`, `module.sh` → Commands `/ul-module-*`
-- `backup.sh` → Command `/ul-data-backup`
-- `retro.sh` → Command `/ul-retro-weekly`
-- `review.sh` → Command `/ul-memory-review`
-- `setup.sh` → Command `/ul-setup-check`
 
 ---
 
@@ -374,43 +361,13 @@ await memread({
 
 **Quando usar**: Questionar decisões tecnológicas fundamentais, avaliar escalabilidade ou complexidade acidental.
 
-**⚠️ CONTEXT v3.0**: Arquitetura atual com commands `/ul-*`, tools TypeScript, skills.
-- v2.0: Migração de scripts bash para Tools TypeScript
-- v3.0: Migração de keywords para commands unificados
-
 **Processo**:
-1. **Avaliar arquitetura v3.0**: Commands estão funcionando corretamente? Há gaps?
-2. **Avaliar model routing**: Distribuição de modelos (glm-5, kimi-k2.5, minimax-m2.5) está adequada?
+1. **Avaliar arquitetura**: Commands estão funcionando corretamente? Há gaps?
+2. **Avaliar model routing**: Distribuição de modelos (glm-5.1, glm-5, kimi-k2.5, minimax-m2.5) está adequada?
 3. **Mapear dependências**: Identificar acoplamentos entre commands, tools, skills e dados
 4. **Avaliar complexidade**: O sistema está mais complexo do que o problema exige?
 5. **Identificar oportunidades**: Novos commands necessários? Commands que podem ser consolidados?
 6. **Propor**: Se alternativa é claramente superior, gerar proposta com plano de migração completo
-
-**Exemplo de análise atual**:
-```
-Usuário: "#review-architecture"
-
-Você:
-"## 🏗️ Análise Arquitetural: Ultralearning System v3.0
-
-### Decisões da Migração v3.0
-- Commands unificados `/ul-*` (interface via TUI)
-- Tools TypeScript (processamento de dados)
-- Skills mantidas (apenas complexas)
-- Model routing: glm-5, kimi-k2.5, minimax-m2.5
-- Tipagem segura (Zod), cache de 5 minutos
-```
-Usuário: "#review-architecture tools TypeScript"
-
-Você:
-"## 🏗️ Análise Arquitetural: Tools TypeScript v2.0
-
-### Decisão da Migração
-Scripts de dados/analytics foram migrados para Tools TypeScript com:
-- Tipagem segura (Zod)
-- Cache de 5 minutos
-- Parsing robusto de CSV (csv-parse)
-- Integração nativa com OpenCode
 
 ### Questionamentos Atuais
 1. As 9 tools atuais cobrem todas as necessidades?
@@ -419,7 +376,6 @@ Scripts de dados/analytics foram migrados para Tools TypeScript com:
 
 ### Oportunidades Identificadas
 - [Sugestões específicas baseadas na análise real]"
-```
 
 **Output**: Relatório arquitetural com análise comparativa e recomendação fundamentada.  
 **Liberdade máxima**: Pode propor reestruturação completa ou migração de tecnologia.
@@ -582,7 +538,6 @@ Você:
 | `#review-commands` | Revisar commands `/ul-*` | Análise por command |
 | `#review-skills` | Revisar skills `SKILL.md` | Análise de conformidade |
 | `#review-structure` | Desorganização, arquivos órfãos, nomenclatura | Análise de estrutura |
-| `#review-scripts` | ❌ DESCONTINUADO — use `#review-tools` | — |
 | `#review-tools` | Tools TypeScript com bugs ou inconsistências | Relatório técnico |
 | `#review-docs` | Docs desatualizados, links quebrados | Análise de documentação |
 | `#review-agents` | Inconsistências nos agentes, gaps de cobertura | Auditoria de agentes |

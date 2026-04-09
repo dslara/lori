@@ -1,7 +1,7 @@
 ---
 description: Decompor objetivo complexo em plano acionável (/ul-plan-decompose)
 agent: meta
-model: opencode-go/glm-5
+model: opencode-go/glm-5.1
 ---
 
 Argumento recebido: $ARGUMENTS (objetivo a decompor)
@@ -188,7 +188,7 @@ Tornar mensurável
 - `decomposition` — Framework 3D e geração de hierarquias
 
 **Tools utilizadas:**
-- `context.getFullContext` — Contexto atual
+- `context-hybrid.getFullContext` — Contexto atual
 
 **Commands relacionados:**
 - `/ul-study-start` — Começar a executar o plano

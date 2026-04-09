@@ -20,35 +20,6 @@ planning/
 
 ---
 
-## Documentos Ativos
-
-| Arquivo | Status |
-|---------|--------|
-| `analise-framework-2026-03-13.md` | ✅ Análise completa |
-| `proposta-openviking-integration-2026-03-13.md` | ✅ Implementada |
-| `proposta-arquitetura-dados-hibrida-2026-03-19.md` | 🟡 Proposta (Revisada v8) |
-| `proposta-base-dados-csv-2026-03-06.md` | ✅ Implementada |
-| `exemplo-registro-automatico-tutor.md` | ✅ Documentação |
-
----
-
-## Documentos Arquivados
-
-Documentos implementados ou supersedidos são movidos para [`archived/`](./archived/).
-
-Consulte [`archived/README.md`](./archived/README.md) para o histórico completo.
-
-| Arquivo | Status |
-|---------|--------|
-| `plano-implementacao-skills-2026-02-27.md` | ✅ Implementado |
-| `plano-migracao-glm-2026-02-27.md` | ✅ Implementado |
-| `proposta-memoria-automatica-2026-02-28.md` | ✅ Implementada |
-| `proposta-estrutura-modular.md` | ⚠️ Parcial (40%) |
-| `report-prototipo-fase0.md` | ✅ Validado |
-| `consolidated-analysis-2026-02-28-v1.0.0.md` | ✅ Consolidado |
-
----
-
 ## Separação de Responsabilidades
 
 | Domínio | Local |

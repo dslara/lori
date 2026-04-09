@@ -1,7 +1,7 @@
 ---
 description: Prática deliberada - repetir procedimento 5-10x (/ul-practice-drill)
 agent: tutor
-model: opencode-go/glm-5
+model: opencode-go/kimi-k2.5
 ---
 
 Argumentos recebidos: $1 (conceito), $2 (variações)

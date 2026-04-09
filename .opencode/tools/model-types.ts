@@ -80,15 +80,3 @@ export interface Goal {
   status: string;
   progress: string;
 }
-
-export interface Interaction {
-  id: string;
-  session_id: string;
-  skill: string;
-  topic: string;
-  user_message: string;
-  user_response: string;
-  tutor_response: string;
-  timestamp: string;
-  metadata: string;
-}

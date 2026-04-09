@@ -215,7 +215,7 @@ Código corrigido:
 - `debug-socratic` — Guia socrático de debugging
 
 **Tools utilizadas:**
-- `context.getFullContext` — Contexto do projeto
+- `context-hybrid.getFullContext` — Contexto do projeto
 
 **Commands relacionados:**
 - `/ul-productivity-break` — Se travou mentalmente

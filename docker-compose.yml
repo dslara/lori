@@ -22,7 +22,7 @@ services:
     restart: unless-stopped
 
   openviking:
-    image: ghcr.io/volcengine/openviking:v0.2.5
+    image: ghcr.io/volcengine/openviking:v0.3.4
     container_name: ultralearning-openviking
     command: ["openviking-server", "--host", "0.0.0.0"]
     ports:

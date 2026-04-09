@@ -1,7 +1,7 @@
 ---
 description: Ver dashboard completo com métricas (/ul-data-dashboard)
 agent: tutor
-model: opencode-go/kimi-k2.5
+model: opencode-go/minimax-m2.5
 ---
 
 ## Descrição

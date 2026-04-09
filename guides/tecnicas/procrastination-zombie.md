@@ -60,13 +60,6 @@ Uma vez em movimento, continuar é mais fácil.
 
 ---
 
-### 🔗 Relação com James Clear (Atomic Habits)
-Esta técnica implementa a **Two-Minute Rule**: 
-Qualquer hábito pode ser iniciado em menos de 2 minutos.
-O Zombie Mode reduz ainda mais: "Abrir VS Code" (5 segundos) → sem resistência.
-
----
-
 ## 🛠️ Como Enganar o Cérebro
 
 ### Técnica 1: O Primeiro Passo Ridículo

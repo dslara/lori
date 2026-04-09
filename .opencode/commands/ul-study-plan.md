@@ -1,7 +1,7 @@
 ---
 description: Ver progresso da semana e plano atual (/ul-study-plan)
 agent: tutor
-model: opencode-go/glm-5
+model: opencode-go/minimax-m2.5
 ---
 
 ## Uso

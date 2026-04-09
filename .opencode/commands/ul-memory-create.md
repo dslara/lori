@@ -1,7 +1,7 @@
 ---
 description: Criar flashcards SRS (/ul-memory-create)
 agent: tutor
-model: opencode-go/glm-5
+model: opencode-go/kimi-k2.5
 ---
 
 Argumentos recebidos: $1 (frente), $2 (verso)

@@ -230,8 +230,8 @@ Escolha: __________
 ## Integrações
 
 **Tools utilizadas:**
-- `context.getCurrentModule` — Obtém módulo atual para contexto
-- `context.getProjectInfo` — Busca recursos específicos do projeto
+- `context-hybrid.getCurrentModule` — Obtém módulo atual para contexto
+- `context-hybrid.getProjectInfo` — Busca recursos específicos do projeto
 - **Web search** — Para encontrar recursos externos (Tier 2 e 3)
 
 ---

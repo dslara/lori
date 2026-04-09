@@ -2,11 +2,10 @@
 
 Sistema de aprendizado autodirigido integrando três abordagens científicas:
 
-| Abordagem | Autor | Foco |
-|-----------|-------|------|
-| **Ultralearning** | Scott Young | Intensidade e imersão profunda |
-| **A Mind for Numbers** | Dra. Barbara Oakley | Eficiência cognitiva para exatas |
-| **Atomic Habits** | James Clear | Consistência e rituais sustentáveis |
+| Abordagem              | Autor               | Foco                                |
+| ---------------------- | ------------------- | ----------------------------------- |
+| **Ultralearning**      | Scott Young         | Intensidade e imersão profunda      |
+| **A Mind for Numbers** | Dra. Barbara Oakley | Eficiência cognitiva para exatas    |
 
 Otimizado para aprendizado acelerado de Ciência da Computação.
 
@@ -147,14 +146,14 @@ Digite `/` no TUI para acessar todos os commands:
 ┌─────────────────────────────────────────────────────────────┐
 │  TOOLS (.opencode/tools/)                                   │
 │  ════════════════════════════════════════════════════════   │
-│  13 tools TypeScript — Processamento de dados                │
+│  13 tools TypeScript — Processamento de dados               │
 │                                                             │
-│  - data.ts (facade) — Delega para módulos                │
-│  - data-session.ts — Sessões                            │
-│  - data-module.ts — Módulos                              │
+│  - data.ts (facade) — Delega para módulos                   │
+│  - data-session.ts — Sessões                                │
+│  - data-module.ts — Módulos                                 │
 │  - data-flashcard.ts — Flashcards/SRS                       │
 │  - data-insight.ts — Insights/streak                        │
-│  - data-core.ts — Core ops (init, backup)                    │
+│  - data-core.ts — Core ops (init, backup)                   │
 │  - context.ts, context-hybrid.ts — Contexto + OpenViking    │
 │  - openviking-utils.ts — Descoberta dinâmica de ID          │
 │  - insights.ts, status.ts                                   │
@@ -176,11 +175,11 @@ Digite `/` no TUI para acessar todos os commands:
 │  viking://agent/memories/                                   │
 │  ├── tutor/   → Casos e padrões do @tutor                   │
 │  ├── meta/    → Histórico de planejamento                   │
-│  └── review/  → Auditorias anteriores                        │
+│  └── review/  → Auditorias anteriores                       │
 │                                                             │
-│  L0 (abstract) ~100 tokens → Quick check                     │
+│  L0 (abstract) ~100 tokens → Quick check                    │
 │  L1 (overview) ~2k tokens → Planning                        │
-│  L2 (full) → Deep dive                                       │
+│  L2 (full) → Deep dive                                      │
 └─────────────────────────────────────────────────────────────┘
                              │
                              │ Carregam on-demand
@@ -209,13 +208,13 @@ Digite `/` no TUI para acessar todos os commands:
 
 ### Agentes
 
-| Agente | Modelo | Função |
-|--------|--------|--------|
-| **@tutor** | GLM-5 / Kimi K2.5 / MiniMax M2.5 | Mentor socrático, quiz, drills, feedback |
-| **@meta** | GLM-5 / MiniMax M2.5 | Planejamento estratégico, decomposição |
-| **@review** | GLM-5 | Auditoria do framework |
+| Agente      | Função                                   |
+| ----------- | ---------------------------------------- |
+| **@tutor**  | Mentor socrático, quiz, drills, feedback |
+| **@meta**   | Planejamento estratégico, decomposição   |
+| **@review** | Auditoria do framework                   |
 
-### Skills Mantidas
+### Skills
 
 | Skill | Command que invoca | Descrição |
 |-------|-------------------|-----------|
@@ -265,35 +264,10 @@ Funcionalidades acessíveis via invocação direta do agente:
 
 Este sistema integra três abordagens complementares:
 
-| Abordagem | Autor | Foco | Implementação |
-|-----------|-------|------|---------------|
-| **Ultralearning** | Scott Young | Intensidade e imersão | 9 princípios + 24 técnicas |
-| **A Mind for Numbers** | Dra. Barbara Oakley | Eficiência cognitiva | Chunking, Foco/Difuso, Overlearning |
-| **Atomic Habits** | James Clear | Consistência e rituais | Cue-Routine-Reward, Habit Stacking, Two-Minute Rule |
-
-### Técnicas de James Clear (Atomic Habits)
-
-**Cue-Routine-Reward (Loop do Hábito):**
-Os commands `/ul-*` implementam o loop completo:
-- **Cue**: Configurar ambiente (`environment-design.md`)
-- **Routine**: `/ul-study-start` → `/ul-practice-*` → `/ul-study-end`
-- **Reward**: Streak atualizado (`/ul-data-status`)
-
-**Habit Stacking (Empilhamento):**
-Acople ao seu dia existente:
-```bash
-# Após café da manhã:
-/ul-study-start  # 25 min de estudo
-
-# Após almoço:
-/ul-memory-review # SRS de 10 min
-```
-
-**Two-Minute Rule:**
-Comece ridicularmente pequeno:
-- "Vou abrir só o VS Code" (5 segundos)
-- "Vou ler 1 linha de código" (10 segundos)
-- Naturalmente continua além dos 2 minutos
+| Abordagem              | Autor               | Foco                   | Implementação                                       |
+| ---------------------- | ------------------- | ---------------------- | --------------------------------------------------- |
+| **Ultralearning**      | Scott Young         | Intensidade e imersão  | 9 princípios + 24 técnicas                          |
+| **A Mind for Numbers** | Dra. Barbara Oakley | Eficiência cognitiva   | Chunking, Foco/Difuso, Overlearning                 |
 
 ---
 
@@ -412,22 +386,6 @@ O projeto arquivado mantém todo o histórico e pode ser consultado futuramente.
 
 ---
 
-## 💰 Custo Estimado (Plano Go)
-
-| Modelo | Uso | Preço |
-|--------|-----|-------|
-| **GLM-5** | Raciocínio complexo | Incluído no plano Go |
-| **Kimi K2.5** | Código e projetos | Incluído no plano Go |
-| **MiniMax M2.5** | Orquestração simples | Incluído no plano Go |
-
-**Plano Go**: $10/mês com requests generosos
-
-- **Por sessão (1h)**: ~0.01€
-- **Por mês (30 dias)**: ~0.30€
-- **Orçamento**: 15€/mês (margem generosa)
-
----
-
 ## 📚 Metodologia
 
 Baseado em **Ultralearning** de Scott Young:
@@ -445,40 +403,15 @@ Baseado em **Ultralearning** de Scott Young:
 
 ## 🏗️ Arquitetura & Design
 
-### Por que Commands Unificados?
-
-**Antes** (v2.0 - keywords dispersas):
-```
-@tutor #drill, @tutor #feynman, @tutor #quiz...
-@meta #decompose-goal, @meta #create-weekly-plan...
-→ Interface fragmentada entre agentes
-```
-
-**Depois** (v3.0 - commands unificados):
-```
-/ul-practice-drill, /ul-practice-feynman, /ul-practice-quiz
-/ul-plan-decompose, /ul-plan-weekly
-→ Interface unificada via TUI
-```
-
-### Benefícios
-
-| Benefício | Antes | Depois |
-|-----------|-------|--------|
-| Interface | Keywords dispersas | Commands `/ul-*` unificados |
-| Dependências | Scripts bash | Tools TypeScript |
-| Tipagem | Nenhuma | Zod validation |
-| Portabilidade | Requer bash | 100% TypeScript |
-
 ### Modelos por Command
 
 Cada command define seu modelo ideal no frontmatter:
 
-| Categoria | Modelo | Commands | Justificativa |
-|-----------|--------|----------|---------------|
-| **Raciocínio complexo** | GLM-5 | `/ul-practice-drill`, `/ul-practice-feynman`, `/ul-learn-explain` | Análise, analogias, validação |
-| **Código e dados** | Kimi K2.5 | `/ul-practice-project`, `/ul-learn-debug`, `/ul-setup-scaffold`, `/ul-data-*` | Projetos, debug, estruturação |
-| **Orquestração simples** | MiniMax M2.5 | `/ul-study-*`, `/ul-productivity-*`, `/ul-retro-weekly`, `/ul-plan-weekly` | Templates, orquestração, tarefas leves |
+| Categoria                | Commands                                                                      | Justificativa                          |
+| ------------------------ | ----------------------------------------------------------------------------- | -------------------------------------- |
+| **Raciocínio complexo**  | `/ul-practice-drill`, `/ul-practice-feynman`, `/ul-learn-explain`             | Análise, analogias, validação          |
+| **Código e dados**       | `/ul-practice-project`, `/ul-learn-debug`, `/ul-setup-scaffold`, `/ul-data-*` | Projetos, debug, estruturação          |
+| **Orquestração simples** | `/ul-study-*`, `/ul-productivity-*`, `/ul-retro-weekly`, `/ul-plan-weekly`    | Templates, orquestração, tarefas leves |
 
 **Padrão**: Verifique o campo `model` no arquivo `.opencode/commands/[command].md`
 

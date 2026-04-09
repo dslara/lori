@@ -26,7 +26,7 @@
 **First Principles** (Primeiros Princípios) é o método de decompor um sistema complexo em suas verdades fundamentais indivisíveis e reconstruir o entendimento a partir dessas bases, em vez de depender de analogias ou suposições herdadas.
 
 ### Origem
-Popularizado por **Aristóteles** e modernamente associado a **Elon Musk**, que o usa para inovação em engenharia (SpaceX, Tesla).
+Popularizado por **Aristóteles**, que o usa para inovação em engenharia (SpaceX, Tesla).
 
 ### Princípio Implementado
 Esta técnica implementa principalmente:

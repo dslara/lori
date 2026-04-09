@@ -1,7 +1,7 @@
 ---
 description: Auditoria completa do framework (/ul-review-audit)
 agent: review
-model: opencode-go/glm-5
+model: opencode-go/glm-5.1
 ---
 
 ## Uso
@@ -49,7 +49,7 @@ Verificar documentação em `guides/`, `README.md`:
 
 Verificar os **29 commands** em `.opencode/commands/`:
 - Frontmatter completo (description, agent, model)
-- Campo `model` definido (opencode-go/glm-5, opencode-go/kimi-k2.5, opencode-go/minimax-m2.5)
+- Campo `model` definido (opencode-go/glm-5.1, opencode-go/glm-5, opencode-go/kimi-k2.5, opencode-go/minimax-m2.5)
 - Placeholders `$ARGUMENTS` configurados corretamente
 - Nomenclatura consistente (`ul-[categoria]-[ação]`)
 - Documentação clara

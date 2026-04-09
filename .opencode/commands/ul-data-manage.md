@@ -1,7 +1,7 @@
 ---
 description: Gerenciar dados - inicializar, resetar (/ul-data-manage)
 agent: tutor
-model: opencode-go/kimi-k2.5
+model: opencode-go/minimax-m2.5
 ---
 
 Argumento recebido: $ARGUMENTS (init|reset)

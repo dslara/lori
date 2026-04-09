@@ -7,6 +7,7 @@ metadata:
   principle: "orquestração"
   agent: "@tutor"
   commands: "/ul-study-start, /ul-study-end, /ul-study-plan"
+  keywords: "session, estudo, contexto, streak, foco, reflexão"
 ---
 
 ## Helpers de Contexto

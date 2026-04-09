@@ -101,11 +101,13 @@ M2,dani,zig-foundations,false,paused,2026-02-15,2026-02-28,15.0
 | `topic` | TEXT | Tópico estudado |
 | `notes` | TEXT | Notas específicas |
 | `success_rating` | INT | Rating de sucesso (1-10) |
+| `correct` | BOOLEAN | Derivado de success_rating >= 6 (true/false) |
 
 **Exemplo**:
 ```csv
-2026-03-04-001,quiz,10,símbolos matemáticos,"∀, ∃, Σ, ∈",6
-2026-03-04-001,feynman,20,∀,"Explicou bem",8
+2026-03-04-001,quiz,10,símbolos matemáticos,"∀, ∃, Σ, ∈",6,true
+2026-03-04-001,feynman,20,∀,"Explicou bem",8,true
+2026-03-04-001,drill,15,recursão,"Errou 2 de 5",4,false
 ```
 
 ---
@@ -250,7 +252,7 @@ CREATE TABLE users (
     email TEXT,
     timezone TEXT,
     created_at DATE,
-    preferences JSON
+    preferences_source TEXT
 );
 
 CREATE TABLE modules (

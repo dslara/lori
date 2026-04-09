@@ -101,13 +101,13 @@ const agentInfo = await contextHybrid({ operation: "getAgentId" });
 import { getAgentId, getAgentBaseUri, getAgentMemoryUri } from "./openviking-utils.js";
 
 // Descobrir ID do agente dinamicamente
-const agentId = await getAgentId(); // "ffb1327b18bf"
+const agentId = await getAgentId(); // ex: "a1b2c3d4"
 
 // URI base do agente
-const baseUri = await getAgentBaseUri(); // "viking://agent/ffb1327b18bf/memories/"
+const baseUri = await getAgentBaseUri(); // ex: "viking://agent/a1b2c3d4/memories/"
 
 // URI específica
-const patternsUri = await getAgentMemoryUri('patterns'); // "viking://agent/ffb1327b18bf/memories/patterns/"
+const patternsUri = await getAgentMemoryUri('patterns'); // ex: "viking://agent/a1b2c3d4/memories/patterns/"
 ```
 
 ### Analytics
@@ -147,7 +147,7 @@ await insights({ operation: "getWeaknesses", threshold: 0.3 });
 | Preferências | `users.csv` (campo preferences) | OpenViking `preferences/` |
 | Métricas por técnica | `tutor_interactions.csv` | `session_skills.csv` (campo correct) |
 | Contexto | `context.ts` (CSV only) | `context-hybrid.ts` (CSV + OpenViking) |
-| ID do agente | Hardcoded (`ffb1327b18bf`) | Dinâmico (`getAgentId()`) |
+| ID do agente | Hardcoded (ID fixo) | Dinâmico (`getAgentId()`) |
 
 ## Fallback
 

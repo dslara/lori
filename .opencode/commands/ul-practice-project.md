@@ -99,7 +99,7 @@ Vamos criar a estrutura base. Você já tem o Go instalado?
 - `directness` — Guia socrático de projetos
 
 **Tools utilizadas:**
-- `context.getProjectInfo` — Contexto do projeto
+- `context-hybrid.getProjectInfo` — Contexto do projeto
 
 **Commands relacionados:**
 - `/ul-setup-scaffold` — Setup inicial de estrutura

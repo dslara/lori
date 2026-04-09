@@ -1,7 +1,7 @@
 ---
 description: Encerrar sessão, salvar progresso e atualizar plano semanal (/ul-study-end)
 agent: tutor
-model: opencode-go/glm-5
+model: opencode-go/kimi-k2.5
 ---
 
 ## Uso

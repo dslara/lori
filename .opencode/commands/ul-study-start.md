@@ -1,7 +1,7 @@
 ---
 description: Iniciar sessão de estudo com contexto automático (/ul-study-start)
 agent: tutor
-model: opencode-go/glm-5
+model: opencode-go/kimi-k2.5
 ---
 
 ## Uso

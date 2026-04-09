@@ -1,7 +1,7 @@
 ---
 description: Criar backup dos dados (/ul-data-backup)
 agent: tutor
-model: opencode-go/glm-5
+model: opencode-go/minimax-m2.5
 ---
 
 ## Uso

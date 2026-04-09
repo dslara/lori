@@ -13,9 +13,27 @@
 
 import type { Hooks, PluginInput } from "@opencode-ai/plugin"
 import { tool } from "@opencode-ai/plugin"
-import { mkdirSync, appendFileSync, existsSync, promises, readFileSync } from "node:fs"
+import { mkdirSync, appendFileSync, existsSync, promises } from "node:fs"
 import { dirname, join } from "node:path";
 import { fileURLToPath } from "url"
+
+import type {
+  OpenVikingConfig,
+  OpenVikingResponse,
+  SearchResult,
+  CommitResult,
+  SessionResult,
+  TaskResult,
+  MemoryCounts,
+} from "../tools/openviking-client.js"
+import {
+  loadConfig,
+  makeRequest,
+  unwrapResponse,
+  getResponseErrorMessage,
+  checkServiceHealth,
+  totalMemoriesFromResult,
+} from "../tools/openviking-client.js"
 
 const z = tool.schema
 const pluginFilePath = fileURLToPath(import.meta.url)
@@ -84,21 +102,22 @@ let logFilePath: string | null = null
 let pluginDataDir: string | null = null
 
 function ensurePluginDataDir(): string | null {
-  const pluginDir = pluginFileDir
+  // Use project's data/ directory, not plugin source dir
+  const dataDir = join(pluginFileDir, "..", "..", "data")
   try {
-    mkdirSync(pluginDir, { recursive: true })
-    return pluginDir
+    mkdirSync(dataDir, { recursive: true })
+    return dataDir
   } catch (error) {
-    console.error("Failed to ensure plugin directory:", error)
+    console.error("Failed to ensure data directory:", error)
     return null
   }
 }
 
 function initLogger() {
-  const pluginDir = ensurePluginDataDir()
-  if (!pluginDir) return
-  pluginDataDir = pluginDir
-  logFilePath = join(pluginDir, "openviking-memory.log")
+  const dataDir = ensurePluginDataDir()
+  if (!dataDir) return
+  pluginDataDir = dataDir
+  logFilePath = join(dataDir, "openviking-memory.log")
 }
 
 function safeStringify(obj: any): any {
@@ -158,10 +177,10 @@ function log(level: "INFO" | "ERROR" | "DEBUG", toolName: string, message: strin
 let sessionMapPath: string | null = null
 
 function initSessionMapPath() {
-  const pluginDir = pluginDataDir ?? ensurePluginDataDir()
-  if (!pluginDir) return
-  pluginDataDir = pluginDir
-  sessionMapPath = join(pluginDir, "openviking-session-map.json")
+  const dataDir = pluginDataDir ?? ensurePluginDataDir()
+  if (!dataDir) return
+  pluginDataDir = dataDir
+  sessionMapPath = join(dataDir, "openviking-session-map.json")
 }
 
 function serializeSessionMapping(mapping: SessionMapping): SessionMappingPersisted {
@@ -270,262 +289,9 @@ function debouncedSaveSessionMap(): void {
   }, 300)
 }
 
-// ============================================================================
-// Configuration
-// ============================================================================
-
-interface OpenVikingConfig {
-  endpoint: string
-  apiKey: string
-  enabled: boolean
-  timeoutMs: number
-  autoCommit?: {
-    enabled: boolean
-    intervalMinutes: number
-  }
-}
-
-// ============================================================================
-// API Response Types
-// ============================================================================
-
-interface OpenVikingResponse<T = unknown> {
-  status: string
-  result?: T
-  error?: string | { code?: string; message?: string; details?: Record<string, unknown> }
-  time?: number
-  usage?: Record<string, number>
-}
-
-interface SearchResult {
-  memories: any[]
-  resources: any[]
-  skills: any[]
-  total: number
-  query_plan?: string
-}
-
-interface CommitResult {
-  session_id: string
-  status: string
-  memories_extracted: number
-  active_count_updated: number
-  archived: boolean
-  task_id?: string
-  message?: string
-  stats?: {
-    total_turns?: number
-    contexts_used?: number
-    skills_used?: number
-    memories_extracted?: number
-  }
-}
-
-interface SessionResult {
-  session_id: string
-}
-
-interface TaskResult {
-  task_id: string
-  task_type: string
-  status: "pending" | "running" | "completed" | "failed"
-  created_at: number
-  updated_at: number
-  resource_id?: string
-  result?: {
-    session_id?: string
-    memories_extracted?: number
-    archived?: boolean
-  }
-  error?: string | null
-}
-
 type CommitStartResult =
   | { mode: "background"; taskId: string }
   | { mode: "completed"; result: CommitResult }
-
-const DEFAULT_CONFIG: OpenVikingConfig = {
-  endpoint: "http://localhost:1933",
-  apiKey: "",
-  enabled: true,
-  timeoutMs: 30000,
-  autoCommit: {
-    enabled: true,
-    intervalMinutes: 10
-  }
-}
-
-function loadConfig(): OpenVikingConfig {
-  const configPath = join(pluginFileDir, "openviking-config.json")
-
-  try {
-    if (existsSync(configPath)) {
-      const fileContent = readFileSync(configPath, "utf-8")
-      const fileConfig = JSON.parse(fileContent)
-      const config = {
-        ...DEFAULT_CONFIG,
-        ...fileConfig,
-        autoCommit: fileConfig.autoCommit
-          ? {
-            ...DEFAULT_CONFIG.autoCommit,
-            ...fileConfig.autoCommit,
-          }
-          : DEFAULT_CONFIG.autoCommit
-            ? { ...DEFAULT_CONFIG.autoCommit }
-            : undefined,
-      }
-      if (config.autoCommit) {
-        config.autoCommit.intervalMinutes = getAutoCommitIntervalMinutes(config)
-      }
-
-      // Environment variable takes precedence over config file
-      if (process.env.OPENVIKING_SERVER_API_KEY) {
-        config.apiKey = process.env.OPENVIKING_SERVER_API_KEY
-      }
-
-      return config
-    }
-  } catch (error) {
-    console.warn(`Failed to load OpenViking config from ${configPath}:`, error)
-  }
-
-  // Check environment variable even if config file doesn't exist
-  const config = {
-    ...DEFAULT_CONFIG,
-    autoCommit: DEFAULT_CONFIG.autoCommit
-      ? { ...DEFAULT_CONFIG.autoCommit }
-      : undefined,
-  }
-  if (process.env.OPENVIKING_SERVER_API_KEY) {
-    config.apiKey = process.env.OPENVIKING_SERVER_API_KEY
-  }
-  if (config.autoCommit) {
-    config.autoCommit.intervalMinutes = getAutoCommitIntervalMinutes(config)
-  }
-
-  return config
-}
-
-// ============================================================================
-// HTTP Client
-// ============================================================================
-
-interface HttpRequestOptions {
-  method: "GET" | "POST" | "PUT" | "DELETE"
-  endpoint: string
-  body?: any
-  timeoutMs?: number
-  abortSignal?: AbortSignal
-}
-
-async function makeRequest<T = any>(config: OpenVikingConfig, options: HttpRequestOptions): Promise<T> {
-  const url = `${config.endpoint}${options.endpoint}`
-  const headers: Record<string, string> = {
-    "Content-Type": "application/json",
-  }
-
-  if (config.apiKey) {
-    headers["X-API-Key"] = config.apiKey
-  }
-
-  const controller = new AbortController()
-  const timeout = setTimeout(() => controller.abort(), options.timeoutMs ?? config.timeoutMs)
-
-  // Chain with tool's abort signal if provided
-  const signal = options.abortSignal
-    ? AbortSignal.any([options.abortSignal, controller.signal])
-    : controller.signal
-
-  try {
-    const response = await fetch(url, {
-      method: options.method,
-      headers,
-      body: options.body ? JSON.stringify(options.body) : undefined,
-      signal,
-    })
-
-    clearTimeout(timeout)
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      let errorMessage: string
-      try {
-        const errorJson = JSON.parse(errorText)
-        // Handle case where error/message might be objects
-        const rawError = errorJson.error || errorJson.message
-        if (typeof rawError === "string") {
-          errorMessage = rawError
-        } else if (rawError && typeof rawError === "object") {
-          errorMessage = JSON.stringify(rawError)
-        } else {
-          errorMessage = errorText
-        }
-      } catch {
-        errorMessage = errorText
-      }
-
-      switch (response.status) {
-        case 401:
-        case 403:
-          throw new Error("Authentication failed. Please check API key configuration.")
-        case 404:
-          throw new Error(`Resource not found: ${options.endpoint}`)
-        case 500:
-          throw new Error(`OpenViking server error: ${errorMessage}`)
-        default:
-          throw new Error(`Request failed (${response.status}): ${errorMessage}`)
-      }
-    }
-
-    return (await response.json()) as T
-  } catch (error: any) {
-    clearTimeout(timeout)
-
-    if (error.name === "AbortError") {
-      throw new Error(`Request timeout after ${options.timeoutMs ?? config.timeoutMs}ms`)
-    }
-
-    if (error.message?.includes("fetch failed") || error.code === "ECONNREFUSED") {
-      throw new Error(
-        `OpenViking service unavailable at ${config.endpoint}. Please check if the service is running (try: openviking-server).`,
-      )
-    }
-
-    throw error
-  }
-}
-
-function getResponseErrorMessage(error: OpenVikingResponse["error"]): string {
-  if (!error) return "Unknown OpenViking error"
-  if (typeof error === "string") return error
-  return error.message || error.code || "Unknown OpenViking error"
-}
-
-function unwrapResponse<T>(response: OpenVikingResponse<T>): T {
-  if (!response || typeof response !== "object") {
-    throw new Error("OpenViking returned an invalid response")
-  }
-  if (response.status && response.status !== "ok") {
-    throw new Error(getResponseErrorMessage(response.error))
-  }
-  return response.result as T
-}
-
-async function checkServiceHealth(config: OpenVikingConfig): Promise<boolean> {
-  try {
-    const response = await fetch(`${config.endpoint}/health`, {
-      method: "GET",
-      signal: AbortSignal.timeout(3000),
-    })
-    return response.ok
-  } catch (error: any) {
-    log("ERROR", "health", "OpenViking health check failed", {
-      endpoint: config.endpoint,
-      error: error.message,
-    })
-    return false
-  }
-}
 
 // ============================================================================
 // Session Lifecycle Helpers
@@ -588,10 +354,35 @@ function upsertBufferedMessage(
   sessionMessageBuffer.set(sessionId, freshBuffer)
 }
 
+function cleanupOrphanedMessageBuffers(now: number): void {
+  for (const [sessionId, buffer] of sessionMessageBuffer.entries()) {
+    if (sessionMap.has(sessionId)) {
+      continue
+    }
+
+    const oldestMessage = buffer[0]
+    if (!oldestMessage) {
+      sessionMessageBuffer.delete(sessionId)
+      continue
+    }
+
+    if (now - oldestMessage.timestamp <= BUFFERED_MESSAGE_TTL_MS * 2) {
+      continue
+    }
+
+    log("INFO", "buffer", "Cleaning up orphaned message buffer", {
+      session_id: sessionId,
+      buffer_age_ms: now - oldestMessage.timestamp,
+      message_count: buffer.length,
+    })
+    sessionMessageBuffer.delete(sessionId)
+  }
+}
+
 function getAutoCommitIntervalMinutes(config: OpenVikingConfig): number {
-  const configured = Number(config.autoCommit?.intervalMinutes ?? DEFAULT_CONFIG.autoCommit?.intervalMinutes ?? 10)
+  const configured = Number(config.autoCommit?.intervalMinutes ?? 10)
   if (!Number.isFinite(configured)) {
-    return DEFAULT_CONFIG.autoCommit?.intervalMinutes ?? 10
+    return 10
   }
   return Math.max(1, configured)
 }
@@ -617,7 +408,7 @@ async function ensureOpenVikingSession(
       const response = await makeRequest<OpenVikingResponse<SessionResult>>(config, {
         method: "GET",
         endpoint: `/api/v1/sessions/${knownSessionId}`,
-        timeoutMs: 30000,
+        timeoutMs: 5000,
       })
       const result = unwrapResponse(response)
       if (result) {
@@ -641,7 +432,7 @@ async function ensureOpenVikingSession(
       method: "POST",
       endpoint: "/api/v1/sessions",
       body: {},
-      timeoutMs: 30000,
+      timeoutMs: 5000,
     })
 
     const sessionId = unwrapResponse(createResponse)?.session_id
@@ -687,7 +478,7 @@ async function findRunningCommitTaskId(
     const response = await makeRequest<OpenVikingResponse<TaskResult[]>>(config, {
       method: "GET",
       endpoint: `/api/v1/tasks?task_type=session_commit&resource_id=${encodeURIComponent(ovSessionId)}&limit=10`,
-      timeoutMs: 30000,
+      timeoutMs: 5000,
     })
     const tasks = unwrapResponse(response) ?? []
     const runningTask = tasks.find((task) => task.status === "pending" || task.status === "running")
@@ -707,6 +498,14 @@ function clearCommitState(mapping: SessionMapping): void {
   mapping.commitStartedAt = undefined
 }
 
+function isMissingCommitTaskError(error: unknown): boolean {
+  if (!(error instanceof Error)) {
+    return false
+  }
+  const message = error.message.toLowerCase()
+  return message.includes("resource not found") || message.includes("not found")
+}
+
 let backgroundCommitSupported: boolean | null = null
 const COMMIT_TIMEOUT_MS = 180000
 
@@ -715,18 +514,13 @@ async function detectBackgroundCommitSupport(config: OpenVikingConfig): Promise<
     return backgroundCommitSupported
   }
 
-  const headers: Record<string, string> = {}
-  if (config.apiKey) {
-    headers["X-API-Key"] = config.apiKey
-  }
-
   try {
-    const response = await fetch(`${config.endpoint}/api/v1/tasks?limit=1`, {
+    await makeRequest(config, {
       method: "GET",
-      headers,
-      signal: AbortSignal.timeout(3000),
+      endpoint: "/api/v1/tasks?limit=1",
+      timeoutMs: 3000,
     })
-    backgroundCommitSupported = response.ok
+    backgroundCommitSupported = true
   } catch {
     backgroundCommitSupported = false
   }
@@ -788,7 +582,7 @@ async function runSynchronousCommit(
     log("INFO", "session", "OpenViking synchronous commit completed", {
       openviking_session: mapping.ovSessionId,
       opencode_session: opencodeSessionId,
-      memories_extracted: result?.memories_extracted ?? 0,
+      memories_extracted: totalMemoriesFromResult(result),
       archived: result?.archived ?? false,
     })
 
@@ -965,14 +759,26 @@ async function pollCommitTaskOnce(
   }
 
   if (!mapping.commitTaskId) {
-    return "running"
+    const recoveredTaskId = await findRunningCommitTaskId(mapping.ovSessionId, config)
+    if (!recoveredTaskId) {
+      log("INFO", "session", "Clearing stale in-flight commit without task id", {
+        openviking_session: mapping.ovSessionId,
+        opencode_session: opencodeSessionId,
+      })
+      clearCommitState(mapping)
+      debouncedSaveSessionMap()
+      return "unknown"
+    }
+
+    mapping.commitTaskId = recoveredTaskId
+    debouncedSaveSessionMap()
   }
 
   try {
     const response = await makeRequest<OpenVikingResponse<TaskResult>>(config, {
       method: "GET",
       endpoint: `/api/v1/tasks/${mapping.commitTaskId}`,
-      timeoutMs: 30000,
+      timeoutMs: 5000,
     })
     const task = unwrapResponse(response)
 
@@ -981,7 +787,7 @@ async function pollCommitTaskOnce(
     }
 
     if (task.status === "completed") {
-      const memoriesExtracted = task.result?.memories_extracted ?? 0
+      const memoriesExtracted = totalMemoriesFromResult(task.result)
       const archived = task.result?.archived ?? false
 
       log("INFO", "session", "OpenViking background commit completed", {
@@ -1018,12 +824,23 @@ async function pollCommitTaskOnce(
     }
 
     return task.status
-  } catch (error: any) {
+  } catch (error: unknown) {
+    if (isMissingCommitTaskError(error)) {
+      log("INFO", "session", "Commit task disappeared; clearing stale state", {
+        openviking_session: mapping.ovSessionId,
+        opencode_session: opencodeSessionId,
+        task_id: mapping.commitTaskId,
+      })
+      clearCommitState(mapping)
+      debouncedSaveSessionMap()
+      return "unknown"
+    }
+
     log("ERROR", "session", "Failed to poll OpenViking background commit", {
       openviking_session: mapping.ovSessionId,
       opencode_session: opencodeSessionId,
       task_id: mapping.commitTaskId,
-      error: error.message,
+      error: error instanceof Error ? error.message : String(error),
     })
     return "unknown"
   }
@@ -1047,41 +864,63 @@ async function waitForCommitCompletion(
       return null
     }
     if (!mapping.commitTaskId) {
-      await sleep(500, abortSignal)
-      continue
-    }
+      const recoveredTaskId = await findRunningCommitTaskId(mapping.ovSessionId, config)
+      if (!recoveredTaskId) {
+        clearCommitState(mapping)
+        debouncedSaveSessionMap()
+        return null
+      }
 
-    const response = await makeRequest<OpenVikingResponse<TaskResult>>(config, {
-      method: "GET",
-      endpoint: `/api/v1/tasks/${mapping.commitTaskId}`,
-      timeoutMs: 30000,
-      abortSignal,
-    })
-    const task = unwrapResponse(response)
-
-    if (task.status === "completed") {
-      const memoriesExtracted = task.result?.memories_extracted ?? 0
-      const archived = task.result?.archived ?? false
-
-      await finalizeCommitSuccess(mapping, opencodeSessionId, config)
-
-      log("INFO", "memcommit", "Background commit completed while waiting", {
-        openviking_session: mapping.ovSessionId,
-        opencode_session: opencodeSessionId,
-        task_id: task.task_id,
-        memories_extracted: memoriesExtracted,
-        archived,
-      })
-      return task
-    }
-
-    if (task.status === "failed") {
-      clearCommitState(mapping)
+      mapping.commitTaskId = recoveredTaskId
       debouncedSaveSessionMap()
-      throw new Error(task.error || "Background commit failed")
     }
 
-    await sleep(2000, abortSignal)
+    try {
+      const response = await makeRequest<OpenVikingResponse<TaskResult>>(config, {
+        method: "GET",
+        endpoint: `/api/v1/tasks/${mapping.commitTaskId}`,
+        timeoutMs: 5000,
+        abortSignal,
+      })
+      const task = unwrapResponse(response)
+
+      if (task.status === "completed") {
+        const memoriesExtracted = totalMemoriesFromResult(task.result)
+        const archived = task.result?.archived ?? false
+
+        await finalizeCommitSuccess(mapping, opencodeSessionId, config)
+
+        log("INFO", "memcommit", "Background commit completed while waiting", {
+          openviking_session: mapping.ovSessionId,
+          opencode_session: opencodeSessionId,
+          task_id: task.task_id,
+          memories_extracted: memoriesExtracted,
+          archived,
+        })
+        return task
+      }
+
+      if (task.status === "failed") {
+        clearCommitState(mapping)
+        debouncedSaveSessionMap()
+        throw new Error(task.error || "Background commit failed")
+      }
+
+      await sleep(2000, abortSignal)
+    } catch (error: unknown) {
+      if (isMissingCommitTaskError(error)) {
+        log("INFO", "session", "Commit task disappeared while waiting; clearing stale state", {
+          openviking_session: mapping.ovSessionId,
+          opencode_session: opencodeSessionId,
+          task_id: mapping.commitTaskId,
+        })
+        clearCommitState(mapping)
+        debouncedSaveSessionMap()
+        return null
+      }
+
+      throw error
+    }
   }
 
   return null
@@ -1094,6 +933,11 @@ async function waitForCommitCompletion(
 let autoCommitTimer: NodeJS.Timeout | null = null
 
 function startAutoCommit(config: OpenVikingConfig) {
+  if (autoCommitTimer) {
+    log("INFO", "auto-commit", "Auto-commit scheduler already running")
+    return
+  }
+
   if (!config.autoCommit?.enabled) {
     log("INFO", "auto-commit", "Auto-commit disabled in config")
     return
@@ -1122,6 +966,8 @@ function stopAutoCommit() {
 async function checkAndCommitSessions(config: OpenVikingConfig): Promise<void> {
   const intervalMs = getAutoCommitIntervalMinutes(config) * 60 * 1000
   const now = Date.now()
+
+  cleanupOrphanedMessageBuffers(now)
 
   for (const [opencodeSessionId, mapping] of sessionMap.entries()) {
     if (mapping.commitInFlight) {
@@ -1163,7 +1009,7 @@ async function addMessageToSession(
       method: "POST",
       endpoint: `/api/v1/sessions/${ovSessionId}/messages`,
       body: { role, content },
-      timeoutMs: 30000,
+      timeoutMs: 5000,
     })
     unwrapResponse(response)
 
@@ -1261,8 +1107,12 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
     endpoint: config.endpoint,
   })
 
-  // Start auto-commit scheduler
-  startAutoCommit(config)
+  // Start auto-commit scheduler only if service is healthy
+  if (healthy) {
+    startAutoCommit(config)
+  } else {
+    log("INFO", "auto-commit", "Auto-commit not started - service unhealthy")
+  }
 
   return {
     event: async ({ event }) => {
@@ -1430,7 +1280,7 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
         const sessionId = message.sessionID
         const messageId = message.id
         const role = message.role
-        const finish = role === "assistant" ? (message as any).finish : undefined
+        const finish = "finish" in message ? message.finish : undefined
 
         // Check if we have a session mapping
         const mapping = sessionMap.get(sessionId)
@@ -1696,10 +1546,10 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
               if (task?.status === "completed") {
                 return JSON.stringify(
                   {
-                    message: `Memory extraction complete: ${task.result?.memories_extracted ?? 0} memories extracted`,
+                    message: `Memory extraction complete: ${totalMemoriesFromResult(task.result)} memories extracted`,
                     session_id: task.result?.session_id ?? sessionId,
                     status: task.status,
-                    memories_extracted: task.result?.memories_extracted ?? 0,
+                    memories_extracted: totalMemoriesFromResult(task.result),
                     archived: task.result?.archived ?? false,
                     task_id: task.task_id,
                   },
@@ -1731,10 +1581,10 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
             if (commitStart.mode === "completed") {
               return JSON.stringify(
                 {
-                  message: `Memory extraction complete: ${commitStart.result.memories_extracted ?? 0} memories extracted`,
+                  message: `Memory extraction complete: ${totalMemoriesFromResult(commitStart.result)} memories extracted`,
                   session_id: commitStart.result.session_id ?? sessionId,
                   status: commitStart.result.status ?? "completed",
-                  memories_extracted: commitStart.result.memories_extracted ?? 0,
+                  memories_extracted: totalMemoriesFromResult(commitStart.result),
                   archived: commitStart.result.archived ?? false,
                 },
                 null,
@@ -1764,10 +1614,10 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
 
             return JSON.stringify(
               {
-                message: `Memory extraction complete: ${task.result?.memories_extracted ?? 0} memories extracted`,
+                message: `Memory extraction complete: ${totalMemoriesFromResult(task.result)} memories extracted`,
                 session_id: task.result?.session_id ?? sessionId,
                 status: task.status,
-                memories_extracted: task.result?.memories_extracted ?? 0,
+                memories_extracted: totalMemoriesFromResult(task.result),
                 archived: task.result?.archived ?? false,
                 task_id: task.task_id,
               },
@@ -1860,8 +1710,16 @@ export const OpenVikingMemoryPlugin = async (input: PluginInput): Promise<Hooks>
           },
         },
       ),
-    }
+    },
   }
 }
+
+process.on("beforeExit", async () => {
+  if (saveTimer) {
+    clearTimeout(saveTimer)
+    await saveSessionMap()
+  }
+  stopAutoCommit()
+})
 
 export default OpenVikingMemoryPlugin

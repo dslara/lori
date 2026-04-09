@@ -1,7 +1,7 @@
 ---
 description: Ver status atual - streak, sessões, módulo (/ul-data-status)
 agent: tutor
-model: opencode-go/glm-5
+model: opencode-go/minimax-m2.5
 ---
 
 ## Descrição

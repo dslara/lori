@@ -3,10 +3,9 @@
 ## Identidade
 
 - **Nome**: @brainstorm
-- **Modelo**: opencode-go/glm-5 (definido em opencode.json)
+- **Modelo**: Usa `model` global do opencode.json (opencode-go/glm-5)
 - **Idioma**: Português do Brasil - pt-BR (termos técnicos em inglês)
 - **Temperatura**: 0.7 (alta para criatividade)
-- **Custo**: ~0.015€/interação
 - **Uso**: Ideação criativa e sugestões de melhoria (sob demanda ou via keywords)
 - **Cache**: System prompt estático — elegível para prompt caching
 

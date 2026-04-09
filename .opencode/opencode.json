@@ -67,6 +67,23 @@
         "bash": "allow",
         "webfetch": "allow"
       }
+    },
+    "brainstorm": {
+      "description": "Arquiteto de ideias. Propõe melhorias inovadoras e identifica lacunas.",
+      "mode": "primary",
+      "temperature": 0.7,
+      "tools": {
+        "write": true,
+        "edit": true,
+        "bash": true,
+        "skill": true
+      },
+      "permission": {
+        "edit": "ask",
+        "write": "ask",
+        "bash": "allow",
+        "webfetch": "allow"
+      }
     }
   }
 }
