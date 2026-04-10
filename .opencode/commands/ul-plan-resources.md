@@ -7,7 +7,7 @@ model: opencode-go/kimi-k2.5
 Argumento recebido: $ARGUMENTS (tópico a mapear)
 
 ## Uso
-/ul-plan-resources <tópico>
+/ul-plan-resources [tópico]
 
 ## Descrição
 

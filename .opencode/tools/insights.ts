@@ -3,8 +3,8 @@ import { z } from "zod";
 import { join } from "path";
 import { format, subDays, getDay, parseISO } from "date-fns";
 
-import { readCSV, getUserId, getCacheKey, getFromCache, setCache } from "./utils-csv.js";
-import type { Session, SessionSkill, Insight, Review, Flashcard } from "./model-types.js";
+import { readCSV, getUserId, getCacheKey, getFromCache, setCache } from "../shared/utils-csv.js";
+import type { Session, SessionSkill, Insight, Review, Flashcard } from "../shared/model-types.js";
 
 // ============================================================================
 // TYPES
@@ -26,7 +26,7 @@ interface InsightsReport {
     retention: Record<string, { avgEasiness: number; count: number }>;
   };
   patterns: {
-    bestPeriod: { name: string; avgFocus: number };
+    bestDuration: { name: string; avgFocus: number };
     bestWeekday: { name: string; avgFocus: number };
     idealDuration: number;
     fatiguePoint: number;
@@ -111,10 +111,11 @@ function suggestTechnique(topic: string): string {
   return "drill";
 }
 
-function getPeriodFromDuration(duration: number): "morning" | "afternoon" | "evening" {
-  if (duration >= 60) return "afternoon";
-  if (duration <= 30) return "evening";
-  return "morning";
+// Map duration to session type (not time of day - we don't have time data)
+function getSessionTypeFromDuration(duration: number): "short" | "medium" | "long" {
+  if (duration >= 60) return "long";
+  if (duration <= 30) return "short";
+  return "medium";
 }
 
 // ============================================================================
@@ -223,11 +224,11 @@ function analyzePatterns(data: typeof cachedData, days: number = 30) {
   const cutoffDate = subDays(new Date(), days);
   const sessions = data!.sessions.filter(s => new Date(s.date) >= cutoffDate);
   
-  // Best period
-  const periodStats: Record<string, { sum: number; count: number }> = {
-    morning: { sum: 0, count: 0 },
-    afternoon: { sum: 0, count: 0 },
-    evening: { sum: 0, count: 0 }
+  // Best session duration (renamed from "period" since we don't have time-of-day data)
+  const durationStats: Record<string, { sum: number; count: number }> = {
+    short: { sum: 0, count: 0 },    // <= 30 min
+    medium: { sum: 0, count: 0 },   // 30-60 min
+    long: { sum: 0, count: 0 }      // >= 60 min
   };
   
   for (const session of sessions) {
@@ -235,21 +236,21 @@ function analyzePatterns(data: typeof cachedData, days: number = 30) {
     if (focus === 0) continue;
     
     const duration = parseInt(session.duration_min) || 0;
-    const period = getPeriodFromDuration(duration);
-    periodStats[period].sum += focus;
-    periodStats[period].count++;
+    const sessionType = getSessionTypeFromDuration(duration);
+    durationStats[sessionType].sum += focus;
+    durationStats[sessionType].count++;
   }
   
-  const periodAvgs: Record<string, number> = {};
-  for (const [period, data] of Object.entries(periodStats)) {
-    if (data.count > 0) periodAvgs[period] = data.sum / data.count;
+  const durationAvgs: Record<string, number> = {};
+  for (const [type, data] of Object.entries(durationStats)) {
+    if (data.count > 0) durationAvgs[type] = data.sum / data.count;
   }
   
-  const bestPeriod = Object.entries(periodAvgs).sort((a, b) => b[1] - a[1])[0]?.[0] || "morning";
-  const periodNames: Record<string, string> = {
-    morning: "Manhã (6-12h)",
-    afternoon: "Tarde (12-18h)",
-    evening: "Noite (18-24h)"
+  const bestDuration = Object.entries(durationAvgs).sort((a, b) => b[1] - a[1])[0]?.[0] || "medium";
+  const durationNames: Record<string, string> = {
+    short: "Sessões curtas (≤30min)",
+    medium: "Sessões médias (30-60min)",
+    long: "Sessões longas (≥60min)"
   };
   
   // Best weekday
@@ -318,7 +319,7 @@ function analyzePatterns(data: typeof cachedData, days: number = 30) {
   }
   
   return {
-    bestPeriod: { name: periodNames[bestPeriod], avgFocus: Math.round(periodAvgs[bestPeriod] * 10) / 10 },
+    bestDuration: { name: durationNames[bestDuration], avgFocus: Math.round(durationAvgs[bestDuration] * 10) / 10 },
     bestWeekday: { name: bestWeekday, avgFocus: Math.round(dayAvgs[bestWeekday] * 10) / 10 },
     idealDuration,
     fatiguePoint: 60, // Simplified calculation
@@ -427,9 +428,9 @@ function formatDashboard(data: InsightsReport): string {
     lines.push("");
   }
   
-  if (data.patterns.bestPeriod) {
+  if (data.patterns.bestDuration) {
     lines.push("⏰ PADRÕES");
-    lines.push(`   Melhor período: ${data.patterns.bestPeriod.name}`);
+    lines.push(`   Melhor duração: ${data.patterns.bestDuration.name}`);
     lines.push(`   Melhor dia: ${data.patterns.bestWeekday.name}`);
     lines.push(`   Duração ideal: ${data.patterns.idealDuration} minutos`);
     lines.push("");

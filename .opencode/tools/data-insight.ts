@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { join } from "path";
-import { readCSV, writeCSV, initCSVDir, getUserId, CSV_HEADERS } from "./utils-csv.js";
-import type { Insight } from "./model-types.js";
+import { readCSV, writeCSV, initCSVDir, getUserId, CSV_HEADERS } from "../shared/utils-csv.js";
+import type { Insight } from "../shared/model-types.js";
 
 export async function updateInsight(
   dataDir: string,
@@ -102,8 +102,10 @@ export async function updateStreak(dataDir: string): Promise<string> {
   const userId = getUserId();
   const today = format(new Date(), "yyyy-MM-dd");
   
+  // Batch read: read insights once
   const insights = await readCSV<Insight>(join(dataDir, "insights.csv"));
   
+  // Find latest values for each metric
   const lastSession = insights
     .filter(i => i.user_id === userId && i.metric === "last_session")
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
@@ -116,13 +118,18 @@ export async function updateStreak(dataDir: string): Promise<string> {
     .filter(i => i.user_id === userId && i.metric === "best_streak")
     .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
   
+  const totalSessionsInsight = insights
+    .filter(i => i.user_id === userId && i.metric === "total_sessions")
+    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
+  
   let streak = parseInt(streakInsight?.value || "0");
   let bestStreak = parseInt(bestStreakInsight?.value || "0");
+  const totalSessions = parseInt(totalSessionsInsight?.value || "0") + 1;
   
   if (lastSession?.value === today) {
     return JSON.stringify({
       success: true,
-      data: { streak, message: "Session already recorded today", unchanged: true }
+      data: { streak, bestStreak, message: "Session already recorded today", unchanged: true }
     });
   }
   
@@ -144,38 +151,23 @@ export async function updateStreak(dataDir: string): Promise<string> {
     bestStreak = streak;
   }
   
+  // Batch write: filter and add all metrics in one operation
   await initCSVDir(dataDir);
   
-  const allInsights = await readCSV<Insight>(join(dataDir, "insights.csv"));
-  
-  const filtered = allInsights.filter(i => 
-    !(i.date === today && i.user_id === userId && i.metric === "streak")
+  const filtered = insights.filter(i => 
+    !(i.date === today && i.user_id === userId && 
+      ["streak", "best_streak", "last_session", "total_sessions"].includes(i.metric))
   );
-  filtered.push({ date: today, user_id: userId, metric: "streak", value: String(streak), module_id: "" });
+  
+  filtered.push(
+    { date: today, user_id: userId, metric: "streak", value: String(streak), module_id: "" },
+    { date: today, user_id: userId, metric: "best_streak", value: String(bestStreak), module_id: "" },
+    { date: today, user_id: userId, metric: "last_session", value: today, module_id: "" },
+    { date: today, user_id: userId, metric: "total_sessions", value: String(totalSessions), module_id: "" }
+  );
+  
+  // Single write operation
   await writeCSV(join(dataDir, "insights.csv"), CSV_HEADERS.insights, filtered);
-  
-  const filtered2 = filtered.filter(i => 
-    !(i.date === today && i.user_id === userId && i.metric === "best_streak")
-  );
-  filtered2.push({ date: today, user_id: userId, metric: "best_streak", value: String(bestStreak), module_id: "" });
-  await writeCSV(join(dataDir, "insights.csv"), CSV_HEADERS.insights, filtered2);
-  
-  const filtered3 = filtered2.filter(i => 
-    !(i.date === today && i.user_id === userId && i.metric === "last_session")
-  );
-  filtered3.push({ date: today, user_id: userId, metric: "last_session", value: today, module_id: "" });
-  await writeCSV(join(dataDir, "insights.csv"), CSV_HEADERS.insights, filtered3);
-  
-  const totalSessionsInsight = insights
-    .filter(i => i.user_id === userId && i.metric === "total_sessions")
-    .sort((a, b) => new Date(b.date).getTime() - new Date(a.date).getTime())[0];
-  const totalSessions = parseInt(totalSessionsInsight?.value || "0") + 1;
-  
-  const filtered4 = filtered3.filter(i => 
-    !(i.date === today && i.user_id === userId && i.metric === "total_sessions")
-  );
-  filtered4.push({ date: today, user_id: userId, metric: "total_sessions", value: String(totalSessions), module_id: "" });
-  await writeCSV(join(dataDir, "insights.csv"), CSV_HEADERS.insights, filtered4);
   
   return JSON.stringify({
     success: true,

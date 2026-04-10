@@ -18,6 +18,8 @@ const thisFileDir = dirname(thisFilePath);
 export interface OpenVikingConfig {
   endpoint: string;
   apiKey: string;
+  account?: string;
+  user?: string;
   enabled: boolean;
   timeoutMs: number;
   autoCommit?: {
@@ -144,6 +146,12 @@ export function loadConfig(): OpenVikingConfig {
       if (process.env.OPENVIKING_SERVER_API_KEY) {
         _cachedConfig!.apiKey = process.env.OPENVIKING_SERVER_API_KEY;
       }
+      if (process.env.OPENVIKING_ACCOUNT) {
+        _cachedConfig!.account = process.env.OPENVIKING_ACCOUNT;
+      }
+      if (process.env.OPENVIKING_USER) {
+        _cachedConfig!.user = process.env.OPENVIKING_USER;
+      }
       return _cachedConfig!;
     }
   } catch (error) {
@@ -158,6 +166,12 @@ export function loadConfig(): OpenVikingConfig {
   };
   if (process.env.OPENVIKING_SERVER_API_KEY) {
     _cachedConfig!.apiKey = process.env.OPENVIKING_SERVER_API_KEY;
+  }
+  if (process.env.OPENVIKING_ACCOUNT) {
+    _cachedConfig!.account = process.env.OPENVIKING_ACCOUNT;
+  }
+  if (process.env.OPENVIKING_USER) {
+    _cachedConfig!.user = process.env.OPENVIKING_USER;
   }
   return _cachedConfig;
 }
@@ -181,6 +195,14 @@ export async function makeRequest<T = any>(
 
   if (config.apiKey) {
     headers["X-API-Key"] = config.apiKey;
+  }
+
+  if (config.account) {
+    headers["X-OpenViking-Account"] = config.account;
+  }
+
+  if (config.user) {
+    headers["X-OpenViking-User"] = config.user;
   }
 
   const controller = new AbortController();

@@ -3,9 +3,64 @@ import { z } from "zod";
 import { format, subDays } from "date-fns";
 import { join } from "path";
 import { mkdir, writeFile, readdir } from "node:fs/promises";
+import { readCSV } from "../shared/utils-csv.js";
 
 function getDataDir(context: any): string {
   return join(context.worktree || context.directory, "data");
+}
+
+interface WeeklyStats {
+  sessionsThisWeek: number;
+  targetSessions: number;
+  status: string;
+  remainingToTarget: number;
+  totalMinutes: number;
+  avgFocus: string;
+  weekStart: string;
+  weekEnd: string;
+}
+
+async function computeWeeklyStats(
+  dataDir: string,
+  moduleId: string | undefined,
+  today: string,
+  weekStart: string
+): Promise<WeeklyStats> {
+  const sessions = await readCSV(join(dataDir, "sessions.csv"));
+  
+  const weekSessions = sessions.filter((s: any) => {
+    const date = s.date;
+    const module = s.module_id;
+    return date >= weekStart && date <= today && (!moduleId || module === moduleId);
+  });
+  
+  const sessionCount = weekSessions.length;
+  const targetSessions = 6;
+  
+  let status: string;
+  if (sessionCount >= targetSessions) {
+    status = "excellent";
+  } else if (sessionCount >= targetSessions * 0.7) {
+    status = "good";
+  } else {
+    status = "needs_improvement";
+  }
+  
+  const totalMinutes = weekSessions.reduce((sum: number, s: any) => sum + parseInt(s.duration_min || "0"), 0);
+  const avgFocus = sessionCount > 0
+    ? (weekSessions as any[]).reduce((sum: number, s: any) => sum + parseInt(s.focus_score || "0"), 0) / sessionCount
+    : 0;
+  
+  return {
+    sessionsThisWeek: sessionCount,
+    targetSessions,
+    status,
+    remainingToTarget: Math.max(0, targetSessions - sessionCount),
+    totalMinutes,
+    avgFocus: avgFocus.toFixed(1),
+    weekStart,
+    weekEnd: today
+  };
 }
 
 export default tool({
@@ -28,7 +83,6 @@ export default tool({
     try {
       switch (args.operation) {
         case "getWeeklyStats": {
-          const { readCSV } = await import("./utils-csv.js");
           const { access } = await import("node:fs/promises");
           
           // Verificar se sessions.csv existe
@@ -46,46 +100,11 @@ export default tool({
             });
           }
           
-          // Ler sessões
-          const sessions = await readCSV(join(dataDir, "sessions.csv"));
-          
-          // Filtrar sessões da semana
-          const weekSessions = sessions.filter((s: any) => {
-            const date = s.date;
-            const module = s.module_id;
-            return date >= weekStart && date <= today && (!args.moduleId || module === args.moduleId);
-          });
-          
-          const sessionCount = weekSessions.length;
-          const targetSessions = 6;
-          
-          let status: string;
-          if (sessionCount >= targetSessions) {
-            status = "excellent";
-          } else if (sessionCount >= targetSessions * 0.7) {
-            status = "good";
-          } else {
-            status = "needs_improvement";
-          }
-          
-          // Calcular métricas adicionais
-          const totalMinutes = weekSessions.reduce((sum: number, s: any) => sum + parseInt(s.duration_min || "0"), 0);
-          const avgFocus = sessionCount > 0
-            ? (weekSessions as any[]).reduce((sum: number, s: any) => sum + parseInt(s.focus_score || "0"), 0) / sessionCount
-            : 0;
+          const stats = await computeWeeklyStats(dataDir, args.moduleId, today, weekStart);
           
           return JSON.stringify({
             success: true,
-            data: {
-              sessionsThisWeek: sessionCount,
-              targetSessions,
-              status,
-              remainingToTarget: Math.max(0, targetSessions - sessionCount),
-              totalMinutes,
-              avgFocus: avgFocus.toFixed(1),
-              weekStart,
-              weekEnd: today
-            }
+            data: stats
           });
         }
         
@@ -101,7 +120,6 @@ export default tool({
           // Determinar module ativo se não especificado
           let moduleId = args.moduleId;
           if (!moduleId) {
-            const { readCSV } = await import("./utils-csv.js");
             const modules = await readCSV(join(dataDir, "modules.csv"));
             const activeModule = modules.find((m: any) => m.is_active === "true");
             
@@ -117,7 +135,7 @@ export default tool({
           }
           
           // Determinar número da semana
-          const metaDir = join(projectDir, "projects", moduleId, "meta");
+          const metaDir = join(projectDir, "projects", moduleId || '', "meta");
           await mkdir(metaDir, { recursive: true });
           
           // Listar weeks existentes
@@ -137,8 +155,7 @@ export default tool({
           }
           
           // Obter estatísticas da semana
-          const statsResult = await this.execute({ operation: "getWeeklyStats", moduleId }, context);
-          const stats = JSON.parse(statsResult);
+          const stats = await computeWeeklyStats(dataDir, moduleId, today, weekStart);
           
           // Criar arquivo de retro
           const retroFile = join(metaDir, `retro-week-${weekNum}.md`);
@@ -149,10 +166,10 @@ export default tool({
 
 ## 📊 Estatísticas da Semana
 
-- **Sessões**: ${stats.data?.sessionsThisWeek || 0}/${stats.data?.targetSessions || 6}
-- **Tempo Total**: ${stats.data?.totalMinutes || 0} minutos
-- **Foco Médio**: ${stats.data?.avgFocus || "N/A"}/10
-- **Período**: ${stats.data?.weekStart || weekStart} a ${stats.data?.weekEnd || today}
+- **Sessões**: ${stats.sessionsThisWeek}/${stats.targetSessions}
+- **Tempo Total**: ${stats.totalMinutes} minutos
+- **Foco Médio**: ${stats.avgFocus}/10
+- **Período**: ${stats.weekStart} a ${stats.weekEnd}
 
 ## ✅ O que funcionou
 
@@ -182,7 +199,7 @@ _Adicione observações extras aqui_
               retroFile, 
               weekNumber: weekNum,
               moduleId,
-              stats: stats.data
+              stats
             }
           });
         }

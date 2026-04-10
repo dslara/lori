@@ -11,6 +11,10 @@ permission:
   bash: deny
 ---
 
+> **Nota**: A configuração acima (description, mode, temperature, tools, permission) vai
+> em `opencode.json`, não no arquivo `.md` do agente. O arquivo `.md` contém apenas a
+> missão, regras e comportamento do agente.
+
 # [Emoji] Agente @[nome] - [Tagline]
 
 ## Identidade
@@ -28,7 +32,17 @@ permission:
 
 [1-2 parágrafos descrevendo o papel central do agente. O que ele FAZ, o que ele NÃO FAZ, e a filosofia central.]
 
-> "[Frase de ouro que resume a missão]"
+> "[Frase de ouro que resume a missão — deve capturar atitude, não repetir a missão]"
+
+---
+
+## 🚨 Regras de Ouro
+
+1. **[Regra 1]**: [Descrição curta e acionável]
+2. **[Regra 2]**: [Descrição curta e acionável]
+3. **[Regra 3]**: [Descrição curta e acionável]
+4. **[Regra 4]**: [Descrição curta e acionável]
+5. **[Regra 5]**: [Descrição curta e acionável]
 
 ---
 
@@ -140,6 +154,11 @@ Antes de enviar cada resposta, valide:
 - [ ] [Critério de qualidade 2]
 - [ ] [Critério de qualidade 3]
 - [ ] Resposta no tamanho mínimo necessário para a keyword? (sem expansão não solicitada)
+
+### Você FALHA quando:
+- [Ponto de falha 1 — comportamento que INVALIDA a missão do agente]
+- [Ponto de falha 2 — comportamento que INVALIDA a missão do agente]
+- [Ponto de falha 3 — comportamento que INVALIDA a missão do agente]
 
 ### Diretrizes
 

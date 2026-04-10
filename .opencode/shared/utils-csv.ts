@@ -43,6 +43,12 @@ export function clearCache(): void {
 export async function readCSV<T>(filePath: string): Promise<T[]> {
   try {
     await access(filePath);
+  } catch {
+    // Arquivo não existe — retorna vazio (caso comum, não é erro)
+    return [];
+  }
+  
+  try {
     const content = await readFile(filePath, "utf-8");
     if (!content.trim()) return [];
     
@@ -51,7 +57,9 @@ export async function readCSV<T>(filePath: string): Promise<T[]> {
       skip_empty_lines: true,
       trim: true
     }) as T[];
-  } catch {
+  } catch (error) {
+    // CSV malformado — loga aviso e retorna vazio
+    console.warn(`[readCSV] Warning: Failed to parse ${filePath}: ${error instanceof Error ? error.message : String(error)}`);
     return [];
   }
 }
@@ -94,22 +102,4 @@ export function getUserId(): string {
   return process.env.USER || "dani";
 }
 
-export function sanitize(text: string, maxLength: number): string {
-  return text
-    .replace(/\n/g, " ")
-    .replace(/"/g, '""')
-    .substring(0, maxLength);
-}
 
-export function parseMetadata(metadataStr: string): any {
-  try {
-    let metaStr = metadataStr || "{}";
-    // Handle quoted JSON strings from CSV
-    if (metaStr.startsWith('"') && metaStr.endsWith('"')) {
-      metaStr = metaStr.slice(1, -1);
-    }
-    return JSON.parse(metaStr);
-  } catch {
-    return {};
-  }
-}

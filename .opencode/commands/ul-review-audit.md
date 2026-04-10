@@ -47,7 +47,7 @@ Verificar documentação em `guides/`, `README.md`:
 
 ### Passo 4: `#review-commands` — Commands Unificados
 
-Verificar os **29 commands** em `.opencode/commands/`:
+Verificar os **30 commands** em `.opencode/commands/`:
 - Frontmatter completo (description, agent, model)
 - Campo `model` definido (opencode-go/glm-5.1, opencode-go/glm-5, opencode-go/kimi-k2.5, opencode-go/minimax-m2.5)
 - Placeholders `$ARGUMENTS` configurados corretamente
@@ -99,7 +99,7 @@ Gerar relatório usando **template**: `@reviews/_template-framework-review.md`
 
 O template já define estrutura completa. Preencher com:
 - **Tipo**: `complete`
-- **Estado Atual**: resumo de commands (29), tools (11), skills (5), agents (3)
+- **Estado Atual**: resumo de commands (30), tools (11), skills (5), agents (3)
 - **Problemas Identificados**: usar gravidade CRÍTICO/ALTO/MÉDIO/BAIXO
 - **Ações Recomendadas**: priorizar por imediato/curto/médio/longo prazo
 

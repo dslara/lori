@@ -25,7 +25,7 @@ import type {
   SessionResult,
   TaskResult,
   MemoryCounts,
-} from "../tools/openviking-client.js"
+} from "../shared/openviking-client.js"
 import {
   loadConfig,
   makeRequest,
@@ -33,7 +33,7 @@ import {
   getResponseErrorMessage,
   checkServiceHealth,
   totalMemoriesFromResult,
-} from "../tools/openviking-client.js"
+} from "../shared/openviking-client.js"
 
 const z = tool.schema
 const pluginFilePath = fileURLToPath(import.meta.url)

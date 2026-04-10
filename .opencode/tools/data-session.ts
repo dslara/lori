@@ -1,7 +1,7 @@
 import { format } from "date-fns";
 import { join } from "path";
-import { readCSV, writeCSV, getUserId, CSV_HEADERS } from "./utils-csv.js";
-import type { Session } from "./model-types.js";
+import { readCSV, writeCSV, getUserId, CSV_HEADERS } from "../shared/utils-csv.js";
+import type { Session } from "../shared/model-types.js";
 
 export async function createSession(
   dataDir: string,

@@ -33,7 +33,7 @@ export async function getAgentId(): Promise<string> {
   try {
     const config = loadConfig();
     if (!config.enabled) {
-      cachedAgentId = process.env.OPENVIKING_AGENT_ID || "default";
+      cachedAgentId = process.env.OPENVIKING_AGENT_ID || "local-agent";
       cachedAgentIdTimestamp = now;
       return cachedAgentId;
     }
@@ -63,8 +63,8 @@ export async function getAgentId(): Promise<string> {
     // Descoberta falhou, usar fallback
   }
 
-  // Fallback: tentar env var ou "default"
-  cachedAgentId = process.env.OPENVIKING_AGENT_ID || "default";
+  // Fallback: tentar env var ou ID neutro
+  cachedAgentId = process.env.OPENVIKING_AGENT_ID || "local-agent";
   cachedAgentIdTimestamp = now;
   return cachedAgentId;
 }

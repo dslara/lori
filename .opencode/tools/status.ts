@@ -2,8 +2,8 @@ import { tool } from "@opencode-ai/plugin";
 import { z } from "zod";
 import { join } from "path";
 
-import { readCSV, getUserId } from "./utils-csv.js";
-import type { Insight, Module, Session } from "./model-types.js";
+import { readCSV, getUserId } from "../shared/utils-csv.js";
+import type { Insight, Module, Session } from "../shared/model-types.js";
 
 interface StatusStats {
   streak: number;
@@ -110,54 +110,63 @@ export default tool({
           });
         }
         
-        case "formatStatus": {
-          const lines: string[] = [
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-            "        🎮 STATUS",
-            "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
-            ""
-          ];
-          
-          if (streak >= 30) {
-            lines.push(`Streak:      🔥 ${streak} dias`);
-            lines.push(`Progresso:   ${progressBar} ${level.name}`);
-          } else if (streak >= 7) {
-            lines.push(`Streak:      🔥 ${streak} dias`);
-            lines.push(`Progresso:   ${progressBar} ${streak}/${level.target} → ${level.name}`);
-          } else if (streak >= 1) {
-            lines.push(`Streak:      🔥 ${streak} dias`);
-            lines.push(`Progresso:   ${progressBar} ${streak}/${level.target} → ${level.name}`);
-          } else {
-            lines.push(`Streak:      💤 0 dias`);
-            lines.push(`Progresso:   ${progressBar} 0/${level.target}`);
-          }
-          
-          lines.push("");
-          lines.push(`Recorde:     🏆 ${bestStreak} dias`);
-          lines.push(`Sessões:     📚 ${totalSessions} total`);
-          
-          if (lastSession) {
-            lines.push(`Última:      📅 ${lastSession}`);
-          }
-          
-          if (currentModule) {
-            lines.push("");
-            lines.push(`Módulo:      📦 ${currentModule.id}-${currentModule.name}`);
-          }
-          
-          lines.push("");
-          lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
-          
-          const formattedStatus: FormattedStatus = {
-            text: lines.join("\n"),
-            stats
-          };
-          
-          return JSON.stringify({
-            success: true,
-            data: formattedStatus
-          });
-        }
+case "formatStatus": {
+           const showBar = args.includeProgressBar !== false;
+           const lines: string[] = [
+             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+             "        🎮 STATUS",
+             "━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━",
+             ""
+           ];
+           
+           if (streak >= 30) {
+             lines.push(`Streak:      🔥 ${streak} dias`);
+             if (showBar) {
+               lines.push(`Progresso:   ${progressBar} ${level.name}`);
+             }
+           } else if (streak >= 7) {
+             lines.push(`Streak:      🔥 ${streak} dias`);
+             if (showBar) {
+               lines.push(`Progresso:   ${progressBar} ${streak}/${level.target} → ${level.name}`);
+             }
+           } else if (streak >= 1) {
+             lines.push(`Streak:      🔥 ${streak} dias`);
+             if (showBar) {
+               lines.push(`Progresso:   ${progressBar} ${streak}/${level.target} → ${level.name}`);
+             }
+           } else {
+             lines.push(`Streak:      💤 0 dias`);
+             if (showBar) {
+               lines.push(`Progresso:   ${progressBar} 0/${level.target}`);
+             }
+           }
+           
+           lines.push("");
+           lines.push(`Recorde:     🏆 ${bestStreak} dias`);
+           lines.push(`Sessões:     📚 ${totalSessions} total`);
+           
+           if (lastSession) {
+             lines.push(`Última:      📅 ${lastSession}`);
+           }
+           
+           if (currentModule) {
+             lines.push("");
+             lines.push(`Módulo:      📦 ${currentModule.id}-${currentModule.name}`);
+           }
+           
+           lines.push("");
+           lines.push("━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━");
+           
+           const formattedStatus: FormattedStatus = {
+             text: lines.join("\n"),
+             stats
+           };
+           
+           return JSON.stringify({
+             success: true,
+             data: formattedStatus
+           });
+         }
         
         default:
           return JSON.stringify({

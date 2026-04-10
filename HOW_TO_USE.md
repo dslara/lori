@@ -4,7 +4,7 @@
 
 **Última atualização**: 2026-03-17
 
-> **🧠 Memória Persistente**: O sistema agora usa **OpenViking** para memória entre sessões. Os agentes lembram conversas anteriores, preferências e padrões de erro automaticamente. Veja [Integração OpenViking](#memória-persistente-openviking).
+> **🧠 Memória Persistente**: O sistema usa **OpenViking** para memória entre sessões. Os agentes lembram conversas anteriores, preferências e padrões de erro automaticamente. Veja [Integração OpenViking](#memória-persistente-openviking).
 
 ---
 
@@ -184,7 +184,7 @@ O que acontece:
 - Skill `session` consolida a sessao com reflexao estruturada
 - Tool `data.createSession` salva no CSV automaticamente
 - Tool `data.updateStreak` atualiza streak automaticamente
-- Tool `analytics.generateReport` atualiza métricas
+- Tool `insights.generateReport` atualiza métricas
 
 ---
 
@@ -508,7 +508,7 @@ docker-compose ps
 | `docker-compose restart` | Reiniciar servidos |
 | `curl http://localhost:1933/health` | Health check |
 
-Mais detalhes: [`planning/proposta-openviking-integration-2026-03-13.md`](proposta-openviking-integration-2026-03-13.md)
+Mais detalhes: [`reviews/audit-complete-2026-04-09-v3.4.0.md`](reviews/audit-complete-2026-04-09-v3.4.0.md)
 
 ---
 

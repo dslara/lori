@@ -58,9 +58,32 @@ Exemplos:
 
 ## Revisão Ativa
 
-  - 4 problemas críticos/alto identificados
-  - 3 problemas da revisão anterior não resolvidos
-  - 2 novos problemas críticos descobertos
+| Data | Documento | Status | Descrição |
+|------|-----------|--------|-----------|
+| 2026-04-09 | `audit-complete-2026-04-09-v3.4.0.md` | 🟢 Ativa | Auditoria completa do framework v3.4.0 |
+| 2026-04-09 | `agents-meta-tutor-audit-2026-04-09-v1.0.0.md` | 🟡 Arquivada | Auditoria dos agentes @meta e @tutor |
+
+**Resumo da Auditoria Completa (v3.4.0 — v2)**:
+- ✅ 27 verificações passaram (4 resolvidas desde v1)
+- ⚠️ 8 alertas/avisos (não críticos)
+- ❌ 2 erros críticos (1 resolvido, 1 parcial)
+- 💡 15 sugestões de melhoria
+
+**Problemas Críticos Restantes**:
+1. Conflito arquitetural de dados (CSV vs OpenViking)
+2. Bug em `retro.ts` — `this.execute()` em contexto incorreto (parcial: imports corrigidos)
+
+**Resolvidos desde v1**:
+- ✅ `context.ts` fantasma — removido, `context-hybrid.ts` é o único
+- ✅ Regras de Ouro adicionadas em todos os 4 agentes
+- ✅ Módulos compartilhados migrados para `.opencode/shared/`
+- ✅ Agentes otimizados (~40% redução de tamanho)
+
+**Problemas Anteriores (Agentes)**:
+1. Regras Críticas no Final (Alta) — ✅ RESOLVIDO (Regras de Ouro adicionadas)
+2. Sem Métricas de Sucesso (Alta) — Pendente na proposta ativa
+3. Referências desatualizadas (Média) — Pendente
+4. Sem Destaques de Personalidade (Baixa) — Pendente
 
 ---
 

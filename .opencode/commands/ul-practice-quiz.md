@@ -4,7 +4,7 @@ agent: tutor
 model: opencode-go/glm-5
 ---
 
-Argumentos recebidos: $1 (quantidade), $2 (tópico)
+Argumentos recebidos: $ARGUMENTS
 
 ## Uso
 /ul-practice-quiz [N] [tópico]

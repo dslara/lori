@@ -7,7 +7,7 @@ model: opencode-go/glm-5
 Argumento recebido: $ARGUMENTS (descrição do desvio)
 
 ## Uso
-/ul-plan-adjust <situação>
+/ul-plan-adjust [situação]
 
 ## Descrição
 

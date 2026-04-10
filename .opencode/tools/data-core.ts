@@ -1,11 +1,11 @@
 import { format } from "date-fns";
 import { join, dirname, basename } from "path";
 import { mkdir, cp as copyFile } from "node:fs/promises";
-import { exec as execCallback } from "child_process";
+import { execFile } from "child_process";
 import { promisify } from "util";
-import { initCSVDir } from "./utils-csv.js";
+import { initCSVDir } from "../shared/utils-csv.js";
 
-const exec = promisify(execCallback);
+const execFileAsync = promisify(execFile);
 
 interface Context {
   worktree?: string;
@@ -49,14 +49,21 @@ export async function createBackup(
   
   try {
     await copyFile(dataDir, join(backupDir, "data"), { recursive: true });
-  } catch (error) {
+  } catch {
     // Se data/ não existe, ignorar
   }
   
   const tarball = `${backupDir}.tar.gz`;
+  const backupDirName = basename(backupDir);
+  const parentDir = dirname(backupDir);
+  
   try {
-    await exec(`tar -czf "${tarball}" -C "${dirname(backupDir)}" "${basename(backupDir)}"`);
-  } catch (error) {
+    const { execFile } = await import("child_process");
+    const execFileAsync = promisify(execFile);
+    
+    // Use execFile with separate args to avoid shell injection
+    await execFileAsync("tar", ["-czf", tarball, "-C", parentDir, backupDirName]);
+  } catch {
     return JSON.stringify({
       success: true,
       data: { 

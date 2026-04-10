@@ -134,7 +134,7 @@ Digite `/` no TUI para acessar todos os commands:
 ┌─────────────────────────────────────────────────────────────┐
 │  COMMANDS (.opencode/commands/)                             │
 │  ════════════════════════════════════════════════════════   │
-│  29 commands /ul-* — Interface principal via TUI            │
+│  30 commands /ul-* — Interface principal via TUI            │
 │                                                             │
 │  Cada command define:                                       │
 │  - agent: tutor, meta ou review                             │
@@ -202,9 +202,22 @@ Digite `/` no TUI para acessar todos os commands:
 | Camada | Responsabilidade | Exemplos |
 |--------|------------------|----------|
 | **Commands** | Interface do usuário | `/ul-study-start`, `/ul-practice-drill` |
-| **Tools** | Processamento de dados | `data.ts`, `insights.ts`, `context.ts` |
+| **Tools** | Processamento de dados | `data.ts`, `insights.ts`, `context-hybrid.ts` |
 | **Skills** | Guias especializados | `directness`, `debug-socratic` |
 | **Agents** | Comportamento dos LLMs | `@tutor`, `@meta`, `@review` |
+
+### Arquitetura de Dados
+
+O sistema usa duas camadas complementares:
+
+| Camada | Tecnologia | Propósito |
+|--------|------------|-----------|
+| **CSV** | Arquivos locais | Dados quantitativos (sessões, streaks, flashcards) |
+| **OpenViking** | Memória persistente | Dados qualitativos (preferências, padrões, contexto) |
+
+**Regra**: CSV é obrigatório (offline-first). OpenViking é opcional (contexto conversacional).
+
+Ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) para detalhes.
 
 ### Agentes
 
@@ -296,9 +309,9 @@ Este sistema integra três abordagens complementares:
 ```
 ultralearning/
 ├── .opencode/
-│   ├── agents/           # @meta, @tutor, @review
-│   ├── commands/         # 29 commands /ul-*
-│   ├── skills/           # 5 skills carregadas on-demand
+│  ├── agents/           # @meta, @tutor, @review
+│  ├── commands/         # 30 commands /ul-*
+│  ├── skills/           # 5 skills carregadas on-demand
 │   ├── tools/            # 9 tools TypeScript
 │   ├── plugins/          # Plugins OpenCode (OpenViking)
 │   └── opencode.json     # Config de modelos + agents

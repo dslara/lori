@@ -4,7 +4,7 @@ agent: tutor
 model: opencode-go/kimi-k2.5
 ---
 
-Argumentos recebidos: $1 (conceito), $2 (variações)
+Argumentos recebidos: $ARGUMENTS
 
 ## Uso
 /ul-practice-drill [conceito] [variações]

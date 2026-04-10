@@ -3,13 +3,13 @@ import { z } from "zod";
 import { format } from "date-fns";
 import { join } from "path";
 
-import { getUserId, readCSV } from "./utils-csv.js";
+import { getUserId, readCSV } from "../shared/utils-csv.js";
 import { createSession, getSessions } from "./data-session.js";
 import { updateInsight, getInsight, getAllInsights, getStreak, updateStreak } from "./data-insight.js";
 import { createFlashcard, getFlashcards, createReview } from "./data-flashcard.js";
 import { createModule, switchModule, archiveModule } from "./data-module.js";
 import { initDataDir, resetAllData, createBackup } from "./data-core.js";
-import type { SessionSkill } from "./model-types.js";
+import type { SessionSkill } from "../shared/model-types.js";
 
 function getDataDir(context: any): string {
   return join(context.worktree || context.directory, "data");

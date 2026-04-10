@@ -121,6 +121,14 @@ O @review recomenda mudanças através de análise, mas **não gera automaticame
 
 ---
 
+## Documentos Ativos
+
+| Data | Documento | Status | Descrição |
+|------|-----------|--------|-----------|
+| 2026-04-09 | `proposta-melhorias-agentes-agency-2026-04-09.md` | 🟡 Proposta | Melhorias nos agentes baseadas em agency-agents |
+
+---
+
 ## Histórico de Consolidacões
 
 | Data | Documento | Documentos Analisados | Veredito |

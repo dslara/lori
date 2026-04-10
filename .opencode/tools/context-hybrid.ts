@@ -4,21 +4,21 @@ import { join } from "path";
 import { readFile } from "node:fs/promises";
 import { format } from "date-fns";
 
-import { readCSV, getUserId, getCacheKey, getFromCache, setCache } from "./utils-csv.js";
+import { readCSV, getUserId, getCacheKey, getFromCache, setCache } from "../shared/utils-csv.js";
 import {
   getAgentId,
   getAgentBaseUri,
   getAgentMemoryUri,
   getUserPreferencesUri,
   isOpenVikingAvailable
-} from "./openviking-utils.js";
+} from "../shared/openviking-utils.js";
 import {
   loadConfig,
   makeRequest,
   unwrapResponse,
-} from "./openviking-client.js";
-import type { OpenVikingResponse } from "./openviking-client.js";
-import type { Module, Session, SessionSkill, Flashcard, Insight } from "./model-types.js";
+} from "../shared/openviking-client.js";
+import type { OpenVikingResponse } from "../shared/openviking-client.js";
+import type { Module, Session, SessionSkill, Flashcard, Insight } from "../shared/model-types.js";
 
 // ============================================================================
 // TYPES
