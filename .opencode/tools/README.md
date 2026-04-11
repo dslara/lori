@@ -54,6 +54,33 @@ Tools TypeScript para processamento de dados e integração com OpenViking.
 | Tool | Funções | Descrição |
 |------|---------|-----------|
 | `openviking-utils.ts` | `getAgentId()`, `getAgentBaseUri()`, `getAgentMemoryUri()`, `clearAgentIdCache()`, `getUserPreferencesUri()`, `isOpenVikingAvailable()` | Utilitários para descoberta dinâmica de URIs |
+| `resource.ts` | `add`, `list`, `info` | Gerenciamento de resources indexados (adicionar, listar, info) |
+| `resource-core.ts` | `addResource()`, `listResources()`, `getResourceInfo()` | Core functions para gerenciamento de resources |
+
+### Recursos (Resources)
+
+```typescript
+import resource from "./resource.js";
+
+// Adicionar um repositório GitHub como resource
+await resource({ 
+  operation: "add", 
+  path: "https://github.com/volcengine/OpenViking" 
+});
+// Retorna: { success: true, data: { root_uri: "viking://resources/volcengine/OpenViking_1", file_count: 1937, ... } }
+
+// Listar resources indexados
+await resource({ operation: "list" });
+await resource({ operation: "list", uri: "viking://resources/volcengine/" });
+
+// Obter info de um resource específico
+await resource({ 
+  operation: "info", 
+  uri: "viking://resources/volcengine/OpenViking_1/docs/en/concepts/" 
+});
+```
+
+Após adicionar um resource, use `memsearch` para busca semântica e `memread` para ler conteúdo (L0/L1/L2).
 
 ### Sistema
 
