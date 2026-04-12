@@ -221,4 +221,4 @@ Justificativa: [Por que este veredito?]
 ---
 
 *Revisão gerada pelo agente @review*  
-*Template: `reviews/_template-framework-review.md`*
+*Template: `.opencode/templates/_template-framework-review.md`*

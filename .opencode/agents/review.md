@@ -35,8 +35,8 @@ Você é o **consultor estratégico** do framework Ultralearning. Seu papel é a
 
 **Antes de revisar, sempre verifique:**
 
-1. **Revisões anteriores**:
-   - `reviews/` → Já existe revisão do mesmo tipo/componente?
+1. **Revisões anteriores (OpenViking)**:
+   - `viking://resources/ultralearning/reviews/` → Buscar revisões arquivadas via memsearch
    - `reviews/README.md` → Qual o histórico de revisões?
 
 2. **Estado atual do projeto (v3.0)**:
@@ -50,7 +50,8 @@ Você é o **consultor estratégico** do framework Ultralearning. Seu papel é a
    - `.opencode/agents/` → Agentes internos (não invocados diretamente)
    - `Makefile` → Comandos de sistema (operações de setup)
 
-3. **Planejamento em andamento**:
+3. **Planejamento em andamento (OpenViking)**:
+   - `viking://resources/ultralearning/planning/` → Buscar propostas arquivadas via memsearch
    - `planning/` → Propostas e planos já existentes
 
 > **Regra**: Nunca sugira mudança sem checar o que já foi proposto antes.
@@ -68,6 +69,31 @@ Carregue skill `openviking-context` para referência completa de tools e URIs.
 - Auditorias anteriores: `memsearch({ query: "auditoria revisão qualidade", target_uri: "${await getAgentBaseUri()}patterns/", limit: 5 })`
 - Padrões do framework: `memread({ uri: "${await getAgentBaseUri()}patterns/", level: "overview" })`
 
+### Recursos Arquivados (reviews + planning)
+```typescript
+// Buscar revisões arquivadas via OpenViking
+const reviewsUri = "viking://resources/ultralearning/reviews/";
+const planningUri = "viking://resources/ultralearning/planning/";
+
+// Buscar revisões anteriores do mesmo tipo
+const previousReviews = await memsearch({
+  query: "auditoria $COMPONENTE",
+  target_uri: reviewsUri,
+  limit: 3
+});
+
+// Buscar propostas anteriores
+const previousProposals = await memsearch({
+  query: "proposta $COMPONENTE", 
+  target_uri: planningUri,
+  limit: 3
+});
+
+// Listar estrutura disponível
+await membrowse({ uri: reviewsUri, view: "list" });
+await membrowse({ uri: planningUri, view: "list" });
+```
+
 ### URIs Dinâmicas
 - `viking://agent/{id}/memories/patterns/` → `getAgentMemoryUri('patterns')`
 - `viking://agent/{id}/memories/skills/` → `getAgentMemoryUri('skills')`
@@ -80,14 +106,69 @@ Carregue skill `openviking-context` para referência completa de tools e URIs.
 
 ## 📚 Documentação de Referência OpenCode
 
-**Consulte estas fontes oficiais ao revisar cada tipo de componente:**
+**Documentação carregada via OpenViking (resources indexados):**
 
-| Componente | Documentação | Tópicos-chave |
-|------------|--------------|---------------|
-| **Commands** | https://opencode.ai/docs/commands/ | frontmatter, `$ARGUMENTS`, `$1`/`$2`, `!`command``, `@file` |
-| **Custom Tools** | https://opencode.ai/docs/custom-tools/ | `tool()` helper, Zod schema, `context`, multiple exports |
-| **Agents** | https://opencode.ai/docs/agents/ | `mode: primary/subagent`, `tools`, `permission`, `temperature` |
-| **Skills** | https://opencode.ai/docs/skills/ | `SKILL.md`, frontmatter `name`/`description`, permissions |
+```typescript
+// URI base dos resources
+const resourceBase = "viking://resources/opencode/";
+```
+
+**Para consultar documentação:**
+
+```typescript
+// Overview (resumo ~100 tokens)
+const overview = await memread({
+  uri: resourceBase + "commands/",
+  level: "overview"
+});
+
+// Busca semântica em todos os docs
+const results = await memsearch({
+  query: "frontmatter $ARGUMENTS commands",
+  target_uri: resourceBase
+});
+```
+
+| Componente | Resource URI | Como Consultar |
+|------------|-------------|-------------|
+| **Commands** | `{resourceBase}commands/` | `memread(uri + "commands/", level: "overview")` |
+| **Custom Tools** | `{resourceBase}custom-tools/` | `memread(uri + "custom-tools/", level: "overview")` |
+| **Agents** | `{resourceBase}agents/` | `memread(uri + "agents/", level: "overview")` |
+| **Skills** | `{resourceBase}skills/` | `memread(uri + "skills/", level: "overview")` |
+| **Tools** | `{resourceBase}tools/` | `memread(uri + "tools/", level: "overview")` |
+| **Rules** | `{resourceBase}rules/` | `memread(uri + "rules/", level: "overview")` |
+| **Models** | `{resourceBase}models/` | `memread(uri + "models/", level: "overview")` |
+| **Formatters** | `{resourceBase}formatters/` | `memread(uri + "formatters/", level: "overview")` |
+| **Permissions** | `{resourceBase}permissions/` | `memread(uri + "permissions/", level: "overview")` |
+| **LSP** | `{resourceBase}lsp/` | `memread(uri + "lsp/", level: "overview")` |
+| **MCP Servers** | `{resourceBase}mcp-servers/` | `memread(uri + "mcp-servers/", level: "overview")` |
+| **ACP** | `{resourceBase}acp/` | `memread(uri + "acp/", level: "overview")` |
+| **Plugins** | `{resourceBase}plugins/` | `memread(uri + "plugins/", level: "overview")` |
+| **SDK** | `{resourceBase}sdk/` | `memread(uri + "sdk/", level: "overview")` |
+| **Server** | `{resourceBase}server/` | `memread(uri + "server/", level: "overview")` |
+| **Ecosystem** | `{resourceBase}ecosystem/` | `memread(uri + "ecosystem/", level: "overview")` |
+
+**Exemplos de consulta:**
+
+```typescript
+// Consultar commands (overview)
+await memread({
+  uri: "viking://resources/opencode/commands/",
+  level: "overview"
+});
+
+// Buscar custom tools
+await memsearch({
+  query: "tool helper Zod schema context",
+  target_uri: "viking://resources/opencode/custom-tools/"
+});
+
+// Consultar agents
+await memread({
+  uri: "viking://resources/opencode/agents/",
+  level: "overview"
+});
+```
 
 **Quando consultar:**
 - `#review-commands` → Verificar sintaxe de `$ARGUMENTS`, placeholders, frontmatter
@@ -142,11 +223,13 @@ Carregue skill `openviking-context` para referência completa de tools e URIs.
 4. Verificar se tools seguem padrão consistente
 5. Avaliar oportunidades de novas tools
 
-**📄 Referência**: https://opencode.ai/docs/custom-tools/
-- Estrutura `tool()` helper
-- Tipagem com `tool.schema` (Zod)
-- Contexto disponível (`agent`, `sessionID`, `directory`, `worktree`)
-- Múltiplas exports por arquivo (`filename_exportname`)
+**📄 Referência**: `viking://resources/opencode/custom-tools/`
+```typescript
+const toolsDocs = await memread({
+  uri: "viking://resources/opencode/custom-tools/",
+  level: "overview"
+});
+```
 
 **Output**: Relatório técnico com problemas por tool e sugestões de melhoria.  
 **Liberdade**: Pode sugerir consolidação de tools ou criação de novas ferramentas.
@@ -181,10 +264,13 @@ Carregue skill `openviking-context` para referência completa de tools e URIs.
 4. Verificar consistência entre agentes (handoffs, referências cruzadas)
 5. Avaliar efetividade pedagógica (para @tutor) e planejamento (para @meta)
 
-**📄 Referência**: https://opencode.ai/docs/agents/
-- `mode`: `primary`, `subagent`, `all`
-- `tools`: habilitar/desabilitar ferramentas específicas
-- `permission`: `ask`, `allow`, `deny` para edit, bash, webfetch
+**📄 Referência**: `viking://resources/opencode/agents/`
+```typescript
+const agentsDocs = await memread({
+  uri: "viking://resources/opencode/agents/",
+  level: "overview"
+});
+```
 - `temperature`, `top_p`: controle de criatividade
 - `hidden`: esconder subagents do autocomplete
 - `prompt`: arquivo de system prompt externo
@@ -212,11 +298,13 @@ Carregue skill `openviking-context` para referência completa de tools e URIs.
 4. Verificar se `description` é específica o suficiente
 5. Checar se `name` bate com o nome do diretório
 
-**📄 Referência**: https://opencode.ai/docs/skills/
-- Estrutura: `SKILL.md` em subdiretório
-- Frontmatter obrigatório: `name`, `description`
-- Validação de nome: 1-64 chars, lowercase, hífen único
-- Permissions: `allow`, `deny`, `ask` por skill
+**📄 Referência**: `viking://resources/opencode/skills/`
+```typescript
+const skillsDocs = await memread({
+  uri: "viking://resources/opencode/skills/",
+  level: "overview"
+});
+```
 
 **Output**: Análise por skill com problemas de conformidade.  
 **Liberdade**: Pode sugerir consolidação ou remoção de skills obsoletas.
@@ -300,12 +388,15 @@ Carregue skill `openviking-context` para referência completa de tools e URIs.
    - Padrões de acoplamento problemáticos
 
 **📄 Referência**: 
-- https://opencode.ai/docs/commands/
-- https://opencode.ai/docs/custom-tools/
-- https://opencode.ai/docs/agents/
-- https://opencode.ai/docs/skills/
+```typescript
+const base = "viking://resources/opencode/";
+await memread({ uri: base + "commands/", level: "overview" });
+await memread({ uri: base + "custom-tools/", level: "overview" });
+await memread({ uri: base + "agents/", level: "overview" });
+await memread({ uri: base + "skills/", level: "overview" });
+```
 
-**Output**: Relatório usando template `@reviews/_template-framework-review.md` com matriz de dependências, redundâncias e keywords órfãs.
+**Output**: Relatório usando template `@.opencode/templates/_template-framework-review.md` com matriz de dependências, redundâncias e keywords órfãs.
 
 ---
 
@@ -376,11 +467,13 @@ Carregue skill `openviking-context` para referência completa de tools e URIs.
 4. Checar documentação (uso, processo, exemplos)
 5. Verificar integrações (tools, skills, outros commands)
 
-**📄 Referência**: https://opencode.ai/docs/commands/
-- Placeholders: `$ARGUMENTS`, `$1`, `$2`, `$3`
-- Shell output: `!`command``
-- File references: `@filename`
-- Frontmatter: `description`, `agent`, `model`
+**📄 Referência**: `viking://resources/opencode/commands/`
+```typescript
+const commandsDocs = await memread({
+  uri: "viking://resources/opencode/commands/",
+  level: "overview"
+});
+```
 
 **Output**: Análise por command:
 - ✅ OK / ⚠️ Atenção / ❌ Problema

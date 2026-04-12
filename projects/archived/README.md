@@ -17,7 +17,6 @@ Esta pasta armazena projetos que foram **concluídos**, mantendo todo o históri
 archived/
 ├── README.md                    # Este arquivo
 ├── indice.md                    # Lista de projetos arquivados
-├── _template-relatorio.md       # Template para relatório de arquivamento
 └── [modulo]/                    # Organizado por módulo de origem
     └── [YYYY-MM-DD]-[nome]/     # Pasta do projeto (data + nome)
         ├── README.md            # README original do projeto
@@ -27,6 +26,10 @@ archived/
         ├── knowledge/           # Conceitos e flashcards
         └── meta/                # Planos e metadados
 ```
+
+## Templates
+
+Templates centralizados em [`.opencode/templates/`](../.opencode/templates/)
 
 ## Como Arquivar um Projeto
 
@@ -81,7 +84,7 @@ Todo projeto arquivado DEVE incluir um `relatorio-final.md` com:
 - **Lições aprendidas**: Insights para projetos futuros
 - **Links úteis**: Referências e recursos importantes
 
-Use o template: [`_template-relatorio.md`](./_template-relatorio.md)
+Use o template centralizado: [`.opencode/templates/_template-relatorio.md`](../.opencode/templates/_template-relatorio.md)
 
 ## Índice de Projetos
 

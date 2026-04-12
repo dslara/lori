@@ -453,7 +453,7 @@ Estes tópicos são importantes mas ficam para após o curso de 22 meses:
 ### Arquivos de Suporte
 - `learning-map.md` - Este arquivo (mapa principal)
 - `resources.md` - Recursos organizados por phase
-- `_template-week.md` - Template para criar semanas
+- `_template-week.md` - Template para criar semanas (em [`.opencode/templates/`](../.opencode/templates/))
 
 ---
 

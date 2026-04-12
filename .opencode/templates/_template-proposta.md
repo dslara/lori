@@ -218,4 +218,4 @@
 ---
 
 *Proposta gerada pelo agente @review*  
-*Template: `planning/_template-proposta.md`*
+*Template: `.opencode/templates/_template-proposta.md`*

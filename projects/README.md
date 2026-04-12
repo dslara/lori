@@ -57,7 +57,7 @@ A pasta `shared/` contém recursos transversais a múltiplos projetos:
 |---------------|-----------|
 | `master-learning-map.md` | Visão global do plano atual — timeline, dependências, milestones |
 | `resources-master.md` | Recursos globais: comunidades, plataformas, estratégia LeetCode |
-| `_template-week.md` | Template para criar arquivos de semana |
+| `_template-week.md` | Template para criar arquivos de semana (em [`.opencode/templates/`](../.opencode/templates/)) |
 | `buffer-week.md` | Template para semanas de buffer |
 | `flashcards/` | Master deck SRS + decks por projeto |
 | `retrospectives/` | Retrospectivas trimestrais |

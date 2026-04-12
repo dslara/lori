@@ -225,8 +225,10 @@ export async function makeRequest<T = any>(
     if (!response.ok) {
       const errorText = await response.text();
       let errorMessage: string;
+      let errorDetails: any = null;
       try {
         const errorJson = JSON.parse(errorText);
+        errorDetails = errorJson;
         const rawError = errorJson.error || errorJson.message;
         if (typeof rawError === "string") {
           errorMessage = rawError;
@@ -242,7 +244,10 @@ export async function makeRequest<T = any>(
       switch (response.status) {
         case 401:
         case 403:
-          throw new Error("Authentication failed. Please check API key configuration.");
+          throw new Error(`Authentication/Authorization failed (${response.status}). Check API key and permissions. Details: ${errorMessage}`);
+        case 422:
+          const validationErrors = errorDetails?.detail ? JSON.stringify(errorDetails.detail) : "";
+          throw new Error(`Validation error (422): ${errorMessage}${validationErrors ? `. Details: ${validationErrors}` : ""}`);
         case 404:
           throw new Error(`Resource not found: ${options.endpoint}`);
         case 500:

@@ -95,7 +95,7 @@ Consolidar problemas encontrados:
 
 ## Output
 
-Gerar relatório usando **template**: `@reviews/_template-framework-review.md`
+Gerar relatório usando **template**: `@.opencode/templates/_template-framework-review.md`
 
 O template já define estrutura completa. Preencher com:
 - **Tipo**: `complete`
