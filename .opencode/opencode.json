@@ -15,8 +15,8 @@
         "baseURL": "http://127.0.0.1:1234/v1"
       },
       "models": {
-        "google/gemma-4-e4b": {
-          "name": "Gemma 4 4b (local)"
+        "google/gemma-4-26b-a4b": {
+          "name": "Gemma 4 26b (local)"
         }
       }
     }
@@ -108,6 +108,9 @@
         "skill": true
       },
       "permission": {
+        "skill": {
+          "caveman": "allow"
+        },
         "edit": "allow",
         "write": "allow",
         "bash": "allow"
@@ -127,6 +130,42 @@
         "edit": "allow",
         "write": "allow",
         "bash": "allow"
+      }
+    },
+    "agentforge": {
+      "description": "Especialista em criar e revisar agentes OpenCode otimizados",
+      "mode": "subagent",
+      "temperature": 0.3,
+      "permission": {
+        "edit": "allow",
+        "write": "allow",
+        "bash": "deny",
+        "skill": {
+          "caveman": "allow"
+        },
+        "task": {
+          "*": "deny",
+          "explore": "allow",
+          "general": "ask"
+        }
+      }
+    },
+    "docs": {
+      "description": "Especialista em documentação do framework Ultralearning. Revisa, melhora, cria e padroniza docs para humanos e agentes AI.",
+      "mode": "subagent",
+      "temperature": 0.3,
+      "permission": {
+        "edit": "allow",
+        "write": "allow",
+        "bash": "deny",
+        "skill": {
+          "caveman": "allow"
+        },
+        "task": {
+          "*": "deny",
+          "explore": "allow",
+          "general": "ask"
+        }
       }
     }
   }

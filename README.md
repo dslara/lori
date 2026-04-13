@@ -344,7 +344,6 @@ O projeto está organizado em pastas especializadas:
 | `.opencode/agents/` | Agentes opencode com frontmatter YAML | — |
 | `.opencode/commands/` | 29 commands `/ul-*` (interface principal) | — |
 | `.opencode/tools/` | 9 tools TypeScript (processamento de dados) | — |
-| `.opencode/skills/` | Skills carregadas on-demand pelos agentes | [Template](.opencode/skills/_template-skill/SKILL.md) |
 | `data/` | Base de dados local (CSV) | [schema.md](data/schema.md) |
 | `projects/` | Módulos e projetos de aprendizado | [README](projects/README.md) |
 | `guides/` | Biblioteca de técnicas e princípios de aprendizado | [README](guides/README.md) |
