@@ -77,7 +77,7 @@ cat projects/M1-math-foundations/projects/symbols-essentials/practice/symbols-dr
 
 ```bash
 # Use o command para criar cards dinamicamente
-/ul-memory-create
+/ul-study-memorize
 ```
 
 **O que acontece**:
@@ -88,7 +88,7 @@ cat projects/M1-math-foundations/projects/symbols-essentials/practice/symbols-dr
 
 **Verificar cards criados**:
 ```bash
-/ul-memory-review
+/ul-study-recall
 ```
 
 ---
@@ -97,7 +97,7 @@ cat projects/M1-math-foundations/projects/symbols-essentials/practice/symbols-dr
 
 **Rotina diária até 100% de recall**:
 ```bash
-/ul-memory-review
+/ul-study-recall
 ```
 
 **Sistema SM-2**:
@@ -125,7 +125,7 @@ cat projects/M1-math-foundations/projects/symbols-essentials/practice/symbols-dr
 
 ```bash
 # Use o command Feynman para validar compreensão
-/ul-practice-feynman "símbolos matemáticos"
+/ul-study-feynman "símbolos matemáticos"
 ```
 
 **Você deve conseguir explicar**:
@@ -160,7 +160,7 @@ Você completou este projeto quando:
 
 **Ver estatísticas SRS**:
 ```bash
-/ul-memory-review
+/ul-study-recall
 ```
 
 ---
@@ -186,9 +186,9 @@ Após concluir este projeto:
 
 ## 💡 Dicas
 
-- **Errou algo?** → Adicione ao SRS imediatamente (`/ul-memory-create`)
-- **Travado?** → Use `/ul-productivity-start` para destravar
-- **Quer aprofundar?** → Use `/ul-learn-explain` em um símbolo específico
+- **Errou algo?** → Adicione ao SRS imediatamente (`/ul-study-memorize`)
+- **Travado?** → Use `/ul-study-start` para destravar
+- **Quer aprofundar?** → Use `/ul-study-learn` em um símbolo específico
 
 ---
 

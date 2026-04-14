@@ -1,5 +1,5 @@
 ---
-description: Warm-up com quiz adaptativo (/ul-practice-quiz)
+description: Warm-up com quiz adaptativo (/ul-study-quiz)
 agent: tutor
 model: opencode-go/glm-5
 ---
@@ -7,7 +7,7 @@ model: opencode-go/glm-5
 Argumentos recebidos: $ARGUMENTS
 
 ## Uso
-/ul-practice-quiz [N] [tópico]
+/ul-study-quiz [N] [tópico]
 
 ## Descrição
 
@@ -17,7 +17,7 @@ Quiz de 3-5 perguntas para retrieval practice. Dificuldade adaptativa baseada no
 
 ### Passo 1: Determinar Parâmetros
 
-**Se usuário forneceu:** `/ul-practice-quiz 5 "algoritmos"`
+**Se usuário forneceu:** `/ul-study-quiz 5 "algoritmos"`
 - N = 5 perguntas
 - Tópico = "algoritmos"
 
@@ -118,9 +118,9 @@ Apresentar resultados:
 • [Tópico B]: 33% ⚠️ (revisar)
 
 💡 Recomendações:
-• Tópico B com dificuldade → /ul-practice-feynman
-• Praticar mais → /ul-practice-drill [tópico B]
-• Criar flashcard → /ul-memory-create
+• Tópico B com dificuldade → /ul-study-feynman
+• Praticar mais → /ul-study-drill [tópico B]
+• Criar flashcard → /ul-study-memorize
 ```
 
 As interações do quiz são registradas automaticamente em `session_skills.csv`via `memcommit()` no final da sessão.
@@ -128,7 +128,7 @@ As interações do quiz são registradas automaticamente em `session_skills.csv`
 ## Exemplo Completo
 
 ```
-Usuário: /ul-practice-quiz 3 "goroutines"
+Usuário: /ul-study-quiz 3 "goroutines"
 
 Sistema:
 "🧠 Quiz - 3 perguntas sobre Goroutines
@@ -205,7 +205,7 @@ canal.
 🎯 Excelente! Goroutines dominadas.
 
 💡 Próximo passo:
-• Praticar canais → /ul-practice-quiz 3 "canais"
+• Praticar canais → /ul-study-quiz 3 "canais"
 • Ou iniciar sessão → /ul-study-start"
 ```
 
@@ -218,9 +218,9 @@ canal.
 - Preparação para entrevistas
 
 ❌ **NÃO USE para:**
-- Aprender conceito novo → `/ul-learn-explain`
-- Praticar procedimentos → `/ul-practice-drill`
-- Validar compreensão profunda → `/ul-practice-feynman`
+- Aprender conceito novo → `/ul-study-learn`
+- Praticar procedimentos → `/ul-study-drill`
+- Validar compreensão profunda → `/ul-study-feynman`
 
 **Ideal:** 1 quiz por dia, 3-5 perguntas, 5 minutos.
 
@@ -232,17 +232,17 @@ canal.
 
 **Commands relacionados:**
 - `/ul-study-start` — Sugere quiz como warm-up
-- `/ul-practice-feynman` — Se errar conceitos
-- `/ul-practice-drill` — Se precisar praticar mais
-- `/ul-memory-review` — Para retenção de longo prazo
+- `/ul-study-feynman` — Se errar conceitos
+- `/ul-study-drill` — Se precisar praticar mais
+- `/ul-study-recall` — Para retenção de longo prazo
 
 ## Handoff
 
 - Acertou tudo → `/ul-study-start` ou novo desafio
-- Errou conceitos → `/ul-practice-feynman` ou `/ul-learn-explain`
-- Errou procedimentos → `/ul-practice-drill`
-- Padrão de erro → `/ul-memory-create`
+- Errou conceitos → `/ul-study-feynman` ou `/ul-study-learn`
+- Errou procedimentos → `/ul-study-drill`
+- Padrão de erro → `/ul-study-memorize`
 
 ---
 
-*Command: /ul-practice-quiz — Retrieval practice com dificuldade adaptativa*
+*Command: /ul-study-quiz — Retrieval practice com dificuldade adaptativa*

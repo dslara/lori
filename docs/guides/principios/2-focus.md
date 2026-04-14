@@ -325,7 +325,6 @@ Muito difícil → Frustra → Desiste
 | Técnica | Descrição | Quando usar |
 |---------|-----------|-------------|
 | [pomodoro.md](../tecnicas/pomodoro.md) | Blocos de 25 min foco + 5 min pausa | Sustentar atenção por tempo prolongado |
-| [environment-design.md](../tecnicas/environment-design.md) | Eliminar distrações do ambiente | Problemas de procrastinação e interrupções |
 | [timeboxing.md](../tecnicas/timeboxing.md) | Blocos de tempo flexíveis | Gestão de tempo em projetos |
 
 ### Técnicas Complementares
@@ -745,7 +744,6 @@ Ativo: 90% retenção (2.25x melhor!)
 - [feynman.md](../tecnicas/feynman.md) - Engajamento profundo
 - [drill.md](../tecnicas/drill.md) - Foco em repetições
 - [directness.md](../tecnicas/directness.md) - Foco em projetos
-- [Master Learning Map](../../shared/master-learning-map.md) - Visão global
 
 ---
 

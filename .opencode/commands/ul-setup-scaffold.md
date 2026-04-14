@@ -167,10 +167,10 @@ Este scaffold NÃO tem lógica de negócio.
 🎯 Próximos passos:
 1. cd [projeto] && go mod init ...
 2. Escolher primeira tarefa do TODO.md
-3. /ul-practice-project para implementar
+3. /ul-study-project para implementar
 
 Ou quer começar implementando agora?
-→ /ul-practice-project '[descrição]'
+→ /ul-study-project '[descrição]'
 ```
 
 ## Exemplo Completo
@@ -277,7 +277,7 @@ git init
 ```
 
 Quer começar implementando?
-→ /ul-practice-project 'Implementar CRUD de tarefas'
+→ /ul-study-project 'Implementar CRUD de tarefas'
 ```
 
 ## Quando Usar
@@ -296,14 +296,14 @@ Quer começar implementando?
 ## Integrações
 
 **Commands relacionados:**
-- `/ul-practice-project` — Implementar funcionalidades
-- `/ul-learn-explain` — Se não entende estrutura
+- `/ul-study-project` — Implementar funcionalidades
+- `/ul-study-learn` — Se não entende estrutura
 - `/ul-study-start` — Começar sessão de implementação
 
 ## Handoff
 
-- Estrutura criada → `/ul-practice-project` para implementar
-- Não entende estrutura → `/ul-learn-explain`
+- Estrutura criada → `/ul-study-project` para implementar
+- Não entende estrutura → `/ul-study-learn`
 - Quer começar → `/ul-study-start`
 
 ---

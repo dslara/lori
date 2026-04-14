@@ -512,7 +512,6 @@ RESULTADO: 5h totais, focado no que precisa
 - [1-metalearning.md](../principios/1-metalearning.md) - Planejamento estratégico
 - [decomposition.md](decomposition.md) - Identificar necessidades
 - [mindmap.md](mindmap.md) - Mapear cobertura
-- [indice.md](indice.md) - Índice completo
 
 ---
 

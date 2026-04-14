@@ -73,9 +73,9 @@ Carregar ON-DEMAND com `skill({ name: "nome" })`:
 | Skill | Command | Uso |
 |-------|---------|-----|
 | `session` | `/ul-study-start`, `/ul-study-end`, `/ul-study-plan` | Orquestrar sessão |
-| `directness` | `/ul-practice-project` | Projetos reais |
-| `debug-socratic` | `/ul-learn-debug` | Encontrar bugs |
-| `srs-generator` | `/ul-memory-create`, `/ul-memory-review` | Flashcards SRS |
+| `directness` | `/ul-study-project` | Projetos reais |
+| `debug-socratic` | `/ul-study-debug` | Encontrar bugs |
+| `srs-generator` | `/ul-study-memorize`, `/ul-study-recall` | Flashcards SRS |
 
 ---
 
@@ -83,11 +83,10 @@ Carregar ON-DEMAND com `skill({ name: "nome" })`:
 
 | Command | Uso |
 |---------|-----|
-| `/ul-practice-drill` | Prática deliberada 5-10x |
-| `/ul-practice-feynman` | Explicar como para criança |
-| `/ul-learn-explain` | Introduzir conceito novo |
-| `/ul-practice-quiz` | Retrieval practice 3-5 perguntas |
-| `/ul-productivity-start` | Two-Minute Rule |
+| `/ul-study-drill` | Prática deliberada 5-10x |
+| `/ul-study-feynman` | Explicar como para criança |
+| `/ul-study-learn` | Introduzir conceito novo |
+| `/ul-study-quiz` | Retrieval practice 3-5 perguntas |
 | `/ul-setup-scaffold` | Criar boilerplate |
 
 ---
@@ -98,13 +97,11 @@ Carregar ON-DEMAND com `skill({ name: "nome" })`:
 Peça código → NÃO corrija → Faça perguntas → Aponte padrões → Sugira refatorações com perguntas.
 
 ### `#intuition [CONCEITO]` - Entender o "Por Quê"
-Pergunte "por quê?" 3 vezes → Conecte princípios → Use analogias. Você explica (diferença de `/ul-practice-feynman`).
+Pergunte "por quê?" 3 vezes → Conecte princípios → Use analogias. Você explica (diferença de `/ul-study-feynman`).
 
 ### `#experiment [CONCEITO]` - Explorar Alternativas
 Identifique 2-3 soluções → Pergunte trade-offs → NÃO diga "melhor" → Compare: legibilidade, performance, manutenibilidade.
 
-### `/ul-productivity-break` - Modo Difuso
-Travado >30 min → Pare → Pausa 15 min → Relaxe (não code) → Retorne fresco.
 
 ---
 
@@ -115,16 +112,14 @@ Travado >30 min → Pare → Pausa 15 min → Relaxe (não code) → Retorne fre
 | `/ul-study-start` | Iniciar sessão | `session` ✓ |
 | `/ul-study-end` | Encerrar sessão | `session` ✓ |
 | `/ul-study-plan` | Progresso da semana | `session` ✓ |
-| `/ul-practice-project` | Projeto real | `directness` ✓ |
-| `/ul-practice-feynman` | Validar compreensão | - |
-| `/ul-practice-drill` | Repetição deliberada | - |
-| `/ul-practice-quiz` | Warm-up/retrieval | - |
-| `/ul-productivity-start` | Procrastinação | - |
-| `/ul-productivity-break` | Travado em bug | - |
+| `/ul-study-project` | Projeto real | `directness` ✓ |
+| `/ul-study-feynman` | Validar compreensão | - |
+| `/ul-study-drill` | Repetição deliberada | - |
+| `/ul-study-quiz` | Warm-up/retrieval | - |
 | `/ul-setup-scaffold` | Setup projeto | - |
-| `/ul-learn-debug` | Encontrar bugs | `debug-socratic` ✓ |
-| `/ul-memory-create` | Criar flashcards | `srs-generator` ✓ |
-| `/ul-memory-review` | Revisar flashcards | `srs-generator` ✓ |
+| `/ul-study-debug` | Encontrar bugs | `debug-socratic` ✓ |
+| `/ul-study-memorize` | Criar flashcards | `srs-generator` ✓ |
+| `/ul-study-recall` | Revisar flashcards | `srs-generator` ✓ |
 | `#feedback` | Revisar código | - |
 | `#intuition` | Entender "por quê" | - |
 | `#experiment` | Comparar abordagens | - |
@@ -134,8 +129,8 @@ Travado >30 min → Pare → Pausa 15 min → Relaxe (não code) → Retorne fre
 ## Pontos Fracos
 
 **Início de sessão**: `weakness.identifyWeaknesses` silenciosamente.
-- error_rate > 40% → `/ul-practice-feynman`
-- error_rate 30-40% → `/ul-practice-drill`
+- error_rate > 40% → `/ul-study-feynman`
+- error_rate 30-40% → `/ul-study-drill`
 
 **Durante sessão**: Erro 3+ vezes → adicionar aos pontos fracos.
 
@@ -172,10 +167,10 @@ Antes de cada resposta:
 |------|-------|--------|---------|
 | Domingo | `/ul-plan-weekly` | - | - |
 | Início sessão | - | `/ul-study-start` | - |
-| Segunda-Sábado | - | `/ul-practice-*` | - |
+| Segunda-Sábado | - | `/ul-study-drill`, `/ul-study-quiz` | - |
 | Fim sessão | - | `/ul-study-end` | - |
-| Fim semana | - | Sugere `@meta /ul-retro-weekly` | - |
-| Fim módulo | `/ul-retro-weekly` final | - | `/ul-review-audit` |
+| Fim semana | - | Sugere `@meta /ul-plan-retro` | - |
+| Fim módulo | `/ul-plan-retro` final | - | `/fw-review-audit` |
 
 ---
 

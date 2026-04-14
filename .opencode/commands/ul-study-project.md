@@ -1,5 +1,5 @@
 ---
-description: Aprender fazendo projetos reais (/ul-practice-project)
+description: Aprender fazendo projetos reais (/ul-study-project)
 agent: tutor
 model: opencode-go/kimi-k2.5
 ---
@@ -7,7 +7,7 @@ model: opencode-go/kimi-k2.5
 Argumento recebido: $ARGUMENTS (descrição do desafio)
 
 ## Uso
-/ul-practice-project [desafio]
+/ul-study-project [desafio]
 
 ## Descrição
 
@@ -52,7 +52,7 @@ O command permanece ativo enquanto a skill executa. O progresso é salvo automat
 ## Exemplo de Interação
 
 ```
-Usuário: /ul-practice-project "API REST com autenticação"
+Usuário: /ul-study-project "API REST com autenticação"
 
 Sistema:
 "Ótimo desafio! Antes de começarmos:
@@ -89,8 +89,8 @@ Vamos criar a estrutura base. Você já tem o Go instalado?
 - Resolver problemas práticos
 
 ❌ **NÃO USE para:**
-- Aprender sintaxe básica → `/ul-practice-drill`
-- Validar compreensão → `/ul-practice-feynman`
+- Aprender sintaxe básica → `/ul-study-drill`
+- Validar compreensão → `/ul-study-feynman`
 - Setup rápido → `/ul-setup-scaffold`
 
 ## Integrações
@@ -104,14 +104,14 @@ Vamos criar a estrutura base. Você já tem o Go instalado?
 **Commands relacionados:**
 - `/ul-setup-scaffold` — Setup inicial de estrutura
 - `/ul-study-end` — Encerrar e salvar sessão
-- `/ul-learn-debug` — Se travar em bugs
+- `/ul-study-debug` — Se travar em bugs
 
 ## Handoff
 
-- Usuário travou em bug → `/ul-learn-debug`
-- Usuário quer pausar → `/ul-productivity-break`
+- Usuário travou em bug → `/ul-study-debug`
+- Usuário quer pausar → Faça uma pausa de 15 min (modo difuso)
 - Projeto completo → `/ul-study-end` para salvar
 
 ---
 
-*Command: /ul-practice-project — Wrapper para skill directness*
+*Command: /ul-study-project — Wrapper para skill directness*

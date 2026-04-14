@@ -386,8 +386,8 @@ Após completar este drill, você deve conseguir:
 
 ## 🔄 Próximos Passos
 
-1. **Errou algo?** → Adicione ao SRS com `/ul-memory-create`
-2. **Acertou tudo?** → Use `/ul-practice-feynman "símbolos"` para validar compreensão
+1. **Errou algo?** → Adicione ao SRS com `/ul-study-memorize`
+2. **Acertou tudo?** → Use `/ul-study-feynman "símbolos"` para validar compreensão
 3. **Quer mais prática?** → Repita este drill amanhã
 
 ---

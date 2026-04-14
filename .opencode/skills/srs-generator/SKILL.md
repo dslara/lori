@@ -24,8 +24,8 @@ metadata:
 
 | Modo | Keyword | Uso |
 |------|---------|-----|
-| **Individual** | `/ul-memory-create` | Criar 1 card por vez |
-| **Batch** | `/ul-memory-create batch` | Criar múltiplos cards de uma vez |
+| **Individual** | `/ul-study-memorize` | Criar 1 card por vez |
+| **Batch** | `/ul-study-memorize batch` | Criar múltiplos cards de uma vez |
 
 ## O que é srs-generator
 
@@ -47,8 +47,8 @@ Gerar flashcards de spaced repetition automaticamente baseados:
 
 ❌ **NÃO USE** para:
 - Importar bulk de cards pré-definidos → use `import-cards.sh`
-- Revisar cards → use `@tutor /ul-memory-create review` (tool `data.getFlashcards`)
-- Validar compreensão → use `/ul-practice-feynman`
+- Revisar cards → use `@tutor /ul-study-memorize review` (tool `data.getFlashcards`)
+- Validar compreensão → use `/ul-study-feynman`
 
 ---
 
@@ -59,9 +59,9 @@ Cria um card por vez, com interação completa.
 
 ### Modo Batch (lote)
 Cria múltiplos cards de uma vez. Use:
-- `/ul-memory-create batch`
-- `/ul-memory-create bulk`
-- `/ul-memory-create múltiplos`
+- `/ul-study-memorize batch`
+- `/ul-study-memorize bulk`
+- `/ul-study-memorize múltiplos`
 
 ---
 
@@ -161,7 +161,7 @@ Informe o usuário:
 ```
 ✅ Card adicionado!
 📅 Próxima revisão: hoje
-📊 Use `@tutor /ul-memory-create review` para revisar cards pendentes
+📊 Use `@tutor /ul-study-memorize review` para revisar cards pendentes
 ```
 
 Ofereça opções:
@@ -178,10 +178,10 @@ Use quando quiser criar múltiplos cards de uma vez.
 ### Passo 1: Detectar Modo Batch
 
 Se o usuário escrever:
-- `/ul-memory-create batch`
-- `/ul-memory-create bulk`
-- `/ul-memory-create múltiplos`
-- `/ul-memory-create 5` (número indica quantidade)
+- `/ul-study-memorize batch`
+- `/ul-study-memorize bulk`
+- `/ul-study-memorize múltiplos`
+- `/ul-study-memorize 5` (número indica quantidade)
 
 → Use o modo batch.
 
@@ -266,13 +266,13 @@ for (const card of cards) {
 ✅ 7 cards adicionados ao SRS!
 
 📅 Todos disponíveis para revisão hoje
-📊 Use `@tutor /ul-memory-create review` para revisar cards pendentes
+📊 Use `@tutor /ul-study-memorize review` para revisar cards pendentes
 ```
 
 ### Exemplo de Interação: Modo Batch
 
 ```
-Usuário: "/ul-memory-create batch"
+Usuário: "/ul-study-memorize batch"
 
 Você: "
 📚 Modo Batch: Símbolos Matemáticos
@@ -315,7 +315,7 @@ Usuário: "s"
 Você: "
 ✅ 7 cards adicionados ao SRS!
 📅 Todos disponíveis para revisão hoje
-📊 Use '/ul-memory-review' para revisar
+📊 Use '/ul-study-recall' para revisar
 "
 ```
 
@@ -324,7 +324,7 @@ Você: "
 ## Exemplo de Interação: Modo Batch
 
 ```
-Usuário: "/ul-memory-create"
+Usuário: "/ul-study-memorize"
 
 Você: "
 📚 Contexto detectado: M1-math-foundations (Semana 5)
@@ -385,15 +385,15 @@ Quer criar outro card? (s/n)
 ## Handoff
 
 - **Revisar agora?** → Execute a revisão manualmente (veja abaixo)
-- **Criar mais cards?** → `/ul-memory-create` novamente
-- **Validar compreensão?** → `/ul-practice-feynman [conceito]`
-- **Praticar conceito?** → `/ul-practice-drill [conceito]`
+- **Criar mais cards?** → `/ul-study-memorize` novamente
+- **Validar compreensão?** → `/ul-study-feynman [conceito]`
+- **Praticar conceito?** → `/ul-study-drill [conceito]`
 
 ---
 
-## 🚀 Modo Revisão Socrática (`/ul-memory-create review`)
+## 🚀 Modo Revisão Socrática (`/ul-study-memorize review`)
 
-Este modo é invocado quando o usuário executa `/ul-memory-create review`.
+Este modo é invocado quando o usuário executa `/ul-study-memorize review`.
 
 ### Passo 0: Carregar cards pendentes (via tool)
 
@@ -504,7 +504,7 @@ A tool `data.createReview` implementa o algoritmo SM-2 completo e atualiza os ca
 
 ### Atualizar card existente
 
-Para revisar cards pendentes, use `@tutor /ul-memory-create review` que invoca as tools `data.getFlashcards` (lista pendentes) e `data.createReview` (atualiza cada card).
+Para revisar cards pendentes, use `@tutor /ul-study-memorize review` que invoca as tools `data.getFlashcards` (lista pendentes) e `data.createReview` (atualiza cada card).
 
 ---
 
@@ -625,7 +625,7 @@ A **tool `data`** com operação `createReview` aplica o SM-2 automaticamente:
 
 **Colunas**: `id,user_id,module_id,front,back,category,created_at,tags,next_review,interval,easiness,reviews`
 
-**Commands**: `@tutor /ul-memory-create review` — para revisar os cards gerados
+**Commands**: `@tutor /ul-study-memorize review` — para revisar os cards gerados
 
 ## 📂 Arquivos de Referência
 

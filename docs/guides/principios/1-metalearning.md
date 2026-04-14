@@ -437,7 +437,7 @@ RECURSOS SELECIONADOS:
 
 ## 🔗 Links Relacionados
 
-- [Agente @meta](../../.opencode/agents/meta.md) - Implementação prática
+- Agente @meta - Implementação prática
 - [decomposition.md](../tecnicas/decomposition.md) - Decomposição de objetivos
 - [benchmarking.md](../tecnicas/benchmarking.md) - Avaliação de recursos
 - [mindmap.md](../tecnicas/mindmap.md) - Mapeamento visual

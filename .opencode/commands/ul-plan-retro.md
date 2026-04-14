@@ -1,11 +1,11 @@
 ---
-description: Criar retrospectiva semanal (/ul-retro-weekly)
+description: Criar retrospectiva semanal (/ul-plan-retro)
 agent: meta
 model: opencode-go/glm-5
 ---
 
 ## Uso
-/ul-retro-weekly
+/ul-plan-retro
 
 ## Descrição
 Cria retrospectiva semanal com estatísticas automáticas do módulo ativo via OpenViking.
@@ -99,7 +99,7 @@ Usuário: [digita resposta]
 
 📈 Próximos passos:
   /ul-plan-weekly 4    → Criar plano da semana 4
-  /ul-memory-review    → Revisar flashcards
+  /ul-study-recall    → Revisar flashcards
   /ul-study-start      → Continuar estudando
 ```
 
@@ -108,7 +108,7 @@ Usuário: [digita resposta]
 ### Exemplo 1: Semana produtiva
 
 ```
-Usuário: /ul-retro-weekly
+Usuário: /ul-plan-retro
 
 Sistema:
 "📝 Retrospectiva Semanal - M1-python
@@ -146,7 +146,7 @@ Próximos passos:
 ### Exemplo 2: Semana difícil
 
 ```
-Usuário: /ul-retro-weekly
+Usuário: /ul-plan-retro
 
 Sistema:
 "📝 Retrospectiva Semanal - M2-zig
@@ -178,7 +178,7 @@ Sistema:
   • Estratégia: aproveitar fim de semana
   
 💡 Recomendações:
-  • /ul-productivity-start  → Técnicas contra procrastinação
+  • /ul-study-start  → Técnicas contra procrastinação
   • /ul-plan-weekly 6      → Plano realista para próxima semana
   • Seja gentil consigo - consistência > intensidade"
 ```
@@ -284,4 +284,4 @@ Este command usa:
 
 ---
 
-*Command: /ul-retro-weekly — Retrospectiva semanal via OpenViking*
+*Command: /ul-plan-retro — Retrospectiva semanal via OpenViking*

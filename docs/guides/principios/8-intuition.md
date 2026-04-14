@@ -663,7 +663,6 @@ Década: "É óbvio que funciona assim"
 - [mindmap.md](../tecnicas/mindmap.md) - Mapeamento visual
 - [concept-map.md](../tecnicas/concept-map.md) - Hierarquias de conceitos
 - [5-retrieval.md](5-retrieval.md) - Testar conhecimento
-- [indice.md](indice.md) - Índice completo
 
 ---
 

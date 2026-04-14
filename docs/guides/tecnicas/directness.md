@@ -964,7 +964,6 @@ cargo run -- "pattern" file.txt
 - [drill.md](drill.md) - Automatizar skills antes
 - [flashcards.md](flashcards.md) - Memorizar fatos
 - [pomodoro.md](pomodoro.md) - Blocos de foco
-- [indice.md](indice.md) - Índice completo
 
 ---
 

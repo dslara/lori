@@ -694,7 +694,6 @@ fn main() {
 - [feynman.md](../tecnicas/feynman.md) - Entender conceitos
 - [flashcards.md](../tecnicas/flashcards.md) - Memorizar fatos
 - [directness.md](../tecnicas/directness.md) - Aplicar em projetos
-- [Master Learning Map](../../shared/master-learning-map.md) - Visão global
 
 ---
 

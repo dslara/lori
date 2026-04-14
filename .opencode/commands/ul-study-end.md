@@ -25,8 +25,8 @@ Finaliza sessão de estudo com reflexão estruturada, salva progresso via OpenVi
 ### Passo 2: Análise de Gaps
 
 Com base nas respostas:
-- **Se confiança < 7** → Sugerir criar flashcard (`/ul-memory-create`)
-- **Se desafio recorrente** → Sugerir mais prática (`/ul-practice-drill`)
+- **Se confiança < 7** → Sugerir criar flashcard (`/ul-study-memorize`)
+- **Se desafio recorrente** → Sugerir mais prática (`/ul-study-drill`)
 - **Se foco < 5** → Sugerir técnica pomodoro ou pausa
 
 ### Passo 3: Persistência via OpenViking
@@ -102,7 +102,7 @@ Apresentar resumo:
 Se for domingo:
 ```
 📅 Hoje é domingo — fim de semana!
-→ /ul-retro-weekly para revisar a semana
+→ /ul-plan-retro para revisar a semana
 ```
 
 ## Exemplo de Interação
@@ -140,8 +140,8 @@ Sistema:
 • Entrega: Projeto de recursão ✓
 
 💡 Recomendações:
-• Criar flashcard sobre memoization → /ul-memory-create
-• Praticar mais casos de memoization → /ul-practice-drill memoization
+• Criar flashcard sobre memoization → /ul-study-memorize
+• Praticar mais casos de memoization → /ul-study-drill memoization
 
 📅 Próxima sessão: Quarta-feira (amanhã)
    Sugestão: Continuar memoization antes de avançar"
@@ -166,15 +166,15 @@ Os dados são persistidos automaticamente via session hooks:
 
 **Commands relacionados:**
 - `/ul-study-start` — Iniciar nova sessão
-- `/ul-memory-create` — Criar flashcards para gaps
-- `/ul-retro-weekly` — Retrospectiva semanal (domingos)
+- `/ul-study-memorize` — Criar flashcards para gaps
+- `/ul-plan-retro` — Retrospectiva semanal (domingos)
 - `/ul-plan-adjust` — Ajustar cronograma se necessário
 
 ## Handoff
 
-- Usuário quer criar flashcard → `/ul-memory-create`
-- Usuário quer mais prática → `/ul-practice-drill`
-- Domingo → Sugerir `/ul-retro-weekly`
+- Usuário quer criar flashcard → `/ul-study-memorize`
+- Usuário quer mais prática → `/ul-study-drill`
+- Domingo → Sugerir `/ul-plan-retro`
 - Plano precisa de ajustes maiores → `/ul-plan-adjust`
 
 ---

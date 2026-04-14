@@ -60,8 +60,8 @@ Ou prefere: [alternativa]
 ### Passo 3: Sugestão Inteligente
 
 **Prioridades:**
-1. Se SRS pendente → Sugerir `/ul-memory-review`
-2. Se weakTopics > 0 (padrões de erro encontrados) → Sugerir `/ul-practice-drill`
+1. Se SRS pendente → Sugerir `/ul-study-recall`
+2. Se weakTopics > 0 (padrões de erro encontrados) → Sugerir `/ul-study-drill`
 3. Se continuidade (sessão anterior existe) → Sugerir mesma atividade
 4. Default → Perguntar objetivo
 
@@ -69,13 +69,13 @@ Ou prefere: [alternativa]
 
 | Situação | Command Sugerido |
 |----------|-----------------|
-| Conceito novo | `/ul-learn-explain [conceito]` |
-| Validar compreensão | `/ul-practice-feynman [conceito]` |
-| Praticar procedimento | `/ul-practice-drill [conceito]` |
-| Construir projeto | `/ul-practice-project [desafio]` |
+| Conceito novo | `/ul-study-learn [conceito]` |
+| Validar compreensão | `/ul-study-feynman [conceito]` |
+| Praticar procedimento | `/ul-study-drill [conceito]` |
+| Construir projeto | `/ul-study-project [desafio]` |
 | Setup de projeto | `/ul-setup-scaffold [projeto]` |
-| Revisar flashcards | `/ul-memory-review` |
-| Procrastinando | `/ul-productivity-start` |
+| Revisar flashcards | `/ul-study-recall` |
+| Procrastinando | `/ul-study-start` |
 
 ### Passo 4: Decisão do Usuário
 
@@ -95,10 +95,10 @@ Sistema:
 Entrega pendente: Projeto API (Parte 2)
 Ontem: completou a Parte 1 (routers + models)
 
-👉 Sugestão: /ul-practice-project 'API parte 2 — repositories e autenticação'
+👉 Sugestão: /ul-study-project 'API parte 2 — repositories e autenticação'
 Porque: é continuação direta do que ficou pendente.
 
-Ou prefere aquecer primeiro? → /ul-practice-quiz 3 autenticação"
+Ou prefere aquecer primeiro? → /ul-study-quiz 3 autenticação"
 ```
 
 **Sem plano:**
@@ -113,10 +113,10 @@ Usuário: "quero praticar recursão, tenho 45 minutos"
 
 Sistema:
 "👉 Para 45 minutos de prática focada em recursão:
-→ /ul-practice-drill recursão
+→ /ul-study-drill recursão
 
 Se preferir entender antes de praticar:
-→ /ul-learn-explain recursão → depois /ul-practice-feynman recursão"
+→ /ul-study-learn recursão → depois /ul-study-feynman recursão"
 ```
 
 ## Estrutura OpenViking
@@ -158,9 +158,9 @@ Vou te ajudar a planejar a sessão."
 **Commands relacionados:**
 - `/ul-study-end` — Encerrar sessão
 - `/ul-study-plan` — Ver progresso
-- `/ul-memory-review` — Revisar flashcards
-- `/ul-practice-*` — Práticas sugeridas
-- `/ul-learn-*` — Aprendizado sugerido
+- `/ul-study-recall` — Revisar flashcards
+- `/ul-study-drill` — Prática sugerida
+- `/ul-study-learn` — Aprendizado sugerido
 
 **Skills utilizadas:**
 - `openviking-context` — Carregar contexto hierárquico
@@ -170,7 +170,7 @@ Vou te ajudar a planejar a sessão."
 
 - Usuário aceita sugestão → Redireciona para command apropriado
 - Usuário quer planejar → `/ul-plan-weekly`
-- Usuário está atrasado → `/ul-retro-weekly` para ajustar
+- Usuário está atrasado → `/ul-plan-retro` para ajustar
 
 ---
 

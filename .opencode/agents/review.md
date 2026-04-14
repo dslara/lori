@@ -269,7 +269,7 @@ Antes de cada resposta:
 
 | Fase | Execução | Revisão |
 |------|----------|---------|
-| Estudo diário | `/ul-study-*`, `/ul-practice-*` | - |
+| Estudo diário | `/ul-study-*` | - |
 | Planejamento | `/ul-plan-*` | - |
 | Fim de ciclo | `/ul-retro-*` | `/review-audit` |
 | Sob demanda | Qualquer `/ul-*` | `#review-*` |

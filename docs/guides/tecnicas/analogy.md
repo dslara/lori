@@ -353,7 +353,6 @@ LIMITAÇÃO DA ANALOGIA:
 - [feynman.md](feynman.md) - Explicar conceitos
 - [first-principles.md](first-principles.md) - Decompor conceitos
 - [concept-map.md](concept-map.md) - Mapear relações
-- [indice.md](indice.md) - Índice completo
 
 ---
 

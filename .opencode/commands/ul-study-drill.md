@@ -1,5 +1,5 @@
 ---
-description: Prática deliberada - repetir procedimento 5-10x (/ul-practice-drill)
+description: Prática deliberada - repetir procedimento 5-10x (/ul-study-drill)
 agent: tutor
 model: opencode-go/kimi-k2.5
 ---
@@ -7,7 +7,7 @@ model: opencode-go/kimi-k2.5
 Argumentos recebidos: $ARGUMENTS
 
 ## Uso
-/ul-practice-drill [conceito] [variações]
+/ul-study-drill [conceito] [variações]
 
 ## Descrição
 
@@ -78,7 +78,7 @@ Identificar:
 
 Se ainda errar frequentemente:
 - Criar flashcard para o padrão de erro
-- Usar `/ul-practice-feynman` para entender por que erra
+- Usar `/ul-study-feynman` para entender por que erra
 - Agendar nova sessão de drill em 2-3 dias
 
 Se automatizou:
@@ -89,7 +89,7 @@ Se automatizou:
 ## Exemplo Completo
 
 ```
-Usuário: /ul-practice-drill "recursão"
+Usuário: /ul-study-drill "recursão"
 
 Sistema:
 "Ótimo! Vamos praticar recursão até automatizar.
@@ -139,7 +139,7 @@ Pronto? Digite 'começar' quando quiser iniciar o cronômetro."
 💡 Recomendações:
 • Criar flashcard para 'caso base' (erro mais comum)
 • Próximo drill em 3 dias
-• Tentar explicar recursão para validar → /ul-practice-feynman"
+• Tentar explicar recursão para validar → /ul-study-feynman"
 ```
 
 ## Quando Usar
@@ -151,9 +151,9 @@ Pronto? Digite 'começar' quando quiser iniciar o cronômetro."
 - Git workflows (muscle memory)
 
 ❌ **NÃO USE para:**
-- Conceitos abstratos → `/ul-practice-feynman`
-- Fatos isolados → `/ul-memory-review`
-- Projetos completos → `/ul-practice-project`
+- Conceitos abstratos → `/ul-study-feynman`
+- Fatos isolados → `/ul-study-recall`
+- Projetos completos → `/ul-study-project`
 - Design criativo → experimentação livre
 
 ## Integrações
@@ -162,18 +162,18 @@ Pronto? Digite 'começar' quando quiser iniciar o cronômetro."
 - `data.createFlashcard` — Cria cards para erros
 
 **Commands relacionados:**
-- `/ul-practice-feynman` — Se não entende o por que
-- `/ul-memory-create` — Para padrões de erro
+- `/ul-study-feynman` — Se não entende o por que
+- `/ul-study-memorize` — Para padrões de erro
 - `/ul-study-end` — Ao finalizar sessão
 
 **Nota**: As interações são registradas automaticamente em `session_skills.csv` via `memcommit()` no final da sessão.
 
 ## Handoff
 
-- Ainda errando → `/ul-memory-create` ou `/ul-practice-feynman`
+- Ainda errando → `/ul-study-memorize` ou `/ul-study-feynman`
 - Conseguiu automatizar → `/ul-study-end` ou novo drill
-- Travou em conceito → `/ul-learn-explain`
+- Travou em conceito → `/ul-study-learn`
 
 ---
 
-*Command: /ul-practice-drill — Prática deliberada 5-10x*
+*Command: /ul-study-drill — Prática deliberada 5-10x*

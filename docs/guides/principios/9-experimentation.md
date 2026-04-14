@@ -770,7 +770,6 @@ Você quer descobrir melhor forma de aprender Rust (Semana 7 de M2).
 - [drill.md](../tecnicas/drill.md) - Experimentar variações de procedimento
 - [directness.md](../tecnicas/directness.md) - Experimentar arquiteturas
 - [6-feedback.md](6-feedback.md) - Feedback de experimentos
-- [Master Learning Map](../../shared/master-learning-map.md) - Visão global
 
 ---
 

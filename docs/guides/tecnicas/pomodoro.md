@@ -46,7 +46,6 @@ As pausas do Pomodoro ativam o **modo difuso** do cérebro, permitindo insights 
 - **[2-focus.md](../principios/2-focus.md)** - Princípio #2: Focus
 
 **Complementa:**
-- [environment-design.md](environment-design.md) - Preparar ambiente antes
 - [focused-diffuse.md](focused-diffuse.md) - Gestão intencional dos modos
 
 ### 🔗 Relação com James Clear (Atomic Habits)
@@ -118,7 +117,6 @@ Com Pomodoro:
 **Checklist de preparação**:
 - [ ] Tarefa definida (escreva no papel)
 - [ ] Material aberto (só o necessário)
-- [ ] Distrações removidas (ver [environment-design.md](environment-design.md))
 - [ ] Timer pronto (app, site, ou físico)
 
 #### Passo 2: Configurar Timer
@@ -419,7 +417,6 @@ Por quê: Pausa permite consolidação da memória
 | Sinal | Problema | Solução |
 |-------|----------|---------|
 | 🚩 0 pomodoros completados | Procrastinação grave | Use "2-Minute Rule" (ver [2-focus.md](../principios/2-focus.md)) |
-| 🚩 Muitas interrupções | Ambiente não preparado | Ver [environment-design.md](environment-design.md) |
 | 🚩 Pula todas as pausas | Burnout iminente | Force pausa, mesmo contra vontade |
 | 🚩 Metas nunca atingidas | Expectativas irreais | Reduza meta para 4 pomodoros/dia |
 | 🚩 Qualidade baixa (<6) | Tarefa muito difícil ou distrações | Simplifique ou melhore ambiente |
@@ -558,11 +555,11 @@ mas depois de uma semana voltei a sentir prazer em estudar."
 ## 🔗 Links Relacionados
 
 - [2-focus.md](../principios/2-focus.md) - Princípio #2: Focus
-- [environment-design.md](environment-design.md) - Preparar ambiente
+- environment-design - Preparar ambiente
 - [feynman.md](feynman.md) - Técnica Feynman (para conceitos)
 - [drill.md](drill.md) - Drill de procedimentos
 - [flashcards.md](flashcards.md) - Revisão SRS
-- [indice.md](indice.md) - Índice completo
+- [Índice](../README.md) - Índice completo
 
 ---
 

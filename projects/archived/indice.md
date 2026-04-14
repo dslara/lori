@@ -83,7 +83,7 @@ Ao arquivar um novo projeto, adicione-o a esta lista:
 
 | Data | Projeto | Status | Relatório |
 |------|---------|--------|-----------|
-| YYYY-MM-DD | [nome](./[modulo]/YYYY-MM-DD-[nome]/relatorio-final.md) | ✅ Concluído | [Ver](./[modulo]/YYYY-MM-DD-[nome]/relatorio-final.md) |
+| YYYY-MM-DD | [nome] - Relatório final | ✅ Concluído | Ver relatório |
 ```
 
 ---

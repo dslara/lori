@@ -740,7 +740,6 @@ Fim de Semana 1 de M1 (Math Foundations).
 - [feynman.md](../tecnicas/feynman.md) - Retrieval via explicação
 - [drill.md](../tecnicas/drill.md) - Retrieval via prática
 - [directness.md](../tecnicas/directness.md) - Retrieval via projetos
-- [Master Learning Map](../../shared/master-learning-map.md) - Visão global
 
 ---
 

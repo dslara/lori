@@ -1,5 +1,5 @@
 ---
-description: Validar compreensão explicando para criança de 12 anos (/ul-practice-feynman)
+description: Validar compreensão explicando para criança de 12 anos (/ul-study-feynman)
 agent: tutor
 model: opencode-go/glm-5
 ---
@@ -7,7 +7,7 @@ model: opencode-go/glm-5
 Argumento recebido: $ARGUMENTS (conceito a validar)
 
 ## Uso
-/ul-practice-feynman [conceito]
+/ul-study-feynman [conceito]
 
 ## Descrição
 
@@ -92,7 +92,7 @@ Se ainda tem gaps → Repetir Passo 4
 ## Exemplo Completo
 
 ```
-Usuário: /ul-practice-feynman "recursão"
+Usuário: /ul-study-feynman "recursão"
 
 Sistema:
 "Ótimo! Vamos validar se você entendeu recursão.
@@ -172,9 +172,9 @@ Você entendeu recursão:
 - Identificar gaps de compreensão
 
 ❌ **NÃO USE para:**
-- Memorizar fatos → `/ul-memory-review`
-- Praticar procedimentos → `/ul-practice-drill`
-- Aprender conceito novo → `/ul-learn-explain`
+- Memorizar fatos → `/ul-study-recall`
+- Praticar procedimentos → `/ul-study-drill`
+- Aprender conceito novo → `/ul-study-learn`
 
 ## Integrações
 
@@ -182,19 +182,19 @@ Você entendeu recursão:
 - `data.createFlashcard` — Salva analogia boa
 
 **Commands relacionados:**
-- `/ul-learn-explain` — Se não consegue explicar (aprender primeiro)
-- `/ul-practice-drill` — Se já entendeu, praticar
-- `/ul-memory-create` — Salvar analogias em flashcards
+- `/ul-study-learn` — Se não consegue explicar (aprender primeiro)
+- `/ul-study-drill` — Se já entendeu, praticar
+- `/ul-study-memorize` — Salvar analogias em flashcards
 
 **Nota**: As interações são registradas automaticamente em `session_skills.csv` via `memcommit()` no final da sessão.
 
 ## Handoff
 
-- Não consegue simplificar → `/ul-learn-explain` para aprender melhor
-- Explicação boa → `/ul-practice-drill` para automatizar
-- Analogia perfeita → `/ul-memory-create` para salvar
+- Não consegue simplificar → `/ul-study-learn` para aprender melhor
+- Explicação boa → `/ul-study-drill` para automatizar
+- Analogia perfeita → `/ul-study-memorize` para salvar
 - Validado → `/ul-study-end` ou novo conceito
 
 ---
 
-*Command: /ul-practice-feynman — Técnica de validação via explicação simples*
+*Command: /ul-study-feynman — Técnica de validação via explicação simples*

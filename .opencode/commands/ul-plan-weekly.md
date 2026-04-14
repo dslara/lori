@@ -95,7 +95,7 @@ Sábado:
 • SRS review
 
 Domingo:
-• /ul-retro-weekly"
+• /ul-plan-retro"
 ```
 
 ### Passo 4: Balancear Técnicas
@@ -217,11 +217,11 @@ Sistema:
 
 | Dia | Foco | Atividade | Entrega |
 |-----|------|-----------|----------|
-| Seg | Conceito | /ul-practice-feynman "Recursão" | Explicação 5 linhas |
-| Ter | Prática | /ul-practice-drill "recursão em árvores" | 5 exercícios |
-| Qua | Conceito | /ul-learn-explain "BST" | Analogia |
-| Qui | Projeto | /ul-practice-project "BST básico" | Inserção + busca |
-| Sex | Projeto | /ul-practice-project "BST completo" | Travessias |
+| Seg | Conceito | /ul-study-feynman "Recursão" | Explicação 5 linhas |
+| Ter | Prática | /ul-study-drill "recursão em árvores" | 5 exercícios |
+| Qua | Conceito | /ul-study-learn "BST" | Analogia |
+| Qui | Projeto | /ul-study-project "BST básico" | Inserção + busca |
+| Sex | Projeto | /ul-study-project "BST completo" | Travessias |
 | Sáb | Revisão | Benchmark + SRS | Teste 80%+ |
 
 📊 Técnicas balanceadas: 1 Feynman, 1 Drill, 2 Project, 1 Explain
@@ -236,7 +236,7 @@ Sistema:
 
 ✅ **USE:**
 - Domingo (próxima semana)
-- Após retrospectiva (`/ul-retro-weekly`)
+- Após retrospectiva (`/ul-plan-retro`)
 - Início de nova fase
 - Quando mudar de direção
 
@@ -253,7 +253,7 @@ Sistema:
 - `insights.getWeaknesses` — Tópicos fracos
 
 **Commands:**
-- `/ul-retro-weekly` — Antes de criar novo plano
+- `/ul-plan-retro` — Antes de criar novo plano
 - `/ul-study-start` — Começar a executar
 - `/ul-plan-decompose` — Se não tem learning-map
 - `/ul-plan-adjust` — Ajustar plano durante a semana

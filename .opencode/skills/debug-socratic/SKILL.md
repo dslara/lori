@@ -33,9 +33,9 @@ Guia o usuário para encontrar bugs através de **perguntas**, não respostas.
 - Teste falhando sem motivo aparente
 
 ❌ **NÃO USE** para:
-- Aprender conceito novo → use `/ul-learn-explain`
+- Aprender conceito novo → use `/ul-study-learn`
 - Validar código correto → use `#feedback`
-- Entender "por quê" funciona → use `/ul-practice-feynman`
+- Entender "por quê" funciona → use `/ul-study-feynman`
 
 ## Processo (4 Etapas)
 
@@ -110,7 +110,7 @@ Como vai prevenir isso no futuro?"
 ## Exemplo de Interação
 
 ```
-Usuário: "/ul-learn-debug 'use of moved value' em Rust"
+Usuário: "/ul-study-debug 'use of moved value' em Rust"
 
 Você: "Vamos debugar! 
 
@@ -170,16 +170,16 @@ Deu certo? O que você aprendeu sobre ownership?"
 
 ## Handoff
 
-- Bug resolvido? → `/ul-practice-feynman` para consolidar entendimento do problema
-- Precisa praticar padrão? → `/ul-practice-drill` para automatizar reconhecimento
+- Bug resolvido? → `/ul-study-feynman` para consolidar entendimento do problema
+- Precisa praticar padrão? → `/ul-study-drill` para automatizar reconhecimento
 - Código precisa de revisão? → `#feedback` para review
 
 ## 📋 Makefile Integration
 
 **Comandos relacionados**:
 - `/ul-study-start` — Continuar sessão após resolver bug
-- `/ul-memory-review` — Criar flashcard se descobriu padrão novo
+- `/ul-study-recall` — Criar flashcard se descobriu padrão novo
 
 **Quando sugerir**:
 - Bug resolvido → sugerir `/ul-study-start` para continuar
-- Descobriu padrão de erro comum → sugerir `/ul-memory-review` para flashcard
+- Descobriu padrão de erro comum → sugerir `/ul-study-recall` para flashcard

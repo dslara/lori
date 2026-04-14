@@ -29,7 +29,7 @@ archived/
 
 ## Templates
 
-Templates centralizados em [`.opencode/templates/`](../.opencode/templates/)
+Templates centralizados em [`.opencode/templates/`](../../.opencode/templates/)
 
 ## Como Arquivar um Projeto
 
@@ -84,7 +84,7 @@ Todo projeto arquivado DEVE incluir um `relatorio-final.md` com:
 - **Lições aprendidas**: Insights para projetos futuros
 - **Links úteis**: Referências e recursos importantes
 
-Use o template centralizado: [`.opencode/templates/_template-relatorio.md`](../.opencode/templates/_template-relatorio.md)
+Use o template centralizado: [`.opencode/templates/_template-relatorio.md`](../../.opencode/templates/_template-relatorio.md)
 
 ## Índice de Projetos
 

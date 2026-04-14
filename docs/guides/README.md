@@ -6,11 +6,7 @@ Biblioteca completa de técnicas e princípios de aprendizado acelerado.
 
 ```
 guides/
-├── README.md                    # Este arquivo
-├── indice.md                   # Navegação completa
-├── workflow.mmd                # Diagrama visual
-├── sistema-dados.md            # Sistema de dados (CSV)
-├── habit-stacking.md           # Empilhamento de hábitos (Atomic Habits)
+├── README.md                    # Este arquivo (navegação completa)
 ├── principios/                 # 9 princípios do Ultralearning
 └── tecnicas/                   # 23 técnicas práticas
 ```
@@ -18,13 +14,13 @@ guides/
 ## Como Usar
 
 ### Primeira vez?
-→ Comece pelo **[Como Usar](/HOW_TO_USE.md)** — setup, rotina, comandos, troubleshooting
+→ Comece pelo **[Como Usar](../../HOW_TO_USE.md)** — setup, rotina, comandos, troubleshooting
 
 ### Quer entender o sistema?
-→ Veja o **[Índice](./indice.md)** — princípios e técnicas
+→ Este arquivo serve como índice de princípios e técnicas
 
 ### Quer entender os dados?
-→ Veja o **[Sistema de Dados](./sistema-dados.md)** — como os dados são salvos
+→ Veja o **[Sistema de Dados](../../data/schema.md)** — como os dados são salvos
 
 ## Princípios (9)
 
@@ -54,11 +50,9 @@ Implementações práticas organizadas por princípio:
 
 ### #2 Focus
 - [pomodoro.md](./tecnicas/pomodoro.md) - Técnica Pomodoro
-- [environment-design.md](./tecnicas/environment-design.md) - Design do ambiente
 - [focused-diffuse.md](./tecnicas/focused-diffuse.md) - Modos focado/difuso
 - [timeboxing.md](./tecnicas/timeboxing.md) - Timeboxing
 - [procrastination-zombie.md](./tecnicas/procrastination-zombie.md) - Modo Zumbi
-- [habit-stacking.md](./habit-stacking.md) - Empilhamento de hábitos
 
 ### #3 Directness
 - [directness.md](./tecnicas/directness.md) - Aprender fazendo

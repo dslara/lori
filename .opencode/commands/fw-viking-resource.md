@@ -1,7 +1,7 @@
 ---
 description: Gerenciar recursos OpenViking - adicionar, listar, mover, deletar, linking, ler conteúdo
 agent: build
-model: opencode/big-pickle
+model: opencode-go/kimi-k2.5
 ---
 
 ## Uso

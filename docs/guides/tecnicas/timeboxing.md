@@ -32,7 +32,6 @@ Solução: Limitar o tempo força foco e eficiência.
 
 **Complementa:**
 - [pomodoro.md](pomodoro.md) - Sessões de estudo
-- [environment-design.md](environment-design.md) - Eliminar distrações
 
 ---
 
@@ -152,4 +151,3 @@ Reserve blocos de tempo para:
 ---
 
 **Relacionado:** [pomodoro.md](pomodoro.md) - Para sessões de estudo
-**Relacionado:** [environment-design.md](environment-design.md) - Para eliminar distrações

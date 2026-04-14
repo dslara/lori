@@ -1,11 +1,11 @@
 ---
-description: Revisar flashcards pendentes (/ul-memory-review)
+description: Revisar flashcards pendentes (/ul-study-recall)
 agent: tutor
 model: opencode-go/glm-5
 ---
 
 ## Uso
-/ul-memory-review
+/ul-study-recall
 
 ## Descrição
 
@@ -32,7 +32,7 @@ Próximas revisões:
 • Amanhã: [N] cards
 • Em 3 dias: [N] cards
 
-Quer criar novos flashcards? → /ul-memory-create"
+Quer criar novos flashcards? → /ul-study-memorize"
 ```
 
 ### Passo 2: Invocar Skill `srs-generator`
@@ -81,7 +81,7 @@ Apresentar resumo:
 ## Exemplo de Interação
 
 ```
-Usuário: /ul-memory-review
+Usuário: /ul-study-recall
 
 Sistema:
 "📚 Revisão SRS - 5 cards pendentes
@@ -159,9 +159,9 @@ viking://user/memories/flashcards/
 - Preparação para entrevistas
 
 ❌ **NÃO USE para:**
-- Criar novos cards → `/ul-memory-create`
-- Praticar procedimentos → `/ul-practice-drill`
-- Validar compreensão → `/ul-practice-feynman`
+- Criar novos cards → `/ul-study-memorize`
+- Praticar procedimentos → `/ul-study-drill`
+- Validar compreensão → `/ul-study-feynman`
 
 **Ideal:** Revisar SRS 3-5x por semana, 10-15 minutos.
 
@@ -175,15 +175,15 @@ viking://user/memories/flashcards/
 - `memcommit` — Atualiza cards após revisão
 
 **Commands relacionados:**
-- `/ul-memory-create` — Criar novos flashcards
+- `/ul-study-memorize` — Criar novos flashcards
 - `/ul-study-start` — Sugere SRS se pendente
 
 ## Handoff
 
 - Cards acabaram → `/ul-study-start` para continuar estudo
-- Quer criar mais cards → `/ul-memory-create`
-- Dificuldade em conceito → `/ul-practice-feynman`
+- Quer criar mais cards → `/ul-study-memorize`
+- Dificuldade em conceito → `/ul-study-feynman`
 
 ---
 
-*Command: /ul-memory-review — Wrapper para skill srs-generator (SM-2) via OpenViking*
+*Command: /ul-study-recall — Wrapper para skill srs-generator (SM-2) via OpenViking*

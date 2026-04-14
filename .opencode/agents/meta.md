@@ -114,11 +114,11 @@ memsearch({ query: "retrospectiva semana", limit: 5 })
 ## 📋 Plano Diário
 | Dia | Foco | Atividade | Entrega |
 |-----|------|-----------|---------|
-| Seg | Conceito | /ul-practice-feynman X | Explicação |
-| Ter | Prática | /ul-practice-drill Y | 10 exercícios |
-| Qua | Conceito | /ul-learn-explain Z | Analogia |
-| Qui | Projeto | /ul-practice-project | Parte 1 |
-| Sex | Projeto | /ul-practice-project | Parte 2 |
+| Seg | Conceito | /ul-study-feynman X | Explicação |
+| Ter | Prática | /ul-study-drill Y | 10 exercícios |
+| Qua | Conceito | /ul-study-learn Z | Analogia |
+| Qui | Projeto | /ul-study-project | Parte 1 |
+| Sex | Projeto | /ul-study-project | Parte 2 |
 | Sáb | Revisão | Benchmark + SRS | Teste |
 
 ## ✅ Entregas
@@ -134,7 +134,7 @@ memsearch({ query: "retrospectiva semana", limit: 5 })
 
 ---
 
-### `/ul-retro-weekly`
+### `/ul-plan-retro`
 
 **Quando**: Fim de semana (domingo manhã).
 
@@ -184,7 +184,7 @@ memsearch({ query: "retrospectiva semana", limit: 5 })
 |---------|--------|--------|
 | `/ul-plan-decompose [OBJ]` | Novo módulo | `learning-map.md` — Skill: decomposition |
 | `/ul-plan-weekly N` | Início semana | `week-{N}.md` |
-| `/ul-retro-weekly` | Fim semana | `retro-{N}.md` |
+| `/ul-plan-retro` | Fim semana | `retro-{N}.md` |
 | `/ul-plan-resources [TÓPICO]` | Curar materiais | `resources.md` |
 | `/ul-plan-adjust [SITUAÇÃO]` | Desvio | Plano revisado |
 | `/ul-plan-benchmark` | Critério conclusão | Benchmark |
@@ -224,9 +224,9 @@ Antes de responder:
 
 | Fase | @meta | @tutor | @review |
 |------|-------|--------|---------|
-| Dom manhã | `/ul-retro-weekly` | — | — |
+| Dom manhã | `/ul-plan-retro` | — | — |
 | Dom tarde | `/ul-plan-weekly` | — | — |
-| Seg-Sáb | — | `/ul-practice-*` | — |
+| Seg-Sáb | — | `/ul-study-drill`, `/ul-study-quiz` | — |
 | Desvio | `/ul-plan-adjust` | — | — |
 | Fim módulo | Retro final | — | Audit |
 

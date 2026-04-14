@@ -66,7 +66,7 @@ Progresso:
 • drill: 4x
 • feynman: 1x
 • quiz: 2x
-⚠️ Sem uso: /ul-learn-explain, /ul-practice-project
+⚠️ Sem uso: /ul-study-learn, /ul-study-project
 
 💡 Sugestão: você preferiu drill — tente alternar com 
    feynman para validar compreensão.
@@ -87,16 +87,16 @@ Se encontrar padrões de erro:
 • [Tópico A]: error_rate 45%
 • [Tópico B]: error_rate 38%
 
-💡 Sugestão: usar /ul-practice-drill em [Tópico A]
+💡 Sugestão: usar /ul-study-drill em [Tópico A]
    antes de avançar para conteúdo novo.
 ```
 
 ### Passo 6: Próximos Passos
 
 Sugerir baseado no estado atual:
-- Se atrasado → `/ul-retro-weekly` ou `/ul-plan-weekly`
-- Se tópicos fracos → `/ul-practice-drill`
-- Se SRS pendente → `/ul-memory-review`
+- Se atrasado → `/ul-plan-retro` ou `/ul-plan-weekly`
+- Se tópicos fracos → `/ul-study-drill`
+- Se SRS pendente → `/ul-study-recall`
 - Se no ritmo → Continuar com `/ul-study-start`
 
 ## Exemplo de Interação
@@ -119,7 +119,7 @@ Módulo: go-os-cpu
 
 📊 Técnicas esta semana:
 • drill: 5x | feynman: 1x | quiz: 2x | project: 1x
-⚠️ Sem uso: /ul-learn-explain
+⚠️ Sem uso: /ul-study-learn
 
 📈 Ritmo: 60% das entregas em 4/5 dias ✅
 Você está no tempo! Sábado é ideal para o benchmark.
@@ -128,9 +128,9 @@ Você está no tempo! Sábado é ideal para o benchmark.
 • Error handling: error_rate 42%
 
 💡 Sugestões:
-1. Praticar error handling → /ul-practice-drill
-2. Validar com feynman antes do benchmark → /ul-practice-feynman
-3. Criar flashcards para padrões de erro → /ul-memory-create"
+1. Praticar error handling → /ul-study-drill
+2. Validar com feynman antes do benchmark → /ul-study-feynman
+3. Criar flashcards para padrões de erro → /ul-study-memorize"
 ```
 
 ## Estrutura OpenViking
@@ -153,15 +153,15 @@ Os dados são buscados de:
 
 **Commands relacionados:**
 - `/ul-study-start` — Iniciar sessão
-- `/ul-practice-drill` — Praticar tópicos fracos
-- `/ul-memory-review` — Revisar SRS pendente
-- `/ul-retro-weekly` — Ajustar se atrasado
+- `/ul-study-drill` — Praticar tópicos fracos
+- `/ul-study-recall` — Revisar SRS pendente
+- `/ul-plan-retro` — Ajustar se atrasado
 - `/ul-plan-weekly` — Replanejar semana
 
 ## Handoff
 
-- Usuário atrasado → `/ul-retro-weekly` ou `/ul-plan-weekly`
-- Tópicos fracos identificados → `/ul-practice-drill`
+- Usuário atrasado → `/ul-plan-retro` ou `/ul-plan-weekly`
+- Tópicos fracos identificados → `/ul-study-drill`
 - Quer mudar ritmo → `/ul-plan-weekly`
 - Tudo certo → `/ul-study-start`
 

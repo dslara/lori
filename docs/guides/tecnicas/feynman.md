@@ -694,7 +694,6 @@ Analogia: Você EMPRESTOU a chave, mas ainda é dona.
 - [flashcards.md](flashcards.md) - Memorização de fatos
 - [drill.md](drill.md) - Automatização de procedimentos
 - [directness.md](directness.md) - Aprender fazendo
-- [indice.md](indice.md) - Índice completo de guias
 - [8-intuition.md](../principios/8-intuition.md) - Princípio #8: Intuition
 - [5-retrieval.md](../principios/5-retrieval.md) - Princípio #5: Retrieval
 

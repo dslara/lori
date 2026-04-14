@@ -225,7 +225,7 @@ Os cards criados via `@tutor #srs-generator` são salvos automaticamente em `dat
 
 ### Comando principal
 ```bash
-/ul-memory-review
+/ul-study-recall
 ```
 
 **O que acontece**:
@@ -393,7 +393,7 @@ nano knowledge/flashcards-source.csv
 # @tutor pergunta conceitos da última sessão
 
 # 3. SRS Review (10-15 min)
-/ul-memory-review
+/ul-study-recall
 
 # Agora sim, cérebro aquecido!
 ```
@@ -434,8 +434,8 @@ nano knowledge/flashcards-source.csv
 ```bash
 # Sábado ou Domingo: apenas revisão, sem conteúdo novo
 
-/ul-memory-review    # 20-30 min de SRS
-/ul-retro-weekly   # Retrospectiva semanal
+/ul-study-recall    # 20-30 min de SRS
+/ul-plan-retro   # Retrospectiva semanal
 ```
 
 **Por quê funciona**:
@@ -584,7 +584,6 @@ nano knowledge/flashcards-source.csv
 
 ## 🔗 Links Relacionados
 
-- [indice.md](indice.md) - Índice completo de guias
 - [7-retention.md](../principios/7-retention.md) - Princípio #7: Retention
 - [srs.md](srs.md) - Spaced Repetition System
 - [mnemonics.md](mnemonics.md) - Técnicas mnemônicas

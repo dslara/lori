@@ -162,7 +162,6 @@ Fase Focada: Implementa com arquitetura clara
 ## 🔗 Links Relacionados
 
 - [pomodoro.md](pomodoro.md) - Já implementa alternância foco/difuso
-- [environment-design.md](environment-design.md) - Preparar ambiente para pausas
 - [2-focus.md](../principios/2-focus.md) - Princípio #2: Focus
 
 **Baseado em**: A Mind for Numbers (Dra. Barbara Oakley)

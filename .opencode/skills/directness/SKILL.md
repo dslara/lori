@@ -40,9 +40,9 @@ PROJETO REAL: "Faça funcionar" → Aprendizado genuíno
 - Solidificar skills (aplicar algoritmos em contexto)
 
 ❌ **NÃO USE** para:
-- Aprender conceito completamente novo → use `/ul-learn-explain` primeiro
-- Memorizar sintaxe → use `/ul-practice-drill`
-- Validar compreensão → use `/ul-practice-feynman`
+- Aprender conceito completamente novo → use `/ul-study-learn` primeiro
+- Memorizar sintaxe → use `/ul-study-drill`
+- Validar compreensão → use `/ul-study-feynman`
 
 ## Processo
 
@@ -59,7 +59,7 @@ PROJETO REAL: "Faça funcionar" → Aprendizado genuíno
 
 **Exemplo**:
 ```
-Usuário: "/ul-practice-project Criar API REST"
+Usuário: "/ul-study-project Criar API REST"
 
 Você: "Antes de começar, vamos planejar:
 
@@ -140,13 +140,13 @@ Projeto concluído! Antes de terminar:
 2. O que você faria diferente?
 3. Explique em 1 frase o que aprendeu.
 
-💡 Conceito difícil? Use `/ul-memory-review` → Adicionar flashcard
+💡 Conceito difícil? Use `/ul-study-recall` → Adicionar flashcard
 ```
 
 ## Exemplo de Interação
 
 ```
-Usuário: "/ul-practice-project Criar um TODO CLI"
+Usuário: "/ul-study-project Criar um TODO CLI"
 
 Você: "Ótimo projeto! Vamos planejar:
 
@@ -177,18 +177,18 @@ Me responda e começamos com o setup!"
 ## Handoff
 
 - Projeto concluído? → `/ul-study-end` para salvar sessão
-- Ponto fraco identificado? → `/ul-practice-drill` para praticar
+- Ponto fraco identificado? → `/ul-study-drill` para praticar
 - Código precisa de revisão? → `#feedback` para code review
-- Conceito não ficou claro? → `/ul-practice-feynman` para validar
+- Conceito não ficou claro? → `/ul-study-feynman` para validar
 
 ## 📋 Makefile Integration
 
 **Comandos relacionados**:
 - `/ul-study-end` — Salvar sessão + atualizar streak
 - `/ul-study-start` — Continuar com outra técnica
-- `/ul-memory-review` — Adicionar flashcards de conceitos aprendidos
+- `/ul-study-recall` — Adicionar flashcards de conceitos aprendidos
 
 **Quando sugerir**:
 - Projeto concluído com sucesso → sugerir `/ul-study-end`
-- Identificou skill fraca → sugerir `/ul-practice-drill`
+- Identificou skill fraca → sugerir `/ul-study-drill`
 - Projeto gerou dúvidas de código → sugerir `#feedback`

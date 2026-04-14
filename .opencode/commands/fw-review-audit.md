@@ -1,11 +1,11 @@
 ---
-description: Auditoria completa do framework (/ul-review-audit)
+description: Auditoria completa do framework (/fw-review-audit)
 agent: review
 model: opencode-go/glm-5.1
 ---
 
 ## Uso
-/ul-review-audit
+/fw-review-audit
 
 ## Descrição
 
@@ -106,7 +106,7 @@ O template já define estrutura completa. Preencher com:
 ## Exemplo
 
 ```
-Usuário: /ul-review-audit
+Usuário: /fw-review-audit
 
 Sistema:
 "🔍 Auditoria Completa - Ultralearning System v3.0
@@ -144,4 +144,4 @@ Pode propor:
 
 ---
 
-*Command: /ul-review-audit - Auditoria completa do framework*
+*Command: /fw-review-audit - Auditoria completa do framework*

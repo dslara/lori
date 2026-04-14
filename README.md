@@ -1,432 +1,49 @@
-# 🚀 Ultralearning System
+# Ultralearning System
 
-Sistema de aprendizado autodirigido integrando três abordagens científicas:
+Sistema de aprendizado autodirigido integrando Ultralearning (Scott Young) + A Mind for Numbers (Barbara Oakley). Otimizado para CS Fundamentals.
 
-| Abordagem              | Autor               | Foco                                |
-| ---------------------- | ------------------- | ----------------------------------- |
-| **Ultralearning**      | Scott Young         | Intensidade e imersão profunda      |
-| **A Mind for Numbers** | Dra. Barbara Oakley | Eficiência cognitiva para exatas    |
-
-Otimizado para aprendizado acelerado de Ciência da Computação.
-
-## ⚡ Como Usar
-
-> **Guia completo**: [`HOW_TO_USE.md`](HOW_TO_USE.md) — Setup, rotina diária, commands, troubleshooting.
-
-### Interface Principal (OpenCode)
-
-Todas as funcionalidades são acessíveis via **commands** no TUI do OpenCode:
+## Quick Start
 
 ```bash
-# Sessão de estudo
-/ul-study-start              # Iniciar sessão com contexto
-/ul-practice-drill recursão  # Prática deliberada
-/ul-practice-feynman closures  # Validar compreensão
-/ul-practice-quiz 3 Big O    # Warm-up
-/ul-study-end                # Encerrar e salvar progresso
-
-# Planejamento
-/ul-plan-decompose "Aprender algoritmos"  # Decompor objetivo
-/ul-plan-weekly 1            # Criar plano semanal
-/ul-retro-weekly             # Retrospectiva semanal
-
-# Revisão
-/ul-memory-create            # Criar flashcard
-/ul-memory-review            # Revisar flashcards
-
-# Módulos
-/ul-module-create [nome]     # Criar novo módulo
-/ul-module-switch [nome]     # Alternar módulo ativo
-/ul-module-archive [nome]    # Arquivar módulo finalizado
+/ul-setup-check                                     # Verificar dependências
+/ul-module-create                                    # Criar módulo
+/ul-study-start → /ul-study-drill → /ul-study-end  # Rotina diária
 ```
 
-### Commands Disponíveis
+**Guia completo**: [HOW_TO_USE.md](HOW_TO_USE.md)
 
-Digite `/` no TUI para acessar todos os commands:
-
-#### Commands de Sessão (`/ul-study-*`)
-
-| Command | Descrição |
-|---------|-----------|
-| `/ul-study-start` | Iniciar sessão com contexto automático |
-| `/ul-study-end` | Encerrar sessão e salvar progresso |
-| `/ul-study-plan` | Ver progresso da semana e plano atual |
-
-#### Commands de Prática (`/ul-practice-*`)
-
-| Command | Descrição |
-|---------|-----------|
-| `/ul-practice-drill [conceito]` | Prática deliberada 5-10x |
-| `/ul-practice-feynman [conceito]` | Validar compreensão explicando |
-| `/ul-practice-quiz N [tópico]` | Warm-up com quiz adaptativo |
-| `/ul-practice-project [desafio]` | Aprender fazendo projetos reais |
-
-#### Commands de Aprendizado (`/ul-learn-*`)
-
-| Command | Descrição |
-|---------|-----------|
-| `/ul-learn-explain [conceito]` | Introduzir conceito novo com analogias |
-| `/ul-learn-debug` | Debug socrático - guia para encontrar bugs |
-
-#### Commands de Produtividade (`/ul-productivity-*`)
-
-| Command | Descrição |
-|---------|-----------|
-| `/ul-productivity-start` | Superar procrastinação (Two-Minute Rule) |
-| `/ul-productivity-break` | Modo difuso - pausa ativa quando travado |
-
-#### Commands de Setup (`/ul-setup-*`)
-
-| Command | Descrição |
-|---------|-----------|
-| `/ul-setup-scaffold [projeto]` | Criar estrutura/boilerplate de projeto |
-| `/ul-setup-check` | Verificar dependências do sistema |
-
-#### Commands de Memória (`/ul-memory-*`)
-
-| Command | Descrição |
-|---------|-----------|
-| `/ul-memory-create` | Criar flashcards SRS |
-| `/ul-memory-review` | Revisar flashcards pendentes |
-
-#### Commands de Planejamento (`/ul-plan-*`)
-
-| Command | Descrição |
-|---------|-----------|
-| `/ul-plan-decompose [objetivo]` | Decompor objetivo complexo |
-| `/ul-plan-weekly [semana]` | Criar plano semanal detalhado |
-| `/ul-retro-weekly` | Retrospectiva semanal |
-| `/ul-plan-benchmark [skill]` | Criar teste de proficiência mensurável |
-| `/ul-plan-adjust [situação]` | Reajustar cronograma |
-| `/ul-plan-resources [tópico]` | Mapear recursos em 3 tiers |
-
-#### Commands de Módulos (`/ul-module-*`)
-
-| Command | Descrição |
-|---------|-----------|
-| `/ul-module-create [nome]` | Criar novo módulo de estudo |
-| `/ul-module-switch [nome]` | Alternar módulo ativo |
-| `/ul-module-archive [nome]` | Arquivar módulo finalizado |
-
-#### Commands de Dados (`/ul-data-*`)
-
-| Command | Descrição |
-|---------|-----------|
-| `/ul-data-status` | Ver streak, sessões, módulo atual |
-| `/ul-data-analytics` | Ver relatório analítico avançado |
-| `/ul-data-dashboard` | Ver dashboard completo com métricas |
-| `/ul-data-manage [op]` | Gerenciar dados (init, reset) |
-| `/ul-data-backup` | Criar backup dos dados |
-
-#### Commands de Revisão (`/ul-retro-*`)
-
-| Command | Descrição |
-|---------|-----------|
-| `/ul-retro-weekly` | Criar retrospectiva semanal |
-
----
-
-## 🤖 Agentes & Skills
-
-### Arquitetura
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│  COMMANDS (.opencode/commands/)                             │
-│  ════════════════════════════════════════════════════════   │
-│  30 commands /ul-* — Interface principal via TUI            │
-│                                                             │
-│  Cada command define:                                       │
-│  - agent: tutor, meta ou review                             │
-│  - model: glm-5, kimi-k2.5 ou minimax-m2.5                  │
-└─────────────────────────────────────────────────────────────┘
-                             │
-                             │ Invocam
-                             ▼
-┌─────────────────────────────────────────────────────────────┐
-│  TOOLS (.opencode/tools/)                                   │
-│  ════════════════════════════════════════════════════════   │
-│  13 tools TypeScript — Processamento de dados               │
-│                                                             │
-│  - data.ts (facade) — Delega para módulos                   │
-│  - data-session.ts — Sessões                                │
-│  - data-module.ts — Módulos                                 │
-│  - data-flashcard.ts — Flashcards/SRS                       │
-│  - data-insight.ts — Insights/streak                        │
-│  - data-core.ts — Core ops (init, backup)                   │
-│  - context.ts, context-hybrid.ts — Contexto + OpenViking    │
-│  - openviking-utils.ts — Descoberta dinâmica de ID          │
-│  - insights.ts, status.ts                                   │
-│  - retro.ts, setup.ts                                       │
-│                                                             │
-│  Cache de 5min • Tipagem Zod • CSV parsing                  │
-└─────────────────────────────────────────────────────────────┘
-                             │
-                             │ Persistent memory
-                             ▼
-┌─────────────────────────────────────────────────────────────┐
-│  OPENVIKING (Memória Persistente)                           │
-│  ════════════════════════════════════════════════════════   │
-│  viking://user/memories/                                    │
-│  ├── preferences/  → Estilo de aprendizado                  │
-│  ├── events/       → Marcos e decisões                      │
-│  └── entities/     → Projetos, conceitos                    │
-│                                                             │
-│  viking://agent/memories/                                   │
-│  ├── tutor/   → Casos e padrões do @tutor                   │
-│  ├── meta/    → Histórico de planejamento                   │
-│  └── review/  → Auditorias anteriores                       │
-│                                                             │
-│  L0 (abstract) ~100 tokens → Quick check                    │
-│  L1 (overview) ~2k tokens → Planning                        │
-│  L2 (full) → Deep dive                                      │
-└─────────────────────────────────────────────────────────────┘
-                             │
-                             │ Carregam on-demand
-                             ▼
-┌─────────────────────────────────────────────────────────────┐
-│  SKILLS (.opencode/skills/)                                 │
-│  ════════════════════════════════════════════════════════   │
-│  5 skills mantidas — Guias especializados                   │
-│                                                             │
-│  - session → Orquestrar sessões                             │
-│  - directness → Projetos reais                              │
-│  - debug-socratic → Guia socrático de bugs                  │
-│  - srs-generator → Gerar flashcards                         │
-│  - decomposition → Dividir objetivos                        │
-└─────────────────────────────────────────────────────────────┘
-```
-
-### Separação de Responsabilidades
-
-| Camada | Responsabilidade | Exemplos |
-|--------|------------------|----------|
-| **Commands** | Interface do usuário | `/ul-study-start`, `/ul-practice-drill` |
-| **Tools** | Processamento de dados | `data.ts`, `insights.ts`, `context-hybrid.ts` |
-| **Skills** | Guias especializados | `directness`, `debug-socratic` |
-| **Agents** | Comportamento dos LLMs | `@tutor`, `@meta`, `@review` |
-
-### Arquitetura de Dados
-
-O sistema usa duas camadas complementares:
+## Arquitetura
 
 | Camada | Tecnologia | Propósito |
 |--------|------------|-----------|
-| **CSV** | Arquivos locais | Dados quantitativos (sessões, streaks, flashcards) |
-| **OpenViking** | Memória persistente | Dados qualitativos (preferências, padrões, contexto) |
+| Commands | `.opencode/commands/` | Interface principal (commands `/ul-*`) |
+| Tools | `.opencode/tools/` | Processamento de dados (tools TypeScript) |
+| Skills | `.opencode/skills/` | Guias especializados (skills) |
+| Agents | `.opencode/agents/` | @tutor, @meta, @review |
+| Dados (CSV) | `data/*.csv` | Dados quantitativos (offline-first) |
+| Memória | OpenViking | Dados qualitativos (contexto entre sessões) |
 
-**Regra**: CSV é obrigatório (offline-first). OpenViking é opcional (contexto conversacional).
+**Regra**: CSV obrigatório. OpenViking opcional.
 
-Ver [docs/ARCHITECTURE.md](docs/ARCHITECTURE.md) para detalhes.
+## Agentes
 
-### Agentes
+| Agente | Função |
+|--------|--------|
+| **@tutor** | Mentor socrático, quiz, drills, feedback |
+| **@meta** | Planejamento estratégico, decomposição |
+| **@review** | Auditoria do framework |
 
-| Agente      | Função                                   |
-| ----------- | ---------------------------------------- |
-| **@tutor**  | Mentor socrático, quiz, drills, feedback |
-| **@meta**   | Planejamento estratégico, decomposição   |
-| **@review** | Auditoria do framework                   |
-
-### Skills
-
-| Skill | Command que invoca | Descrição |
-|-------|-------------------|-----------|
-| `session` | `/ul-study-*` | Orquestrar início/fim de sessão |
-| `directness` | `/ul-practice-project` | Guia socrático para projetos reais |
-| `debug-socratic` | `/ul-learn-debug` | Guia socrático para encontrar bugs |
-| `srs-generator` | `/ul-memory-create`, `/ul-memory-review` | Gerar flashcards dinamicamente |
-| `decomposition` | `/ul-plan-decompose` | Dividir objetivos complexos |
-
-### Commands por Agente
-
-| Agente | Commands |
-|--------|----------|
-| **@tutor** | `/ul-study-*`, `/ul-practice-*`, `/ul-learn-*`, `/ul-productivity-*`, `/ul-memory-*`, `/ul-setup-*`, `/ul-data-*` |
-| **@meta** | `/ul-plan-*`, `/ul-module-*`, `/ul-retro-*` |
-| **@review** | `/ul-review-*` |
-
-### Keywords Avançadas
-
-Funcionalidades acessíveis via invocação direta do agente:
-
-#### @meta - Planejamento
-
-| Keyword | Descrição | Exemplo |
-|---------|-----------|---------|
-| `#update-plan semana N` | Registrar progresso | `@meta #update-plan semana 3` |
-| `#habit-stack` | Criar cadeia de hábitos | `@meta #habit-stack` |
-
-> **Nota**: As funcionalidades `#map-resources` e `#adjust-plan` agora são commands: `/ul-plan-resources` e `/ul-plan-adjust`
-
-#### @review - Auditoria
-
-| Keyword | Descrição | Exemplo |
-|---------|-----------|---------|
-| `#review-structure` | Estrutura do projeto | `@review #review-structure` |
-| `#review-tools` | Qualidade das tools | `@review #review-tools` |
-| `#review-docs` | Documentação | `@review #review-docs` |
-| `#review-commands` | Commands `/ul-*` | `@review #review-commands` |
-| `#review-agents` | Agentes | `@review #review-agents` |
-| `#review-skills` | Skills | `@review #review-skills` |
-| `#review-consistency` | Análise completa | `@review #review-consistency` |
-| `#review-costs` | Otimização de tokens | `@review #review-costs` |
-
----
-
-## 📚 Fundamentação Científica
-
-Este sistema integra três abordagens complementares:
-
-| Abordagem              | Autor               | Foco                   | Implementação                                       |
-| ---------------------- | ------------------- | ---------------------- | --------------------------------------------------- |
-| **Ultralearning**      | Scott Young         | Intensidade e imersão  | 9 princípios + 24 técnicas                          |
-| **A Mind for Numbers** | Dra. Barbara Oakley | Eficiência cognitiva   | Chunking, Foco/Difuso, Overlearning                 |
-
----
-
-### Técnicas da Dra. Barbara Oakley
-
-**Chunking (Blocos de Conhecimento):**
-- `drill.md` → Chunks de procedimentos
-- `feynman.md` → Chunks conceituais
-- `flashcards.md` → Chunks de fatos
-
-**Modos de Pensamento:**
-- `pomodoro.md` → Alternância foco/difuso
-- `focused-diffuse.md` → Gestão intencional dos modos
-
-**Transferência & Overlearning:**
-- `chunk-transfer.md` → Conectar entre domínios
-- `drill.md` → Praticar além do básico
-
-**Procrastinação:**
-- `procrastination-zombie.md` → Zombie Mode
-
----
-
-## 📁 Estrutura do Projeto
+## Estrutura do Projeto
 
 ```
 ultralearning/
-├── .opencode/
-│  ├── agents/           # @meta, @tutor, @review
-│  ├── commands/         # 30 commands /ul-*
-│  ├── skills/           # 5 skills carregadas on-demand
-│   ├── tools/            # 9 tools TypeScript
-│   ├── plugins/          # Plugins OpenCode (OpenViking)
-│   └── opencode.json     # Config de modelos + agents
-├── data/                 # Base de dados local (CSV) — Backup
-│   ├── sessions.csv      # Sessões diárias
-│   ├── insights.csv      # Métricas (streak, tempo, foco)
-│   ├── session_skills.csv # Técnicas por sessão (correct field)
-│   ├── modules.csv       # Módulos de estudo
-│   └── schema.md         # Documentação do schema
-├── projects/             # Módulos de aprendizado
-│   ├── [modulo]/
-│   │   ├── meta/         # Planos ativos (learning-map, weeks)
-│   │   ├── projects/     # Projetos práticos
-│   │   └── knowledge/    # Conceitos aprendidos
-│   └── shared/           # Recursos compartilhados
-│       └── planning/     # Planejamento multi-módulo
-├── guides/               # 9 princípios + 24 técnicas
-├── reviews/              # Revisões técnicas do framework
-├── planning/             # Propostas de mudança do FRAMEWORK
-├── docker-compose.yml    # OpenViking + Ollama
-└── .env                  # API keys (não versionar)
+├── .opencode/         # Commands, tools, skills, agents
+├── data/               # Base de dados local (CSV)
+├── projects/           # Módulos de aprendizado
+├── docs/guides/        # princípios + técnicas
+└── HOW_TO_USE.md       # Guia completo e autocontido
 ```
 
-> **Nota**: A memória persistente agora é gerenciada pelo OpenViking em `~/.openviking/` (global). Os CSVs em `data/` são mantidos como backup.
-
-O projeto está organizado em pastas especializadas:
-
-| Pasta | Propósito | Documentação |
-|-------|-----------|--------------|
-| `.opencode/agents/` | Agentes opencode com frontmatter YAML | — |
-| `.opencode/commands/` | 29 commands `/ul-*` (interface principal) | — |
-| `.opencode/tools/` | 9 tools TypeScript (processamento de dados) | — |
-| `data/` | Base de dados local (CSV) | [schema.md](data/schema.md) |
-| `projects/` | Módulos e projetos de aprendizado | [README](projects/README.md) |
-| `guides/` | Biblioteca de técnicas e princípios de aprendizado | [README](guides/README.md) |
-| `planning/` | Propostas de mudança do framework | [README](planning/README.md) |
-| `reviews/` | Revisões técnicas do framework (consolidadas) | [README](reviews/README.md) |
-| `archived/` | Projetos finalizados e arquivados | [README](archived/README.md) |
-
-### Separação de Planejamento
-
-| Domínio | Local |
-|---------|-------|
-| **Framework** (commands, tools, agents) | `planning/` |
-| **Módulo específico** (currículo, migração de linguagem) | `projects/[modulo]/planning/` |
-| **Compartilhado** (múltiplos módulos) | `projects/shared/planning/` |
-| **Planos ativos** (learning-map, weeks, phases) | `projects/[modulo]/meta/` |
-
-## 📦 Arquivamento de Projetos
-
-Quando um projeto é concluído, use `/ul-module-archive [nome]` para:
-- Mover todos os arquivos para `archived/[modulo]/[data]-[nome]/`
-- Preservar logs, código, conhecimento e metadados
-- Criar um relatório final de lições aprendidas
-- Manter o módulo ativo limpo
-
-O projeto arquivado mantém todo o histórico e pode ser consultado futuramente.
-
 ---
 
-## 🔥 Workflow Diário
-
-```
-┌───────────────────────────────────────────────┐
-│  /ul-study-start    (5 min)                   │
-│  └── Carrega contexto + sugere atividade      │
-├───────────────────────────────────────────────┤
-│  /ul-practice-*     (50 min)                  │
-│  ├── drill      → Exercícios repetitivos      │
-│  ├── feynman    → Explicar conceito           │
-│  ├── quiz       → Warm-up com perguntas       │
-│  └── project    → Projeto prático             │
-├───────────────────────────────────────────────┤
-│  /ul-study-end      (5 min)                   │
-│  └── Salva sessão + atualiza streak           │
-└───────────────────────────────────────────────┘
-```
-
-**Alternativas durante a sessão**:
-- `/ul-learn-explain [conceito]` — Introduzir conceito novo
-- `/ul-learn-debug` — Debug socrático
-- `/ul-productivity-break` — Modo difuso quando travado
-- `/ul-productivity-start` — Superar procrastinação
-
----
-
-## 📚 Metodologia
-
-Baseado em **Ultralearning** de Scott Young:
-1. **Metalearning**: Planeje antes de executar (@meta)
-2. **Focus**: Sessões de 1h focadas
-3. **Directness**: Aprenda fazendo projetos reais
-4. **Drill**: Repita pontos fracos
-5. **Retrieval**: Quiz diário (não releia, recupere)
-6. **Feedback**: Feedback honesto (@tutor)
-7. **Retention**: Spaced repetition (SRS)
-8. **Intuition**: Entenda o "por quê"
-9. **Experimentation**: Teste múltiplas abordagens
-
----
-
-## 🏗️ Arquitetura & Design
-
-### Modelos por Command
-
-Cada command define seu modelo ideal no frontmatter:
-
-| Categoria                | Commands                                                                      | Justificativa                          |
-| ------------------------ | ----------------------------------------------------------------------------- | -------------------------------------- |
-| **Raciocínio complexo**  | `/ul-practice-drill`, `/ul-practice-feynman`, `/ul-learn-explain`             | Análise, analogias, validação          |
-| **Código e dados**       | `/ul-practice-project`, `/ul-learn-debug`, `/ul-setup-scaffold`, `/ul-data-*` | Projetos, debug, estruturação          |
-| **Orquestração simples** | `/ul-study-*`, `/ul-productivity-*`, `/ul-retro-weekly`, `/ul-plan-weekly`    | Templates, orquestração, tarefas leves |
-
-**Padrão**: Verifique o campo `model` no arquivo `.opencode/commands/[command].md`
-
----
-
-Feito com 🧠 para aprender melhor.
+*Comece agora com `/ul-setup-check`. Guia completo em [HOW_TO_USE.md](HOW_TO_USE.md).*

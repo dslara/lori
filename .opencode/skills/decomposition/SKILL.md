@@ -79,9 +79,9 @@ Distribuir conteúdo em 3 dimensões:
 
 | Dimensão | O quê | % Tempo | Método |
 |----------|-------|----------|--------|
-| **Conceitos** | Entender o "por quê" | 40% | `/ul-practice-feynman` |
+| **Conceitos** | Entender o "por quê" | 40% | `/ul-study-feynman` |
 | **Fatos** | Memorizar | 20% | Flashcards/SRS |
-| **Procedimentos** | Automatizar | 40% | `/ul-practice-drill` |
+| **Procedimentos** | Automatizar | 40% | `/ul-study-drill` |
 
 **Exemplo de decomposição**:
 
@@ -89,23 +89,23 @@ Distribuir conteúdo em 3 dimensões:
 ## Módulo: Sorting Algorithms (4 semanas)
 
 ### Semana 1: Sorting Básico
-- Conceitos (40%): /ul-practice-feynman "Como bubble sort funciona?"
+- Conceitos (40%): /ul-study-feynman "Como bubble sort funciona?"
 - Fatos (20%): Flashcards de complexidades
-- Procedimentos (40%): /ul-practice-drill implementar bubble sort 5x
+- Procedimentos (40%): /ul-study-drill implementar bubble sort 5x
 
 ### Semana 2: Sorting Eficiente
 - Merge sort + quick sort
-- /ul-practice-feynman "Por que merge sort é O(n log n)?"
-- /ul-practice-drill quick sort partition
+- /ul-study-feynman "Por que merge sort é O(n log n)?"
+- /ul-study-drill quick sort partition
 
 ### Semana 3: Comparação e Análise
 - Comparar 5 algoritmos
-- /ul-practice-project: Visualizer de sorting
+- /ul-study-project: Visualizer de sorting
 - #feedback: Code review
 
 ### Semana 4: Aplicação
-- /ul-practice-project: Projeto real usando sorting
-- /ul-practice-drill: Edge cases
+- /ul-study-project: Projeto real usando sorting
+- /ul-study-drill: Edge cases
 - Benchmarking
 ```
 

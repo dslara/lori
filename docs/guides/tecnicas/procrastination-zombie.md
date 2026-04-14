@@ -201,7 +201,6 @@ Resultado: Mantém momentum sem forçar
 ## 🔗 Links Relacionados
 
 - [pomodoro.md](pomodoro.md) - Timer de 25 min (após começar)
-- [environment-design.md](environment-design.md) - Preparar ambiente
 - [timeboxing.md](timeboxing.md) - Limitar carga inicial
 - [2-focus.md](../principios/2-focus.md) - Princípio #2: Focus
 

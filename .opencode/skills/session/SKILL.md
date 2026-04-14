@@ -153,14 +153,14 @@ Tabela de atividades para sugestões:
 
 | Situação | Command Sugerido |
 |----------|-----------------|
-| Conceito novo | `/ul-learn-explain` |
-| Validar compreensão | `/ul-practice-feynman` |
-| Praticar procedimento | `/ul-practice-drill` |
-| Construir projeto | `/ul-practice-project` |
+| Conceito novo | `/ul-study-learn` |
+| Validar compreensão | `/ul-study-feynman` |
+| Praticar procedimento | `/ul-study-drill` |
+| Construir projeto | `/ul-study-project` |
 | Setup de projeto | `/ul-setup-scaffold` |
-| Revisar flashcards | `/ul-memory-review` |
-| Procrastinando | `/ul-productivity-start` |
-| Travado >30min | `/ul-productivity-break` |
+| Revisar flashcards | `/ul-study-recall` |
+| Procrastinando | `/ul-study-start` |
+| Travado >30min | Pausa 15 min (modo difuso) |
 
 ## Estrutura OpenViking
 
@@ -203,7 +203,7 @@ viking://user/projects/
 2. Coletar respostas
 3. Chamar analyzeGaps()
 4. Chamar memcommit({ wait: true }) para persistir
-5. Se checkSunday() → Sugerir /ul-retro-weekly
+5. Se checkSunday() → Sugerir /ul-plan-retro
 ```
 
 ### /ul-study-plan

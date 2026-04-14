@@ -214,7 +214,7 @@ front,back,tags,created
 #### Passo 3: Revisar Diariamente (15-20 min)
 
 ```bash
-/ul-memory-review
+/ul-study-recall
 ```
 
 **Fluxo de Revisão:**
@@ -300,7 +300,7 @@ cp knowledge/srs/master-deck.csv knowledge/srs/backup/
 # "Big O é notação de...?" → "limite superior assintótico"
 # "O(n) é melhor que O(n²)?" → "Sim"
 # "O(log n) cresce mais rápido que O(n)?" → "Não"
-/ul-memory-review
+/ul-study-recall
 
 # 3. PRATICAR (não use SRS!)
 @tutor #drill "analisar complexidade de 10 algoritmos"
@@ -601,7 +601,7 @@ Semana 7-8 de Rust - memorizando sintaxe básica.
 echo '"Zig: Optional type?","?T (pode ser null)"' >> srs.csv
 
 # Dia 2: Primeira revisão
-/ul-memory-review
+/ul-study-recall
 # Card: "Zig: Como criar ArrayList vazio?"
 # Você: "std.ArrayList.init(allocator)"
 # Sistema: ✅ "std.ArrayList.init(allocator)"
@@ -649,7 +649,6 @@ Sempre consultando cheatsheet de git. Criar cards para automatizar.
 - [flashcards.md](flashcards.md) - Criar e usar flashcards
 - [feynman.md](feynman.md) - Entender antes de memorizar
 - [mnemonics.md](mnemonics.md) - Técnicas mnemônicas
-- [indice.md](indice.md) - Índice completo
 
 ---
 

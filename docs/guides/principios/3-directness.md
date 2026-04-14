@@ -896,7 +896,6 @@ cargo run -- "pattern" file.txt
 - [feynman.md](../tecnicas/feynman.md) - Entender conceitos antes
 - [drill.md](../tecnicas/drill.md) - Automatizar skills antes
 - [flashcards.md](../tecnicas/flashcards.md) - Memorizar fatos
-- [Master Learning Map](../../shared/master-learning-map.md) - Visão global
 
 ---
 

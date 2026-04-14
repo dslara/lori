@@ -204,7 +204,7 @@ Validar domínio através de tarefas práticas
 • Final do módulo (validação)
 
 🚀 Próximo passo:
-→ /ul-practice-project para começar
+→ /ul-study-project para começar
    preparação para o benchmark
 ```
 
@@ -248,7 +248,7 @@ no meio (checkpoint) e no final
 (validação) do módulo.
 
 🎯 Próximo passo:
-→ /ul-practice-drill 'recursão'
+→ /ul-study-drill 'recursão'
    para se preparar"
 ```
 
@@ -269,9 +269,9 @@ no meio (checkpoint) e no final
 ## Integrações
 
 **Commands:**
-- `/ul-practice-drill` — Praticar para benchmark
-- `/ul-practice-project` — Preparar com projetos
-- `/ul-retro-weekly` — Discutir resultados
+- `/ul-study-drill` — Praticar para benchmark
+- `/ul-study-project` — Preparar com projetos
+- `/ul-plan-retro` — Discutir resultados
 
 ---
 

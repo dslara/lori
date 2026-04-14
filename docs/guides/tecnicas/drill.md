@@ -749,7 +749,6 @@ Sempre esquece comandos git, consulta toda vez.
 - [flashcards.md](flashcards.md) - Memorizar fatos
 - [directness.md](directness.md) - Aplicar em projetos
 - [pomodoro.md](pomodoro.md) - Blocos de foco
-- [indice.md](indice.md) - Índice completo
 
 ---
 

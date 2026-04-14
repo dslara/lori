@@ -515,7 +515,6 @@ SOLUÇÕES:
 - [analogy.md](analogy.md) - Criar comparações efetivas
 - [feynman.md](feynman.md) - Explicar conceitos
 - [decomposition.md](decomposition.md) - Quebrar problemas
-- [indice.md](indice.md) - Índice completo
 
 ---
 

@@ -1,5 +1,5 @@
 ---
-description: Debug socrático - guia para encontrar bugs (/ul-learn-debug)
+description: Debug socrático - guia para encontrar bugs (/ul-study-debug)
 agent: tutor
 model: opencode-go/kimi-k2.5
 ---
@@ -7,7 +7,7 @@ model: opencode-go/kimi-k2.5
 Argumento recebido: $ARGUMENTS (descrição do problema)
 
 ## Uso
-/ul-learn-debug [descrição do problema]
+/ul-study-debug [descrição do problema]
 
 ## Descrição
 
@@ -79,14 +79,14 @@ O progresso do debug é registrado automaticamente via `memcommit()` no final da
 • Prevenção futura: [dica]
 
 🎯 Recomendação:
-• Criar flashcard do padrão de erro → /ul-memory-create
-• Praticar detecção → /ul-practice-drill 'debug patterns'
+• Criar flashcard do padrão de erro → /ul-study-memorize
+• Praticar detecção → /ul-study-drill 'debug patterns'
 ```
 
 ## Exemplo de Interação
 
 ```
-Usuário: /ul-learn-debug "Meu programa Go trava ao processar arquivos grandes"
+Usuário: /ul-study-debug "Meu programa Go trava ao processar arquivos grandes"
 
 Sistema:
 "Vamos debugar isso juntos! 
@@ -193,7 +193,7 @@ Código corrigido:
 
 🎯 Recomendação:
 • Criar flashcard: 'Quando usar streaming vs ReadAll'
-• Praticar: /ul-practice-drill 'file I/O patterns'"
+• Praticar: /ul-study-drill 'file I/O patterns'"
 ```
 
 ## Quando Usar
@@ -218,18 +218,18 @@ Código corrigido:
 - `context-hybrid.getFullContext` — Contexto do projeto
 
 **Commands relacionados:**
-- `/ul-productivity-break` — Se travou mentalmente
-- `/ul-practice-drill` — Praticar padrões de debug
-- `/ul-memory-create` — Salvar padrões de erro
+- Pausa difusa — Se travou mentalmente, pare 15 min
+- `/ul-study-drill` — Praticar padrões de debug
+- `/ul-study-memorize` — Salvar padrões de erro
 - `/ul-study-end` — Ao resolver, encerrar sessão
 
 ## Handoff
 
 - Bug resolvido → `/ul-study-end` para salvar
-- Padrão identificado → `/ul-memory-create`
-- Travou mentalmente → `/ul-productivity-break`
-- Novo bug → Reiniciar `/ul-learn-debug`
+- Padrão identificado → `/ul-study-memorize`
+- Travou mentalmente → Pausa 15 min (modo difuso)
+- Novo bug → Reiniciar `/ul-study-debug`
 
 ---
 
-*Command: /ul-learn-debug — Wrapper para skill debug-socratic*
+*Command: /ul-study-debug — Wrapper para skill debug-socratic*

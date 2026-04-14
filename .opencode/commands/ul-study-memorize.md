@@ -1,5 +1,5 @@
 ---
-description: Criar flashcards SRS (/ul-memory-create)
+description: Criar flashcards SRS (/ul-study-memorize)
 agent: tutor
 model: opencode-go/kimi-k2.5
 ---
@@ -7,7 +7,7 @@ model: opencode-go/kimi-k2.5
 Argumentos recebidos: $ARGUMENTS
 
 ## Uso
-/ul-memory-create [frente] [verso]
+/ul-study-memorize [frente] [verso]
 
 ## Descrição
 
@@ -116,8 +116,8 @@ Próxima revisão: Amanhã
 • Para revisar hoje: [N]
 
 💡 Quer criar mais?
-• Outro card → /ul-memory-create
-• Revisar pendentes → /ul-memory-review
+• Outro card → /ul-study-memorize
+• Revisar pendentes → /ul-study-recall
 • Voltar ao estudo → /ul-study-start"
 ```
 
@@ -192,7 +192,7 @@ viking://user/memories/flashcards/
 ## Exemplo Completo
 
 ```
-Usuário: /ul-memory-create
+Usuário: /ul-study-memorize
 
 Sistema:
 "Criar flashcards!
@@ -264,8 +264,8 @@ Próxima revisão: Amanhã
 • Para revisar hoje: 3
 
 💡 Próximo passo:
-a) Criar outro → /ul-memory-create
-b) Revisar pendentes → /ul-memory-review
+a) Criar outro → /ul-study-memorize
+b) Revisar pendentes → /ul-study-recall
 c) Voltar ao estudo → /ul-study-start"
 ```
 
@@ -276,11 +276,11 @@ c) Voltar ao estudo → /ul-study-start"
 - Sintaxe que sempre esquece
 - Algoritmos para entrevistas
 - Comandos de CLI
-- Após /ul-practice-feynman (analogias boas)
-- Após /ul-learn-explain (conceitos novos)
+- Após /ul-study-feynman (analogias boas)
+- Após /ul-study-learn (conceitos novos)
 
 ❌ **NÃO USE para:**
-- Procedimentos (use /ul-practice-drill)
+- Procedimentos (use /ul-study-drill)
 - Projetos inteiros (muitos cards)
 - Coisas que já domina
 
@@ -294,16 +294,16 @@ c) Voltar ao estudo → /ul-study-start"
 - `memsearch` — Busca tópicos fracos (sugestão)
 
 **Commands relacionados:**
-- `/ul-memory-review` — Revisar cards criados
-- `/ul-practice-feynman` — Criar card de analogia boa
+- `/ul-study-recall` — Revisar cards criados
+- `/ul-study-feynman` — Criar card de analogia boa
 - `/ul-study-end` — Sugerir criar cards ao finalizar
 
 ## Handoff
 
 - Card criado → Outro card, revisão, ou estudo
-- Vários cards criados → `/ul-memory-review`
+- Vários cards criados → `/ul-study-recall`
 - Terminou → `/ul-study-start` ou `/ul-study-end`
 
 ---
 
-*Command: /ul-memory-create — Criar flashcards SRS via OpenViking*
+*Command: /ul-study-memorize — Criar flashcards SRS via OpenViking*

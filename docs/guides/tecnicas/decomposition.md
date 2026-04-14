@@ -550,7 +550,6 @@ Total: 7 sessões (16h)
 - [benchmarking.md](benchmarking.md) - Avaliar recursos
 - [mindmap.md](mindmap.md) - Visualizar estrutura
 - [first-principles.md](first-principles.md) - Identificar fundamentos
-- [indice.md](indice.md) - Índice completo
 
 ---
 

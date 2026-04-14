@@ -491,7 +491,6 @@ Cada iteração fortalece a memória.
 - [mnemonics.md](../tecnicas/mnemonics.md) - Técnicas mnemônicas
 - [interleaving.md](../tecnicas/interleaving.md) - Prática intercalada
 - [5-retrieval.md](5-retrieval.md) - Testar conhecimento
-- [indice.md](indice.md) - Índice completo
 
 ---
 

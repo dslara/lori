@@ -1,5 +1,5 @@
 ---
-description: Introduzir conceito novo com analogias (/ul-learn-explain)
+description: Introduzir conceito novo com analogias (/ul-study-learn)
 agent: tutor
 model: opencode-go/glm-5
 ---
@@ -7,11 +7,11 @@ model: opencode-go/glm-5
 Argumento recebido: $ARGUMENTS (conceito a explicar)
 
 ## Uso
-/ul-learn-explain [conceito]
+/ul-study-learn [conceito]
 
 ## Descrição
 
-Introduzir conceito completamente novo usando analogias do mundo real e exemplos mínimos. Diferente de /ul-practice-feynman (onde usuário explica), aqui o sistema introduz.
+Introduzir conceito completamente novo usando analogias do mundo real e exemplos mínimos. Diferente de /ul-study-feynman (onde usuário explica), aqui o sistema introduz.
 
 ## Processo
 
@@ -121,16 +121,16 @@ Resposta: 1 (cada closure tem sua própria 'mochila')"
 • Casos de uso
 
 🎯 Recomendações:
-• Validar compreensão → /ul-practice-feynman [conceito]
-• Praticar uso → /ul-practice-drill [conceito]
-• Criar flashcard → /ul-memory-create
-• Usar em projeto → /ul-practice-project"
+• Validar compreensão → /ul-study-feynman [conceito]
+• Praticar uso → /ul-study-drill [conceito]
+• Criar flashcard → /ul-study-memorize
+• Usar em projeto → /ul-study-project"
 ```
 
 ## Exemplo Completo
 
 ```
-Usuário: /ul-learn-explain "closures em Go"
+Usuário: /ul-study-learn "closures em Go"
 
 Sistema:
 "Vou introduzir closures de forma intuitiva!
@@ -223,9 +223,9 @@ Resposta: 8 (5 da 'mochila' + 3 parâmetro)
 ✅ Conceito Introduzido!
 
 💡 Próximos passos:
-• Validar com feynman → /ul-practice-feynman closures
-• Praticar padrões → /ul-practice-drill closures
-• Criar flashcard → /ul-memory-create"
+• Validar com feynman → /ul-study-feynman closures
+• Praticar padrões → /ul-study-drill closures
+• Criar flashcard → /ul-study-memorize"
 ```
 
 ## Quando Usar
@@ -237,28 +237,28 @@ Resposta: 8 (5 da 'mochila' + 3 parâmetro)
 - Aprender fundamentos antes de praticar
 
 ❌ **NÃO USE para:**
-- Já conhece o conceito → `/ul-practice-feynman` para validar
-- Praticar → `/ul-practice-drill`
-- Memorizar → `/ul-memory-review`
+- Já conhece o conceito → `/ul-study-feynman` para validar
+- Praticar → `/ul-study-drill`
+- Memorizar → `/ul-study-recall`
 
 **Sequência ideal:**
-`/ul-learn-explain` → `/ul-practice-feynman` → `/ul-practice-drill` → `/ul-practice-project`
+`/ul-study-learn` → `/ul-study-feynman` → `/ul-study-drill` → `/ul-study-project`
 
 ## Integrações
 
 **Commands relacionados:**
-- `/ul-practice-feynman` — Validar se entendeu
-- `/ul-practice-drill` — Praticar o conceito
-- `/ul-memory-create` — Salvar analogia em flashcard
-- `/ul-practice-project` — Usar em projeto real
+- `/ul-study-feynman` — Validar se entendeu
+- `/ul-study-drill` — Praticar o conceito
+- `/ul-study-memorize` — Salvar analogia em flashcard
+- `/ul-study-project` — Usar em projeto real
 
 ## Handoff
 
-- Analogia ficou clara → `/ul-practice-feynman` para validar
-- Quer praticar → `/ul-practice-drill`
-- Quer usar em projeto → `/ul-practice-project`
+- Analogia ficou clara → `/ul-study-feynman` para validar
+- Quer praticar → `/ul-study-drill`
+- Quer usar em projeto → `/ul-study-project`
 - Terminou estudo → `/ul-study-end`
 
 ---
 
-*Command: /ul-learn-explain — Introdução a conceitos novos com analogias*
+*Command: /ul-study-learn — Introdução a conceitos novos com analogias*

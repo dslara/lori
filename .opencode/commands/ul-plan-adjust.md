@@ -164,5 +164,5 @@ Aceita? (s/n/editar)
 ## Handoff
 
 - Plano ajustado → Continuar com `/ul-study-start`
-- Muitos ajustes? → `/ul-retro-weekly` para revisar abordagem
+- Muitos ajustes? → `/ul-plan-retro` para revisar abordagem
 - Novo módulo necessário? → `/ul-module-create`
