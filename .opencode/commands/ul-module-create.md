@@ -23,17 +23,8 @@ Cria novo módulo de estudo com estrutura completa de diretórios e arquivos ini
 ### Passo 2: Criar Estrutura
 
 Gerar ID único (M + timestamp) e criar estrutura via OpenViking:
-
-```typescript
-// Criar estrutura de projeto
-await membrowse({
-  uri: "viking://user/projects/",
-  view: "list"
-})
-
-// Atualizar perfil com novo módulo ativo
-await memcommit({ wait: true })
-```
+1. `membrowse` com URI `viking://user/projects/`, view `list` — verificar estrutura existente
+2. `memcommit` com `wait: true` — persistir novo módulo e atualizar perfil
 
 **Estrutura OpenViking:**
 ```

@@ -31,21 +31,7 @@ Com base nas respostas:
 
 ### Passo 3: Persistência via OpenViking
 
-**Obrigatório:** Chamar `memcommit()` para persistir a sessão:
-
-```typescript
-// 1. Salvar sessão no CSV
-await data({ operation: "createSession", ... })
-
-// 2. Commitar memória automaticamente (CRÍTICO)
-await memcommit({ wait: true })
-
-// 3. Retornar resultado
-return JSON.stringify({
-  success: true,
-  message: "Sessão salva e memória sincronizada"
-})
-```
+**Obrigatório:** Chamar `memcommit` com `wait: true` para persistir a sessão. Usar `data` com operação `createSession` para salvar no CSV.
 
 **Dados capturados automaticamente:**
 - moduleId (do perfil)

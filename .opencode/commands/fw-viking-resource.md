@@ -1,5 +1,5 @@
 ---
-description: Gerenciar recursos OpenViking - adicionar, listar, mover, deletar, linking, ler conteúdo
+description: Gerenciar recursos OpenViking - adicionar, listar, mover, deletar, linking, ler conteúdo (/fw-viking-resource)
 agent: build
 model: opencode-go/kimi-k2.5
 ---

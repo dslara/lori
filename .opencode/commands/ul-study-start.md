@@ -16,32 +16,10 @@ Inicia sessão de estudo carregando contexto automático (módulo ativo, streak,
 ### Passo 1: Carregar Contexto (automático)
 
 Usar OpenViking tools para carregar contexto:
-
-```typescript
-// 1. Carregar perfil do usuário
-const profile = await memread({
-  uri: "viking://user/memories/profile.md",
-  level: "read"
-})
-
-// 2. Buscar sessões recentes
-const sessions = await memsearch({
-  query: "sessões de estudo recentes",
-  limit: 5
-})
-
-// 3. Buscar flashcards pendentes
-const flashcards = await memsearch({
-  query: "flashcards pendentes revisão",
-  limit: 10
-})
-
-// 4. Buscar padrões de erro (pontos fracos)
-const weaknesses = await memsearch({
-  query: "padrões de erro tópicos fracos",
-  limit: 5
-})
-```
+1. `memread` com URI `viking://user/memories/profile.md` nível `read` — perfil do usuário
+2. `memsearch` com query `"sessões de estudo recentes"`, `limit: 5` — sessões recentes
+3. `memsearch` com query `"flashcards pendentes revisão"`, `limit: 10` — flashcards pendentes
+4. `memsearch` com query `"padrões de erro tópicos fracos"`, `limit: 5` — pontos fracos
 
 ### Passo 2: Processar e Apresentar
 

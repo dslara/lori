@@ -18,31 +18,15 @@ Lista módulos disponíveis ou ativa um módulo específico como atual via OpenV
 ### Sem Parâmetro: Listar Módulos
 
 1. Buscar projetos via OpenViking:
-```typescript
-const projects = await membrowse({
-  uri: "viking://user/projects/",
-  view: "list"
-})
-
-const profile = await memread({
-  uri: "viking://user/memories/profile.md",
-  level: "read"
-})
-```
-
+   - `membrowse` com URI `viking://user/projects/`, view `list` — listar projetos
+   - `memread` com URI `viking://user/memories/profile.md` nível `read` — perfil atual
 2. Mostrar todos os módulos com status
 3. Indicar qual está ativo
 
 ### Com Parâmetro: Ativar Módulo
 
 1. Buscar módulo pelo nome ou ID
-2. Atualizar perfil:
-```typescript
-// Atualizar perfil com novo módulo ativo
-// (presume que isso será feito via memcommit automático)
-await memcommit({ wait: true })
-```
-
+2. Atualizar perfil: `memcommit` com `wait: true` para persistir mudança de módulo ativo
 3. Confirmar mudança
 
 ## Parâmetros

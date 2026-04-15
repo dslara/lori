@@ -8,302 +8,45 @@ Argumentos recebidos: $ARGUMENTS
 
 ## Uso
 /ul-study-memorize [frente] [verso]
+/ul-study-memorize batch
+/ul-study-memorize review
 
 ## Descrição
 
-Cria flashcards para o sistema de repetição espaçada (SRS) via OpenViking. Pode criar um card de cada vez ou em lote.
+Cria flashcards para o sistema de repetição espaçada (SRS). Delega para a skill `srs-generator` que gerencia validação, criação e revisão de cards.
 
 ## Processo
 
-### Passo 1: Modo de Criação
+### Modo Criação (padrão ou batch)
 
-**Se forneceu frente e verso:**
-Criar card imediatamente.
+1. Carregar contexto: `memsearch` com query `"tópicos em estudo"`, `limit: 5` para sugerir conceitos
+2. Carregar skill `srs-generator` e seguir processo de criação definido nela
+3. Invocar `data.createFlashcard` com `front`, `back`, `category`, `tags` para persistir card
+4. Oferecer próximo passo: criar outro card, revisar pendentes, ou sair
 
-**Se não forneceu:**
-Perguntar modo:
-```
-"Criar flashcards!
+### Modo Revisão (review)
 
-Modo:
-a) Card único
-b) Múltiplos cards (lote)
-c) Cards de conceito atual"
-```
+1. Invocar `data.getFlashcards` para buscar cards com `next_review <= hoje`
+2. Seguir processo de revisão da skill `srs-generator`
+3. Para cada card, coletar nota 0-5 e invocar `data.createReview` com `flashcardId` e `quality`
+4. Apresentar resumo ao final
 
-### Passo 2: Criar Card Único
+## Argumento
 
-Coletar informações:
-```
-"Frente (pergunta):
-[Usuário responde]
-
-Verso (resposta):
-[Usuário responde]
-
-Categoria:
-a) Algoritmo
-b) Sintaxe
-c) Conceito
-d) Comando
-e) Outro: _____
-
-Tags (opcional, separadas por vírgula):
-[Ex: go, concorrência, goroutines]"
-```
-
-### Passo 3: Validação
-
-**Verificar qualidade:**
-- Frente é pergunta clara?
-- Verso é resposta completa?
-- Não é muito longo (> 200 chars)?
-- Não é muito vago?
-
-**Se qualidade ruim, sugerir melhorias:**
-```
-"💡 Dica: Bons flashcards são:
-• Específicos (não genéricos)
-• Concisos (até 2 frases)
-• Testáveis (você saberia responder?)
-
-Exemplo ruim:
-❌ Frente: 'Go'
-❌ Verso: 'Linguagem de programação'
-
-Exemplo bom:
-✅ Frente: 'O que faz defer em Go?'
-✅ Verso: 'Adia execução de função até retorno da função atual'
-
-Quer refinar seu card?"
-```
-
-### Passo 4: Persistir via OpenViking
-
-Criar card como resource:
-
-```typescript
-// Estrutura do flashcard
-const card = {
-  front: "Pergunta",
-  back: "Resposta",
-  category: "conceito",
-  tags: ["tag1", "tag2"],
-  created_at: new Date().toISOString(),
-  next_review: tomorrow,
-  interval: 1,
-  easiness: 2.5,
-  reviews: 0
-}
-
-// Adicionar ao index
-await memcommit({ wait: true })
-```
-
-**Retorno:**
-```
-✅ Flashcard Criado!
-
-📝 Card #[ID]:
-Frente: [frente]
-Verso: [verso]
-Categoria: [categoria]
-Próxima revisão: Amanhã
-
-📊 Estatísticas:
-• Total de cards: [N]
-• Cards deste módulo: [N]
-• Para revisar hoje: [N]
-
-💡 Quer criar mais?
-• Outro card → /ul-study-memorize
-• Revisar pendentes → /ul-study-recall
-• Voltar ao estudo → /ul-study-start"
-```
-
-### Passo 5: Criar em Lote (opcional)
-
-Se modo lote:
-```
-"Modo lote! Envie múltiplos cards no formato:
-
----
-Frente: [pergunta 1]
-Verso: [resposta 1]
-Categoria: [cat]
-Tags: [tags]
-
----
-Frente: [pergunta 2]
-Verso: [resposta 2]
-...
-
-[Cole os cards aqui]"
-```
-
-Processar cada separador `---` e criar todos.
-
-## Boas Práticas
-
-**Flashcards efetivos:**
-1. **Uma ideia por card** — Não misturar conceitos
-2. **Pergunta específica** — Não genérico
-3. **Resposta completa** — Mas concisa
-4. **Contexto quando necessário** — Ex: "Em Go..."
-5. **Exemplos no verso** — Se aplicável
-
-**Exemplos:**
-
-❌ **Ruim:**
-```
-Frente: Quick sort
-Verso: Algoritmo de ordenação rápido
-```
-
-✅ **Bom:**
-```
-Frente: Qual complexidade média do quick sort?
-Verso: O(n log n). Pior caso: O(n²) quando pivô é extremo.
-```
-
-❌ **Ruim:**
-```
-Frente: Goroutines
-Verso: Concorrência em Go
-```
-
-✅ **Bom:**
-```
-Frente: Qual diferença entre goroutine e thread?
-Verso: Goroutine é gerenciada pelo runtime Go (2KB stack, multiplexada). Thread é gerenciada pelo SO (1MB stack).
-```
-
-## Estrutura OpenViking
-
-Flashcards são armazenados como JSON estruturado:
-
-```
-viking://user/memories/flashcards/
-├── index.json          # Lista + metadados
-└── cards/
-    └── [uuid].json     # { front, back, category, tags, sm2_data }
-```
-
-## Exemplo Completo
-
-```
-Usuário: /ul-study-memorize
-
-Sistema:
-"Criar flashcards!
-
-Modo:
-a) Card único
-b) Múltiplos cards
-c) Do conceito atual"
-
-Usuário: "a"
-
-Sistema:
-"Frente (pergunta):"
-
-Usuário: "O que é memoization?"
-
-Sistema:
-"Verso (resposta):"
-
-Usuário: "Técnica de otimização que armazena resultados de funções custosas e retorna o cache quando inputs se repetem"
-
-Sistema:
-"Categoria:
-a) Algoritmo
-b) Sintaxe
-c) Conceito"
-
-Usuário: "c"
-
-Sistema:
-"Tags (opcional):"
-
-Usuário: "performance, cache, otimização"
-
-Sistema:
-"Validação:
-
-📝 Seu card:
-Frente: 'O que é memoization?'
-Verso: 'Técnica de otimização que armazena 
-resultados de funções custosas...'
-
-✅ Bom: Pergunta específica
-✅ Bom: Resposta completa
-⚠️  Melhorar: Pode adicionar exemplo
-
-Quer:
-a) Criar assim mesmo
-b) Adicionar exemplo
-c) Editar"
-
-Usuário: "a"
-
-Sistema:
-"✅ Flashcard Criado!
-
-📝 Card #F12345:
-Frente: O que é memoization?
-Verso: Técnica de otimização que armazena 
-resultados de funções custosas e retorna 
-o cache quando inputs se repetem
-Categoria: conceito
-Tags: performance, cache, otimização
-Próxima revisão: Amanhã
-
-📊 Estatísticas:
-• Total de cards: 47
-• Cards deste módulo: 12
-• Para revisar hoje: 3
-
-💡 Próximo passo:
-a) Criar outro → /ul-study-memorize
-b) Revisar pendentes → /ul-study-recall
-c) Voltar ao estudo → /ul-study-start"
-```
+- `$ARGUMENTS` vazio → modo criação interativo
+- `$ARGUMENTS` contém "batch" ou "bulk" → modo lote
+- `$ARGUMENTS` contém "review" → modo revisão
+- `$ARGUMENTS` contém frente e verso → criação direta
 
 ## Quando Usar
 
-✅ **USE para:**
-- Conceitos importantes para memorizar
-- Sintaxe que sempre esquece
-- Algoritmos para entrevistas
-- Comandos de CLI
-- Após /ul-study-feynman (analogias boas)
-- Após /ul-study-learn (conceitos novos)
-
-❌ **NÃO USE para:**
-- Procedimentos (use /ul-study-drill)
-- Projetos inteiros (muitos cards)
-- Coisas que já domina
+- Memorizar conceitos, sintaxe, algoritmos
+- Após `/ul-study-feynman` (analogias boas)
+- Após `/ul-study-learn` (conceitos novos)
 
 ## Integrações
 
-**Skill invocada:**
-- `srs-generator` — Validação e formatação
-
-**Tools OpenViking utilizadas:**
-- `memcommit` — Persiste card
-- `memsearch` — Busca tópicos fracos (sugestão)
-
-**Commands relacionados:**
-- `/ul-study-recall` — Revisar cards criados
-- `/ul-study-feynman` — Criar card de analogia boa
-- `/ul-study-end` — Sugerir criar cards ao finalizar
-
-## Handoff
-
-- Card criado → Outro card, revisão, ou estudo
-- Vários cards criados → `/ul-study-recall`
-- Terminou → `/ul-study-start` ou `/ul-study-end`
-
----
-
-*Command: /ul-study-memorize — Criar flashcards SRS via OpenViking*
+- Skill: `srs-generator` — processo completo de criação e revisão
+- Tools: `data.createFlashcard`, `data.getFlashcards`, `data.createReview`
+- `/ul-study-recall` — alias para modo review
+- `/ul-study-start` — pode sugerir SRS se pendente

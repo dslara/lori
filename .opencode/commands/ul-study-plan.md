@@ -16,32 +16,10 @@ Visualiza progresso da semana atual: tópicos concluídos, em andamento e penden
 ### Passo 1: Carregar Dados
 
 Usar OpenViking tools:
-
-```typescript
-// 1. Carregar plano da semana
-const weekPlan = await memread({
-  uri: "viking://user/projects/[module]/meta/week-*.md",
-  level: "read"
-})
-
-// 2. Buscar sessões recentes
-const sessions = await memsearch({
-  query: "sessões recentes semana atual",
-  limit: 20
-})
-
-// 3. Buscar métricas gerais
-const insights = await memread({
-  uri: "viking://user/memories/insights.md",
-  level: "read"
-})
-
-// 4. Buscar pontos fracos
-const weaknesses = await memsearch({
-  query: "padrões de erro tópicos fracos",
-  limit: 5
-})
-```
+1. `memread` com URI `viking://user/projects/[module]/meta/week-*.md` nível `read` — plano da semana
+2. `memsearch` com query `"sessões recentes semana atual"`, `limit: 20` — sessões recentes
+3. `memread` com URI `viking://user/memories/insights.md` nível `read` — métricas gerais
+4. `memsearch` com query `"padrões de erro tópicos fracos"`, `limit: 5` — pontos fracos
 
 ### Passo 2: Apresentar Progresso
 

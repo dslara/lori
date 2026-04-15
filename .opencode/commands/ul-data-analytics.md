@@ -14,32 +14,10 @@ Gera relatório analítico avançado com métricas de desempenho, padrões de es
 ## Processo
 
 Carregar dados via OpenViking:
-
-```typescript
-// 1. Carregar insights agregados
-const insights = await memread({
-  uri: "viking://user/memories/insights.md",
-  level: "read"
-})
-
-// 2. Buscar padrões de estudo
-const patterns = await memsearch({
-  query: "padrões de estudo",
-  limit: 10
-})
-
-// 3. Buscar pontos fracos
-const weaknesses = await memsearch({
-  query: "padrões de erro tópicos fracos",
-  limit: 5
-})
-
-// 4. Buscar sessões recentes
-const sessions = await memsearch({
-  query: "sessões recentes desempenho",
-  limit: 20
-})
-```
+1. `memread` com URI `viking://user/memories/insights.md` nível `read` — insights agregados
+2. `memsearch` com query `"padrões de estudo"`, `limit: 10` — padrões de estudo
+3. `memsearch` com query `"padrões de erro tópicos fracos"`, `limit: 5` — pontos fracos
+4. `memsearch` com query `"sessões recentes desempenho"`, `limit: 20` — sessões recentes
 
 ---
 

@@ -14,26 +14,9 @@ Mostra status atual de estudo: streak atual, recorde, total de sessões, módulo
 ## Processo
 
 Carregar informações via OpenViking:
-
-```typescript
-// 1. Carregar perfil do usuário
-const profile = await memread({
-  uri: "viking://user/memories/profile.md",
-  level: "read"
-})
-
-// 2. Buscar sessões recentes
-const sessions = await memsearch({
-  query: "sessões de estudo recentes",
-  limit: 5
-})
-
-// 3. Buscar streak e métricas
-const insights = await memsearch({
-  query: "streak métricas estudo",
-  limit: 3
-})
-```
+1. `memread` com URI `viking://user/memories/profile.md` nível `read` — perfil do usuário
+2. `memsearch` com query `"sessões de estudo recentes"`, `limit: 5` — sessões recentes
+3. `memsearch` com query `"streak métricas estudo"`, `limit: 3` — streak e métricas
 
 Exiba:
 - Streak atual com barra de progresso visual
