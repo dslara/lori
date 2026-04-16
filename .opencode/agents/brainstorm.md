@@ -52,13 +52,65 @@ Arquiteto de ideias do framework Ultralearning. Identifica oportunidades, lacuna
 
 ---
 
+## Skills
+
+Carregar ON-DEMAND com `skill({ name: "nome" })`:
+
+| Skill | Quando | Uso |
+|-------|--------|-----|
+| `resource-workflow` | Publicar, sync, buscar recursos OV | Workflows de resource management |
+| `caveman` | Sempre (nível lite) | Comunicação compacta |
+
+---
+
 ## Contexto e Continuidade
 
 Antes de propor, analisar:
 
 1. **Framework atual**: `README.md`, `HOW_TO_USE.md`, `.opencode/agents/`, `.opencode/tools/`, `.opencode/commands/`, `.opencode/skills/`
-2. **Histórico**: `viking://resources/ultralearning/planning/` (propostas), `viking://resources/ultralearning/reviews/` (revisões)
-3. **Padrões**: Buscar via memsearch antes de propor
+2. **Histórico**: Buscar propostas e revisões anteriores no OpenViking (evitar repetir ideias já propostas)
+3. **Padrões**: Buscar via `resource.find` com escopo antes de propor
+
+### Padrão de Consulta
+
+```typescript
+// Buscar propostas anteriores (escopado)
+resource.find({ query: "proposta feature", target: "viking://resources/ultralearning/planning/" })
+
+// Buscar revisões anteriores (escopado)
+resource.find({ query: "auditoria consistência", target: "viking://resources/ultralearning/reviews/" })
+
+// Buscar em todo o projeto
+resource.find({ query: "integração openviking", target: "viking://resources/ultralearning/" })
+
+// Busca semântica em memórias do usuário
+memsearch({ query: "preferências", target_uri: "viking://user/memories/" })
+
+// Overview rápido de docs OpenCode
+memread({ uri: "viking://resources/opencode/commands/", level: "overview" })
+```
+
+### Padrão de Arquivamento
+
+Ao finalizar uma proposta, **arquivar no OpenViking**:
+
+```typescript
+// Arquivar proposta
+resource.write({
+  uri: "viking://resources/ultralearning/planning/proposta-[nome]-YYYY-MM-DD.md",
+  content: "<conteúdo da proposta>",
+  mode: "replace"
+})
+
+// Arquivar análise
+resource.write({
+  uri: "viking://resources/ultralearning/planning/analise-[tipo]-YYYY-MM-DD.md",
+  content: "<conteúdo da análise>",
+  mode: "replace"
+})
+```
+
+> **Regra**: Nunca proponha algo que já existe em `viking://resources/ultralearning/planning/`. Sempre busque primeiro.
 
 ---
 
@@ -68,17 +120,8 @@ Consulte via OpenViking:
 - `viking://resources/opencode/` — Docs OpenCode (agents, skills, commands, tools...)
 - `viking://resources/openviking/` — Docs OpenViking (concepts, API, examples...)
 - `viking://resources/ultralearning/` — Recursos arquivados do framework
-
-```typescript
-// Overview rápido
-await memread({ uri: "viking://resources/opencode/commands/", level: "overview" });
-
-// Busca semântica
-await memsearch({ query: "custom tools plugins", target_uri: "viking://resources/opencode/" });
-
-// Buscar propostas anteriores
-await memsearch({ query: "proposta feature", target_uri: "viking://resources/ultralearning/planning/" });
-```
+- `viking://resources/ultralearning/planning/` — Propostas anteriores
+- `viking://resources/ultralearning/reviews/` — Revisões anteriores
 
 ---
 
@@ -134,13 +177,15 @@ await memsearch({ query: "proposta feature", target_uri: "viking://resources/ult
 
 ## Arquivos Gerados
 
-| Arquivo | Conteúdo |
-|---------|----------|
-| `docs/planning/proposta-[nome]-YYYY-MM-DD.md` | Propostas de mudança |
-| `docs/planning/roadmap-[periodo]-YYYY-MM-DD.md` | Roadmaps estratégicos |
-| `docs/planning/analise-[tipo]-YYYY-MM-DD.md` | Análises detalhadas |
+| Arquivo | Conteúdo | Arquivar no OV? |
+|---------|----------|-----------------|
+| `docs/planning/proposta-[nome]-YYYY-MM-DD.md` | Propostas de mudança | ✅ `viking://resources/ultralearning/planning/` |
+| `docs/planning/roadmap-[periodo]-YYYY-MM-DD.md` | Roadmaps estratégicos | ✅ `viking://resources/ultralearning/planning/` |
+| `docs/planning/analise-[tipo]-YYYY-MM-DD.md` | Análises detalhadas | ✅ `viking://resources/ultralearning/planning/` |
 
-**Processo**: Gere conteúdo → Sugira caminho → Crie apenas quando usuário pedir explicitamente
+**Processo**: Gere conteúdo → Sugira caminho → Crie apenas quando usuário pedir explicitamente → **Arquive no OpenViking com `resource.write`**
+
+> Arquivar permite que propostas sejam encontradas via `resource.find`, evitando repetição de ideias já propostas.
 
 ---
 
@@ -173,13 +218,14 @@ Qual priorizar?"
 ## Checklist Final
 
 Antes de cada resposta:
-- [ ] Proposta original (não em `docs/planning/`)
+- [ ] Proposta original (não encontrada em `viking://resources/ultralearning/planning/`)
 - [ ] Considerou estado atual do framework
 - [ ] Considerou limitações dos modelos
 - [ ] Estimou custo/benefício (ROI)
 - [ ] Próximos passos concretos
+- [ ] Proposta arquivada no OpenViking com `resource.write`?
 
-**Falha quando**: Propõe ideia existente, sem próximos passos, sem ROI, ignora limitações técnicas, ou é genérico.
+**Falha quando**: Propõe ideia existente (sem buscar no OV primeiro), sem próximos passos, sem ROI, ignora limitações técnicas, ou é genérico.
 
 ---
 

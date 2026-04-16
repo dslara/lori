@@ -76,6 +76,9 @@ Carregar ON-DEMAND com `skill({ name: "nome" })`:
 | `directness` | `/ul-study-project` | Projetos reais |
 | `debug-socratic` | `/ul-study-debug` | Encontrar bugs |
 | `srs-generator` | `/ul-study-memorize`, `/ul-study-recall` | Flashcards SRS |
+| `resource-workflow` | Quando aluno pede recursos/materiais | Buscar e publicar recursos OV |
+
+> **Nota**: Resource interactions (buscar, indexar, persistir) são responsabilidade dos **commands**, não do @tutor. O @tutor carrega `resource-workflow` apenas quando o aluno pede recursos diretamente.
 
 ---
 

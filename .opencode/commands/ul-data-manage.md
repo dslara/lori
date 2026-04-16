@@ -1,56 +1,28 @@
 ---
-description: Gerenciar dados - inicializar, resetar (/ul-data-manage)
+description: Gerenciar dados - inicializar, resetar
 agent: tutor
-model: opencode-go/minimax-m2.5
+model: opencode-go/kimi-k2.5
 ---
 
-Argumento recebido: $ARGUMENTS (init|reset)
+$1 (init|reset)
 
-## Uso
-/ul-data-manage [init|reset]
+## Descrição
 
-Comando de gerenciamento de dados para o Sistema Ultralearning.
+Comando de gerenciamento de dados para o Sistema Ultralearning. Inicializa estrutura ou reseta todos os dados.
 
-## Operações
+## Processo
 
-### /ul-data-manage init
-Inicializa a estrutura de dados CSV. Cria todos os arquivos necessários se não existirem.
+1. **Identificar operação** — Se `$1` vazio, perguntar qual operação deseja realizar
+2. **Executar operação**:
+   - `init` — Invocar `data.initDataDir` para criar estrutura de dados CSV
+   - `reset` — ⚠️ Confirmar com usuário (irreversível). Opcionalmente criar backup via `data.createBackup`. Invocar `data.resetAllData`
+3. **Reportar resultado** — Mostrar resultado da operação
 
-Use quando:
-- Configurando o sistema pela primeira vez
-- Após clonar o repositório em uma nova máquina
-- Se arquivos de dados estiverem faltando ou corrompidos
+## Argumento
 
-### /ul-data-manage reset
-⚠️ AVISO: Isso exclui TODOS os dados incluindo sessões, streaks, flashcards e progresso!
+- `$1`: Operação — "init" para inicializar, "reset" para resetar todos os dados (requer confirmação)
 
-Use quando:
-- Começando do zero com uma base limpa
-- Testando o sistema (apenas desenvolvimento)
+## Handoff
 
-**Sempre confirme com o usuário antes de resetar dados.**
-
-## Operações Disponíveis
-
-Pergunte ao usuário qual operação deseja realizar:
-- "init" - Inicializar estrutura de dados
-- "reset" - Resetar todos os dados (requer confirmação)
-
-## Integrações
-
-**Tools utilizadas:**
-- `data-core.initDataDir` — Inicializa estrutura de dados (operação `init`)
-- `data-core.resetAllData` — Reseta todos os dados (operação `reset`)
-- `data-core.createBackup` — Cria backup antes de operações destrutivas
-
-**Processo:**
-1. Se operação for `init`: Invocar `data-core.initDataDir`
-2. Se operação for `reset`: 
-   - Confirmar com usuário (irreversível)
-   - Opcional: Criar backup automático via `data-core.createBackup`
-   - Invocar `data-core.resetAllData`
-3. Reportar resultado da operação
-
----
-
-Execute a operação apropriada usando as ferramentas acima.
+- Inicializado → `/ul-module-create` para criar primeiro módulo
+- Resetado → `/ul-setup-check` para verificar dependências

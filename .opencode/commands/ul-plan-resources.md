@@ -1,239 +1,76 @@
 ---
-description: Mapear recursos de estudo em 3 tiers (/ul-plan-resources)
+description: Mapear recursos de estudo em 3 tiers e indexar no OpenViking
 agent: meta
-model: opencode-go/kimi-k2.5
+model: opencode-go/glm-5
 ---
 
-Argumento recebido: $ARGUMENTS (tópico a mapear)
-
-## Uso
-/ul-plan-resources [tópico]
+$ARGUMENTS (tópico a mapear, opcional)
 
 ## Descrição
 
-Identificar os melhores materiais de estudo para um tópico, organizando em 3 tiers (conceito, prática, referência).
-
-## Argumentos
-
-- `tópico`: Área de estudo (ex: "Rust async", "machine learning", "algoritmos")
-
-## Critérios de Seleção (80/20)
-
-- ✅ Prático (hands-on > teoria)
-- ✅ Atualizado (últimos 2 anos)
-- ✅ Bem avaliado (reviews positivos)
-- ✅ Gratuito ou custo-benefício
-- ❌ Evitar: cursos muito longos, conteúdo desatualizado, teoria sem prática
-
-## Regra de Ouro
-
-**Máximo 3 recursos Tier 1. Menos é mais.**
-
-## Diversificação
-
-Os 3 slots de Tier 1 devem ser complementares:
-1. 📖 **Conceito** → docs oficial / tutorial teórico
-2. 🔨 **Prática** → projeto guiado / exercícios
-3. 📚 **Referência** → documentação completa / cheatsheet
+Identifica os melhores materiais de estudo para um tópico, organizando em 3 tiers (conceito, prática, referência). Máximo 3 recursos Tier 1. Menos é mais. Recursos são indexados no OpenViking para busca semântica futura.
 
 ## Processo
 
-### Passo 1: Contexto (30 seg)
+1. **Contexto** — Invocar `context-hybrid.getCurrentModule` e `context-hybrid.getProjectInfo` para módulo atual.
+2. **Buscar recursos existentes** — Antes de pesquisar na web, verificar se já existem recursos indexados:
+   ```
+   resource.find({ query: "{tópico} recursos", target: "viking://resources/ultralearning/projects/{id}/resources/" })
+   resource.find({ query: "{tópico} tutorial documentação", target: "viking://resources/ultralearning/resources/" })
+   ```
+3. **Pesquisar recursos na web** — Usar `webfetch` para encontrar: documentação oficial, tutoriais interativos, projetos práticos, cursos e comunidades. Avaliar por relevância, qualidade, atualização e praticidade (1-5).
+4. **Apresentar sugestões** — Oferecer 3 slots Tier 1: 📖 Conceito, 🔨 Prática, 📚 Referência. Cada um com nome, link e justificativa.
+5. **Detalhar recursos** — Para cada Tier 1: link, tipo, tempo estimado, custo, pré-requisitos, tópicos cobertos, avaliação.
+6. **Salvar localmente** — Gerar `projects/{modulo}/meta/resources.md` com Tier 1 (tabela + detalhes), Tier 2 (aprofundamento), Tier 3 (avançado) e lista de recursos a evitar.
+7. **Indexar no OpenViking** — Publicar os recursos curados para busca semântica:
+   ```
+   # Para cada recurso Tier 1 com conteúdo web
+   resource.write(
+     uri: "viking://resources/ultralearning/projects/{id}/resources/{recurso}.md",
+     content: "<conteúdo filtrado com metadata>",
+     mode: "replace"
+   )
 
-```
-📚 Mapeando recursos para: [TÓPICO]
+   # Para recursos externos (URLs diretas)
+   resource.add(
+     path: "https://docs.exemplo.com/guide/",
+     target: "viking://resources/ultralearning/projects/{id}/resources/",
+     instruction: "Focar em exemplos práticos e APIs",
+     reason: "Recurso Tier 1 para {tópico}"
+   )
 
-Módulo atual: [nome do módulo]
+   # Linkar ao projeto
+   resource.link(
+     uri: "viking://resources/ultralearning/projects/{id}/resources/{recurso}.md",
+     to_uri: "viking://resources/ultralearning/projects/{id}/",
+     reason: "recurso de estudo do projeto"
+   )
+   ```
 
-Buscando recursos em:
-- Documentação oficial
-- Tutoriais interativos
-- Cursos práticos
-- Livros/E-books
-- Projetos open source
-```
+## Argumento
 
-### Passo 2: Pesquisa (2-3 min)
+- `tópico`: Área de estudo (opcional — será perguntado se não fornecido). Ex: "Rust async", "machine learning"
 
-Use web search para encontrar:
-1. **Documentação oficial** (docs, guides, tutorials)
-2. **Recursos práticos** (exercícios, projetos, playgrounds)
-3. **Cursos/Tutoriais** (YouTube, Udemy, Coursera, etc.)
-4. **Comunidade** (Reddit, Stack Overflow, blogs)
+## Formato de Metadata para Recursos
 
-**Critérios de avaliação**:
-- ⭐ Relevância (1-5)
-- ⭐ Qualidade (1-5)
-- ⭐ Atualização (1-5)
-- ⭐ Praticidade (1-5)
-
-### Passo 3: Apresentar Sugestões (1 min)
-
-```
-📚 Recursos encontrados para [TÓPICO]:
-
-TIER 1 - Comece aqui (escolha 3):
-
-📖 Conceito:
-  1. [Nome] - [breve descrição]
-     Link: [url]
-     Por quê: [razão]
-     
-🔨 Prática:
-  2. [Nome] - [breve descrição]
-     Link: [url]
-     Por quê: [razão]
-     
-📚 Referência:
-  3. [Nome] - [breve descrição]
-     Link: [url]
-     Por quê: [razão]
-
-Opções (a/b/c):
-a) Usar sugestões
-b) Buscar outros recursos
-c) Especificar recursos que já conhece
-
-Escolha: __________"
-```
-
-### Passo 4: Detalhar Recurso (2 min)
-
-Para cada recurso Tier 1:
-```
-🔍 Detalhes: [Nome do recurso]
-
-Link: [url]
-Tipo: [docs/tutorial/curso/livro]
-Tempo estimado: Xh
-Custo: Grátis/X€
-Pré-requisitos: [se houver]
-Tópicos cobertos:
-- [tópico 1]
-- [tópico 2]
-- [tópico 3]
-
-Avaliação:
-- ⭐⭐⭐⭐⭐ Qualidade
-- ⭐⭐⭐⭐ Praticidade
-- ⭐⭐⭐ Atualização
-
-✅ Recomendado para: [seu objetivo]
-```
-
-### Passo 5: Salvar arquivo (1 min)
-
-```
-💾 Salvar em projects/{modulo}/meta/resources.md? (s/n)
-
-✅ Recursos mapeados!
-
-📄 Arquivo: projects/{modulo}/meta/resources.md
-
-💡 Próximos passos:
-- Começar estudo → /ul-study-start
-- Planejar semana → /ul-plan-weekly
-- Decompor objetivo → /ul-plan-decompose
-```
-
-## Output
-
-Arquivo `projects/{modulo}/meta/resources.md`:
+Cada recurso publicado no OpenViking deve incluir metadata no topo:
 
 ```markdown
-# 📚 Recursos: [TÓPICO]
-
-**Data**: YYYY-MM-DD
-**Módulo**: [nome]
-**Status**: 🟢 Ativo
-
+---
+source: https://docs.exemplo.com/guide/
+date: 2026-04-15
+tier: 1
+type: conceito|prática|referência
+topic: {tópico}
+project: {id}
 ---
 
-## 🥇 Tier 1 - Comece aqui (máx 3)
-
-| Slot | Recurso | Por quê |
-|------|---------|---------|
-| 📖 Conceito | [Nome] | [razão] |
-| 🔨 Prática | [Nome] | [razão] |
-| 📚 Referência | [Nome] | [razão] |
-
-### 1. [Nome do Recurso]
-- **Link**: [url]
-- **Tipo**: [docs/tutorial/curso/livro]
-- **Tempo**: Xh
-- **Custo**: Grátis/X€
-- **Por quê**: [razão específica]
-- **Tópicos**: [lista]
-
----
-
-## 🥈 Tier 2 - Aprofundamento
-
-### 4. [Nome]
-[detalhes...]
-
----
-
-## 🥉 Tier 3 - Avançado
-
-### 5. [Nome]
-[detalhes...]
-
----
-
-## ⚠️ Evitar
-
-- [Recurso X] - Motivo: [desatualizado/muito teórico/etc]
+# {Nome do Recurso}
+{Conteúdo filtrado e organizado}
 ```
 
-## Exemplo
+## Handoff
 
-```
-Usuário: /ul-plan-resources Rust async
-
-Você:
-📚 Vou mapear recursos para Rust async...
-
-Módulo atual: M2-rust-backend
-
-Buscando recursos...
-
-━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
-
-📚 Recursos encontrados para Rust async:
-
-TIER 1 - Comece aqui:
-
-📖 Conceito:
-  1. The Rust Book - Chapter 17: Async
-     Link: https://doc.rust-lang.org/book/ch17-01-what-is-async.html
-     Por quê: Documentação oficial, explicação clara dos fundamentos
-     
-🔨 Prática:
-  2. Rustlings - Async Exercises
-     Link: https://github.com/rust-lang/rustlings
-     Por quê: Exercícios práticos com feedback imediato
-     
-📚 Referência:
-  3. Tokio Tutorial
-     Link: https://tokio.rs/tokio/tutorial
-     Por quê: Tutorial completo do runtime mais popular
-
-Opções (a/b/c):
-a) Usar sugestões
-b) Buscar outros recursos
-c) Especificar recursos que já conheço
-
-Escolha: __________
-```
-
-## Integrações
-
-**Tools utilizadas:**
-- `context-hybrid.getCurrentModule` — Obtém módulo atual para contexto
-- `context-hybrid.getProjectInfo` — Busca recursos específicos do projeto
-- **Web search** — Para encontrar recursos externos (Tier 2 e 3)
-
----
-
-*Command: /ul-plan-resources - Mapear recursos de estudo*
+- Recursos mapeados → `/ul-study-start` para começar estudo
+- Precisa planejar semanas → `/ul-plan-weekly`
+- Objetivo muito grande → `/ul-plan-decompose`

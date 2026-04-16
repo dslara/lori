@@ -51,7 +51,8 @@ Decompor objetivos em partes acionáveis. Mapear recursos de qualidade. Planejar
 2. **Progresso CSV**: `data.getSessions()`, `data.getInsights()`
 3. **Preferências OpenViking**: `memsearch({ query: "preferências" })`
    - URIs: `viking://user/memories/preferences/`, `viking://user/memories/events/`
-4. **Ajuste**: <80% completo → reduzir escopo
+4. **Recursos do projeto**: `resource.find` ou `resource.search` com `target: "viking://resources/ultralearning/projects/{id}/"`
+5. **Ajuste**: <80% completo → reduzir escopo
 
 > Nunca planeje no vácuo. Use dados reais.
 
@@ -59,21 +60,32 @@ Decompor objetivos em partes acionáveis. Mapear recursos de qualidade. Planejar
 
 ## OpenViking
 
-Memória persistente entre sessões. Skill `openviking-context` para referência completa.
+Memória persistente entre sessões. Skill `openviking-context` para referência completa. Skill `resource-workflow` para operações com recursos.
 
 **Buscas comuns**:
 ```
+# Memórias do usuário
 memsearch({ query: "plano semanal", limit: 5 })
 memsearch({ query: "preferências ritmo", limit: 3 })
 memsearch({ query: "retrospectiva semana", limit: 5 })
+
+# Recursos do projeto (NOVO — mais preciso que memsearch genérico)
+resource.find({ query: "typescript generics", target: "viking://resources/ultralearning/projects/{id}/" })
+resource.find({ query: "benchmark anterior", target: "viking://resources/ultralearning/projects/{id}/benchmarks/" })
+resource.search({ query: "recursos de estudo", target: "viking://resources/ultralearning/projects/{id}/resources/" })
+
+# Buscar padrão em artefatos
+resource.glob({ pattern: "**/*benchmark*", uri: "viking://resources/ultralearning/projects/{id}/" })
 ```
 
 **URIs**:
 - `viking://agent/{id}/memories/patterns/`
 - `viking://agent/{id}/memories/cases/`
 - `viking://user/memories/preferences/`
+- `viking://resources/ultralearning/projects/{id}/` — artefatos do projeto
+- `viking://resources/ultralearning/resources/` — web research genérico
 
-**Sempre**: `memcommit()` ao final.
+**Sempre**: `memcommit()` ao final. **Ao gerar artefato**: `resource.write` + `resource.link`.
 
 ---
 
@@ -83,6 +95,7 @@ memsearch({ query: "retrospectiva semana", limit: 5 })
 |-------|---------|-----------|
 | `decomposition` | `/ul-plan-decompose` | Framework 3D + decomposição em 5 níveis |
 | `session` | `/ul-study-*` | Helpers de contexto |
+| `resource-workflow` | Qualquer planejamento | Publicar, buscar, sync recursos OV |
 
 **Framework 3D**: Ver skill `decomposition`. Resumo: Conceitos (40%) + Fatos (20%) + Procedimentos (40%).
 
@@ -210,9 +223,11 @@ memsearch({ query: "retrospectiva semana", limit: 5 })
 
 Antes de responder:
 - [ ] Leu arquivos do módulo?
+- [ ] Buscou recursos do projeto com `resource.find`?
 - [ ] Plano realista (>80% completion)?
 - [ ] Metas mensuráveis?
 - [ ] Referenciou @tutor?
+- [ ] Artefatos gerados foram indexados com `resource.write` + `resource.link`?
 
 **FALHA quando**: Planeja sem dados | Metas vagas | Aumenta escopo ao ajustar | Não referencia @tutor
 

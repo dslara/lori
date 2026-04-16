@@ -1,100 +1,110 @@
 ---
-description: Gerenciar recursos OpenViking - adicionar, listar, mover, deletar, linking, ler conteúdo (/fw-viking-resource)
+description: Gerenciar recursos OpenViking - ingest, filesystem, conteúdo, busca, relações, sync
 agent: build
 model: opencode-go/kimi-k2.5
 ---
 
-## Uso
-
-```
-/resource <operação> [parâmetros]
-```
-
-### Operações Disponíveis
-
-| Operação | Parâmetro | Descrição |
-|----------|-----------|-----------|
-| `add` | `path` | Adicionar arquivo/URL como recurso |
-| `list` | `uri` | Listar recursos em um diretório |
-| `info` | `uri` | Obter metadata do recurso |
-| `mv` | `from`, `to` | Mover/renomear recurso |
-| `rm` | `uri` | Deletar recurso |
-| `link` | `uri`, `to_uri` | Criar linking entre recursos |
-| `unlink` | `uri`, `to_uri` | Remover linking |
-| `relations` | `uri` | Ver recursos relacionados |
-| `abstract` | `uri` | Ler resumo (~100 tokens) |
-| `overview` | `uri` | Ler overview (~2k tokens) |
-| `read` | `uri` | Ler conteúdo completo |
-| `export` | `uri`, `to` | Exportar como .ovpack |
-| `import` | `file_path`, `parent` | Importar .ovpack |
+$ARGUMENTS (operação e parâmetros, ex: `add path=./docs/guide.md target=viking://resources/ultralearning/`)
 
 ## Descrição
 
-Este command expõe a tool `@.opencode/tools/resource.ts` para gerenciamento de recursos OpenViking. Permite adicionar, organizar, linking e recuperar recursos para busca semântica.
-
-### Casos de Uso
-
-1. **Adicionar documentação** - Importar PDFs, MDs, URLs para indexing
-2. **Organizar recursos** - Mover entre pastas, renomear
-3. **Criar linking** - Conectar recursos relacionados semanticamente
-4. **Recuperar conteúdo** - Ler em diferentes níveis de detalhe
-5. **Exportar/Importar** - Backup e transferência de recursos
+Gerencia recursos OpenViking para busca semântica: adicionar, organizar, publicar conteúdo, buscar, relacionar e sincronizar.
 
 ## Processo
 
-1. Parsear operação e parâmetros
-2. Validar parâmetros obrigatórios
-3. Executar via tool `resource`
-4. Retornar resultado formatado
+1. **Parsear operação** — Extrair operação e parâmetros de `$ARGUMENTS`
+2. **Validar parâmetros** — Verificar parâmetros obrigatórios para cada operação (coluna Req)
+3. **Executar** — Invocar tool `resource` com operação e parâmetros
+4. **Retornar resultado** — Formatar e apresentar resultado da operação
 
-## Parâmetros
+## Operações
 
-| Parâmetro | Obrigatório | Descrição |
-|-----------|------------|-----------|
-| `operation` | ✅ | Operação a executar |
-| `path` | add | Arquivo/URL para adicionar |
-| `target` | add | URI alvo para adicionar |
-| `uri` | list/info/rm/relations/abstract/overview/read/export | URI do recurso |
-| `from` | mv | URI de origem |
-| `to` | mv/export | URI de destino / arquivo para export |
-| `recursive` | rm | Deletar recursivamente |
-| `to_uri` | link/unlink | URI para linking |
-| `reason` | add/link | Razão para adicionar/linkar |
-| `wait` | add | Esperar processamento semântico |
-| `file_path` | import | Arquivo .ovpack para importar |
-| `parent` | import | URI pai para import |
-| `force` | import | Forçar overwrite |
-| `vectorize` | import | Trigger vectorização (default: true) |
+### Ingest — Adicionar e sincronizar recursos
+
+| Op | Parâmetros | Req | Descrição |
+|----|-----------|-----|-----------|
+| `add` | path, target?, reason?, wait?, instruction?, watch_interval? | path | Adicionar arquivo/URL como recurso |
+| `sync` | target, path?, reason?, watch_interval? | target | Atualizar recurso existente (diff incremental) |
+
+**`add`** — Ingest de caminho local ou URL remota. `instruction` melhora qualidade do resumo semântico. `watch_interval` habilita auto-refresh periódico.
+
+**`sync`** — Re-add com mesmo `target` → OpenViking faz diff incremental. Arquivos inalterados mantêm índice. `watch_interval=0` desabilita auto-refresh.
+
+### Filesystem — Navegar e organizar
+
+| Op | Parâmetros | Req | Descrição |
+|----|-----------|-----|-----------|
+| `list` | uri? | — | Listar recursos em diretório |
+| `info` | uri | uri | Obter metadata (stat) |
+| `mv` | from, to | ambos | Mover/renomear |
+| `rm` | uri, recursive? | uri | Deletar |
+| `mkdir` | uri | uri | Criar diretório |
+| `tree` | uri?, simple? | — | Visão hierárquica de diretórios |
+
+### Content — Ler e escrever conteúdo
+
+| Op | Parâmetros | Req | Descrição |
+|----|-----------|-----|-----------|
+| `abstract` | uri | uri | Resumo ~100 tokens |
+| `overview` | uri | uri | Overview estruturado ~2k tokens |
+| `read` | uri | uri | Conteúdo completo |
+| `write` | uri, content, mode?, wait?, timeout? | uri, content | Escrever/atualizar arquivo existente |
+
+**`write`** — Publica conteúdo local no viking://. Modos: `replace` (default) ou `append`. Auto re-indexa semântica + vectors. Arquivo deve existir; criar dir com `mkdir` antes se necessário.
+
+**Fluxo para publicar conteúdo novo:**
+1. `mkdir uri=viking://resources/ultralearning/notes/` — criar diretório
+2. `add path=/tmp/notes.md target=viking://resources/ultralearning/notes/` — primeira vez
+3. `write uri=viking://resources/ultralearning/notes/session.md content="..." mode=replace` — atualizações
+
+### Search — Busca semântica e por padrão
+
+| Op | Parâmetros | Req | Descrição |
+|----|-----------|-----|-----------|
+| `find` | query, target?, limit?, score_threshold?, search_mode? | query | Busca semântica simples |
+| `search` | query, target?, session_id?, limit?, score_threshold? | query | Busca contextual com sessão |
+| `grep` | pattern, uri?, limit? | pattern | Regex search em resources |
+| `glob` | pattern, uri?, limit? | pattern | Pattern matching em filenames |
+
+**`find`** — Busca semântica por similaridade. Modos: `fast` (rápido), `deep` (contextual), `auto` (default). `score_threshold` filtra relevância (0-1).
+
+**`search`** — Busca contextual que usa estado da sessão. Mais precisa que `find` para consultas ambíguas.
+
+### Relate — Links, relações, import/export
+
+| Op | Parâmetros | Req | Descrição |
+|----|-----------|-----|-----------|
+| `link` | uri, to_uri, reason? | uri, to_uri | Criar relação entre recursos |
+| `unlink` | uri, to_uri | ambos | Remover relação |
+| `relations` | uri | uri | Ver recursos relacionados |
+| `export` | uri, to | ambos | Exportar subtree como .ovpack |
+| `import` | file_path, parent, force?, vectorize? | file_path, parent | Importar .ovpack |
 
 ## Exemplos
 
 ```
-/resource add path=./docs/guide.md target=viking://resources/ultralearning/
+# Adicionar repo com auto-refresh
+resource add path=https://github.com/org/repo target=viking://resources/repo/ watch_interval=60
 
-/resource list uri=viking://resources/ultralearning/
+# Sync manual (atualizar repo)
+resource sync target=viking://resources/repo/
 
-/resource read uri=viking://resources/ultralearning/README.md
+# Publicar conteúdo local
+resource mkdir uri=viking://resources/ultralearning/notes/
+resource write uri=viking://resources/ultralearning/notes/session-15.md content="# Sessão 15..." mode=replace
 
-/resource link uri=viking://resources/ultralearning/docs/ to_uri=viking://resources/openviking/docs/ reason=Referência OpenViking
+# Busca semântica
+resource find query="typescript generics" target=viking://resources/ultralearning/ limit=5
 
-/resource mv from=viking://resources/ultralearning OLD/ to=viking://resources/ultralearning/new/
+# Busca por padrão
+resource grep pattern="TODO.*urgent" uri=viking://resources/project/
+
+# Linkar recursos
+resource link uri=viking://resources/ultralearning/projects/typescript/ to_uri=viking://resources/ultralearning/projects/typescript/plans/week-3.md reason="plano semanal do projeto"
 ```
-
-## Erros Comuns
-
-| Erro | Causa | Solução |
-|------|-------|--------|
-| `MISSING_PATH` | path não fornecido para add | Fornecer path do arquivo |
-| `MISSING_URI` | uri não fornecida | Fornecer URI válida |
-| `MISSING_PARAMS` | Parâmetros obrigatórios faltando | Verificar parâmetros |
-| `INVALID_OPERATION` | Operação desconhecida | Usar operação válida |
-
-## Integrações
-
-- **Tool**: `@.opencode/tools/resource.ts`
-- **Tool**: `@.opencode/tools/resource-core.ts`
-- **Skills**: `openviking-context`
 
 ## Handoff
 
-Após execução bem-sucedida, retorna JSON com resultado da operação.
+- Após execução → retorna JSON com resultado da operação
+- Para `write` com `wait=true` → aguarda re-indexação semântica completar
+- Para `sync` → verificar `watch_interval` no resultado para confirmar auto-refresh

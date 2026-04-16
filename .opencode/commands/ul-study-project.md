@@ -1,13 +1,10 @@
 ---
-description: Aprender fazendo projetos reais (/ul-study-project)
+description: Aprender fazendo projetos reais
 agent: tutor
 model: opencode-go/kimi-k2.5
 ---
 
-Argumentos recebidos: $ARGUMENTS (descrição do projeto)
-
-## Uso
-/ul-study-project [descrição do projeto]
+$ARGUMENTS (descrição do projeto, opcional)
 
 ## Descrição
 
@@ -15,26 +12,17 @@ Aprender através de projetos reais com guia socrático. Delega para a skill `di
 
 ## Processo
 
-1. Carregar contexto: `context-hybrid.getProjectInfo` para obter módulo atual e projetos existentes
-2. Carregar skill `directness` e seguir processo definido nela
-3. A skill conduzirá: perguntas de planejamento → micro-passos → guia socrático → validação → mini-retrieval
-4. Ao finalizar, usar `memcommit` com `wait: true` para persistir progresso
+1. **Carregar contexto** — Invocar `context-hybrid.getProjectInfo` para obter módulo atual e projetos existentes
+2. **Carregar skill** — Carregar skill `directness` e seguir processo definido nela
+3. **Executar projeto** — A skill conduzirá: perguntas de planejamento → micro-passos → guia socrático → validação → mini-retrieval
+4. **Persistir** — Ao finalizar, usar `memcommit` com `wait: true` para persistir progresso
 
 ## Argumento
 
-- `$ARGUMENTS` vazio → perguntar qual projeto deseja construir
-- `$ARGUMENTS` preenchido → usar como descrição do projeto
+- `descrição`: Descrição do projeto (opcional — será perguntado se não fornecido)
 
-## Quando Usar
+## Handoff
 
-- Integrar múltiplos conceitos
-- Mini-projetos semanais
-- Resolver problema real
-- Preparar para trabalho
-
-## Integrações
-
-- Skill: `directness` — processo de aprendizado por projetos
-- Tool: `context-hybrid.getProjectInfo` — contexto do projeto
-- `/ul-study-end` — salvar sessão ao concluir
-- `/ul-study-drill` — praticar skill fraca identificada
+- Projeto concluído → `/ul-study-end` para salvar sessão
+- Skill fraca identificada → `/ul-study-drill`
+- Precisa scaffold → `/ul-setup-scaffold`

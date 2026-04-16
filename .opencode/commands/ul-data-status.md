@@ -1,88 +1,23 @@
 ---
-description: Ver status atual - streak, sessões, módulo (/ul-data-status)
+description: Ver status atual - streak, sessões, módulo
 agent: tutor
 model: opencode-go/minimax-m2.5
+subtask: true
 ---
 
 ## Descrição
 
-Mostra status atual de estudo: streak atual, recorde, total de sessões, módulo ativo e data da última sessão via OpenViking.
-
-## Uso
-/ul-data-status
+Mostra status atual de estudo: streak, recorde, total de sessões, módulo ativo e data da última sessão.
 
 ## Processo
 
-Carregar informações via OpenViking:
-1. `memread` com URI `viking://user/memories/profile.md` nível `read` — perfil do usuário
-2. `memsearch` com query `"sessões de estudo recentes"`, `limit: 5` — sessões recentes
-3. `memsearch` com query `"streak métricas estudo"`, `limit: 3` — streak e métricas
+1. **Verificar dados existentes** — Checar `!`ls data/*.csv 2>/dev/null | wc -l`` para confirmar que dados existem. Se 0, sugerir `/ul-data-manage init`
+2. **Perfil** — `memread` com URI `viking://user/memories/profile.md` nível `read`
+3. **Sessões recentes** — `memsearch` com query `"sessões de estudo recentes"`, `limit: 5`
+4. **Métricas** — `memsearch` com query `"streak métricas estudo"`, `limit: 3`
+5. **Apresentar** — Streak atual, recorde, total de sessões, módulo ativo, data da última sessão. Celebrar streaks bons, encorajar se inativo.
 
-Exiba:
-- Streak atual com barra de progresso visual
-- Recorde de streak
-- Total de sessões
-- Módulo ativo
-- Data da última sessão
+## Handoff
 
-Apresente as informações de forma clara e motivadora. Se o usuário tiver um bom streak, celebre! Se não estudou recentemente, encoraje-o gentilmente.
-
-Se não houver dados (OpenViking vazio), sugira começar com `/ul-study-start`.
-
-## Output
-
-```
-📊 Status de Estudo
-
-🔥 Streak: 15 dias (recorde: 23 dias)
-███████████████░░░░░░░ 65%
-
-📚 Módulo: go-os-cpu
-   Iniciado: 2026-03-01
-   Sessões: 12
-   Tempo total: 8h 30min
-
-📅 Última sessão: Ontem (45 min)
-   Foco: 8/10
-   
-💡 Dica: Você está numa sequência boa! Mantenha assim.
-```
-
-Se streak quebrado:
-```
-📊 Status de Estudo
-
-⚠️ Streak: 0 dias (quebrou há 3 dias)
-   Recorde: 5 dias
-
-📚 Módulo: math-foundations
-
-📅 Última sessão: 3 dias atrás
-
-💡 Não desanime! Uma sessão rápida já conta.
-   → /ul-study-start para retomar
-```
-
-## Estrutura OpenViking
-
-Os dados são buscados de:
-
-| Dado | URI OpenViking |
-|------|---------------|
-| Perfil/Streak | `viking://user/memories/profile.md` |
-| Sessões recentes | `memsearch({ query: "sessões recentes" })` |
-| Métricas | `memsearch({ query: "métricas streak" })` |
-
-## Integrações
-
-**Tools OpenViking utilizadas:**
-- `memread` — Carregar perfil
-- `memsearch` — Buscar sessões e métricas
-
-**Commands relacionados:**
-- `/ul-study-start` — Iniciar sessão
-- `/ul-data-analytics` — Ver relatório detalhado
-
----
-
-*Command: /ul-data-status — Status rápido via OpenViking*
+- Iniciar sessão → `/ul-study-start`
+- Ver relatório detalhado → `/ul-data-analytics`

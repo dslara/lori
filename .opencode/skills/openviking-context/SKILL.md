@@ -271,76 +271,46 @@ await memread({
 
 ## Resources Indexados do Framework
 
-O framework agora tem resources indexados em `viking://resources/ultralearning/`:
+O framework tem recursos indexados em `viking://resources/`:
 
 ```typescript
 const resourceBase = "viking://resources/ultralearning/";
 ```
 
-### OpenCode Docs
+### Estrutura de Recursos
 
-| Resource | URI | Como Consultar |
-|----------|-----|---------------|
-| Commands | `{resourceBase}opencode/commands/` | `memread(uri + "commands/", level: "overview")` |
-| Custom Tools | `{resourceBase}opencode/custom-tools/` | `memread(uri + "custom-tools/", level: "overview")` |
-| Agents | `{resourceBase}opencode/agents/` | `memread(uri + "agents/", level: "overview")` |
-| Skills | `{resourceBase}opencode/skills/` | `memread(uri + "skills/", level: "overview")` |
-| Rules | `{resourceBase}opencode/rules/` | `memread(uri + "rules/", level: "overview")` |
-| Models | `{resourceBase}opencode/models/` | `memread(uri + "models/", level: "overview")` |
-| Permissions | `{resourceBase}opencode/permissions/` | `memread(uri + "permissions/", level: "overview")` |
-| MCP Servers | `{resourceBase}opencode/mcp-servers/` | `memread(uri + "mcp-servers/", level: "overview")` |
-| ACP | `{resourceBase}opencode/acp/` | `memread(uri + "acp/", level: "overview")` |
-| Plugins | `{resourceBase}opencode/plugins/` | `memread(uri + "plugins/", level: "overview")` |
-| SDK | `{resourceBase}opencode/sdk/` | `memread(uri + "sdk/", level: "overview")` |
-
-**Exemplos:**
-
-```typescript
-// Consultar todos os docs OpenCode (overview)
-await memread({
-  uri: "viking://resources/opencode/",
-  level: "overview"
-});
-
-// Buscar custom tools
-await memsearch({
-  query: "tool helper Zod schema context",
-  target_uri: "viking://resources/opencode/custom-tools/"
-});
-
-// Buscar commands
-await memsearch({
-  query: "frontmatter placeholder commands",
-  target_uri: "viking://resources/opencode/"
-});
+```
+viking://resources/
+├── agents/                          ← GENÉRICO (reutilizável)
+│   └── ... (19 categorias de agentes)
+│
+├── opencode/                        ← GENÉRICO (reutilizável)
+│   ├── commands/                    ← Commands, skills, plugins, etc.
+│   └── ...
+│
+├── openviking/                      ← GENÉRICO (docs + examples)
+│   ├── docs/en/api/                ← API reference
+│   ├── docs/en/concepts/           ← Conceitos
+│   ├── docs/en/getting-started/    ← Getting started
+│   ├── docs/en/guides/            ← Guias
+│   └── examples/                   ← Exemplos
+│
+└── ultralearning/                   ← ESPECÍFICO DO PROJETO
+    ├── planning/                    ← Propostas e planos
+    ├── reviews/                     ← Auditorias e reviews
+    ├── projects/                    ← Recursos por projeto
+    │   └── {project-id}/
+    │       ├── meta/
+    │       ├── plans/
+    │       ├── benchmarks/
+    │       ├── maps/
+    │       ├── notes/
+    │       └── resources/
+    └── resources/                   ← Web research e refs genéricas
+        └── {topic}/
 ```
 
-### OpenViking Docs
-
-| Resource | URI | Como Consultar |
-|----------|-----|---------------|
-| Concepts | `{resourceBase}openviking/docs/en/concepts/` | `memread(uri + "docs/en/concepts/", level: "overview")` |
-| Getting Started | `{resourceBase}openviking/docs/en/getting-started/` | `memread(uri + "docs/en/getting-started/", level: "overview")` |
-| API Reference | `{resourceBase}openviking/docs/en/api/` | `memread(uri + "docs/en/api/", level: "overview")` |
-| Guides | `{resourceBase}openviking/docs/en/guides/` | `memread(uri + "docs/en/guides/", level: "overview")` |
-| Examples | `{resourceBase}openviking/examples/` | `memread(uri + "examples/", level: "overview")` |
-
-**Exemplos:**
-
-```typescript
-// Buscar conceitos do OpenViking
-await memsearch({
-  query: "context layers L0 L1 L2 retrieval",
-target_uri: "viking://resources/openviking/docs/en/concepts/"
-});
-
-
-// Ver estrutura dos docs
-await membrowse({
-  uri: "viking://resources/openviking/docs/en/",
-  view: "tree"
-});
-```
+**Regra**: Conteúdo genérico → root (`agents/`, `opencode/`, `openviking/`). Conteúdo específico → `ultralearning/`.
 
 ---
 

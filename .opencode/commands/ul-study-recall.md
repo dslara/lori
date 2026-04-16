@@ -1,49 +1,24 @@
 ---
-description: Revisar flashcards pendentes (/ul-study-recall)
+description: Revisar flashcards pendentes
 agent: tutor
-model: opencode-go/glm-5
+model: opencode-go/kimi-k2.5
 ---
-
-## Uso
-/ul-study-recall
 
 ## Descrição
 
-Revisa flashcards pendentes usando o algoritmo SM-2. Delega para a skill `srs-generator` que gerencia o fluxo completo de revisão: apresenta pergunta, aguarda resposta, coleta auto-avaliação (0-5) e calcula próxima revisão.
+Revisa flashcards pendentes usando o algoritmo SM-2. Delega para a skill `srs-generator` que gerencia o fluxo completo de revisão.
 
 ## Processo
 
-1. Invocar `data.getFlashcards` para buscar cards com `next_review <= hoje`
-2. Se nenhum card pendente:
-   ```
-   "🎉 Nenhum flashcard para revisar hoje!
+1. **Buscar cards pendentes** — Invocar `data.getFlashcards` para buscar cards com `next_review <= hoje`
+2. **Se nenhum card pendente** — Apresentar mensagem "Nenhum flashcard para revisar hoje" com próximos agendados e sugerir `/ul-study-memorize`
+3. **Carregar skill** — Carregar skill `srs-generator` e seguir processo de revisão definido nela
+4. **Revisar cada card** — Apresentar frente, aguardar resposta, mostrar verso, coletar nota 0-5
+5. **Atualizar intervalo** — Invocar `data.createReview` com `flashcardId` e `quality` para atualizar intervalo SM-2
+6. **Persistir e resumir** — Usar `memcommit` com `wait: true` para persistir. Apresentar resumo: cards revisados, média de qualidade, próxima revisão
 
-   Próximas revisões:
-   • Amanhã: [N] cards
-   • Em 3 dias: [N] cards
+## Handoff
 
-   Quer criar novos flashcards? → /ul-study-memorize"
-   ```
-3. Carregar skill `srs-generator` e seguir processo de revisão definido nela
-4. Para cada card: apresentar frente, aguardar resposta, mostrar verso, coletar nota 0-5
-5. Invocar `data.createReview` com `flashcardId` e `quality` para atualizar intervalo SM-2
-6. Após todos, usar `memcommit` com `wait: true` para persistir e apresentar resumo:
-   ```
-   ✅ Revisão Concluída!
-   • Cards revisados: [N]
-   • Média de qualidade: [X]/5
-   • Próxima revisão: [data]
-   ```
-
-## Quando Usar
-
-- Revisão diária de conceitos (ideal: 3-5x/semana, 10-15 min)
-- Memorização de sintaxe
-- Retenção de algoritmos
-
-## Integrações
-
-- Skill: `srs-generator` — algoritmo SM-2 e gerenciamento de cards
-- Tools: `data.getFlashcards`, `data.createReview`
-- `/ul-study-memorize` — criar novos flashcards
-- `/ul-study-start` — sugere SRS se pendente
+- Quer criar novos cards → `/ul-study-memorize`
+- Sessão completa → `/ul-study-end`
+- Precisa de mais prática → `/ul-study-drill`

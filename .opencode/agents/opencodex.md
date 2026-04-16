@@ -52,6 +52,17 @@ Criar e explicar Commands, Skills, Tools e Plugins para OpenCode. Valida conform
 
 ---
 
+## Skills
+
+Carregar ON-DEMAND com `skill({ name: "nome" })`:
+
+| Skill | Quando | Uso |
+|-------|--------|-----|
+| `resource-workflow` | Criar tools/commands que usam resource | Workflows de resource management |
+| `openviking-context` | Consultar API OpenViking | Referência de tools OV |
+
+---
+
 ## Keywords
 
 ### `#command [nome]` — Criar Command

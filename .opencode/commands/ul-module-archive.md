@@ -1,215 +1,29 @@
 ---
-description: Arquivar módulo finalizado (/ul-module-archive)
+description: Arquivar módulo finalizado
 agent: meta
-model: opencode-go/minimax-m2.5
+model: opencode-go/glm-5
 ---
 
-Argumento recebido: $ARGUMENTS (nome ou ID do módulo)
-
-## Uso
-/ul-module-archive [nome]
+$1 (nome ou ID do módulo)
 
 ## Descrição
-Arquiva módulo completo, marca como finalizado e cria template de relatório via OpenViking.
+
+Arquiva módulo completo, marca como finalizado e cria template de relatório. Ação irreversível.
 
 ## Processo
 
-### Passo 1: Confirmar Arquivamento
+1. **Validar entrada** — Se `$1` vazio, pedir nome ou ID do módulo.
+2. **Confirmar arquivamento** — Mostrar resumo do módulo (nome, ID, data de início, horas) e avisar que é irreversível. Pedir confirmação explícita.
+3. **Executar arquivamento** — Invocar `data.archiveModule` com `moduleName: $1`. A tool copia projeto para `archived/`, cria `relatorio-final.md`, marca status como `completed` no CSV.
+4. **Preencher relatório** — Usar template @.opencode/templates/_template-relatorio.md como referência para o relatório final.
+5. **Apresentar resultado** — Caminho do archive, módulo ID, template de relatório criado. Sugerir preencher relatório.
 
-- Verificar módulo existe via `memsearch`
-- Mostrar aviso sobre ação irreversível
-- Pedir confirmação
+## Argumento
 
-### Passo 2: Copiar para Archived
+- `$1`: Nome ou ID do módulo a arquivar (obrigatório)
 
-Estrutura no OpenViking:
+## Handoff
 
-```
-viking://user/projects/archived/
-└── M03101430-python-backend/
-    └── 2026-03-10/          # Data do arquivamento
-        ├── meta/
-        ├── projects/
-        ├── knowledge/
-        ├── README.md
-        └── relatorio-final.md
-```
-
-### Passo 3: Atualizar Status
-
-- Marcar status como `completed` no perfil
-- Definir `completed_at`
-- Desativar módulo
-
-### Passo 4: Oferecer Próximos Passos
-
-- Preencher relatório final
-- Criar novo módulo
-
-## Parâmetros
-
-- `nome`: Nome ou ID do módulo a arquivar
-
-## Output
-
-```
-📦 Arquivando python-backend...
-
-⚠️ O projeto será arquivado e marcado como completed.
-⚠️ Ação irreversível - projeto será movido para archived/
-
-Continuar? [s/N]: s
-
-✓ Projeto copiado para: archived/M03101430-python-backend/2026-03-10
-✓ Status atualizado: completed
-✓ Módulo desativado
-
-📝 Ações necessárias:
-  1. Preencha o relatório: relatorio-final.md
-  2. Crie próximo módulo: /ul-module-create [nome]
-```
-
-## Exemplos
-
-### Exemplo 1: Arquivar módulo ativo
-
-```
-Usuário: /ul-module-archive python-backend
-
-Sistema:
-"📦 Arquivando python-backend...
-
-📊 Resumo do módulo:
-  • Data de início: 2026-03-10
-  • Tempo total: 45 horas
-  • Sessões: 32
-  • Status: ativo
-
-⚠️ Atenção: O projeto será arquivado e marcado como completed.
-⚠️ Ação irreversível.
-
-Continuar? [s/N]: s
-
-✓ Projeto movido para: viking://user/projects/archived/M03101430-python-backend/2026-03-10/
-✓ Template de relatório criado
-✓ Status atualizado: completed
-
-📝 Próximos passos:
-  1. Preencha: relatorio-final.md
-  2. Novo módulo: /ul-module-create rust-async"
-```
-
-### Exemplo 2: Módulo não encontrado
-
-```
-Usuário: /ul-module-archive go-web
-
-Sistema:
-"❌ Módulo não encontrado: go-web
-
-Módulos disponíveis:
-  • python-backend (ativo)
-  • rust-async
-  • algorithms
-
-Use um dos nomes acima."
-```
-
-### Exemplo 3: Cancelar arquivamento
-
-```
-Usuário: /ul-module-archive python-backend
-
-Sistema:
-"📦 Arquivando python-backend...
-
-⚠️ Atenção: Ação irreversível.
-
-Continuar? [s/N]: n
-
-✓ Arquivamento cancelado
-✓ Módulo mantido como ativo"
-```
-
-## Template de Relatório Final
-
-O arquivo `relatorio-final.md` criado automaticamente contém:
-
-```markdown
-# Relatório Final - python-backend
-
-**Data de Conclusão**: 2026-03-10
-**Módulo ID**: M03101430
-
-## 📊 Resumo
-
-- **Data de Início**: 2026-03-10
-- **Tempo Total**: N/A horas
-- **Status**: ✅ Completado
-
-## ✅ Conquistas
-
-_Liste as principais conquistas deste módulo_
-
-## 📚 Aprendizados
-
-_Quais foram os principais aprendizados?_
-
-## 🔧 Melhorias
-
-_O que poderia ser melhorado no próximo módulo?_
-
-## 📎 Links e Recursos
-
-- Adicione links relevantes
-
-## 🎯 Próximos Passos
-
-- [ ] Próximo módulo
-- [ ] Revisar flashcards
-```
-
-## Validações
-
-- Módulo deve existir
-- Confirmação obrigatória
-- Não pode arquivar módulo já arquivado
-
-## Estrutura OpenViking
-
-Após arquivamento:
-
-```
-viking://user/projects/
-└── archived/
-    └── M{id}-{name}/
-        └── {date}/
-            ├── meta/
-            ├── projects/
-            ├── knowledge/
-            └── relatorio-final.md
-```
-
-Perfil atualizado:
-
-```
-viking://user/memories/profile.md
-→ archived_modules: [M{id}-{name}]
-```
-
-## Integração com OpenViking
-
-Este command usa:
-- `memsearch` — Buscar módulo
-- `membrowse` — Verificar estrutura
-- `memcommit` — Mover e atualizar status
-
-## Ver Também
-
-- `/ul-module-create` - Criar novo módulo
-- `/ul-module-switch` - Alternar módulo
-- `viking://user/projects/archived/` - Projetos arquivados
-
----
-
-*Command: /ul-module-archive — Arquivar módulo via OpenViking*
+- Preencher relatório → editar `relatorio-final.md` no projeto arquivado
+- Criar novo módulo → `/ul-module-create`
+- Alternar módulo → `/ul-module-switch`
