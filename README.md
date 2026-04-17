@@ -88,7 +88,7 @@ O Pi sugere sozinho a técnica certa no momento certo. Mas você pode forçar qu
 
 ## Quer entender ou mudar algo?
 
-[ARQUITETURA_FINAL.md](ARQUITETURA_FINAL.md) tem o mapa completo: eventos, fluxos, estrutura da extension.
+[ARQUITETURA.md](ARQUITETURA.md) tem o mapa completo: eventos, fluxos, estrutura da extension.
 
 ---
 
