@@ -59,20 +59,9 @@ ENV/
 temp-*.py
 draft-*.py
 
-# Ultralearning - Dados (CSV são versionados, dados não)
-backups/
-projects/*/logs/daily/*.md
-
-# Optional: Keep learning maps but not personal logs
-# Uncomment if you want to track learning maps in Git
-# !01-meta/active/**/learning-map.md
-# !01-meta/active/**/resources.md
 .obsidian
 node_modules
-.opencode/package-lock.json
+package-lock.json
 bun.lock
 .env
-data/openviking-session-map.json
-data/openviking-memory.log
-.opencode/plugins/openviking-session-map.json
 .lori
