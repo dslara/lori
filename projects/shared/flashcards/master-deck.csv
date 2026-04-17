@@ -1,5 +1,0 @@
-front,back,module,difficulty,last_reviewed,next_review,interval_days
-"O que significa o símbolo ∈?","Pertence (elemento de um conjunto)","M1-math",easy,"","",1
-"Quanto é log₂(8)?","3 (porque 2³ = 8)","M1-math",easy,"","",1
-"Lei de De Morgan: ¬(A ∧ B) = ?","¬A ∨ ¬B (negação de AND vira OR de negações)","M1-math",medium,"","",1
-"∑ᵢ₌₁ⁿ i = ?","n(n+1)/2","M1-math",medium,"","",1

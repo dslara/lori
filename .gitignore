@@ -75,3 +75,4 @@ bun.lock
 data/openviking-session-map.json
 data/openviking-memory.log
 .opencode/plugins/openviking-session-map.json
+.lori
