@@ -1,4 +1,4 @@
-# Ultralearning sobre Pi — Arquitetura Final
+# Lori — Arquitetura Final
 
 > Sistema de aprendizado autodirigido para qualquer domínio. CS, música, ilustração, idiomas. Construído como Pi Package nativo. Sem bancos. Sem containers. O terminal é a sala de aula.
 
@@ -10,7 +10,7 @@ O estudante não "usa" um sistema. O Pi **é** o ambiente de aprendizado. Cada s
 
 **Instalação:**
 ```bash
-pi install git:github.com/dslara/ultralearning
+pi install git:github.com/dslara/lori
 ```
 
 ---
@@ -53,13 +53,13 @@ Distribuído como pacote npm/git. Instala extension, skills, prompts e tema.
 ```
 package.json
   pi:
-    extensions: ["./extensions/ultralearning/index.ts"]
+    extensions: ["./extensions/lori/index.ts"]
     skills: ["./skills"]
     prompts: ["./prompts"]
     themes: ["./themes"]
 ```
 
-### 4.2 Extension `.pi/extensions/ultralearning/`
+### 4.2 Extension `.pi/extensions/lori/`
 
 Cérebro do sistema. TypeScript. Event-driven.
 
@@ -67,7 +67,7 @@ Cérebro do sistema. TypeScript. Event-driven.
 |--------|-----------------|
 | `index.ts` | Entry point. Registra tools, commands, listeners. |
 | `cycle.ts` | Máquina de estados: idle → pre-session → in-session → post-session. |
-| `context.ts` | Monta e injeta `ul-context` via `before_agent_start`. |
+| `context.ts` | Monta e injeta `lori-context` via `before_agent_start`. |
 | `events.ts` | Persiste e recupera eventos (`appendEntry` + `state.jsonl`). |
 | `memory.ts` | Reconstrói estado projetado a partir do log de eventos. |
 | `ui.ts` | Timer, widgets, notificações, status bar. |
@@ -78,8 +78,8 @@ Cérebro do sistema. TypeScript. Event-driven.
 | Evento Pi | O que a extension faz |
 |-----------|----------------------|
 | `session_start` | Carrega `state.jsonl`. Reconstrói estado. Mostra streak no status bar. |
-| `before_agent_start` | Se prompt contém keywords de estudo, injeta `ul-context` como `custom_message`. |
-| `tool_call` (edit/write em `.ultralearning/`) | Gera eventos automáticos (ex: `resource_curated`, `concept_learned`). |
+| `before_agent_start` | Se prompt contém keywords de estudo, injeta `lori-context` como `custom_message`. |
+| `tool_call` (edit/write em `.lori/`) | Gera eventos automáticos (ex: `resource_curated`, `concept_learned`). |
 | `session_before_compact` | Resumo UL-aware: mantém pontos fracos, recursos, próximos passos. |
 | `turn_end` | Se timer ativo, verifica se sessão acabou. Notifica. |
 | `session_shutdown` | Garante que eventos pendentes foram salvos. |
@@ -118,8 +118,8 @@ Cérebro do sistema. TypeScript. Event-driven.
 Tudo que acontece é evento append-only. Estado = projeção dos eventos.
 
 **Persistência dupla:**
-1. `pi.appendEntry("ul-event", event)` — vive na sessão Pi, sobrevive compaction
-2. `.ultralearning/state.jsonl` — réplica local para durabilidade entre sessões
+1. `pi.appendEntry("lori-event", event)` — vive na sessão Pi, sobrevive compaction
+2. `.lori/state.jsonl` — réplica local para durabilidade entre sessões
 
 **Eventos:**
 
@@ -181,7 +181,7 @@ interface ULState {
 Bloco injetado automaticamente quando `before_agent_start` detecta contexto de estudo:
 
 ```
-[ULTRALEARNING CONTEXT]
+[LORI CONTEXT]
 
 Módulo ativo: jazz-harmonia
 Semana: 3 de 4
@@ -214,7 +214,7 @@ Não existe "consulta". O contexto **já está lá** na janela de contexto do LL
 Eventos capturam **o que aconteceu**. Markdown captura **o que foi aprendido**.
 
 ```markdown
-<!-- .ultralearning/modules/jazz-harmonia/concepts.md -->
+<!-- .lori/modules/jazz-harmonia/concepts.md -->
 
 ## Substituição Tritônica
 **Data**: 2026-04-02
@@ -227,7 +227,7 @@ Eventos capturam **o que aconteceu**. Markdown captura **o que foi aprendido**.
 ### 4.7 Flashcards SRS
 
 ```jsonl
-// .ultralearning/flashcards/jazz-harmonia.jsonl
+// .lori/flashcards/jazz-harmonia.jsonl
 {"front":"Qual acorde substitui G7 em ii-V-I em C?","back":"Db7 (mesmo trítono F-B)","next_review":"2026-04-05","ef":2.5,"interval":3,"reps":2}
 {"front":"Regra do shell voicing mão esquerda","back":"3ª + 7ª do acorde. No máximo 2 notas.","next_review":"2026-04-03","ef":2.3,"interval":1,"reps":1}
 ```
@@ -248,7 +248,7 @@ name: ul-pomodoro
 description: Ritual de foco profundo para sessões de estudo. Configura timer, elimina interrupções, protege ciclo de aprendizado. Use antes de qualquer técnica de estudo.
 ---
 
-# Pomodoro para Ultralearning
+# Pomodoro para Lori
 
 ## Ritual (2 minutos)
 
@@ -412,7 +412,7 @@ description: Spaced Repetition System para memorização. Criar flashcards com f
 
 ## Output
 
-- Arquivo: `.ultralearning/flashcards/{module}.jsonl`
+- Arquivo: `.lori/flashcards/{module}.jsonl`
 - Evento: `concept_learned` (novo) ou reforço
 ```
 
@@ -604,11 +604,11 @@ description: Retrospectiva semanal de aprendizado. Revisar plano, identificar pa
 
 | Tool | Uso |
 |------|-----|
-| `ul_log_event` | Persistir evento no `state.jsonl`. Chamado implicitamente pelos ciclos. |
-| `ul_get_context` | Retorna contexto vivo reconstruído de eventos. |
-| `ul_review_srs` | Listar flashcards pendentes de revisão. |
-| `ul_search_concepts` | Busca exata em `concepts.md` + eventos. |
-| `ul_add_resource` | Curar recurso: salva URL + notas + tags. |
+| `lori_log_event` | Persistir evento no `state.jsonl`. Chamado implicitamente pelos ciclos. |
+| `lori_get_context` | Retorna contexto vivo reconstruído de eventos. |
+| `lori_review_srs` | Listar flashcards pendentes de revisão. |
+| `lori_search_concepts` | Busca exata em `concepts.md` + eventos. |
+| `lori_add_resource` | Curar recurso: salva URL + notas + tags. |
 
 ---
 
@@ -617,7 +617,7 @@ description: Retrospectiva semanal de aprendizado. Revisar plano, identificar pa
 ```
 .pi/                                # Nativo do Pi
   extensions/
-    ultralearning/
+    lori/
       index.ts                      # Entry point
       cycle.ts                      # Máquina de estados
       context.ts                    # Injeção de contexto
@@ -642,7 +642,7 @@ description: Retrospectiva semanal de aprendizado. Revisar plano, identificar pa
     plan-retro.md
     stuck.md
 
-.ultralearning/                     # Dados do sistema
+.lori/                     # Dados do sistema
   state.jsonl                       # Eventos append-only
   config.json                       # Preferências
   modules/
@@ -673,7 +673,7 @@ Pi:
   1. Detecta novo módulo via before_agent_start
   2. Sugere /skill:ul-decomposition
   3. Skill guia decomposição em 5 semanas
-  4. Gera .ultralearning/modules/rust-async/plan.md
+  4. Gera .lori/modules/rust-async/plan.md
   5. Gera week-01.md
   6. Evento: plan_created
   7. Próximo passo: /ul-start amanhã
@@ -685,7 +685,7 @@ Pi:
 Usuário: /ul-start
 
 Pi:
-  1. before_agent_start injeta ul-context
+  1. before_agent_start injeta lori-context
   2. Pergunta: "Qual técnica hoje?" (ou sugere baseado em contexto)
   3. Usuário escolhe: "drill"
   4. /skill:ul-pomodoro → inicia timer 50min
@@ -738,9 +738,9 @@ Pi:
 ## 11. Roadmap de Implementação
 
 ### Fase 1: Foundation (2h)
-- [ ] Scaffold `.pi/extensions/ultralearning/` com `index.ts`
+- [ ] Scaffold `.pi/extensions/lori/` com `index.ts`
 - [ ] Configurar `package.json` com manifest `pi` (extension + skills + prompts)
-- [ ] Criar `.ultralearning/` com estrutura de diretórios
+- [ ] Criar `.lori/` com estrutura de diretórios
 - [ ] Implementar `state.jsonl` e funções de event sourcing
 - [ ] Registrar commands básicos: `/ul-start`, `/ul-end`, `/ul-stats`
 
@@ -782,21 +782,21 @@ Pi:
 ## 12. Prompt Executável
 
 ```
-Crie sistema de ultralearning como Pi Package nativo.
+Crie sistema Lori como Pi Package nativo.
 
 1. PI PACKAGE: package.json com manifest pi (extensions, skills, prompts, themes)
-   - Distribuição: pi install git:dslara/ultralearning
+   - Distribuição: pi install git:dslara/lori
 
-2. EXTENSION `.pi/extensions/ultralearning/index.ts`:
-   - Event sourcing: eventos append-only em `.ultralearning/state.jsonl` + `appendEntry`
+2. EXTENSION `.pi/extensions/lori/index.ts`:
+   - Event sourcing: eventos append-only em `.lori/state.jsonl` + `appendEntry`
    - Eventos Pi:
      * session_start: reconstruir estado de state.jsonl + session entries
-     * before_agent_start: detectar keywords de estudo, injetar ul-context
-     * tool_call: interceptar edit/write em .ultralearning/ para eventos automáticos
+     * before_agent_start: detectar keywords de estudo, injetar lori-context
+     * tool_call: interceptar edit/write em .lori/ para eventos automáticos
      * session_before_compact: resumo UL-aware mantendo weaknesses, recursos
      * turn_end: verificar timer ativo, notificar
    - Commands: /ul-start, /ul-end, /ul-timer, /ul-plan, /ul-retro, /ul-stats, /ul-review-srs
-   - Custom tools: ul_log_event, ul_get_context, ul_review_srs, ul_search_concepts, ul_add_resource
+   - Custom tools: lori_log_event, lori_get_context, lori_review_srs, lori_search_concepts, lori_add_resource
    - UI: status bar [módulo] [streak] [SRS] [weaknesses], widget de timer, notificações
 
 3. SKILLS `.pi/skills/` (rituais completos, cada uma com SKILL.md):
@@ -805,12 +805,12 @@ Crie sistema de ultralearning como Pi Package nativo.
    - ul-feynman: explicar para criança, identificar gaps
    - ul-drill: repetição deliberada com progressão de nível
    - ul-srs: flashcards SM-2, criação e revisão
-   - ul-directness: projeto real, code review socrático
+   - ul-directness: projeto real, review socrático
    - ul-stuck: 5 perguntas sistemáticas para quando travar
    - ul-decomposition: framework 3D (conceitos 40%, fatos 20%, procedimentos 40%)
    - ul-retro: retrospectiva semanal com ajustes
 
-4. ESTRUTURA `.ultralearning/`:
+4. ESTRUTURA `.lori/`:
    - state.jsonl: eventos append-only
    - config.json: preferências estáveis
    - modules/{name}/: plan.md, week-*.md, retro-*.md, concepts.md, drills.md, resources.md, benchmark.md

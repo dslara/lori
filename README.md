@@ -1,10 +1,12 @@
-# Ultralearning sobre Pi
+# Lori
 
 > Sistema de aprendizado autodirigido para qualquer domínio. CS, música, ilustração, idiomas — tudo no terminal. Construído como Pi Package nativo.
 
+Baseado nos princípios de Ultralearning (Scott Young).
+
 **Instalação:**
 ```bash
-pi install git:github.com/dslara/ultralearning
+pi install git:github.com/dslara/lori
 ```
 
 ---
@@ -86,11 +88,11 @@ Invoque com `/skill:ul-feynman` ou deixe o Pi sugerir automaticamente.
 
 ```
 .pi/
-  extensions/ultralearning/    # Extension TypeScript (cérebro do sistema)
+  extensions/lori/             # Extension TypeScript (cérebro do sistema)
   skills/                      # 9 skills com ritual completo
   prompts/                     # Templates pré/pós-sessão
 
-.ultralearning/                # Dados do usuário
+.lori/                         # Dados do usuário
   state.jsonl                  # Eventos append-only
   modules/{nome}/              # Planos, retros, conceitos, drills
   resources/                   # Materiais curados

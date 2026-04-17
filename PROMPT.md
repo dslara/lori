@@ -1,25 +1,25 @@
-# Prompt Executável — Ultralearning sobre Pi
+# Prompt Executável — Lori
 
 Copie e cole este prompt em uma sessão Pi para gerar o sistema completo.
 
 ---
 
 ```
-Crie sistema de ultralearning como Pi Package nativo.
+Crie sistema Lori como Pi Package nativo.
 
 1. PI PACKAGE: package.json com manifest pi (extensions, skills, prompts, themes)
-   - Distribuição: pi install git:dslara/ultralearning
+   - Distribuição: pi install git:dslara/lori
 
-2. EXTENSION `.pi/extensions/ultralearning/index.ts`:
-   - Event sourcing: eventos append-only em `.ultralearning/state.jsonl` + `appendEntry`
+2. EXTENSION `.pi/extensions/lori/index.ts`:
+   - Event sourcing: eventos append-only em `.lori/state.jsonl` + `appendEntry`
    - Eventos Pi:
      * session_start: reconstruir estado de state.jsonl + session entries
-     * before_agent_start: detectar keywords de estudo, injetar ul-context
-     * tool_call: interceptar edit/write em .ultralearning/ para eventos automáticos
+     * before_agent_start: detectar keywords de estudo, injetar lori-context
+     * tool_call: interceptar edit/write em .lori/ para eventos automáticos
      * session_before_compact: resumo UL-aware mantendo weaknesses, recursos
      * turn_end: verificar timer ativo, notificar
    - Commands: /ul-start, /ul-end, /ul-timer, /ul-plan, /ul-retro, /ul-stats, /ul-review-srs
-   - Custom tools: ul_log_event, ul_get_context, ul_review_srs, ul_search_concepts, ul_add_resource
+   - Custom tools: lori_log_event, lori_get_context, lori_review_srs, lori_search_concepts, lori_add_resource
    - UI: status bar [módulo] [streak] [SRS] [weaknesses], widget de timer, notificações
 
 3. SKILLS `.pi/skills/` (rituais completos, cada uma com SKILL.md):
@@ -28,12 +28,12 @@ Crie sistema de ultralearning como Pi Package nativo.
    - ul-feynman: explicar para criança, identificar gaps
    - ul-drill: repetição deliberada com progressão de nível
    - ul-srs: flashcards SM-2, criação e revisão
-   - ul-directness: projeto real, code review socrático
+   - ul-directness: projeto real, review socrático
    - ul-stuck: 5 perguntas sistemáticas para quando travar
    - ul-decomposition: framework 3D (conceitos 40%, fatos 20%, procedimentos 40%)
    - ul-retro: retrospectiva semanal com ajustes
 
-4. ESTRUTURA `.ultralearning/`:
+4. ESTRUTURA `.lori/`:
    - state.jsonl: eventos append-only
    - config.json: preferências estáveis
    - modules/{name}/: plan.md, week-*.md, retro-*.md, concepts.md, drills.md, resources.md, benchmark.md
