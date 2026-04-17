@@ -111,12 +111,18 @@ function getLatestInsight(insights: Insight[], metric: string): string | null {
 // ============================================================================
 
 let _ovConfig: ReturnType<typeof loadConfig> | null = null;
+let _ovConfigFailed: boolean = false;
 
 function getOVConfig() {
+  if (_ovConfigFailed) {
+    return null;
+  }
   if (!_ovConfig) {
     try {
       _ovConfig = loadConfig();
-    } catch {
+    } catch (e) {
+      console.warn("[context-hybrid] Failed to load OpenViking config:", e);
+      _ovConfigFailed = true;
       return null;
     }
   }
@@ -137,7 +143,8 @@ async function safeMemread(uri: string, level: string = "overview"): Promise<any
       timeoutMs: 10000,
     });
     return unwrapResponse(response) ?? null;
-  } catch {
+  } catch (e) {
+    console.warn(`[context-hybrid] memread failed for ${uri}:`, e instanceof Error ? e.message : e);
     return null;
   }
 }
@@ -157,7 +164,8 @@ async function safeMemsearch(query: string, targetUri: string, limit: number = 5
     });
     const result = unwrapResponse(response);
     return result?.memories ?? [];
-  } catch {
+  } catch (e) {
+    console.warn(`[context-hybrid] memsearch failed for "${query}":`, e instanceof Error ? e.message : e);
     return [];
   }
 }
@@ -291,7 +299,7 @@ export default tool({
             });
           }
 
-          const casesUri = `viking://agent/${agentId}/memories/cases/`;
+          const casesUri = await getAgentMemoryUri('cases');
           const results = await safeMemsearch(args.query, casesUri, args.limit || 10);
 
           return JSON.stringify({

@@ -17,6 +17,8 @@ interface AddResourceInput {
 
 interface ListResourcesInput {
   uri?: string;
+  recursive?: boolean;
+  simple?: boolean;
 }
 
 interface GetResourceInput {
@@ -35,7 +37,7 @@ interface DeleteResourceInput {
 
 interface LinkResourcesInput {
   from: string;
-  to: string | string[];
+  to: string;
   reason?: string;
 }
 
@@ -153,8 +155,10 @@ export async function addResource(input: AddResourceInput): Promise<string> {
     const result = response.result;
     
     if (input.wait && result?.temp_uri) {
-      // TODO: Implement wait for processing completion
-      // For now, just return success
+      // NOTE: wait=true for addResource returns immediately without polling.
+      // For blocking semantic processing, use resource.write with wait=true instead.
+      // The add operation queues processing; use resource.find/search after a delay
+      // to verify indexing completed.
     }
 
     return JSON.stringify({
@@ -180,20 +184,17 @@ export async function addResource(input: AddResourceInput): Promise<string> {
   }
 }
 
-// CORREÇÕES FEITAS EM 2026-04-11:
-// - listResources: `/api/v1/browse` → `/api/v1/fs/ls`
-// - getResourceInfo: `/api/v1/stat` → `/api/v1/fs/stat`
-// Estas correções precisam de /reload para ter efeito
-
 export async function listResources(input: ListResourcesInput): Promise<string> {
   const config = loadConfig();
   const uri = input.uri || "viking://resources/";
+  const recursive = input.recursive ? "true" : "false";
+  const simple = input.simple ? "true" : "false";
   
   try {
     const encodedUri = encodeURIComponent(uri);
     const response = await makeRequest<OpenVikingResponse<any[]>>(config, {
       method: "GET",
-      endpoint: `/api/v1/fs/ls?uri=${encodedUri}&recursive=false&simple=false`,
+      endpoint: `/api/v1/fs/ls?uri=${encodedUri}&recursive=${recursive}&simple=${simple}`,
     });
 
     if (response.status === "error") {

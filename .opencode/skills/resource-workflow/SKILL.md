@@ -88,8 +88,13 @@ resource({ operation: "link", uri: "viking://resources/ultralearning/projects/ty
 ```
 
 **Quando usar `add` vs `write`:**
-- `add` — primeira vez, arquivo local ou URL. Cria + indexa + gera abstract/overview
+- `add` — primeira vez, arquivo local ou URL. Cria + indexa + gera abstract/overview. Aceita `reason`, `instruction`, `watch_interval`
 - `write` — atualizações. Re-indexa automaticamente. Mais eficiente que delete+re-add
+
+**Parâmetros avançados de `add`:**
+- `reason` — motivo da adição (usado pelo índice semântico)
+- `instruction` — instruções de processamento para melhorar resumo semântico (ex: "Focar em exemplos práticos")
+- `watch_interval` — auto-refresh periódico em minutos para repos externos (0 = desabilitar)
 
 **Modos de `write`:**
 - `replace` (default) — substitui conteúdo inteiro
@@ -320,8 +325,8 @@ resource.write({
   mode: "replace"  # ou "append" para acumular (ex: notes, analogies)
 })
 resource.link({
-  from: "viking://resources/ultralearning/projects/{id}/{tipo}/{artefato}.md",
-  to: "viking://resources/ultralearning/projects/{id}/",
+  uri: "viking://resources/ultralearning/projects/{id}/{tipo}/{artefato}.md",
+  to_uri: "viking://resources/ultralearning/projects/{id}/",
   reason: "descrição do link"
 })
 

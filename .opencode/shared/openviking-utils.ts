@@ -118,28 +118,34 @@ export async function getAgentMemoryUri(memoryType: 'cases' | 'patterns' | 'skil
 /**
  * Retorna a URI para preferências do usuário.
  *
- * @returns URI (ex: "viking://user/default/memories/preferences/")
+ * @returns URI (ex: "viking://user/<username>/memories/preferences/")
  */
 export function getUserPreferencesUri(): string {
-  return "viking://user/default/memories/preferences/";
+  const config = loadConfig();
+  const user = config.user || config.account || "default";
+  return `viking://user/${user}/memories/preferences/`;
 }
 
 /**
  * Retorna a URI para entidades do usuário.
  *
- * @returns URI (ex: "viking://user/default/memories/entities/")
+ * @returns URI (ex: "viking://user/<username>/memories/entities/")
  */
 export function getUserEntitiesUri(): string {
-  return "viking://user/default/memories/entities/";
+  const config = loadConfig();
+  const user = config.user || config.account || "default";
+  return `viking://user/${user}/memories/entities/`;
 }
 
 /**
  * Retorna a URI para eventos do usuário.
  *
- * @returns URI (ex: "viking://user/default/memories/events/")
+ * @returns URI (ex: "viking://user/<username>/memories/events/")
  */
 export function getUserEventsUri(): string {
-  return "viking://user/default/memories/events/";
+  const config = loadConfig();
+  const user = config.user || config.account || "default";
+  return `viking://user/${user}/memories/events/`;
 }
 
 /**

@@ -17,13 +17,13 @@ services:
     healthcheck:
       test: ["CMD-SHELL", "ollama list || exit 1"]
       interval: 30s
-      timeout: 5s
+      timeout: 15s
       retries: 3
       start_period: 120s
     restart: unless-stopped
 
   openviking:
-    image: ghcr.io/volcengine/openviking:v0.3.5
+    image: ghcr.io/volcengine/openviking:v0.3.8
     container_name: ultralearning-openviking
     command: ["openviking-server", "--host", "0.0.0.0"]
     ports:

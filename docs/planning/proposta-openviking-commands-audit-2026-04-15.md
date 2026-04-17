@@ -78,7 +78,7 @@ Validação completa dos **27** commands do Ultralearning System (nota: `ul-setu
 #### 1. `memsearch` sem `target_uri` (6 commands afetados) → ✅ RESOLVIDO
 
 Todos os 10 commands que usam `memsearch` agora usam `target_uri`.
-- 7 commands com `"viking://user/"`: ul-study-start, ul-study-drill, ul-study-memorize, ul-study-plan, ul-data-status, ul-data-analytics, ul-plan-retro, ul-setup-scaffold
+- 8 commands com `"viking://user/"`: ul-study-start, ul-study-drill, ul-study-memorize, ul-study-plan, ul-data-status, ul-data-analytics, ul-plan-retro, ul-setup-scaffold
 - 4 commands com `"viking://resources/ultralearning/"`: ul-study-feynman, ul-plan-benchmark, ul-plan-decompose, ul-study-learn (usam ambos)
 
 #### 2. `context-hybrid` subutilizado (10 operations, 7/10 usadas)

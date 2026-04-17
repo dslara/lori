@@ -29,7 +29,7 @@ export default tool({
       "add", "list", "info", "mv", "rm", "link", "unlink", "relations",
       "abstract", "overview", "read", "write", "mkdir", "tree", "sync",
       "find", "search", "grep", "glob", "export", "import"
-    ]).describe("Operation to perform: add=list=info=mv=rm=link=unlink=relations=abstract=overview=read=write=mkdir=tree=sync=find=search=grep=glob=export=import"),
+    ]).describe("Operation to perform. Options: add, list, info, mv, rm, link, unlink, relations, abstract, overview, read, write, mkdir, tree, sync, find, search, grep, glob, export, import"),
 
     path: z.string().optional().describe("URL or local path to add as resource. Required for 'add' operation."),
     target: z.string().optional().describe("Target URI in viking://resources/ (e.g., viking://resources/ultralearning/openviking)"),
@@ -39,7 +39,7 @@ export default tool({
     recursive: z.boolean().optional().describe("Recursive flag for 'rm' operation"),
     to_uri: z.string().optional().describe("Target URI for 'link' or 'unlink' operation"),
     reason: z.string().optional().describe("Reason for adding, linking, or syncing resources"),
-    wait: z.boolean().optional().describe("Wait for semantic processing to complete (default: false)"),
+    wait: z.boolean().optional().describe("Wait for semantic processing to complete (default: false). NOTE: For 'add' operation, returns immediately; for 'write' operation, polls until indexing completes."),
     file_path: z.string().optional().describe("Local file path for 'export' or 'import' operation"),
     parent: z.string().optional().describe("Parent URI for 'import' operation"),
     force: z.boolean().optional().describe("Force overwrite for 'import' operation"),
@@ -78,7 +78,7 @@ export default tool({
       }
 
       case "list": {
-        return await listResources({ uri: args.uri });
+        return await listResources({ uri: args.uri, recursive: args.recursive, simple: args.simple });
       }
 
       case "info": {
