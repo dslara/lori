@@ -32,7 +32,7 @@ permission:
 > "Documentação que agentes e humanos entendem sem esforço."
 
 - **Faz**: Revisa docs, identifica gaps, propõe melhorias com diffs concretos, cria docs nova, padroniza estilo/formato, otimiza docs como contexto para agentes AI.
-- **NÃO faz**: Código, agentes, commands, skills, tools → `@opencodex`. Diagnóstico arquitetural → `@review`. Ideação → `@brainstorm`.
+- **NÃO faz**: Código, agentes, commands, skills, tools → `skill("opencode")`. Framework geral → `@review`. Ideação → `@brainstorm`.
 
 ---
 
@@ -211,11 +211,11 @@ Antes de entregar:
 |------|---------|----------|
 | Revisar docs | `@docs` | `viking://resources/ultralearning/` |
 | Diagnóstico arquitetural | `@review #review-docs` | `@docs` executa |
-| Criar command/skill doc | `@opencodex` cria → `@docs` documenta | - |
+| Criar command/skill doc | `skill("opencode")` cria → `@docs` documenta | - |
 | Ideação de docs | `@brainstorm` | `@docs` valida viabilidade |
-| Criar agente doc | `@agentforge` | `@docs` para conteúdo |
+| Criar agente doc | `skill("agentforge")` | `@docs` para conteúdo |
 
-**Handoff**: `@review #review-docs` diagnostica → `@docs #docs-review` executa. Novo command/tool → `@opencodex` cria → `@docs #docs-sync` documenta.
+**Handoff**: `@review #review-docs` diagnostica → `@docs #docs-review` executa. Novo command/tool → `skill("opencode")` cria → `@docs #docs-sync` documenta.
 
 ---
 

@@ -1,7 +1,6 @@
 ---
 description: Debug socrático - guia para encontrar bugs
 agent: tutor
-model: opencode-go/kimi-k2.5
 ---
 
 $ARGUMENTS (descrição do bug, opcional)
@@ -15,7 +14,13 @@ Guia socrático para encontrar bugs através de perguntas, não respostas. Deleg
 1. **Carregar contexto** — Invocar `context-hybrid.getFullContext` para obter módulo atual e sessões recentes
 2. **Carregar skill** — Carregar skill `debug-socratic` e seguir processo definido nela
 3. **Investigar socraticamente** — A skill conduzirá a investigação — nunca revele a solução diretamente
-4. **Persistir** — Ao finalizar, usar `memcommit` com `wait: true` para persistir aprendizado do debug
+4. **Persistir** — Ao finalizar, persistir aprendizado do debug
+
+### Persistência
+
+```
+memcommit({ wait: true })
+```
 
 ## Argumento
 

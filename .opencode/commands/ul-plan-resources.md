@@ -1,7 +1,6 @@
 ---
 description: Mapear recursos de estudo em 3 tiers e indexar no OpenViking
 agent: meta
-model: opencode-go/glm-5
 ---
 
 $ARGUMENTS (tópico a mapear, opcional)
@@ -25,26 +24,33 @@ Identifica os melhores materiais de estudo para um tópico, organizando em 3 tie
 7. **Indexar no OpenViking** — Publicar os recursos curados para busca semântica:
    ```
    # Para cada recurso Tier 1 com conteúdo web
-   resource.write(
+   resource.write({
      uri: "viking://resources/ultralearning/projects/{id}/resources/{recurso}.md",
      content: "<conteúdo filtrado com metadata>",
      mode: "replace"
-   )
+   })
 
    # Para recursos externos (URLs diretas)
-   resource.add(
+   resource.add({
      path: "https://docs.exemplo.com/guide/",
      target: "viking://resources/ultralearning/projects/{id}/resources/",
      instruction: "Focar em exemplos práticos e APIs",
-     reason: "Recurso Tier 1 para {tópico}"
-   )
+     reason: "Recurso Tier 1 para {tópico}",
+     watch_interval: 60  # auto-refresh a cada 60 min
+   })
 
    # Linkar ao projeto
-   resource.link(
-     uri: "viking://resources/ultralearning/projects/{id}/resources/{recurso}.md",
-     to_uri: "viking://resources/ultralearning/projects/{id}/",
+   resource.link({
+     from: "viking://resources/ultralearning/projects/{id}/resources/{recurso}.md",
+     to: "viking://resources/ultralearning/projects/{id}/",
      reason: "recurso de estudo do projeto"
-   )
+   })
+
+   # Configurar auto-refresh para recursos externos
+   resource.sync({
+     target: "viking://resources/ultralearning/projects/{id}/resources/",
+     watch_interval: 60  # sync a cada 60 min
+   })
    ```
 
 ## Argumento

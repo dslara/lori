@@ -1,7 +1,6 @@
 ---
 description: Decompor objetivo complexo em plano acionável
 agent: meta
-model: opencode-go/glm-5
 ---
 
 $ARGUMENTS (objetivo a decompor, opcional)
@@ -12,11 +11,38 @@ Wrapper que invoca a skill `decomposition` para quebrar objetivos grandes em pla
 
 ## Processo
 
+### 1. Contexto OpenViking (pré-execução)
+
+```
+context-hybrid.getCurrentModule
+memsearch({ query: "decomposições similares", target_uri: "viking://resources/ultralearning/", mode: "auto" })
+resource.find({ query: "learning-map", target: "viking://resources/ultralearning/projects/{id}/maps/" })
+```
+
+### 2. Execução Principal
+
 1. **Validar entrada** — Se não houver objetivo, perguntar qual objetivo decompor.
 2. **Contextualização** — Coletar: nível atual, prazo, disponibilidade semanal, pré-requisitos e motivação.
 3. **Invocar skill** — Carregar skill `decomposition`. A skill gera hierarquia de 5 níveis: (1) Domínio, (2) Meta, (3) Habilidades, (4) Conceitos, (5) Entregas. Framework 3D: Deconstruct → Design → Define.
 4. **Gerar artefatos** — A skill cria `learning-map.md`, `week-01.md` até `week-N.md` e checkpoints/milestones.
 5. **Apresentar resumo** — Hierarquia completa, arquivos gerados, estimativa total de semanas/horas e cronograma sugerido.
+
+### 3. Persistência (pós-execução)
+
+```
+resource.mkdir({ uri: "viking://resources/ultralearning/projects/{id}/maps/" })
+resource.write({
+  uri: "viking://resources/ultralearning/projects/{id}/maps/learning-map.md",
+  content: "<conteúdo completo do learning map>",
+  mode: "replace"
+})
+resource.link({
+  from: "viking://resources/ultralearning/projects/{id}/maps/learning-map.md",
+  to: "viking://resources/ultralearning/projects/{id}/",
+  reason: "mapa de aprendizado do projeto"
+})
+memcommit({ wait: false })
+```
 
 ## Argumento
 

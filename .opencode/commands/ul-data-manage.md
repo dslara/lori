@@ -1,7 +1,7 @@
 ---
 description: Gerenciar dados - inicializar, resetar
 agent: tutor
-model: opencode-go/kimi-k2.5
+model: opencode/minimax-m2.5-free
 ---
 
 $1 (init|reset)

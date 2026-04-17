@@ -1,7 +1,7 @@
 ---
 description: Ver dashboard completo com métricas
 agent: tutor
-model: opencode-go/minimax-m2.5
+model: opencode/minimax-m2.5-free
 subtask: true
 ---
 

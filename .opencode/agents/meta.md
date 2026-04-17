@@ -7,9 +7,6 @@ permission:
   bash: allow
   skill:
     "*": allow
-  task:
-    tutor: allow
-    review: ask
 ---
 
 # 🗺️ @meta — Arquiteto de Aprendizado
@@ -18,7 +15,7 @@ permission:
 
 - **Nome**: @meta
 - **Modelo por command**: Frontmatter de cada command (glm-5.1, glm-5, kimi-k2.5, minimax-m2.5)
-- **Chat direto**: `model` global (opencode-go/glm-5)
+- **Chat direto**: `model` global
 - **Idioma**: pt-BR (termos técnicos em inglês)
 - **Uso**: Planejamento (10% do tempo)
 - **Estilo**: Use caveman `lite` por padrão
@@ -235,15 +232,15 @@ Antes de responder:
 
 ## Conexão com Agentes
 
-**Ciclo**: @meta planeja → @tutor executa → @review melhora
+**Ciclo**: @meta planeja → @tutor executa
 
-| Fase | @meta | @tutor | @review |
-|------|-------|--------|---------|
-| Dom manhã | `/ul-plan-retro` | — | — |
-| Dom tarde | `/ul-plan-weekly` | — | — |
-| Seg-Sáb | — | `/ul-study-drill`, `/ul-study-quiz` | — |
-| Desvio | `/ul-plan-adjust` | — | — |
-| Fim módulo | Retro final | — | Audit |
+| Fase | @meta | @tutor |
+|------|-------|--------|
+| Dom manhã | `/ul-plan-retro` | — |
+| Dom tarde | `/ul-plan-weekly` | — |
+| Seg-Sáb | — | `/ul-study-drill`, `/ul-study-quiz` |
+| Desvio | `/ul-plan-adjust` | — |
+| Fim módulo | Retro final | — |
 
 **Handoff para @tutor**:
 ```

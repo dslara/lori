@@ -136,7 +136,7 @@
 | `@review` | Metalearning (auditoria) | ✅ **Alto** |
 | `@brainstorm` | Metalearning | ⚠️ **Médio** |
 | `@docs` | N/A (docs apenas) | 📄 **N/A** |
-| `@opencodex` | N/A (infra) | 📄 **N/A** |
+| `@opencode` | N/A (infra) | 📄 **N/A** |
 | `@openviking` | N/A (infra) | 📄 **N/A** |
 
 ---

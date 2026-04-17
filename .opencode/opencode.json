@@ -1,13 +1,12 @@
 {
   "$schema": "https://opencode.ai/config.json",
-  "model": "opencode-go/glm-5",
-  "small_model": "opencode-go/minimax-m2.5",
+  "small_model": "opencode/minimax-m2.5-free",
+  "default_agent": "meta",
+  "share": "disabled",
+  "watcher": {
+    "ignore": ["node_modules", ".opencode/node_modules", "data/*.csv"]
+  },
   "provider": {
-    "opencode-go": {
-      "options": {
-        "setCacheKey": true
-      }
-    },
     "lmstudio": {
       "npm": "@ai-sdk/openai-compatible",
       "name": "LM Studio (local)",
@@ -17,154 +16,6 @@
       "models": {
         "google/gemma-4-26b-a4b": {
           "name": "Gemma 4 26b (local)"
-        }
-      }
-    }
-  },
-  "agent": {
-    "meta": {
-      "description": "Arquiteto de aprendizado. Planeja módulos, mapeia recursos, cria cronogramas semanais.",
-      "mode": "primary",
-      "temperature": 0.2,
-      "tools": {
-        "write": true,
-        "edit": true,
-        "bash": true,
-        "skill": true
-      },
-      "permission": {
-        "edit": "ask",
-        "bash": "allow",
-        "skill": {
-          "*": "allow"
-        }
-      },
-      "task": {
-        "*": "deny",
-        "tutor": "allow",
-        "review": "ask"
-      }
-    },
-    "tutor": {
-      "description": "Mentor socrático de ultralearning. Guia sessões com #directness, #feynman, #drill, #quiz.",
-      "mode": "primary",
-      "temperature": 0.5,
-      "tools": {
-        "write": true,
-        "edit": true,
-        "bash": true,
-        "skill": true
-      },
-      "permission": {
-        "edit": "allow",
-        "bash": "allow",
-        "skill": {
-          "*": "allow"
-        }
-      }
-    },
-    "review": {
-      "description": "Revisor arquitetural. Audita qualidade do framework e propõe melhorias.",
-      "mode": "primary",
-      "temperature": 0.1,
-      "tools": {
-        "write": true,
-        "edit": true,
-        "bash": true,
-        "skill": false
-      },
-      "permission": {
-        "edit": "ask",
-        "write": "ask",
-        "bash": "allow",
-        "webfetch": "allow"
-      }
-    },
-    "brainstorm": {
-      "description": "Arquiteto de ideias. Propõe melhorias inovadoras e identifica lacunas.",
-      "mode": "primary",
-      "temperature": 0.7,
-      "tools": {
-        "write": true,
-        "edit": true,
-        "bash": true,
-        "skill": true
-      },
-      "permission": {
-        "edit": "ask",
-        "write": "ask",
-        "bash": "allow",
-        "webfetch": "allow"
-      }
-    },
-    "openviking": {
-      "description": "Consultor OpenViking - API, Skills e Memória",
-      "mode": "subagent",
-      "temperature": 0.3,
-      "tools": {
-        "write": true,
-        "edit": true,
-        "bash": true,
-        "skill": true
-      },
-      "permission": {
-        "skill": {
-          "caveman": "allow"
-        },
-        "edit": "allow",
-        "write": "allow",
-        "bash": "allow"
-      }
-    },
-    "opencodex": {
-      "description": "Especialista OpenCode - Commands, Skills, Tools e Plugins",
-      "mode": "subagent",
-      "temperature": 0.3,
-      "tools": {
-        "write": true,
-        "edit": true,
-        "bash": true,
-        "skill": true
-      },
-      "permission": {
-        "edit": "allow",
-        "write": "allow",
-        "bash": "allow"
-      }
-    },
-    "agentforge": {
-      "description": "Especialista em criar e revisar agentes OpenCode otimizados",
-      "mode": "subagent",
-      "temperature": 0.3,
-      "permission": {
-        "edit": "allow",
-        "write": "allow",
-        "bash": "deny",
-        "skill": {
-          "caveman": "allow"
-        },
-        "task": {
-          "*": "deny",
-          "explore": "allow",
-          "general": "ask"
-        }
-      }
-    },
-    "docs": {
-      "description": "Especialista em documentação do framework Ultralearning. Revisa, melhora, cria e padroniza docs para humanos e agentes AI.",
-      "mode": "subagent",
-      "temperature": 0.3,
-      "permission": {
-        "edit": "allow",
-        "write": "allow",
-        "bash": "deny",
-        "skill": {
-          "caveman": "allow"
-        },
-        "task": {
-          "*": "deny",
-          "explore": "allow",
-          "general": "ask"
         }
       }
     }

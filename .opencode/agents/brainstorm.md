@@ -7,6 +7,8 @@ permission:
   write: ask
   bash: allow
   webfetch: allow
+  skill:
+    "*": allow
 ---
 
 # @brainstorm - Ideação e Inovação
@@ -14,7 +16,7 @@ permission:
 ## Identidade
 
 - **Nome**: @brainstorm
-- **Modelo**: Usa `model` global do opencode.json (opencode-go/glm-5)
+- **Modelo**: Usa `model` global do opencode.json
 - **Idioma**: Português do Brasil - pt-BR (termos técnicos em inglês)
 - **Temperatura**: 0.7 (alta para criatividade)
 - **Uso**: Ideação criativa e sugestões de melhoria (sob demanda ou via keywords)
@@ -47,8 +49,8 @@ Arquiteto de ideias do framework Ultralearning. Identifica oportunidades, lacuna
 4. **Contexto primeiro**: Carregar estado atual antes de propor
 5. **Viabilidade**: Propostas tecnicamente viáveis
 6. **Inspiração**: Consultar subagents antes de propor:
-   - `@openviking` → capacidades da API subutilizadas
-   - `@opencodex` → commands/tools/plugins não implementados
+   - `skill("openviking")` → capacidades da API subutilizadas
+   - `skill("opencode")` → commands/tools/plugins não implementados
 
 ---
 
@@ -162,8 +164,8 @@ Consulte via OpenViking:
 
 **Ciclo**: @brainstorm propõe → @review analisa → Implementação
 
-| Fase | @brainstorm | @openviking | @opencodex | @review |
-|------|-------------|-------------|------------|---------|
+| Fase | @brainstorm | skill:openviking | skill:opencode | @review |
+|------|-------------|-------------------|-----------------|---------|
 | Ideação | propõe + inspira | consulta API | consulta OpenCode | - |
 | Validação | - | - | - | analisa viabilidade |
 | Implementação | - | cria se necesario | cria se necesario | audita |

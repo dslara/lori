@@ -1,7 +1,6 @@
 ---
 description: Aprender fazendo projetos reais
 agent: tutor
-model: opencode-go/kimi-k2.5
 ---
 
 $ARGUMENTS (descrição do projeto, opcional)
@@ -15,7 +14,13 @@ Aprender através de projetos reais com guia socrático. Delega para a skill `di
 1. **Carregar contexto** — Invocar `context-hybrid.getProjectInfo` para obter módulo atual e projetos existentes
 2. **Carregar skill** — Carregar skill `directness` e seguir processo definido nela
 3. **Executar projeto** — A skill conduzirá: perguntas de planejamento → micro-passos → guia socrático → validação → mini-retrieval
-4. **Persistir** — Ao finalizar, usar `memcommit` com `wait: true` para persistir progresso
+4. **Persistir** — Ao finalizar, persistir progresso
+
+### Persistência
+
+```
+memcommit({ wait: true })
+```
 
 ## Argumento
 

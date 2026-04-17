@@ -1,7 +1,6 @@
 ---
 description: Criar flashcards SRS
 agent: tutor
-model: opencode-go/kimi-k2.5
 ---
 
 $1 (criar|review|batch|direto)
@@ -15,7 +14,7 @@ Cria flashcards para o sistema de repetição espaçada (SRS). Delega para a ski
 
 ### Modo Criação (criar, padrão)
 
-1. **Carregar contexto** — Invocar `memsearch` com query `"tópicos em estudo"`, `limit: 5` para sugerir conceitos
+1. **Carregar contexto** — Invocar `context-hybrid.getCurrentModule`, depois `memsearch` com query `"tópicos em estudo"`, `target_uri: "viking://user/"`, `mode: "auto"`, `limit: 5` para sugerir conceitos
 2. **Carregar skill** — Carregar skill `srs-generator` e seguir processo de criação definido nela
 3. **Persistir** — Invocar `data.createFlashcard` com `front`, `back`, `category`, `tags`
 4. **Oferecer próximo passo** — Criar outro card, revisar pendentes, ou sair
@@ -41,6 +40,12 @@ Cria flashcards para o sistema de repetição espaçada (SRS). Delega para a ski
 
 - `$1`: Modo de operação — `criar` (padrão interativo), `review` (revisar pendentes), `batch` (criação em lote), `direto` (criação rápida). Se vazio, modo criar.
 - `$ARGUMENTS`: Conteúdo para modo direto (ex: "O que é closure?::Função que captura variáveis do escopo externo")
+
+### 3. Persistência (pós-execução)
+
+```
+memcommit({ wait: false })
+```
 
 ## Handoff
 

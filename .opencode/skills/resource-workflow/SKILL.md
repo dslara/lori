@@ -5,7 +5,7 @@ license: MIT
 compatibility: opencode
 metadata:
   principle: "resource-management"
-  agent: "@tutor @meta @review @brainstorm @opencodex"
+  agent: "@tutor @meta @review @brainstorm @docs @build @plan"
   keywords: "resource, openviking, publish, sync, write, mkdir, find, search, grep, glob, workflow, viking, ingest, content, uri, ovpack, link, unlink, tree, abstract, overview"
 ---
 
@@ -280,6 +280,74 @@ resource({ operation: "add", path: "https://github.com/org/repo", target: "vikin
 | Pesquisa multi-fonte | `webfetch` + `write` múltiplos | Agente seleciona e organiza |
 | Conteúdo gerado pelo agente | `write` direto | Já tem o conteúdo, só publica |
 
+## Template: Integração OpenViking em Commands
+
+Padrão obrigatório para todos commands do Ultralearning System (após auditoria v3.5.0):
+
+```
+### 1. Contexto OpenViking (pré-execução)
+
+context-hybrid.getCurrentModule  # obter módulo ativo
+context-hybrid.getSRSPending     # SRS pendente (se command de estudo)
+context-hybrid.getProjectInfo    # info do projeto (se disponível)
+
+### 2. Busca de Contexto
+
+# Memórias pessoais (usuário)
+memsearch({ query: "...", target_uri: "viking://user/", mode: "auto" })
+
+# Artefatos do projeto (mais preciso que memsearch genérico)
+resource.find({ query: "...", target: "viking://resources/ultralearning/projects/{id}/" })
+resource.glob({ pattern: "**/*benchmark*", path: "viking://resources/ultralearning/projects/{id}/" })
+
+### 3. Leitura Progressiva
+
+memread({ uri: "...", level: "abstract" })  # escalar para overview/read se necessário
+```
+
+### 4. Execução Principal
+
+[lógica do command]
+
+### 5. Persistência (pós-execução)
+
+```
+# Se gerou artefato novo:
+resource.mkdir({ uri: "viking://resources/ultralearning/projects/{id}/{tipo}/" })
+resource.write({
+  uri: "viking://resources/ultralearning/projects/{id}/{tipo}/{artefato}.md",
+  content: "<conteúdo>",
+  mode: "replace"  # ou "append" para acumular (ex: notes, analogies)
+})
+resource.link({
+  from: "viking://resources/ultralearning/projects/{id}/{tipo}/{artefato}.md",
+  to: "viking://resources/ultralearning/projects/{id}/",
+  reason: "descrição do link"
+})
+
+# Sempre ao final:
+memcommit({ wait: false })  # wait: true só em commands de encerramento (ul-study-end, ul-study-recall)
+```
+
+**URI Schema por Tipo de Artefato:**
+
+| Artefato | URI |
+|----------|-----|
+| Plano semanal | `viking://resources/ultralearning/projects/{id}/plans/week-{N}.md` |
+| Benchmark | `viking://resources/ultralearning/projects/{id}/benchmarks/benchmark-{skill}.md` |
+| Learning map | `viking://resources/ultralearning/projects/{id}/maps/learning-map.md` |
+| Notas de sessão | `viking://resources/ultralearning/projects/{id}/notes/session-{N}.md` |
+| Log de sessões | `viking://resources/ultralearning/projects/{id}/notes/sessions-log.md` |
+| Analogias | `viking://resources/ultralearning/projects/{id}/knowledge/analogies.md` |
+| Padrões de erro | `viking://resources/ultralearning/projects/{id}/knowledge/patterns.md` |
+| Recursos externos | `viking://resources/ultralearning/projects/{id}/resources/{recurso}.md` |
+| Retrospectiva | `viking://resources/ultralearning/projects/{id}/retros/retro-week-{N}.md` |
+| Scaffold | `viking://resources/ultralearning/projects/{id}/scaffolds/scaffold-{tipo}-{data}.md` |
+
+**Links Obrigatórios:**
+- Todo artefato → `project-{id}` (pertence ao projeto)
+- `retro-week-N` → `week-N` (retro revisa plano)
+
 ## Anti-Patterns
 
 ❌ **Não faça:**
@@ -289,6 +357,8 @@ resource({ operation: "add", path: "https://github.com/org/repo", target: "vikin
 - `rm` sem `recursive=true` em diretórios (falha silenciosamente)
 - `add` com URL de página web genérica (usa webfetch + write para filtrar ruído)
 - Publicar conteúdo sem metadata (fonte, data, tópico)
+- `memsearch` sem `target_uri` (resultados irrelevantes)
+- `memcommit` sem `wait` explícito (comportamento indefinido)
 
 ✅ **Faça:**
 - `abstract` → `overview` → `read` (leitura progressiva)
@@ -298,6 +368,8 @@ resource({ operation: "add", path: "https://github.com/org/repo", target: "vikin
 - `mkdir` antes de `add` se a estrutura de dirs não existe
 - `webfetch` + `write` para páginas web (filtra ruído)
 - Metadata no topo de conteúdo publicado (fonte, data, tópico)
+- `memsearch` sempre com `target_uri` e `mode: "auto"`
+- `memcommit` ao final de commands de estudo (`wait: false` para maioria, `wait: true` para encerramento)
 
 ## Referência Rápida
 

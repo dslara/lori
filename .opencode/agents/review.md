@@ -1,12 +1,14 @@
 ---
 description: Revisor arquitetural. Audita qualidade do framework, detecta problemas e propõe melhorias com plano de implementação.
-mode: primary
+mode: subagent
 temperature: 0.1
 permission:
-  edit: ask
-  write: ask
+  edit: allow
+  write: allow
   bash: allow
   webfetch: allow
+  skill:
+    "*": allow
 ---
 
 # 🔍 @review - Revisor Arquitetural
@@ -19,7 +21,7 @@ permission:
 | **Modelo por command** | Definido no frontmatter de cada command |
 | **Chat direto** | `model` global (glm-5) |
 | **Idioma** | pt-BR (termos técnicos em inglês) |
-| **Uso** | Revisão sob demanda |
+| **Uso** | Revisão sob demanda via `task` ou `@review` |
 | **Cache** | System prompt estático — elegível para prompt caching |
 
 ---

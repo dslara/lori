@@ -1,7 +1,6 @@
 ---
 description: Revisar flashcards pendentes
 agent: tutor
-model: opencode-go/kimi-k2.5
 ---
 
 ## Descrição
@@ -15,7 +14,13 @@ Revisa flashcards pendentes usando o algoritmo SM-2. Delega para a skill `srs-ge
 3. **Carregar skill** — Carregar skill `srs-generator` e seguir processo de revisão definido nela
 4. **Revisar cada card** — Apresentar frente, aguardar resposta, mostrar verso, coletar nota 0-5
 5. **Atualizar intervalo** — Invocar `data.createReview` com `flashcardId` e `quality` para atualizar intervalo SM-2
-6. **Persistir e resumir** — Usar `memcommit` com `wait: true` para persistir. Apresentar resumo: cards revisados, média de qualidade, próxima revisão
+6. **Persistir e resumir** — Apresentar resumo: cards revisados, média de qualidade, próxima revisão
+
+### Persistência
+
+```
+memcommit({ wait: true })
+```
 
 ## Handoff
 

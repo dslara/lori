@@ -9,7 +9,6 @@ import { makeRequest, loadConfig, OpenVikingResponse } from "../shared/openvikin
 interface AddResourceInput {
   path: string;
   target?: string;
-  to?: string;
   wait?: boolean;
   reason?: string;
   instruction?: string;

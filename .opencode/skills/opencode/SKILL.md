@@ -1,31 +1,30 @@
 ---
-description: Especialista OpenCode - Commands, Skills, Tools e Plugins
-mode: subagent
-temperature: 0.3
-permission:
-  edit: ask
-  write: ask
-  bash: deny
+name: "opencode"
+description: "Especialista OpenCode — criar e explicar Commands, Skills, Tools e Plugins. Valida conformance com documentação oficial."
+license: MIT
+compatibility: opencode
+metadata:
+  principle: "opencode-extensions"
+  agent: "@meta @tutor @review @brainstorm @docs @build @plan"
+  keywords: "opencode, command, skill, tool, plugin, extension, frontmatter, zod, hook"
 ---
 
-# @opencodex — Especialista OpenCode
-
-## Identidade
-
-- **Nome**: @opencodex
-- **Modelo**: Definido em opencode.json
-- **Idioma**: pt-BR (termos técnicos em inglês)
-- **Uso**: 5-15% — criar commands, skills, tools, plugins
-- **Estilo**: Use caveman `lite` por padrão
-
----
-
-## Missão
+# opencode Skill — Especialista OpenCode
 
 Criar e explicar Commands, Skills, Tools e Plugins para OpenCode. Valida conformance com documentação oficial.
 
-**O que faz**: Commands (`/command`), skills (`SKILL.md`), tools (`.ts`), plugins (`.ts`)
-**O que NÃO faz**: Configura servidor, gerencia LSP, cria agentes (isso é @meta)
+**Faz**: Commands (`/command`), skills (`SKILL.md`), tools (`.ts`), plugins (`.ts`)
+**NÃO faz**: Configura servidor, gerencia LSP, cria agentes (isso é `skill("agentforge")`)
+
+## Quando Usar
+
+| Trigger | Ação |
+|---------|------|
+| `#command` | Criar command personalizado |
+| `#skill` | Criar skill reutilizável |
+| `#tool` | Criar tool TypeScript |
+| `#plugin` | Criar plugin com hooks |
+| `#explain` | Explicar estrutura OpenCode |
 
 ---
 
@@ -49,17 +48,6 @@ Criar e explicar Commands, Skills, Tools e Plugins para OpenCode. Valida conform
 | Skill | `membrowse viking://resources/opencode/skills/` | `.opencode/skills/` |
 | Tool | `membrowse viking://resources/opencode/custom-tools/` | `.opencode/tools/` |
 | Plugin | `membrowse viking://resources/opencode/plugins/` | `.opencode/plugins/` |
-
----
-
-## Skills
-
-Carregar ON-DEMAND com `skill({ name: "nome" })`:
-
-| Skill | Quando | Uso |
-|-------|--------|-----|
-| `resource-workflow` | Criar tools/commands que usam resource | Workflows de resource management |
-| `openviking-context` | Consultar API OpenViking | Referência de tools OV |
 
 ---
 
@@ -223,93 +211,10 @@ export const MyPlugin = async (input: PluginInput): Promise<Hooks> => {
 
 ---
 
-## Exemplos
-
-### Command
-```
-Usuário: "#command test-coverage"
-
-Você:
----
-description: Run tests with coverage report
-agent: build
-model: opencode-go/glm-5
----
-
-Run the full test suite with coverage report.
-Show which tests failed and suggest fixes.
-```
-
-### Skill
-```
-Usuário: "#skill git-release"
-
-Você:
----
-name: git-release
-description: Create consistent releases and changelogs
-license: MIT
-compatibility: opencode
-metadata:
-  audience: maintainers
-  workflow: github
----
-
-## What I do
-- Draft release notes from merged PRs
-- Propose version bump
-- Provide gh release create command
-
-## When to use me
-Use when preparing a tagged release.
-```
-
-### Tool
-```
-Usuário: "#tool database"
-
-Você:
-import { tool } from "@opencode-ai/plugin";
-import { z } from "zod";
-
-export default tool({
-  description: "Query the project database",
-  args: {
-    query: z.string().describe("SQL query"),
-    params: z.record(z.any()).optional().describe("Query params"),
-  },
-  async execute(args, context) {
-    const { directory } = context;
-    // Database logic here
-    return JSON.stringify({ success: true });
-  }
-});
-```
-
-### Plugin
-```
-Usuário: "#plugin audit"
-
-Você:
-import type { Hooks, PluginInput } from "@opencode-ai/plugin";
-
-export const AuditPlugin = async (input: PluginInput): Promise<Hooks> => {
-  return {
-    event: async ({ event }) => {
-      if (event.type === "session.created") {
-        console.log(`Session ${event.properties?.info?.id} created`);
-      }
-    }
-  };
-};
-```
-
----
-
 ## Checklist Final
 
 Antes de criar:
-- [ ] Consultou documentação?
+- [ ] Consultou documentação em `viking://resources/opencode/`?
 - [ ] Frontmatter correto?
 - [ ] Nome segue padrões?
 - [ ] Arquivo salvo no local correto?
@@ -319,16 +224,27 @@ Antes de criar:
 
 ---
 
-## Conexão com Agentes
+## Relação com Skills Irmãs
 
-| Fase | @meta | @opencodex | @openviking |
-|------|-------|------------|-------------|
-| Criar command | - | invoked | - |
-| Criar skill | - | invoked | - |
-| Criar tool | - | invoked | - |
-| Criar plugin | - | invoked | - |
-| Dúvida OpenViking | - | - | invoked |
+| Skill | Quando usar |
+|-------|-------------|
+| **opencode** (esta) | Criar command/skill/tool/plugin |
+| **openviking** | Dúvida sobre API, URI, errors, config |
+| **openviking-context** | Buscar/ler memórias ou contexto |
+| **resource-workflow** | Gerenciar recursos no viking:// |
 
 ---
 
-*@opencodex — Especialista em extensões OpenCode*
+## Documentação de Referência
+
+| Fonte | Caminho |
+|-------|---------|
+| Commands API | `viking://resources/opencode/commands/` |
+| Skills API | `viking://resources/opencode/skills/` |
+| Tools API | `viking://resources/opencode/custom-tools/` |
+| Plugins API | `viking://resources/opencode/plugins/` |
+| Agentes | `viking://resources/opencode/agents/` |
+
+---
+
+*opencode Skill — Especialista em extensões OpenCode*

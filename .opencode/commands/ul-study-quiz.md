@@ -1,7 +1,6 @@
 ---
 description: Warm-up com quiz adaptativo
 agent: tutor
-model: opencode-go/kimi-k2.5
 ---
 
 $1 (número de perguntas, 3-5)
@@ -18,7 +17,13 @@ Quiz de 3-5 perguntas para retrieval practice. Dificuldade adaptativa baseada no
 3. **Gerar perguntas** — Nível adequado (múltipla escolha ou abertas), variando tipo: conceito, comparação, aplicação.
 4. **Apresentar uma por vez** — Aguardar resposta antes de mostrar a próxima.
 5. **Feedback imediato** — Acertou → explicação rápida; errou → resposta correta + explicação + dica mnemônica.
-6. **Resultado final** — Acertos/total, análise por tópico, recomendações. Persistir via `memcommit` com `wait: true` ao final.
+6. **Resultado final** — Acertos/total, análise por tópico, recomendações.
+
+### Persistência
+
+```
+memcommit({ wait: true })
+```
 
 ## Argumento
 

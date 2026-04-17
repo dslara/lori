@@ -1,7 +1,6 @@
 ---
 description: Criar novo módulo de estudo
 agent: meta
-model: opencode-go/glm-5
 ---
 
 $1 (nome do módulo)

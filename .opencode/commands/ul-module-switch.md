@@ -1,7 +1,7 @@
 ---
 description: Alternar módulo ativo
 agent: meta
-model: opencode-go/glm-5
+model: opencode/minimax-m2.5-free
 ---
 
 $1 (nome ou ID do módulo, opcional)

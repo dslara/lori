@@ -5,7 +5,7 @@ license: MIT
 compatibility: opencode
 metadata:
   principle: "communication-efficiency"
-  agent: "@tutor @meta @review @brainstorm"
+  agent: "@tutor @meta @review @brainstorm @docs @build @plan"
   keywords: "caveman, brief, concise, token, compression, terse"
 ---
 
