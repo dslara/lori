@@ -29,18 +29,18 @@ Tudo isso vive no **contexto da conversa**, não em bancos separados.
 
 ```bash
 # Iniciar sessão de estudo
-/ul-start
+/lori-start
 
 # Durante a sessão, escolha técnica:
-/skill:ul-drill        # Repetição deliberada
-/skill:ul-feynman      # Validar compreensão
-/skill:ul-directness   # Projeto real
+/skill:lori-drill        # Repetição deliberada
+/skill:lori-feynman      # Validar compreensão
+/skill:lori-directness   # Projeto real
 
 # Finalizar sessão
-/ul-end
+/lori-end
 
 # Retrospectiva semanal (domingo)
-/ul-retro
+/lori-retro
 ```
 
 **Guia completo**: [HOW_TO_USE.md](HOW_TO_USE.md)  
@@ -52,17 +52,17 @@ Tudo isso vive no **contexto da conversa**, não em bancos separados.
 
 | Skill | Quando usar |
 |-------|-------------|
-| **ul-pomodoro** | Antes de qualquer técnica — timer 50/10, proteção de interrupções |
-| **ul-decomposition** | Iniciar novo tópico — quebrar objetivo em semanas |
-| **ul-retrieval** | Warm-up ou revisão — quiz adaptativo baseado em erros |
-| **ul-feynman** | Quando achar que "entendeu" — explicar para criança de 5 anos |
-| **ul-drill** | Praticar procedimentos — erro → análise → repetição |
-| **ul-directness** | Consolidar conhecimento — projeto real, review socrático |
-| **ul-srs** | Memorizar fatos — flashcards SM-2 |
-| **ul-stuck** | Quando travar — 5 perguntas socráticas genéricas |
-| **ul-retro** | Todo domingo — retrospectiva semanal com ajustes |
+| **lori-pomodoro** | Antes de qualquer técnica — timer 50/10, proteção de interrupções |
+| **lori-decomposition** | Iniciar novo tópico — quebrar objetivo em semanas |
+| **lori-retrieval** | Warm-up ou revisão — quiz adaptativo baseado em erros |
+| **lori-feynman** | Quando achar que "entendeu" — explicar para criança de 5 anos |
+| **lori-drill** | Praticar procedimentos — erro → análise → repetição |
+| **lori-directness** | Consolidar conhecimento — projeto real, review socrático |
+| **lori-srs** | Memorizar fatos — flashcards SM-2 |
+| **lori-stuck** | Quando travar — 5 perguntas socráticas genéricas |
+| **lori-retro** | Todo domingo — retrospectiva semanal com ajustes |
 
-Invoque com `/skill:ul-feynman` ou deixe o Pi sugerir automaticamente.
+Invoque com `/skill:lori-feynman` ou deixe o Pi sugerir automaticamente.
 
 ---
 
@@ -105,15 +105,15 @@ Invoque com `/skill:ul-feynman` ou deixe o Pi sugerir automaticamente.
 
 | Command | Ação |
 |---------|------|
-| `/ul-start` | Inicia ciclo de estudo + ritual pré-sessão |
-| `/ul-end` | Finaliza ciclo + ritual pós-sessão |
-| `/ul-timer [start\|stop\|status]` | Pomodoro integrado no TUI |
-| `/ul-plan` | Mostra plano da semana e progresso |
-| `/ul-retro` | Guia retrospectiva interativa |
-| `/ul-weak` | Lista pontos fracos ativos |
-| `/ul-resources` | Lista recursos curados |
-| `/ul-stats` | Analytics derivados dos eventos |
-| `/ul-review-srs` | Flashcards pendentes de revisão |
+| `/lori-start` | Inicia ciclo de estudo + ritual pré-sessão |
+| `/lori-end` | Finaliza ciclo + ritual pós-sessão |
+| `/lori-timer [start\|stop\|status]` | Pomodoro integrado no TUI |
+| `/lori-plan` | Mostra plano da semana e progresso |
+| `/lori-retro` | Guia retrospectiva interativa |
+| `/lori-weak` | Lista pontos fracos ativos |
+| `/lori-resources` | Lista recursos curados |
+| `/lori-stats` | Analytics derivados dos eventos |
+| `/lori-review-srs` | Flashcards pendentes de revisão |
 
 ---
 

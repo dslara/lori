@@ -232,19 +232,19 @@ Eventos capturam **o que aconteceu**. Markdown captura **o que foi aprendido**.
 {"front":"Regra do shell voicing mão esquerda","back":"3ª + 7ª do acorde. No máximo 2 notas.","next_review":"2026-04-03","ef":2.3,"interval":1,"reps":1}
 ```
 
-Algoritmo SM-2. Revisão diária via `/ul-review-srs`.
+Algoritmo SM-2. Revisão diária via `/lori-review-srs`.
 
 ---
 
 ## 5. Skills: Rituais de Aprendizado
 
-Cada skill é workflow completo. Invocada via `/skill:ul-feynman` ou guiada pelo ciclo.
+Cada skill é workflow completo. Invocada via `/skill:lori-feynman` ou guiada pelo ciclo.
 
-### 5.1 `ul-pomodoro` — Foco Protegido
+### 5.1 `lori-pomodoro` — Foco Protegido
 
 ```markdown
 ---
-name: ul-pomodoro
+name: lori-pomodoro
 description: Ritual de foco profundo para sessões de estudo. Configura timer, elimina interrupções, protege ciclo de aprendizado. Use antes de qualquer técnica de estudo.
 ---
 
@@ -252,7 +252,7 @@ description: Ritual de foco profundo para sessões de estudo. Configura timer, e
 
 ## Ritual (2 minutos)
 
-1. Defina timer: `/ul-timer start 50`
+1. Defina timer: `/lori-timer start 50`
 2. Celular: Não Perturbe
 3. Editor: apenas arquivos do módulo ativo
 4. Feche todas as abas irrelevantes
@@ -261,7 +261,7 @@ description: Ritual de foco profundo para sessões de estudo. Configura timer, e
 ## Regras
 
 - Se interrompido: pause timer, anote interrupção, volte em < 2 min
-- Se travar por > 5 min: use `/skill:ul-stuck`
+- Se travar por > 5 min: use `/skill:lori-stuck`
 - Se terminar antes: overlearning — faça variação mais difícil
 - NUNCA pule o ritual
 
@@ -273,16 +273,16 @@ description: Ritual de foco profundo para sessões de estudo. Configura timer, e
 
 ## Comandos
 
-- `/ul-timer start [minutos]` — inicia
-- `/ul-timer stop` — interrompe
-- `/ul-timer status` — tempo restante
+- `/lori-timer start [minutos]` — inicia
+- `/lori-timer stop` — interrompe
+- `/lori-timer status` — tempo restante
 ```
 
-### 5.2 `ul-feynman` — Validar Compreensão
+### 5.2 `lori-feynman` — Validar Compreensão
 
 ```markdown
 ---
-name: ul-feynman
+name: lori-feynman
 description: Técnica Feynman para validar compreensão real. Aluno explica conceito como se ensinasse criança de 5 anos. Agente identifica gaps e guia preenchimento. Use quando achar que "entendeu".
 ---
 
@@ -312,11 +312,11 @@ Aluno explica com jargão. Agente interrompe: "Explique como se eu não soubesse
 - Gaps identificados viram flashcards SRS
 ```
 
-### 5.3 `ul-retrieval` — Quiz Socrático
+### 5.3 `lori-retrieval` — Quiz Socrático
 
 ```markdown
 ---
-name: ul-retrieval
+name: lori-retrieval
 description: Active recall via quiz adaptativo. Agente pergunta sobre conceitos do módulo ativo. Dificuldade ajustada pelo histórico de erros. Use como warm-up ou revisão.
 ---
 
@@ -346,11 +346,11 @@ description: Active recall via quiz adaptativo. Agente pergunta sobre conceitos 
 - Eventos: `drill_completed` ou `weakness_identified`
 ```
 
-### 5.4 `ul-drill` — Repetição Deliberada
+### 5.4 `lori-drill` — Repetição Deliberada
 
 ```markdown
 ---
-name: ul-drill
+name: lori-drill
 description: Prática deliberada com repetição e progressão. Aluno resolve exercício tipo. Erro → análise → repetição. Acerto → variação mais difícil. Use para automatizar procedimentos.
 ---
 
@@ -382,11 +382,11 @@ description: Prática deliberada com repetição e progressão. Aluno resolve ex
 - Se erro persistente: evento `weakness_identified`
 ```
 
-### 5.5 `ul-srs` — Flashcards
+### 5.5 `lori-srs` — Flashcards
 
 ```markdown
 ---
-name: ul-srs
+name: lori-srs
 description: Spaced Repetition System para memorização. Criar flashcards com front/back. Revisão diária via algoritmo SM-2. Use para fatos, termos, regras, fórmulas.
 ---
 
@@ -404,7 +404,7 @@ description: Spaced Repetition System para memorização. Criar flashcards com f
 
 ## Revisão diária
 
-1. `/ul-review-srs` lista pendentes
+1. `/lori-review-srs` lista pendentes
 2. Aluno tenta responder mentalmente
 3. Auto-avalia: Again (0) / Hard (1) / Good (3) / Easy (4)
 4. Agente atualiza `next_review` via SM-2
@@ -416,11 +416,11 @@ description: Spaced Repetition System para memorização. Criar flashcards com f
 - Evento: `concept_learned` (novo) ou reforço
 ```
 
-### 5.6 `ul-directness` — Projeto Real
+### 5.6 `lori-directness` — Projeto Real
 
 ```markdown
 ---
-name: ul-directness
+name: lori-directness
 description: Aprender fazendo projeto real. Não tutoriais. Agente guia estrutura, não solução. Aluno constrói algo que funciona. Use para consolidar conhecimento em contexto real.
 ---
 
@@ -453,11 +453,11 @@ description: Aprender fazendo projeto real. Não tutoriais. Agente guia estrutur
 - Recurso: `resource_curated` (referências usadas)
 ```
 
-### 5.7 `ul-debug-socratic` — Debug com Perguntas
+### 5.7 `lori-stuck` — Quando Travar
 
 ```markdown
 ---
-name: ul-stuck
+name: lori-stuck
 description: Guia socrático para quando travar. Agente faz 5 perguntas sistemáticas. Nunca dá a resposta. Use quando não consegue avançar e não sabe por quê.
 ---
 
@@ -484,11 +484,11 @@ description: Guia socrático para quando travar. Agente faz 5 perguntas sistemá
 - Evento: `drill_completed` (se foi só erro de atenção)
 ```
 
-### 5.8 `ul-decomposition` — Quebrar Objetivos
+### 5.8 `lori-decomposition` — Quebrar Objetivos
 
 ```markdown
 ---
-name: ul-decomposition
+name: lori-decomposition
 description: Decompor objetivo de aprendizado complexo em módulos de 4-6 semanas. Framework: Conceitos 40%, Fatos 20%, Procedimentos 40%. Use ao iniciar novo tópico.
 ---
 
@@ -517,11 +517,11 @@ Para cada objetivo, classificar em:
 - Evento: `plan_created`
 ```
 
-### 5.9 `ul-retro` — Retrospectiva
+### 5.9 `lori-retro` — Retrospectiva
 
 ```markdown
 ---
-name: ul-retro
+name: lori-retro
 description: Retrospectiva semanal de aprendizado. Revisar plano, identificar padrões, ajustar próxima semana. Use todo domingo.
 ---
 
@@ -588,15 +588,15 @@ description: Retrospectiva semanal de aprendizado. Revisar plano, identificar pa
 
 | Command | Ação |
 |---------|------|
-| `/ul-start` | Inicia ciclo de estudo. Injetor de contexto + ritual pré-sessão. |
-| `/ul-end` | Finaliza ciclo. Ritual pós-sessão + evento `session_ended`. |
-| `/ul-timer [start\|stop\|status]` | Pomodoro integrado no TUI. |
-| `/ul-plan` | Mostra plano da semana e progresso. |
-| `/ul-retro` | Guia retrospectiva interativa. |
-| `/ul-weak` | Lista pontos fracos ativos com contagem de erros. |
-| `/ul-resources` | Lista recursos curados do módulo ativo. |
-| `/ul-stats` | Analytics derivados dos eventos (streak, horas, técnicas). |
-| `/ul-review-srs` | Flashcards pendentes de revisão. |
+| `/lori-start` | Inicia ciclo de estudo. Injetor de contexto + ritual pré-sessão. |
+| `/lori-end` | Finaliza ciclo. Ritual pós-sessão + evento `session_ended`. |
+| `/lori-timer [start\|stop\|status]` | Pomodoro integrado no TUI. |
+| `/lori-plan` | Mostra plano da semana e progresso. |
+| `/lori-retro` | Guia retrospectiva interativa. |
+| `/lori-weak` | Lista pontos fracos ativos com contagem de erros. |
+| `/lori-resources` | Lista recursos curados do módulo ativo. |
+| `/lori-stats` | Analytics derivados dos eventos (streak, horas, técnicas). |
+| `/lori-review-srs` | Flashcards pendentes de revisão. |
 
 ---
 
@@ -626,15 +626,15 @@ description: Retrospectiva semanal de aprendizado. Revisar plano, identificar pa
       ui.ts                         # Widgets e timer
       skills.ts                     # Mapeamento de skills
   skills/
-    ul-pomodoro/SKILL.md
-    ul-retrieval/SKILL.md
-    ul-feynman/SKILL.md
-    ul-drill/SKILL.md
-    ul-srs/SKILL.md
-    ul-directness/SKILL.md
-    ul-stuck/SKILL.md
-    ul-decomposition/SKILL.md
-    ul-retro/SKILL.md
+    lori-pomodoro/SKILL.md
+    lori-retrieval/SKILL.md
+    lori-feynman/SKILL.md
+    lori-drill/SKILL.md
+    lori-srs/SKILL.md
+    lori-directness/SKILL.md
+    lori-stuck/SKILL.md
+    lori-decomposition/SKILL.md
+    lori-retro/SKILL.md
   prompts/
     pre-session.md
     post-session.md
@@ -671,28 +671,28 @@ Usuário: "Quero aprender Rust async"
 
 Pi:
   1. Detecta novo módulo via before_agent_start
-  2. Sugere /skill:ul-decomposition
+  2. Sugere /skill:lori-decomposition
   3. Skill guia decomposição em 5 semanas
   4. Gera .lori/modules/rust-async/plan.md
   5. Gera week-01.md
   6. Evento: plan_created
-  7. Próximo passo: /ul-start amanhã
+  7. Próximo passo: /lori-start amanhã
 ```
 
 ### 10.2 Sessão diária completa
 
 ```
-Usuário: /ul-start
+Usuário: /lori-start
 
 Pi:
   1. before_agent_start injeta lori-context
   2. Pergunta: "Qual técnica hoje?" (ou sugere baseado em contexto)
   3. Usuário escolhe: "drill"
-  4. /skill:ul-pomodoro → inicia timer 50min
-  5. /skill:ul-drill → apresenta exercício
+  4. /skill:lori-pomodoro → inicia timer 50min
+  5. /skill:lori-drill → apresenta exercício
   6. Usuário resolve, erra, refaz, acerta
-  7. Timer acaba (notificação) ou usuário chama /ul-end
-  8. /skill:ul-retrieval → quiz rápido de warm-down (3 perguntas)
+  7. Timer acaba (notificação) ou usuário chama /lori-end
+  8. /skill:lori-retrieval → quiz rápido de warm-down (3 perguntas)
   9. Ritual pós-sessão:
      - "Quão honesto você foi? (1-10)"
      - "O que ficou confuso?"
@@ -710,17 +710,17 @@ Pi:
   1. Detecta frustração (palavras-chave ou explicitamente)
   2. Sugere: pausa de 15 min (modo difuso)
   3. Timer de pausa
-  4. Após pausa, /skill:ul-stuck
+  4. Após pausa, /skill:lori-stuck
   5. Se ainda travado após 5 perguntas:
      - Registra weakness_identified
      - Sugere downgradear para exercício mais simples
-     - Ou sugerir /skill:ul-feynman no conceito subjacente
+     - Ou sugerir /skill:lori-feynman no conceito subjacente
 ```
 
 ### 10.4 Domingo: Planejamento + Retro
 
 ```
-Usuário: /ul-retro
+Usuário: /lori-retro
 
 Pi:
   1. Lê eventos da semana
@@ -742,7 +742,7 @@ Pi:
 - [ ] Configurar `package.json` com manifest `pi` (extension + skills + prompts)
 - [ ] Criar `.lori/` com estrutura de diretórios
 - [ ] Implementar `state.jsonl` e funções de event sourcing
-- [ ] Registrar commands básicos: `/ul-start`, `/ul-end`, `/ul-stats`
+- [ ] Registrar commands básicos: `/lori-start`, `/lori-end`, `/lori-stats`
 
 ### Fase 2: Ciclos (2h)
 - [ ] Máquina de estados: idle → pre-session → in-session → post-session
@@ -751,26 +751,26 @@ Pi:
 - [ ] `session_before_compact` customizado
 
 ### Fase 3: Skills Core (3h)
-- [ ] `ul-pomodoro` — timer + ritual de foco
-- [ ] `ul-retrieval` — quiz adaptativo
-- [ ] `ul-feynman` — validação de compreensão
-- [ ] `ul-drill` — repetição deliberada
+- [ ] `lori-pomodoro` — timer + ritual de foco
+- [ ] `lori-retrieval` — quiz adaptativo
+- [ ] `lori-feynman` — validação de compreensão
+- [ ] `lori-drill` — repetição deliberada
 
 ### Fase 4: Skills Avançadas (2h)
-- [ ] `ul-srs` — flashcards com SM-2
-- [ ] `ul-directness` — projeto real
-- [ ] `ul-stuck` — quando travar, perguntas socráticas genéricas
-- [ ] `ul-decomposition` — quebrar objetivos
-- [ ] `ul-retro` — retrospectiva semanal
+- [ ] `lori-srs` — flashcards com SM-2
+- [ ] `lori-directness` — projeto real
+- [ ] `lori-stuck` — quando travar, perguntas socráticas genéricas
+- [ ] `lori-decomposition` — quebrar objetivos
+- [ ] `lori-retro` — retrospectiva semanal
 
 ### Fase 5: UI (2h)
 - [ ] Status bar persistente (streak, módulo, SRS, weaknesses)
 - [ ] Widget de timer ativo
 - [ ] Notificações (timer, SRS, streak)
-- [ ] `/ul-stats` com analytics derivados
+- [ ] `/lori-stats` com analytics derivados
 
 ### Fase 6: Integração + Pi Package (1h)
-- [ ] Prompt templates: `/ul-start`, `/ul-end`, `/ul-plan`, `/ul-stuck`
+- [ ] Prompt templates: `/lori-start`, `/lori-end`, `/lori-plan`, `/lori-stuck`
 - [ ] Testar `pi install` local
 - [ ] Teste end-to-end: novo módulo → sessão → retro
 - [ ] Documentação: `HOW_TO_USE.md`
@@ -795,20 +795,20 @@ Crie sistema Lori como Pi Package nativo.
      * tool_call: interceptar edit/write em .lori/ para eventos automáticos
      * session_before_compact: resumo UL-aware mantendo weaknesses, recursos
      * turn_end: verificar timer ativo, notificar
-   - Commands: /ul-start, /ul-end, /ul-timer, /ul-plan, /ul-retro, /ul-stats, /ul-review-srs
+   - Commands: /lori-start, /lori-end, /lori-timer, /lori-plan, /lori-retro, /lori-stats, /lori-review-srs
    - Custom tools: lori_log_event, lori_get_context, lori_review_srs, lori_search_concepts, lori_add_resource
    - UI: status bar [módulo] [streak] [SRS] [weaknesses], widget de timer, notificações
 
 3. SKILLS `.pi/skills/` (rituais completos, cada uma com SKILL.md):
-   - ul-pomodoro: timer 50/10, proteção de interrupções
-   - ul-retrieval: quiz adaptativo baseado em erros
-   - ul-feynman: explicar para criança, identificar gaps
-   - ul-drill: repetição deliberada com progressão de nível
-   - ul-srs: flashcards SM-2, criação e revisão
-   - ul-directness: projeto real, review socrático
-   - ul-stuck: 5 perguntas sistemáticas para quando travar
-   - ul-decomposition: framework 3D (conceitos 40%, fatos 20%, procedimentos 40%)
-   - ul-retro: retrospectiva semanal com ajustes
+   - lori-pomodoro: timer 50/10, proteção de interrupções
+   - lori-retrieval: quiz adaptativo baseado em erros
+   - lori-feynman: explicar para criança, identificar gaps
+   - lori-drill: repetição deliberada com progressão de nível
+   - lori-srs: flashcards SM-2, criação e revisão
+   - lori-directness: projeto real, review socrático
+   - lori-stuck: 5 perguntas sistemáticas para quando travar
+   - lori-decomposition: framework 3D (conceitos 40%, fatos 20%, procedimentos 40%)
+   - lori-retro: retrospectiva semanal com ajustes
 
 4. ESTRUTURA `.lori/`:
    - state.jsonl: eventos append-only

@@ -18,20 +18,20 @@ Crie sistema Lori como Pi Package nativo.
      * tool_call: interceptar edit/write em .lori/ para eventos automáticos
      * session_before_compact: resumo UL-aware mantendo weaknesses, recursos
      * turn_end: verificar timer ativo, notificar
-   - Commands: /ul-start, /ul-end, /ul-timer, /ul-plan, /ul-retro, /ul-stats, /ul-review-srs
+   - Commands: /lori-start, /lori-end, /lori-timer, /lori-plan, /lori-retro, /lori-stats, /lori-review-srs
    - Custom tools: lori_log_event, lori_get_context, lori_review_srs, lori_search_concepts, lori_add_resource
    - UI: status bar [módulo] [streak] [SRS] [weaknesses], widget de timer, notificações
 
 3. SKILLS `.pi/skills/` (rituais completos, cada uma com SKILL.md):
-   - ul-pomodoro: timer 50/10, proteção de interrupções
-   - ul-retrieval: quiz adaptativo baseado em erros
-   - ul-feynman: explicar para criança, identificar gaps
-   - ul-drill: repetição deliberada com progressão de nível
-   - ul-srs: flashcards SM-2, criação e revisão
-   - ul-directness: projeto real, review socrático
-   - ul-stuck: 5 perguntas sistemáticas para quando travar
-   - ul-decomposition: framework 3D (conceitos 40%, fatos 20%, procedimentos 40%)
-   - ul-retro: retrospectiva semanal com ajustes
+   - lori-pomodoro: timer 50/10, proteção de interrupções
+   - lori-retrieval: quiz adaptativo baseado em erros
+   - lori-feynman: explicar para criança, identificar gaps
+   - lori-drill: repetição deliberada com progressão de nível
+   - lori-srs: flashcards SM-2, criação e revisão
+   - lori-directness: projeto real, review socrático
+   - lori-stuck: 5 perguntas sistemáticas para quando travar
+   - lori-decomposition: framework 3D (conceitos 40%, fatos 20%, procedimentos 40%)
+   - lori-retro: retrospectiva semanal com ajustes
 
 4. ESTRUTURA `.lori/`:
    - state.jsonl: eventos append-only
