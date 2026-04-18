@@ -1,6 +1,6 @@
 {
   "name": "lori-pi-package",
-  "version": "0.0.1",
+  "version": "0.1.0",
   "description": "Lori - Sistema de aprendizado acelerado como Pi Package nativo",
   "keywords": ["pi-package", "lori", "learning", "srs", "pomodoro"],
   "license": "MIT",

@@ -189,8 +189,7 @@ A extension roda um `setInterval` a cada 30 segundos durante a sessão. Ele:
 | `/lori-start [mod] [tec]` | Transiciona para `pre-session`, registra `session_started`, envia mensagem de ritual para o agente. |
 | `/lori-end [foco] [honesto]` | Transiciona para `post-session`, registra `session_ended`, atualiza streak, força pergunta de honestidade. |
 | `/lori-timer start\|stop\|status [min]` | Controla o pomodoro, registra `timer_started`/`timer_ended`. |
-| `/lori-plan [mod]` | Cria plano.md e week-01.md se não existirem, registra módulo como ativo. |
-| `/lori-decomposition [mod]` | Envia mensagem guiando decomposição 3D (conceitos/fatos/procedimentos). |
+| `/lori-plan` | Inicia wizard interativo. Coleta tópico, objetivo, tempo, nível. Cria `plan-draft.md`, `resources.md` (template), dispara agente para gerar plano completo com decomposition 3D + resources curados. Sempre wizard, nunca legacy. |
 | `/lori-retro` | Gera artefatos de retrospectiva para cada módulo ativo, cria próxima semana, registra `retro_done`. |
 | `/lori-stats` | Mostra resumo calculado do estado: módulos, streak, weaknesses, SRS, honestidade. |
 | `/lori-review-srs` | Inicia revisão de flashcards pendentes. |
@@ -254,11 +253,11 @@ A extension não executa a skill. Ela sugere qual skill usar (`skills.ts`) e o a
   modules/
     {nome}/
       plan.md                     # Plano de 4-8 semanas
-      week-01.md .. week-NN.md    # Plano semanal
+      week-01.md .. week-NN.md    # Plano semanal (cada uma com seção Recursos da semana)
       retro-WNN.md                # Retrospectiva
       concepts.md                 # Conceitos aprendidos com analogias
       drills.md                   |  Lista de exercícios
-      resources.md                # Links e materiais curados
+      resources.md                # Recursos curados por 3D (Conceitos, Fatos, Procedimentos)
   flashcards/
     {modulo}.jsonl                # Flashcards SRS (front/back/interval/ef)
 ```
@@ -274,15 +273,16 @@ Usuário: "Quero aprender Rust"
 → before_agent_start detecta contexto de estudo
 → injeta lori-context (nenhum módulo ativo ainda)
 
-Usuário: /lori-plan rust-foundations
-→ cria .lori/modules/rust-foundations/plan.md
-→ cria week-01.md
-→ registra evento plan_created
-→ adiciona rust-foundations em activeModules
-
-Usuário: /lori-decomposition rust-foundations
-→ agente guia decomposição 3D
-→ preenche plan.md com conceitos/fatos/procedimentos
+Usuário: /lori-plan
+→ Wizard interativo: tópico, objetivo, tempo, nível, pré-requisitos
+→ Cria plan-draft.md + resources.md (template com placeholders)
+→ Dispara agente para gerar:
+   - plan.md com decomposition 3D completa
+   - resources.md com recursos curados por categoria
+   - week-01.md até week-NN.md (N = semanas extraídas do tempo)
+   - Cada week linka resources.md na seção Recursos da semana
+→ Registra evento plan_created
+→ Adiciona rust-foundations em activeModules
 ```
 
 ### Sessão diária

@@ -10,7 +10,7 @@ Ritual de decomposição de módulo usando framework 3D.
 ## Quando usar
 - Criando novo módulo de estudo
 - Usuário quer aprender tópico novo
-- `/lori-plan <modulo>` seguido de decomposição
+- `/lori-plan` (sem args, sempre wizard) integra decomposition + resources automaticamente
 
 ## Ritual
 
@@ -50,9 +50,23 @@ Crie `.lori/modules/<modulo>/plan.md`:
 - [ ] Procedimento Y
 ```
 
+### 3.5 Curar recursos iniciais
+Crie `.lori/modules/<modulo>/resources.md` com mínimo viável:
+- **Conceitos**: 1-2 recursos para entender "como/por que"
+- **Fatos**: 1-2 recursos para decorar (tabelas, referências)
+- **Procedimentos**: 1-2 recursos para codar/analisar
+
+Cada recurso deve ter: título, tag de semana, tipo (conceito/fato/procedimento), nota de uso obrigatória (ler/codar/consultar/decorar/analisar + tempo estimado).
+
+Não sabe o recurso? Use placeholder `???` com nota de busca.
+
+Regra: recurso sem nota de uso é recurso inútil.
+
 ### 4. Definir semanas
 Cada semana foca em 1-2 conceitos + fatos/procedimentos associados.
 Crie `.lori/modules/<modulo>/week-01.md`, `week-02.md`, etc.
+
+Cada `week-*.md` deve incluir seção `## Recursos da semana` linkando para `resources.md`.
 
 ### 5. Benchmark
 Defina benchmark de saída em `benchmark.md`:

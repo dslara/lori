@@ -25,6 +25,7 @@ import {
   getElapsedMinutes,
 } from "./cycle.js";
 import { suggestRitual } from "./skills.js";
+import { runModuleWizard, buildAgentPrompt, slugifyTopic } from "./wizard.js";
 
 export function registerCommands(
   pi: ExtensionAPI,
@@ -170,28 +171,58 @@ Ritual sugerido:
   });
 
   pi.registerCommand("lori-plan", {
-    description: "Criar ou ver plano de módulo. Uso: /lori-plan [modulo]",
-    handler: async (args, ctx) => {
-      const module = args.trim() || "geral";
-      await ensureLoriDir(ctx.cwd);
-      const existing = await readModuleFile(ctx.cwd, module, "plan.md");
-      if (existing) {
-        ctx.ui.notify(`Plano ${module} existe. Use read para ver.`, "info");
-      } else {
-        const template = `# Plano: ${module}\n\n## Objetivo\nSer capaz de ______ em ______\n\n## Decomposição 3D\n- Conceitos (40%): o que precisa ENTENDER?\n- Fatos (20%): o que precisa LEMBRAR?\n- Procedimentos (40%): o que precisa FAZER?\n\n## Semanas (~6h cada)\n| Semana | Foco | Técnica | Benchmark |\n|--------|------|---------|-----------|\n| W1     |      |         |           |\n| W2     |      |         |           |\n| W3     |      |         |           |\n| W4     |      |         |           |\n\n## Benchmark de conclusão\n- Critério objetivo: ______\n- Forma de testar: ______\n`;
-        await writeModuleFile(ctx.cwd, module, "plan.md", template);
-        const weekTemplate = `# Semana 1 — ${module}\n\n## Objetivo desta semana\n\n## Conceitos\n- [ ]\n\n## Fatos\n- [ ]\n\n## Procedimentos\n- [ ]\n\n## Benchmark\n\n## Notas\n`;
-        await writeModuleFile(ctx.cwd, module, "week-01.md", weekTemplate);
-        await appendEvent(ctx.cwd, { type: "plan_created", data: { module, weeks: 0, goals: [] } });
-        pi.appendEntry("lori-event", { eventType: "plan_created", module });
-        ctx.ui.notify(`Plano ${module} criado.`, "info");
+    description: "Criar plano de módulo via wizard. Uso: /lori-plan",
+    handler: async (_args, ctx) => {
+      // --- Always wizard mode ---
+      const answers = await runModuleWizard(ctx);
+      if (!answers) {
+        ctx.ui.notify("Wizard cancelado. Nenhum módulo criado.", "warning");
+        return;
       }
 
+      const module = slugifyTopic(answers.topic);
+      await ensureLoriDir(ctx.cwd);
+
+      // Check for collision
+      const existing = await readModuleFile(ctx.cwd, module, "plan.md");
+      if (existing) {
+        ctx.ui.notify(`Módulo "${module}" já existe. Use read para ver.`, "warning");
+        return;
+      }
+
+      // Save draft with raw answers
+      const draft = `# Draft: ${module}\n\n**Tópico:** ${answers.topic}\n**Objetivo:** ${answers.objective}\n**Tempo:** ${answers.timeCommitment}\n**Nível:** ${answers.level}\n**Pré-requisitos:** ${answers.prerequisites}\n`;
+      await writeModuleFile(ctx.cwd, module, "plan-draft.md", draft);
+
+      // Create empty resources.md template
+      const resourcesTemplate = `# Recursos Curados — ${module}\n\nLegenda de uso:\n- **LER**: leitura passiva, extrair ideias\n- **CODAR**: codar junto, pausar e testar\n- **CONSULTAR**: abrir quando travar, não ler antes\n- **DECORAR**: memorizar tabela/fato exato\n- **ANALISAR**: ler código existente, identificar padrões\n\nNota: substitua \`<pi-install>\` pelo path da instalação do Pi e \`<projeto>\` pelo root do projeto estudado.\n\n---\n\n## Conceitos\n- [ ] ??? — tag: semana-1, conceito: [tópico], ler-ativo\n  Notas: buscar recurso sobre...\n\n## Fatos\n- [ ] ??? — tag: semana-1, fato: [tópico], decorar\n  Notas: buscar referência rápida sobre...\n\n## Procedimentos\n- [ ] ??? — tag: semana-1, procedimento: [tópico], codar\n  Notas: buscar tutorial prático sobre...\n`;
+      await writeModuleFile(ctx.cwd, module, "resources.md", resourcesTemplate);
+
+      // Register module as active
       const config = await loadConfig(ctx.cwd);
       if (!config.activeModules.includes(module)) {
         config.activeModules.push(module);
         await saveConfig(ctx.cwd, config);
       }
+
+      // Log event
+      await appendEvent(ctx.cwd, {
+        type: "plan_created",
+        data: { module, weeks: 0, goals: [answers.objective] },
+      });
+      pi.appendEntry("lori-event", { eventType: "plan_created", module, wizard: true });
+
+      // Notify and trigger agent to generate full plan
+      ctx.ui.notify(`🧙 Módulo "${module}" criado via wizard. Draft + resources template prontos. Aguardando geração do plano...`, "info");
+
+      pi.sendMessage(
+        {
+          customType: "lori-wizard",
+          content: buildAgentPrompt(answers, module),
+          display: true,
+        },
+        { triggerTurn: true },
+      );
 
       const newState = await rebuildState(ctx.cwd);
       setState(newState);
@@ -264,20 +295,7 @@ Use /skill:lori-retro para ritual completo.`,
     },
   });
 
-  pi.registerCommand("lori-decomposition", {
-    description: "Iniciar ritual de decomposição 3D para novo módulo. Uso: /lori-decomposition [modulo]",
-    handler: async (args, ctx) => {
-      const module = args.trim() || "geral";
-      pi.sendMessage(
-        {
-          customType: "lori-decomposition",
-          content: `Decomposição 3D para ${module}:\n1. Conceitos (40%): o que precisa ENTENDER?\n2. Fatos (20%): o que precisa LEMBRAR?\n3. Procedimentos (40%): o que precisa FAZER?\nUse /skill:lori-decomposition para ritual completo.`,
-          display: true,
-        },
-        { triggerTurn: true },
-      );
-    },
-  });
+
 
   pi.registerCommand("lori-stats", {
     description: "Mostrar estatísticas Lori.",

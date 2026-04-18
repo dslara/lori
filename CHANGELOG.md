@@ -5,6 +5,17 @@ Todas as mudanças notáveis neste projeto serão documentadas neste arquivo.
 O formato é baseado em [Keep a Changelog](https://keepachangelog.com/pt-BR/1.0.0/).
 Este projeto adere ao [Versionamento Semântico](https://semver.org/lang/pt-BR/).
 
+## [0.1.0]
+
+### Mudado
+
+- **`/lori-plan` sempre wizard.** Não aceita mais argumentos. Sempre inicia wizard interativo que coleta tópico, objetivo, tempo, nível e pré-requisitos. Legacy mode removido.
+- **`/lori-decomposition` removido como comando.** Decomposition 3D agora é automática no wizard do `/lori-plan`. Skill `lori-decomposition` continua disponível como referência do ritual.
+- **`resources.md` obrigatório.** Todo módulo novo ganha `resources.md` com template de curadoria. Recursos organizados por 3D (Conceitos, Fatos, Procedimentos), cada um com tag de semana, tipo e nota de uso (ler/codar/consultar/decorar/analisar).
+- **Prompt do wizard com semanas exatas.** Extrai número de semanas de `timeCommitment` (ex: "8 semanas" → 8). Agente gera exatamente N arquivos `week-*.md`.
+- **`week-*.md` com Recursos da semana.** Cada semana inclui seção linkando para `resources.md`.
+- **Skill `lori-decomposition` atualizada.** Passo 3.5 novo: curar recursos iniciais. Regra: recurso sem nota de uso é inútil.
+
 ## [0.0.1]
 
 ### Adicionado

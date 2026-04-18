@@ -20,6 +20,7 @@ Você estuda sem sair do terminal. Conversa com o Pi, escreve código, revisa co
 /lori-start rust-foundations drill   # começa sessão de estudo
 /lori-end 8 true                     # termina, nota 8 de foco, honesto
 /lori-timer start 50                 # pomodoro de 50 min
+/lori-plan                           # wizard: cria plano + resources automaticamente
 ```
 
 O Pi sugere sozinho a técnica certa no momento certo. Mas você pode forçar quando quiser:
@@ -37,7 +38,7 @@ O Pi sugere sozinho a técnica certa no momento certo. Mas você pode forçar qu
 | Skill | Pra quê |
 |-------|---------|
 | **lori-pomodoro** | Focar sem ser interrompido. Timer 50/10. |
-| **lori-decomposition** | Começar algo novo. Quebra em partes pequenas. |
+| **lori-decomposition** | Começar algo novo. Quebra em partes pequenas. (Automático no `/lori-plan`) |
 | **lori-retrieval** | Revisar. Quiz que pega no seu calo. |
 | **lori-feynman** | Achar buraco no seu entendimento. Explica em voz alta. |
 | **lori-drill** | Treinar procedimento. Errou → analisa → repete. |
@@ -55,8 +56,7 @@ O Pi sugere sozinho a técnica certa no momento certo. Mas você pode forçar qu
 | `/lori-start [modulo] [tecnica]` | Inicia sessão: pré-sessão → foco → pós-sessão |
 | `/lori-end [foco 0-10] [honesto]` | Termina e pergunta: "o que ficou confuso?" |
 | `/lori-timer start\|stop\|status [min]` | Pomodoro com notificação no TUI quando acaba |
-| `/lori-plan [modulo]` | Cria ou mostra o plano do módulo |
-| `/lori-decomposition [modulo]` | Decompõe o tópico em conceitos, fatos, procedimentos |
+| `/lori-plan` | Cria plano de módulo via wizard (sempre interativo) |
 | `/lori-retro` | Gera artefatos da retrospectiva semanal |
 | `/lori-review-srs` | Revisa só os flashcards que estão devendo |
 | `/lori-weak` | Mostra seus pontos fracos ativos |
@@ -80,7 +80,8 @@ O Pi sugere sozinho a técnica certa no momento certo. Mas você pode forçar qu
 
 .lori/
   state.jsonl          # eventos append-only
-  modules/{nome}/      # planos, semanas, retros, projetos
+  resources/           # recursos curados globais
+  modules/{nome}/      # planos, semanas, retros, projetos, resources
   flashcards/          # SRS SM-2
 ```
 
