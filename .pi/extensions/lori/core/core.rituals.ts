@@ -1,4 +1,4 @@
-import type { Weakness } from "./memory.js";
+import type { Weakness } from "../modules/modules.model";
 
 /**
  * Lori skills registry

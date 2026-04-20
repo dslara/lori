@@ -123,7 +123,7 @@ export async function runModuleWizard(ctx: ExtensionCommandContext): Promise<Wiz
       if (!q) return [];
       const opts = [...q.options];
       if (q.allowOther) {
-        opts.push({ value: "__other__", label: "Digite algo...", isOther: true });
+        opts.push({ value: "__other__", label: "Digite algo..." });
       }
       return opts;
     }
