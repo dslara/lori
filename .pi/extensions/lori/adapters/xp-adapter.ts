@@ -7,12 +7,10 @@ function defaultProfile(): PlayerProfile {
   return {
     version: 1,
     totalXP: 0,
-    streak: 0,
     activeSkin: "default",
     lastDomainId: null,
     domains: {},
     sessionHistory: [],
-    lastCompletedDate: null,
   };
 }
 
@@ -33,8 +31,7 @@ export class JsonFileXPAdapter implements XPPort {
       const parsed = JSON.parse(raw) as PlayerProfile;
       return parsed;
     } catch {
-      const timestamp = Date.now();
-      const backupPath = `${this.statePath}.bak.${timestamp}`;
+      const backupPath = `${this.statePath}.bak.${Math.random().toString(36).slice(2, 9)}`;
       renameSync(this.statePath, backupPath);
       console.warn("[Lori] state.json corrupt. Backup created, loading defaults.");
       return defaultProfile();

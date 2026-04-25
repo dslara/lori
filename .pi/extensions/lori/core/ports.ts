@@ -1,4 +1,4 @@
-import type { Domain, PlayerProfile, ActiveSession } from "./types";
+import type { Domain, PlayerProfile } from "./types";
 
 export interface DomainPort {
   create(name: string): Promise<Domain>;
@@ -14,16 +14,4 @@ export interface XPPort {
 export interface SkinPort {
   getString(key: string, vars?: Record<string, string>): string;
   listSkins(): { id: string; name: string }[];
-}
-
-export interface SessionPort {
-  start(domainId: string, plannedDurationSec: number): Promise<void>;
-  load(): Promise<ActiveSession | null>;
-  clear(): Promise<void>;
-}
-
-export interface TimerPort {
-  onTick(cb: (remainingSec: number) => void): void;
-  start(plannedDurationSec: number): void;
-  stop(): void;
 }

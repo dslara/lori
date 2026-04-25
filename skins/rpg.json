@@ -2,29 +2,18 @@
   "id": "rpg",
   "name": "RPG",
   "strings": {
-    "session.started": "Aventura em {domain} começou!",
-    "session.ended": "Missão completa. {xp} XP conquistados.",
     "xp.gained": "+{xp} XP",
-    "streak.incremented": "{streak} dias de fogo sagrado!",
-    "streak.broken": "A chama se extinguiu...",
     "domain.created": "Novo território: {name}",
-    "timer.overtime": "Além do limite! +{min} min",
     "skin.changed": "Armadura equipada: {name}",
-    "error.active_session": "Já há uma batalha em andamento!",
     "error.no_domains": "Nenhum território conquistado. Crie um com /lori plan.",
     "error.skin_not_found": "Armadura não encontrada: {name}",
     "menu.plan": "Planejar domínio",
-    "menu.start": "Iniciar sessão",
-    "menu.end": "Encerrar sessão",
+    "menu.record": "Registrar missão",
     "menu.skin": "Trocar armadura",
     "menu.title": "Lori - O que deseja fazer?",
     "menu.domain_select": "Escolha o território:",
     "help.lori_args": "Use /lori sem argumentos para o menu.",
     "input.domain_name": "Nome do território:",
     "input.domain_placeholder": "ex: Japanese"
-  },
-  "ascii": {
-    "session.started": "   ⚔️   ",
-    "session.ended": "   🏆   "
   }
 }

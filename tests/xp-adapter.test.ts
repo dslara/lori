@@ -9,12 +9,10 @@ function defaultProfile(): PlayerProfile {
   return {
     version: 1,
     totalXP: 0,
-    streak: 0,
     activeSkin: "default",
     lastDomainId: null,
     domains: {},
     sessionHistory: [],
-    lastCompletedDate: null,
   };
 }
 
@@ -40,8 +38,7 @@ describe("JsonFileXPAdapter", () => {
     const profile: PlayerProfile = {
       ...defaultProfile(),
       totalXP: 500,
-      streak: 3,
-      lastCompletedDate: "2026-04-24",
+      lastDomainId: "japanese",
     };
 
     await adapter.saveProfile(profile);

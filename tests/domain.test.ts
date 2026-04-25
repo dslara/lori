@@ -22,9 +22,6 @@ describe("FileDomainAdapter", () => {
 
     expect(domain.slug).toBe("japanese");
     expect(domain.name).toBe("Japanese");
-    expect(domain.totalXP).toBe(0);
-    expect(domain.sessions).toBe(0);
-    expect(typeof domain.createdAt).toBe("string");
 
     const filePath = join(tmpDir, ".lori", "domains", "japanese", "domain.json");
     expect(existsSync(filePath)).toBe(true);

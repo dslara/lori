@@ -26,9 +26,6 @@ export class FileDomainAdapter implements DomainPort {
     const domain: Domain = {
       slug,
       name,
-      createdAt: new Date().toISOString(),
-      totalXP: 0,
-      sessions: 0,
     };
 
     mkdirSync(this.domainDir(slug), { recursive: true });

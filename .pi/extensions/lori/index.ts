@@ -1,18 +1,13 @@
 import type { ExtensionAPI } from "@mariozechner/pi-coding-agent";
 import { FileDomainAdapter } from "./domain/domain";
 import { JsonFileXPAdapter } from "./adapters/xp-adapter";
-import { FileSessionAdapter } from "./domain/session";
-import { NodeTimerAdapter } from "./domain/timer";
 import { JsonSkinAdapter } from "./domain/skin";
 import { Dashboard } from "./dashboard";
-import { StudyLifecycle } from "./core/study-lifecycle";
 import { handleBeforeAgentStart } from "./llm-context";
 
 export default function (pi: ExtensionAPI) {
   const domainAdapter = new FileDomainAdapter(process.cwd());
   const xpAdapter = new JsonFileXPAdapter(process.cwd());
-  const sessionAdapter = new FileSessionAdapter(process.cwd());
-  const timerAdapter = new NodeTimerAdapter();
 
   async function getSkinAdapter(): Promise<JsonSkinAdapter> {
     const profile = await xpAdapter.loadProfile();
@@ -21,24 +16,15 @@ export default function (pi: ExtensionAPI) {
 
   async function refreshStatus(ctx: any) {
     const profile = await xpAdapter.loadProfile();
-    ctx.ui.setStatus?.("lori", `Lori | 🔥 ${profile.streak} | ${profile.totalXP} XP`);
+    ctx.ui.setStatus?.("lori", `Lori | ${profile.totalXP} XP`);
   }
 
   pi.on("session_start", async (_event, ctx) => {
-    const skin = await getSkinAdapter();
-    const lifecycle = new StudyLifecycle(
-      sessionAdapter,
-      timerAdapter,
-      domainAdapter,
-      (text) => ctx.ui.setWidget("lori-timer", text ? [text] : undefined),
-    );
-    const dashboard = new Dashboard(lifecycle, ctx.ui, skin);
-    await dashboard.reconstructSession();
+    await refreshStatus(ctx);
   });
 
   pi.on("before_agent_start", async (event, _ctx) => {
     const systemPrompt = await handleBeforeAgentStart(
-      sessionAdapter,
       xpAdapter,
       event.systemPrompt
     );
@@ -55,28 +41,16 @@ export default function (pi: ExtensionAPI) {
         ctx.ui.notify(skin.getString("help.lori_args"), "info");
         return;
       }
-      const lifecycle = new StudyLifecycle(
-        sessionAdapter,
-        timerAdapter,
-        domainAdapter,
-        (text) => ctx.ui.setWidget("lori-timer", text ? [text] : undefined),
-      );
-      const dashboard = new Dashboard(lifecycle, ctx.ui, skin);
+      const dashboard = new Dashboard(domainAdapter, xpAdapter, ctx.ui, skin);
       const choice = await dashboard.showMenu();
       const planLabel = skin.getString("menu.plan");
-      const startLabel = skin.getString("menu.start");
-      const endLabel = skin.getString("menu.end");
+      const recordLabel = skin.getString("menu.record");
       const skinLabel = skin.getString("menu.skin");
 
       if (choice === planLabel) {
-        const name = await ctx.ui.input(skin.getString("input.domain_name"), skin.getString("input.domain_placeholder"));
-        if (!name) return;
-        const domain = await domainAdapter.create(name);
-        ctx.ui.notify(skin.getString("domain.created", { name: domain.name }), "info");
-      } else if (choice === startLabel) {
-        await dashboard.startSession();
-      } else if (choice === endLabel) {
-        await dashboard.endSession();
+        await dashboard.planDomain();
+      } else if (choice === recordLabel) {
+        await dashboard.recordSession();
       } else if (choice === skinLabel) {
         await switchSkin(ctx, skin);
       }
