@@ -4,6 +4,7 @@ import { JsonFileXPAdapter } from "./adapters/xp-adapter";
 import { FileSessionAdapter } from "./domain/session";
 import { NodeTimerAdapter } from "./domain/timer";
 import { Dashboard } from "./dashboard";
+import { handleBeforeAgentStart } from "./llm-context";
 
 export default function (pi: ExtensionAPI) {
   const domainAdapter = new FileDomainAdapter(process.cwd());
@@ -25,6 +26,15 @@ export default function (pi: ExtensionAPI) {
       xpAdapter
     );
     await dashboard.reconstructSession();
+  });
+
+  pi.on("before_agent_start", async (event, _ctx) => {
+    const systemPrompt = await handleBeforeAgentStart(
+      sessionAdapter,
+      xpAdapter,
+      event.systemPrompt
+    );
+    if (systemPrompt) return { systemPrompt };
   });
 
   pi.registerCommand("lori", {
