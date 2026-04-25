@@ -1,8 +1,12 @@
 {
   "name": "lori-pi-package",
-  "version": "0.1.1",
+  "version": "0.0.1",
   "description": "Lori - Sistema de aprendizado acelerado como Pi Package nativo",
-  "keywords": ["pi-package", "lori", "learning", "srs", "pomodoro"],
+  "keywords": [
+    "pi-package",
+    "lori",
+    "learning"
+  ],
   "license": "MIT",
   "peerDependencies": {
     "@mariozechner/pi-ai": "*",
@@ -12,9 +16,17 @@
     "@sinclair/typebox": "*"
   },
   "pi": {
-    "extensions": ["./extensions/lori/index.ts"],
+    "extensions": [
+      "./.pi/extensions/lori/index.ts"
+    ],
     "skills": ["./skills"],
     "prompts": ["./prompts"],
     "themes": ["./themes"]
+  },
+  "scripts": {
+    "test": "vitest run"
+  },
+  "devDependencies": {
+    "vitest": "^4.1.5"
   }
 }
