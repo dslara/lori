@@ -6,7 +6,7 @@ describe("Dashboard", () => {
   let timerMock: any;
   let uiMock: any;
   let domainMock: any;
-  let xpMock: any;
+  let skinMock: any;
 
   beforeEach(() => {
     sessionMock = {
@@ -31,14 +31,16 @@ describe("Dashboard", () => {
       create: vi.fn(),
       get: vi.fn(),
     };
-    xpMock = {
-      loadProfile: vi.fn().mockResolvedValue({ lastDomainId: null }),
-      saveProfile: vi.fn(),
+    skinMock = {
+      getString: vi.fn((key: string, _vars?: Record<string, string>) => `SKIN:${key}`),
+      listSkins: vi.fn().mockReturnValue([]),
+      setActive: vi.fn(),
+      getActiveId: vi.fn().mockReturnValue("minimal"),
     };
   });
 
   it("starts session with explicit domainId when idle", async () => {
-    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, xpMock);
+    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, skinMock);
     await dashboard.startSession("japanese");
 
     expect(sessionMock.start).toHaveBeenCalledWith("japanese", 1500);
@@ -49,16 +51,16 @@ describe("Dashboard", () => {
   it("blocks start when session already active", async () => {
     sessionMock.getActive.mockResolvedValue({ domainId: "rust", startedAt: new Date().toISOString(), plannedDurationSec: 1500 });
 
-    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, xpMock);
+    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, skinMock);
     await dashboard.startSession("japanese");
 
     expect(sessionMock.start).not.toHaveBeenCalled();
     expect(timerMock.start).not.toHaveBeenCalled();
-    expect(uiMock.notify).toHaveBeenCalledWith(expect.stringContaining("ativa"), "error");
+    expect(uiMock.notify).toHaveBeenCalledWith("SKIN:error.active_session", "error");
   });
 
   it("ends session and clears widget", async () => {
-    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, xpMock);
+    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, skinMock);
     await dashboard.startSession("japanese");
     await dashboard.endSession();
 
@@ -78,7 +80,7 @@ describe("Dashboard", () => {
       plannedDurationSec: 1500,
     });
 
-    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, xpMock);
+    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, skinMock);
     await dashboard.reconstructSession();
 
     expect(timerMock.start).toHaveBeenCalledWith(1200);
@@ -89,18 +91,18 @@ describe("Dashboard", () => {
 
   it("menu shows Start when idle", async () => {
     sessionMock.getActive.mockResolvedValue(null);
-    uiMock.select.mockResolvedValue("Iniciar sessão");
+    uiMock.select.mockResolvedValue("SKIN:menu.start");
 
-    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, xpMock);
+    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, skinMock);
     await dashboard.showMenu();
 
     expect(uiMock.select).toHaveBeenCalledWith(
-      "Lori - O que deseja fazer?",
-      expect.arrayContaining(["Iniciar sessão"])
+      "SKIN:menu.title",
+      expect.arrayContaining(["SKIN:menu.start"])
     );
     expect(uiMock.select).not.toHaveBeenCalledWith(
       expect.anything(),
-      expect.arrayContaining(["Encerrar sessão"])
+      expect.arrayContaining(["SKIN:menu.end"])
     );
   });
 
@@ -110,25 +112,25 @@ describe("Dashboard", () => {
       startedAt: new Date().toISOString(),
       plannedDurationSec: 1500,
     });
-    uiMock.select.mockResolvedValue("Encerrar sessão");
+    uiMock.select.mockResolvedValue("SKIN:menu.end");
 
-    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, xpMock);
+    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, skinMock);
     await dashboard.showMenu();
 
     expect(uiMock.select).toHaveBeenCalledWith(
-      "Lori - O que deseja fazer?",
-      expect.arrayContaining(["Encerrar sessão"])
+      "SKIN:menu.title",
+      expect.arrayContaining(["SKIN:menu.end"])
     );
     expect(uiMock.select).not.toHaveBeenCalledWith(
       expect.anything(),
-      expect.arrayContaining(["Iniciar sessão"])
+      expect.arrayContaining(["SKIN:menu.start"])
     );
   });
 
   it("start resolves single domain automatically", async () => {
     domainMock.list.mockResolvedValue([{ slug: "japanese", name: "Japanese" }]);
 
-    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, xpMock);
+    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, skinMock);
     await dashboard.startSession();
 
     expect(sessionMock.start).toHaveBeenCalledWith("japanese", 1500);
@@ -142,11 +144,11 @@ describe("Dashboard", () => {
     ]);
     uiMock.select.mockResolvedValue("Rust");
 
-    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, xpMock);
+    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, skinMock);
     await dashboard.startSession();
 
     expect(uiMock.select).toHaveBeenCalledWith(
-      "Escolha o domínio:",
+      "SKIN:menu.domain_select",
       ["Japanese", "Rust"]
     );
     expect(sessionMock.start).toHaveBeenCalledWith("rust", 1500);
@@ -155,10 +157,10 @@ describe("Dashboard", () => {
   it("start errors when no domains exist", async () => {
     domainMock.list.mockResolvedValue([]);
 
-    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, xpMock);
+    const dashboard = new Dashboard(sessionMock, timerMock, uiMock, domainMock, skinMock);
     await dashboard.startSession();
 
     expect(sessionMock.start).not.toHaveBeenCalled();
-    expect(uiMock.notify).toHaveBeenCalledWith(expect.stringContaining("domínio"), "error");
+    expect(uiMock.notify).toHaveBeenCalledWith("SKIN:error.no_domains", "error");
   });
 });

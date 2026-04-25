@@ -1,4 +1,4 @@
-import type { SessionPort, TimerPort, DomainPort, XPPort } from "./core/ports";
+import type { SessionPort, TimerPort, DomainPort, SkinPort } from "./core/ports";
 
 interface UIMock {
   setWidget(key: string, content: string[] | undefined): void;
@@ -23,7 +23,7 @@ export class Dashboard {
     private timer: TimerPort,
     private ui: UIMock,
     private domain: DomainPort,
-    private xp: XPPort
+    private skin: SkinPort
   ) {
     this.timer.onTick((remaining) => {
       const text = `${formatRemaining(remaining)} | ${this.activeDomainId ?? ""}`;
@@ -34,7 +34,7 @@ export class Dashboard {
   async startSession(domainId?: string): Promise<void> {
     const active = await this.session.getActive();
     if (active) {
-      this.ui.notify("Já existe uma sessão ativa.", "error");
+      this.ui.notify(this.skin.getString("error.active_session"), "error");
       return;
     }
 
@@ -42,14 +42,14 @@ export class Dashboard {
     if (!resolvedId) {
       const domains = await this.domain.list();
       if (domains.length === 0) {
-        this.ui.notify("Nenhum domínio encontrado. Crie um com /lori plan.", "error");
+        this.ui.notify(this.skin.getString("error.no_domains"), "error");
         return;
       }
       if (domains.length === 1) {
         resolvedId = domains[0].slug;
       } else {
         const choice = await this.ui.select(
-          "Escolha o domínio:",
+          this.skin.getString("menu.domain_select"),
           domains.map((d) => d.name)
         );
         const chosen = domains.find((d) => d.name === choice);
@@ -83,8 +83,11 @@ export class Dashboard {
   async showMenu(): Promise<string | undefined> {
     const active = await this.session.getActive();
     const options = active
-      ? ["Planejar domínio", "Encerrar sessão", "Trocar skin"]
-      : ["Planejar domínio", "Iniciar sessão", "Trocar skin"];
-    return this.ui.select("Lori - O que deseja fazer?", options);
+      ? ["menu.plan", "menu.end", "menu.skin"]
+      : ["menu.plan", "menu.start", "menu.skin"];
+    return this.ui.select(
+      this.skin.getString("menu.title"),
+      options.map((k) => this.skin.getString(k))
+    );
   }
 }

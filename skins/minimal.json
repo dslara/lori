@@ -1,0 +1,26 @@
+{
+  "id": "minimal",
+  "name": "Minimal",
+  "strings": {
+    "session.started": "Sessão iniciada: {domain}",
+    "session.ended": "Sessão encerrada. +{xp} XP conquistados.",
+    "xp.gained": "+{xp} XP",
+    "streak.incremented": "{streak} dias de fogo sagrado!",
+    "streak.broken": "A chama se extinguiu...",
+    "domain.created": "Domínio criado: {name}",
+    "timer.overtime": "Além do limite! +{min} min",
+    "skin.changed": "Skin alterado para: {name}",
+    "error.active_session": "Já existe uma sessão ativa.",
+    "error.no_domains": "Nenhum domínio encontrado. Crie um com /lori plan.",
+    "error.skin_not_found": "Skin não encontrada: {name}",
+    "menu.plan": "Planejar domínio",
+    "menu.start": "Iniciar sessão",
+    "menu.end": "Encerrar sessão",
+    "menu.skin": "Trocar skin",
+    "menu.title": "Lori - O que deseja fazer?",
+    "menu.domain_select": "Escolha o domínio:",
+    "help.lori_args": "Use /lori sem argumentos para o menu.",
+    "input.domain_name": "Nome do domínio:",
+    "input.domain_placeholder": "ex: Japanese"
+  }
+}

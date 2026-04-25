@@ -11,6 +11,11 @@ export interface XPPort {
   saveProfile(profile: PlayerProfile): Promise<void>;
 }
 
+export interface SkinPort {
+  getString(key: string, vars?: Record<string, string>): string;
+  listSkins(): { id: string; name: string }[];
+}
+
 export interface SessionPort {
   start(domainId: string, plannedDurationSec: number): Promise<void>;
   getActive(): Promise<ActiveSession | null>;

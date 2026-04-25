@@ -6,6 +6,13 @@ export interface Domain {
   sessions: number;
 }
 
+export interface SkinManifest {
+  id: string;
+  name: string;
+  strings: Record<string, string>;
+  ascii?: Record<string, string>;
+}
+
 export interface ActiveSession {
   domainId: string;
   startedAt: string;
