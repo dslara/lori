@@ -5,3 +5,26 @@ export interface Domain {
   totalXP: number;
   sessions: number;
 }
+
+export interface StudySession {
+  id: string;
+  domainId: string;
+  plannedMinutes: number;
+  elapsedMinutes: number;
+  completed: boolean;
+  startedAt: string;
+  endedAt: string;
+  xpEarned: number;
+}
+
+export interface PlayerProfile {
+  version: number;
+  totalXP: number;
+  streak: number;
+  activeSkin: string;
+  lastDomainId: string | null;
+  domains: Record<string, number>; // domainId -> totalXP per domain
+  sessionHistory: StudySession[];
+  lastCompletedDate: string | null;
+}
+
