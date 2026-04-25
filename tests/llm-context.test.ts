@@ -39,7 +39,7 @@ describe("buildContextString", () => {
 
   it("handleBeforeAgentStart appends context when session active", async () => {
     const sessionPort = {
-      getActive: vi.fn().mockResolvedValue({
+      load: vi.fn().mockResolvedValue({
         domainId: "japanese",
         startedAt: new Date(Date.now() - 300_000).toISOString(),
         plannedDurationSec: 1500,
@@ -55,7 +55,23 @@ describe("buildContextString", () => {
   });
 
   it("handleBeforeAgentStart returns undefined when no active session", async () => {
-    const sessionPort = { getActive: vi.fn().mockResolvedValue(null) };
+    const sessionPort = { load: vi.fn().mockResolvedValue(null) };
+    const xpPort = { loadProfile: vi.fn() };
+
+    const result = await handleBeforeAgentStart(sessionPort as any, xpPort as any, "system prompt");
+    expect(result).toBeUndefined();
+    expect(xpPort.loadProfile).not.toHaveBeenCalled();
+  });
+
+  it("handleBeforeAgentStart returns undefined for stale session", async () => {
+    const stale = new Date(Date.now() - 31 * 60 * 1000).toISOString();
+    const sessionPort = {
+      load: vi.fn().mockResolvedValue({
+        domainId: "old",
+        startedAt: stale,
+        plannedDurationSec: 1500,
+      }),
+    };
     const xpPort = { loadProfile: vi.fn() };
 
     const result = await handleBeforeAgentStart(sessionPort as any, xpPort as any, "system prompt");

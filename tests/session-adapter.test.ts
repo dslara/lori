@@ -29,35 +29,24 @@ describe("FileSessionAdapter", () => {
     expect(typeof raw.startedAt).toBe("string");
   });
 
-  it("getActive returns session when file exists", async () => {
+  it("load returns session when file exists", async () => {
     await adapter.start("rust", 30 * 60);
-    const active = await adapter.getActive();
+    const active = await adapter.load();
     expect(active).not.toBeNull();
     expect(active!.domainId).toBe("rust");
     expect(active!.plannedDurationSec).toBe(1800);
   });
 
-  it("getActive returns null when no active session", async () => {
-    const active = await adapter.getActive();
+  it("load returns null when no active session", async () => {
+    const active = await adapter.load();
     expect(active).toBeNull();
   });
 
-  it("end deletes active-session.json", async () => {
+  it("clear deletes active-session.json", async () => {
     await adapter.start("japanese", 25 * 60);
     expect(existsSync(join(tmpDir, ".lori", "active-session.json"))).toBe(true);
 
-    await adapter.end();
+    await adapter.clear();
     expect(existsSync(join(tmpDir, ".lori", "active-session.json"))).toBe(false);
-  });
-
-  it("getActive returns null for stale session older than 30 minutes", async () => {
-    const stale = new Date(Date.now() - 31 * 60 * 1000).toISOString();
-    const filePath = join(tmpDir, ".lori", "active-session.json");
-    mkdirSync(join(tmpDir, ".lori"), { recursive: true });
-    writeFileSync(filePath, JSON.stringify({ domainId: "old", startedAt: stale, plannedDurationSec: 1500 }));
-
-    const active = await adapter.getActive();
-    expect(active).toBeNull();
-    expect(existsSync(filePath)).toBe(false); // stale file cleaned up
   });
 });

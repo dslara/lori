@@ -18,8 +18,8 @@ export interface SkinPort {
 
 export interface SessionPort {
   start(domainId: string, plannedDurationSec: number): Promise<void>;
-  getActive(): Promise<ActiveSession | null>;
-  end(): Promise<void>;
+  load(): Promise<ActiveSession | null>;
+  clear(): Promise<void>;
 }
 
 export interface TimerPort {

@@ -5,6 +5,7 @@ import { FileSessionAdapter } from "./domain/session";
 import { NodeTimerAdapter } from "./domain/timer";
 import { JsonSkinAdapter } from "./domain/skin";
 import { Dashboard } from "./dashboard";
+import { StudyLifecycle } from "./core/study-lifecycle";
 import { handleBeforeAgentStart } from "./llm-context";
 
 export default function (pi: ExtensionAPI) {
@@ -25,13 +26,13 @@ export default function (pi: ExtensionAPI) {
 
   pi.on("session_start", async (_event, ctx) => {
     const skin = await getSkinAdapter();
-    const dashboard = new Dashboard(
+    const lifecycle = new StudyLifecycle(
       sessionAdapter,
       timerAdapter,
-      ctx.ui,
       domainAdapter,
-      skin
+      (text) => ctx.ui.setWidget("lori-timer", text ? [text] : undefined),
     );
+    const dashboard = new Dashboard(lifecycle, ctx.ui, skin);
     await dashboard.reconstructSession();
   });
 
@@ -54,13 +55,13 @@ export default function (pi: ExtensionAPI) {
         ctx.ui.notify(skin.getString("help.lori_args"), "info");
         return;
       }
-      const dashboard = new Dashboard(
+      const lifecycle = new StudyLifecycle(
         sessionAdapter,
         timerAdapter,
-        ctx.ui,
         domainAdapter,
-        skin
+        (text) => ctx.ui.setWidget("lori-timer", text ? [text] : undefined),
       );
+      const dashboard = new Dashboard(lifecycle, ctx.ui, skin);
       const choice = await dashboard.showMenu();
       const planLabel = skin.getString("menu.plan");
       const startLabel = skin.getString("menu.start");

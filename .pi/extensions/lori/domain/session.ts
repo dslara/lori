@@ -21,20 +21,13 @@ export class FileSessionAdapter implements SessionPort {
     writeFileSync(this.sessionPath, JSON.stringify(session, null, 2));
   }
 
-  async getActive(): Promise<ActiveSession | null> {
+  async load(): Promise<ActiveSession | null> {
     if (!existsSync(this.sessionPath)) return null;
     const raw = readFileSync(this.sessionPath, "utf-8");
-    const session = JSON.parse(raw) as ActiveSession;
-    const startedAt = new Date(session.startedAt).getTime();
-    const ageMin = (Date.now() - startedAt) / (1000 * 60);
-    if (ageMin > 30) {
-      unlinkSync(this.sessionPath);
-      return null;
-    }
-    return session;
+    return JSON.parse(raw) as ActiveSession;
   }
 
-  async end(): Promise<void> {
+  async clear(): Promise<void> {
     if (existsSync(this.sessionPath)) {
       unlinkSync(this.sessionPath);
     }

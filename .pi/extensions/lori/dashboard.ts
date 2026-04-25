@@ -1,4 +1,5 @@
-import type { SessionPort, TimerPort, DomainPort, SkinPort } from "./core/ports";
+import type { StudyLifecycle } from "./core/study-lifecycle";
+import type { SkinPort } from "./core/ports";
 
 interface UIMock {
   setWidget(key: string, content: string[] | undefined): void;
@@ -7,81 +8,59 @@ interface UIMock {
   select(title: string, options: string[]): Promise<string | undefined>;
 }
 
-function formatRemaining(sec: number): string {
-  const sign = sec < 0 ? "-" : "";
-  const abs = Math.abs(sec);
-  const m = Math.floor(abs / 60).toString().padStart(2, "0");
-  const s = (abs % 60).toString().padStart(2, "0");
-  return `${sign}${m}:${s}`;
-}
-
 export class Dashboard {
-  private activeDomainId: string | null = null;
-
   constructor(
-    private session: SessionPort,
-    private timer: TimerPort,
+    private lifecycle: StudyLifecycle,
     private ui: UIMock,
-    private domain: DomainPort,
     private skin: SkinPort
-  ) {
-    this.timer.onTick((remaining) => {
-      const text = `${formatRemaining(remaining)} | ${this.activeDomainId ?? ""}`;
-      this.ui.setWidget("lori-timer", [text]);
-    });
-  }
+  ) {}
 
   async startSession(domainId?: string): Promise<void> {
-    const active = await this.session.getActive();
-    if (active) {
-      this.ui.notify(this.skin.getString("error.active_session"), "error");
+    const result = await this.lifecycle.start(domainId);
+
+    if (!result.ok) {
+      if (result.reason === "active_session") {
+        this.ui.notify(this.skin.getString("error.active_session"), "error");
+      } else if (result.reason === "no_domains") {
+        this.ui.notify(this.skin.getString("error.no_domains"), "error");
+      } else if (result.reason === "needs_selection") {
+        const choice = await this.ui.select(
+          this.skin.getString("menu.domain_select"),
+          result.domains.map((d) => d.name)
+        );
+        const chosen = result.domains.find((d) => d.name === choice);
+        if (chosen) await this.startSession(chosen.slug);
+      }
       return;
     }
 
-    let resolvedId = domainId;
-    if (!resolvedId) {
-      const domains = await this.domain.list();
-      if (domains.length === 0) {
-        this.ui.notify(this.skin.getString("error.no_domains"), "error");
-        return;
-      }
-      if (domains.length === 1) {
-        resolvedId = domains[0].slug;
-      } else {
-        const choice = await this.ui.select(
-          this.skin.getString("menu.domain_select"),
-          domains.map((d) => d.name)
-        );
-        const chosen = domains.find((d) => d.name === choice);
-        resolvedId = chosen?.slug;
-      }
-    }
-
-    if (!resolvedId) return;
-
-    await this.session.start(resolvedId, 1500);
-    this.activeDomainId = resolvedId;
-    this.timer.start(1500);
+    this.ui.setWidget("lori-timer", [""]);
   }
 
-  async endSession(): Promise<void> {
-    this.timer.stop();
-    await this.session.end();
-    this.activeDomainId = null;
+  async endSession(): Promise<{
+    elapsedSec: number;
+    domainId: string;
+    plannedDurationSec: number;
+  } | null> {
+    const result = await this.lifecycle.end();
+    if (!result.ok) {
+      return null;
+    }
     this.ui.setWidget("lori-timer", undefined);
+    return {
+      elapsedSec: result.elapsedSec,
+      domainId: result.domainId,
+      plannedDurationSec: result.plannedDurationSec,
+    };
   }
 
   async reconstructSession(): Promise<void> {
-    const active = await this.session.getActive();
-    if (!active) return;
-    const elapsedSec = Math.floor((Date.now() - new Date(active.startedAt).getTime()) / 1000);
-    const remaining = active.plannedDurationSec - elapsedSec;
-    this.activeDomainId = active.domainId;
-    this.timer.start(remaining);
+    const ok = await this.lifecycle.reconstruct();
+    if (ok) this.ui.setWidget("lori-timer", [""]);
   }
 
   async showMenu(): Promise<string | undefined> {
-    const active = await this.session.getActive();
+    const active = await this.lifecycle.isActive();
     const options = active
       ? ["menu.plan", "menu.end", "menu.skin"]
       : ["menu.plan", "menu.start", "menu.skin"];
