@@ -107,7 +107,7 @@ Implementa **Princípio #6 - Feedback** do Ultralearning:
 | **Após explicar conceito** | Informational | @tutor #feynman |
 | **Após completar projeto** | Informational | @tutor #feedback |
 | **Stuck >30 min no mesmo erro** | Corrective | @tutor #debug |
-| **Fim de semana (retrospectiva)** | Informational | `make retro` |
+| **Fim de semana (retrospectiva)** | Informational | `/ul-retro-weekly` |
 | **Fim de trimestre** | Informational | Retrospectiva trimestral |
 
 ### ❌ NÃO busque feedback quando:
@@ -237,7 +237,7 @@ mod tests {
 
 **Semanal** (Fim de cada semana, 10-15 min):
 ```bash
-make retro
+/ul-retro-weekly
 
 # Responda:
 # 1. O que funcionou esta semana?
@@ -592,7 +592,7 @@ fn sort(arr: &mut Vec<i32>) { ... }
 | 🚩 Nunca pede feedback | Orgulho ou medo | Regra: 30 min stuck = pedir ajuda |
 | 🚩 Ignora feedback recebido | Não valoriza | Crie ação IMEDIATA após feedback |
 | 🚩 Só feedback positivo | Não busca honestidade | Peça feedback específico: "O que melhorar?" |
-| 🚩 Não faz retrospectivas | Sem reflexão | Integre no `make retro` |
+| 🚩 Não faz retrospectivas | Sem reflexão | Integre no `/ul-retro-weekly` |
 
 ---
 

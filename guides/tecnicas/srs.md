@@ -101,7 +101,7 @@ Retenção
 |------------------|---------|----------------------|
 | **Vocabulário** | Termos técnicos, idiomas | Muitos itens, revisão espaçada ideal |
 | **Fórmulas** | Big O, logaritmos | Precisa recall instantâneo |
-| **Sintaxe** | Comandos Rust, Git | Memória procedural |
+| **Sintaxe** | Comandos Zig, Git | Memória procedural |
 | **Definições** | Conceitos chave | Base para entendimento |
 | **Fatos técnicos** | Portas HTTP, códigos de erro | Consulta frequente |
 | **Comandos CLI** | Docker, Kubernetes | Automação através de repetição |
@@ -174,7 +174,7 @@ def calcular_intervalo(intervalo_atual, facilidade, resposta):
 # 2. Criar deck para cada módulo
 mkdir -p knowledge/srs/
 echo "deck: M1-Math-Foundations" > knowledge/srs/config.ini
-echo "deck: M2-Rust-Fundamentals" >> knowledge/srs/config.ini
+echo "deck: M2-Zig-Fundamentals" >> knowledge/srs/config.ini
 ```
 
 **Ferramentas Recomendadas:**
@@ -200,7 +200,7 @@ nano knowledge/srs/new-cards.csv
 front,back,tags,created
 "O que significa ∈?","Pertence (elemento de conjunto)","M1-math,symbols","2026-02-18"
 "log₂(64) = ?","6","M1-math,logarithms","2026-02-18"
-"Rust: Como criar Vec?","Vec::new() ou vec![]","M2-rust,syntax","2026-02-18"
+"Zig: Como criar ArrayList?","std.ArrayList.init(allocator)","M2-zig,syntax","2026-02-18"
 ```
 
 **Boas práticas de criação:**
@@ -214,7 +214,7 @@ front,back,tags,created
 #### Passo 3: Revisar Diariamente (15-20 min)
 
 ```bash
-make srs-review
+/ul-memory-review
 ```
 
 **Fluxo de Revisão:**
@@ -259,7 +259,7 @@ cp knowledge/srs/master-deck.csv knowledge/srs/backup/
 
 ```bash
 # Durante sessão de estudo
-make study
+/ul-study-start
 
 # Escolha: 5. SRS Review
 > @tutor #srs review
@@ -300,7 +300,7 @@ make study
 # "Big O é notação de...?" → "limite superior assintótico"
 # "O(n) é melhor que O(n²)?" → "Sim"
 # "O(log n) cresce mais rápido que O(n)?" → "Não"
-make srs-review
+/ul-memory-review
 
 # 3. PRATICAR (não use SRS!)
 @tutor #drill "analisar complexidade de 10 algoritmos"
@@ -319,7 +319,7 @@ make srs-review
 # ✅ BOM: 1 pergunta, 1 resposta, específico
 "log₂(64) = ?","6","M1-math"
 "∈ significa?","Pertence (elemento de conjunto)","M1-math"
-"Rust: Vec::new() retorna?","Vec<T>","M2-rust"
+"Zig: ArrayList.init() retorna?","ArrayList(T)","M2-zig"
 ```
 
 **Por que funciona:**
@@ -359,8 +359,8 @@ make srs-review
 
 ```csv
 # ✅ BOM: Contexto claro
-"Rust: Como declarar HashMap mutável?","let mut map = HashMap::new();","M2-rust"
-"Git: Como ver histórico em formato curto?","git log --oneline","M2-rust"
+"Zig: Como declarar HashMap?","var map = std.AutoHashMap(K,V).init(allocator);","M2-zig"
+"Git: Como ver histórico em formato curto?","git log --oneline","tools"
 "Big O: Complexidade de merge sort?","O(n log n)","M3-ds"
 ```
 
@@ -500,7 +500,7 @@ srs-stats --week
 
 ### Novos Cards
 - Criados: 42
-- Módulos: M1-math (15), M2-rust (27)
+- Módulos: M1-math (15), M2-zig (27)
 - Taxa de acerto (1ª revisão): 72%
 
 ### Alertas
@@ -585,12 +585,12 @@ Semana 7-8 de Rust - memorizando sintaxe básica.
 #### Cards Criados
 
 ```csv
-"Rust: Como criar String mutável?","let mut s = String::from(\"hello\");","M2-rust"
-"Rust: Diferença entre String e &str?","String é owned, &str é borrowed","M2-rust"
-"Rust: Como criar Vec vazio?","Vec::new() ou vec![]","M2-rust"
-"Rust: Pattern match sintaxe?","match x { A => ..., B => ..., _ => ... }","M2-rust"
-"Rust: O que significa 'static?","Lifetime que dura todo o programa","M2-rust"
-"Rust: Como clonar valor?",".clone()","M2-rust"
+"Zig: Como criar ArrayList vazio?","std.ArrayList.init(allocator)","M2-zig"
+"Zig: O que é @as?","Cast explícito em comptime/runtime","M2-zig"
+"Zig: Como lidar com erro?","try/ catch/ errdefer","M2-zig"
+"Zig: Optional type?","?T (pode ser null)","M2-zig"
+"Zig: Diferença entre *T e ?*T?","Ponteiro obrigatório vs opcional","M2-zig"
+"Zig: Como clonar slice?","allocator.dupe(u8, slice)","M2-zig"
 ```
 
 #### Fluxo de Uso
@@ -598,18 +598,18 @@ Semana 7-8 de Rust - memorizando sintaxe básica.
 ```bash
 # Dia 1: Cria cards durante estudo
 # Estudando ownership...
-echo '"Rust: Diferença entre String e &str?","String é owned, &str é borrowed"' >> srs.csv
+echo '"Zig: Optional type?","?T (pode ser null)"' >> srs.csv
 
 # Dia 2: Primeira revisão
-make srs-review
-# Card: "Rust: Como criar Vec vazio?"
-# Você: "Vec::new()"
-# Sistema: ✅ "Vec::new() ou vec![]"
+/ul-memory-review
+# Card: "Zig: Como criar ArrayList vazio?"
+# Você: "std.ArrayList.init(allocator)"
+# Sistema: ✅ "std.ArrayList.init(allocator)"
 # Avalia: Fácil → Próximo: 6 dias
 
 # Dia 8: Segunda revisão
-# Card: "Rust: Como criar Vec vazio?"
-# Você: "Vec::new() ou vec![]"
+# Card: "Zig: Como criar ArrayList vazio?"
+# Você: "std.ArrayList.init(allocator)"
 # Avalia: Fácil → Próximo: 15 dias
 
 # Dia 23: Terceira revisão

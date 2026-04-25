@@ -374,7 +374,7 @@ Cada sessão deve ter:
 
 ```bash
 # Semana 0: Planejamento
-make plan
+@meta #create-weekly-plan
 
 @meta #decompose-goal "Dominar [tópico]"
   ↓

@@ -79,7 +79,7 @@ Retrieval funciona para **TUDO**:
 
 ```bash
 # Todo dia, ao iniciar sessão:
-make start
+/ul-study-start
 
 # Sistema automaticamente:
 # 1. Faz 3-5 perguntas do conteúdo de ONTEM
@@ -197,7 +197,7 @@ make start
 
 ```bash
 # Durante sessão de estudo
-make study
+/ul-study-start
 
 # Escolha: Quiz
 > @tutor #quiz 5 perguntas
@@ -397,7 +397,7 @@ A: [seu código]
 # ✅ CERTO: Usa retrieval para aquecer cérebro
 
 # 10:00 - Sessão de estudo
-make start
+/ul-study-start
 > Quiz de 3 perguntas (5 min)
 > Cérebro aqueceu ✅
 
@@ -540,7 +540,7 @@ Semana depois, testa de novo
 | 🚩 Sempre consulta material | Não faz retrieval real | Force: feche TODO material |
 | 🚩 Trava completamente | Não entendeu conceito | #feynman antes de retrieval |
 | 🚩 Reconhece mas não explica | Ilusão de competência | Retrieval de múltiplos ângulos |
-| 🚩 Não faz retrieval diário | Preguiça/esquece | Integre no `make start` |
+| 🚩 Não faz retrieval diário | Preguiça/esquece | Integre no `/ul-study-start` |
 
 ---
 
@@ -579,7 +579,7 @@ Você estudou ownership ontem (Semana 7 de M2).
 
 #### Passo 1: Quiz de aquecimento (hoje, 10:00)
 ```bash
-make start
+/ul-study-start
 
 # Sistema pergunta (SEM consultar material):
 Q1: "O que é ownership em Rust?"

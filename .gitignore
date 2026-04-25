@@ -55,35 +55,19 @@ ENV/
 .zed/.tmp*
 
 # Project specific
-.current-topic
 *.bak
 temp-*.py
 draft-*.py
 
-# Logs (keep structure, ignore content)
-04-logs/daily/*.md
-!04-logs/daily/.gitkeep
-04-logs/retrospectives/*.md
-!04-logs/retrospectives/.gitkeep
-
-# Temporary drills
-03-drills/temp-*
-03-drills/scratch-*
-
-# Keep structure folders
-!01-meta/active/.gitkeep
-!01-meta/completed/.gitkeep
-!01-meta/templates/.gitkeep
-!02-projects/current/.gitkeep
-!02-projects/completed/.gitkeep
-!03-drills/syntax/.gitkeep
-!03-drills/algorithms/.gitkeep
-!03-drills/timed/.gitkeep
-!05-knowledge-base/concepts/.gitkeep
-!05-knowledge-base/mental-models/.gitkeep
+# Ultralearning - Dados (CSV são versionados, dados não)
+backups/
+projects/*/logs/daily/*.md
 
 # Optional: Keep learning maps but not personal logs
 # Uncomment if you want to track learning maps in Git
 # !01-meta/active/**/learning-map.md
 # !01-meta/active/**/resources.md
 .obsidian
+node_modules
+.opencode/package-lock.json
+bun.lock

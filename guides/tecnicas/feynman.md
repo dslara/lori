@@ -188,7 +188,7 @@ nano knowledge/concepts/big-o-feynman.md
 
 ```bash
 # Durante sessão de estudo
-make study
+/ul-study-start
 
 # Escolha: 3. Feynman
 > @tutor #feynman Big O notation

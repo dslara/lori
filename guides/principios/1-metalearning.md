@@ -256,7 +256,7 @@ O **Agente @meta** implementa Metalearning na prática:
 Uso:
 ```bash
 # Durante planejamento (10% do tempo)
-make plan
+@meta #create-weekly-plan
 
 # Ou diretamente
 @meta #decompose-goal "[seu objetivo]"

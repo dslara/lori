@@ -305,7 +305,7 @@ mod tests {
 
 ```bash
 # Durante sessão de estudo
-make study
+/ul-study-start
 
 # Escolha: 2. Drill
 > @tutor #drill "implementar binary search"

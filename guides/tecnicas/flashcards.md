@@ -86,7 +86,7 @@ Flashcards são perfeitos para **memorização de informação factual**:
 # 2. ENTÃO crie flashcard para fatos relacionados
 
 # Adicionar ao arquivo
-nano 01-math-foundations/knowledge/flashcards-source.csv
+ nano projects/M1-math-foundations/knowledge/flashcards-source.csv
 ```
 
 **Exemplo de workflow**:
@@ -106,7 +106,7 @@ nano 01-math-foundations/knowledge/flashcards-source.csv
 # ❌ MAU: Busca no Google toda vez
 # ✅ BOM: Cria flashcard para não esquecer de novo
 
-echo '"Como criar Vec vazio?","Vec::new() ou vec![]","M2-rust",easy,"","",1' >> knowledge/flashcards-source.csv
+ echo '"Como criar ArrayList vazio?","std.ArrayList.init(allocator)","M2-zig",easy,"","",1' >> knowledge/flashcards-source.csv
 ```
 
 ### ⏰ Frequência de Criação
@@ -129,7 +129,7 @@ echo '"Como criar Vec vazio?","Vec::new() ou vec![]","M2-rust",easy,"","",1' >> 
 
 #### Passo 1: Abrir arquivo do módulo atual
 ```bash
-cd 01-math-foundations
+ cd projects/M1-math-foundations
 nano knowledge/flashcards-source.csv
 ```
 
@@ -142,7 +142,7 @@ front,back,module,difficulty,last_reviewed,next_review,interval_days
 **Campos explicados**:
 - `front`: Pergunta (use aspas duplas)
 - `back`: Resposta (use aspas duplas)
-- `module`: Identificador do módulo (ex: M1-math, M2-rust)
+- `module`: Identificador do módulo (ex: M1-math, M2-zig)
 - `difficulty`: `easy`, `medium`, `hard`
 - `last_reviewed`: Deixe vazio (`""`)
 - `next_review`: Deixe vazio (`""`)
@@ -161,7 +161,7 @@ front,back,module,difficulty,last_reviewed,next_review,interval_days
 
 ```bash
 # Durante sessão de estudo
-make study
+/ul-study-start
 
 # Opção: Criar flashcard
 > @tutor cria flashcard de "Big O notation"
@@ -189,7 +189,7 @@ make study
 
 #### Passo 1: Criar cards no módulo
 ```bash
-cd 01-math-foundations
+ cd projects/M1-math-foundations
 nano knowledge/flashcards-source.csv
 # Adicione seus cards
 ```
@@ -199,25 +199,17 @@ nano knowledge/flashcards-source.csv
 cp knowledge/flashcards-source.csv ../shared/flashcards/by-module/M1-math.csv
 ```
 
-#### Passo 3: Sincronizar ao master-deck
-```bash
-cd ../shared/flashcards
-bash sync-script.sh
-```
+#### Passo 3: Cards disponíveis para revisão
 
-**O que o script faz**:
-1. ✅ Cria backup (`master-deck.csv.backup`)
-2. ✅ Agrega cards de todos os módulos
-3. ✅ Remove duplicatas
-4. ✅ Mostra resumo
+Os cards criados via `@tutor #srs-generator` são salvos automaticamente em `data/flashcards.csv` e ficam disponíveis para revisão via `@tutor #srs-generator review`.
 
-**Output esperado**:
+**Para revisar**:
 ```
 🔄 Sincronizando flashcards ao master-deck...
 ✅ Backup criado: master-deck.csv.backup
 📚 Processando: M1-math
    ✅ 10 cards adicionados
-📚 Processando: M2-rust
+📚 Processando: M2-zig
    ✅ 15 cards adicionados
 
 ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -233,7 +225,7 @@ bash sync-script.sh
 
 ### Comando principal
 ```bash
-make review
+/ul-memory-review
 ```
 
 **O que acontece**:
@@ -278,7 +270,7 @@ Dia 22: Revisa (fácil) → próximo: 25 dias
 | **Fim de semana** | 2x/dia (manhã + noite) | 20-30 min |
 
 **Regra de ouro**: **Revisar ANTES de aprender conteúdo novo**
-- ✅ `make start` → Quiz + SRS → Aquece memória
+- ✅ `/ul-study-start` → Quiz + SRS → Aquece memória
 - ❌ Estudar novo conteúdo → SRS no fim (cansado)
 
 ---
@@ -328,7 +320,7 @@ nano knowledge/flashcards-source.csv
 ```csv
 "Quanto é log₂(64)?","6","M1-math",easy,"","",1
 "Lei de De Morgan: ¬(A ∧ B) = ?","¬A ∨ ¬B","M1-math",medium,"","",1
-"Rust: como criar Vec vazio?","Vec::new() ou vec![]","M2-rust",easy,"","",1
+"Zig: como criar ArrayList vazio?","std.ArrayList.init(allocator)","M2-zig",easy,"","",1
 ```
 
 **Por quê funciona**:
@@ -360,7 +352,7 @@ nano knowledge/flashcards-source.csv
 ### ✅ BOM: Usa Contexto
 
 ```csv
-"Rust: Vec::push() é O(?)","O(1) amortizado","M2-rust",medium,"","",1
+"Zig: ArrayList.append() é O(?)","O(1) amortizado","M2-zig",medium,"","",1
 "Hash table: pior caso de busca?","O(n) se todas keys colidirem","M3-ds",hard,"","",1
 ```
 
@@ -395,13 +387,13 @@ nano knowledge/flashcards-source.csv
 
 ```bash
 # 1. Iniciar sessão
-make start
+/ul-study-start
 
 # 2. Quiz automático (3 perguntas do conteúdo anterior)
 # @tutor pergunta conceitos da última sessão
 
 # 3. SRS Review (10-15 min)
-make review
+/ul-memory-review
 
 # Agora sim, cérebro aquecido!
 ```
@@ -412,7 +404,7 @@ make review
 
 ```bash
 # 4. Estudar novo conteúdo
-make study
+/ul-study-start
 # Escolhe: 1. Code / 3. Feynman
 
 # 5. Encontrou fato importante? Cria flashcard!
@@ -431,12 +423,8 @@ nano knowledge/flashcards-source.csv
 ### Final do Dia (Sincronizar)
 
 ```bash
-# 6. Sincronizar cards novos ao master-deck
-cp knowledge/flashcards-source.csv ../shared/flashcards/by-module/M1-math.csv
-cd ../shared/flashcards && bash sync-script.sh
-
-# 7. Finalizar sessão
-make end
+# 6. Finalizar sessão
+@tutor #end
 ```
 
 ---
@@ -446,8 +434,8 @@ make end
 ```bash
 # Sábado ou Domingo: apenas revisão, sem conteúdo novo
 
-make review    # 20-30 min de SRS
-make retro     # Retrospectiva semanal
+/ul-memory-review    # 20-30 min de SRS
+/ul-retro-weekly   # Retrospectiva semanal
 ```
 
 **Por quê funciona**:
@@ -500,7 +488,7 @@ make retro     # Retrospectiva semanal
    - ❌ Criando 50 cards de uma vez (não vai revisar)
 
 3. **Revise ANTES de aprender conteúdo novo**
-   - ✅ `make start` → SRS → Aquece memória
+   - ✅ `/ul-study-start` → SRS → Aquece memória
    - ❌ Estuda novo conteúdo → SRS cansado
 
 4. **Qualidade > Quantidade**
@@ -522,12 +510,12 @@ make retro     # Retrospectiva semanal
 # ─────────────
 
 # 1. Aquecer com revisão (10 min)
-make start
+/ul-study-start
 > Quiz de 3 perguntas (conteúdo Semana 1-2)
 > SRS: 15 cards para revisar
 
 # 2. Estudar novo conteúdo (40 min)
-make study
+/ul-study-start
 > Escolhe: "1. Code"
 > @tutor #intuition logaritmos
 > Assiste Khan Academy - Logarithms
@@ -546,12 +534,8 @@ nano knowledge/flashcards-source.csv
 ```
 
 ```bash
-# 4. Sincronizar
-cp knowledge/flashcards-source.csv ../shared/flashcards/by-module/M1-math.csv
-cd ../shared/flashcards && bash sync-script.sh
-
-# 5. Finalizar
-make end
+# 4. Finalizar
+@tutor #end
 ```
 
 ---
@@ -562,7 +546,7 @@ make end
 # - 3-5 cards de ontem (intervalo curto)
 # - 10-15 cards mais antigos (intervalo maior)
 
-make start
+/ul-study-start
 > "log₂(128) = ?"
   Você responde mentalmente: "7"
   Sistema mostra resposta: "7"

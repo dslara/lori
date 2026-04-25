@@ -1,0 +1,4 @@
+id,session_id,skill,topic,user_message,user_response,tutor_response,timestamp,metadata
+I20260306085731,2026-03-06-085708,quiz,símbolos matemáticos,"O que significa ∀? ","Para todo (quantificador universal) ",2026-03-06T08:57:31+01:00,"{""correct"":true}"
+I20260306090143,2026-03-06-085708,quiz,símbolos matemáticos,"O que significa ∃? ","Existe (quantificador existencial) ",2026-03-06T09:01:43+01:00,"{""correct"":true}"
+I20260306090453,2026-03-06-085708,quiz,símbolos matemáticos,"O que significa ∈? ","Pertence ","Correto! ∈ significa 'pertence a um conjunto' ",2026-03-06T09:04:53+01:00,"{""correct"":true}"

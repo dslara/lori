@@ -252,19 +252,19 @@ SEMANA 5+: Manutenção
 
 ```bash
 # MANHÃ (Aquecimento)
-make start
+/ul-study-start
 ├─ Quiz do dia anterior (retrieval)
 └─ SRS review (10-15 min)
 
 # ESTUDO
-make study
+/ul-study-start
 ├─ Novo conteúdo
 ├─ Criar flashcards de fatos
 ├─ Feynman de conceitos
 └─ Drill de procedimentos
 
 # FINAL DO DIA
-make end
+/ul-study-end
 └─ Sincronizar flashcards
 ```
 

@@ -225,7 +225,7 @@ fn binary_search(arr: &[i32], target: i32) -> Option<usize> {
 
 ```bash
 # Durante sessão de estudo
-make study
+/ul-study-start
 
 # Escolha: 2. Drill
 > @tutor #drill binary search

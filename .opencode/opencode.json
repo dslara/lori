@@ -1,0 +1,72 @@
+{
+  "$schema": "https://opencode.ai/config.json",
+  "model": "opencode-go/glm-5",
+  "small_model": "opencode-go/minimax-m2.5",
+  "provider": {
+    "opencode-go": {
+      "options": {
+        "setCacheKey": true
+      }
+    }
+  },
+  "agent": {
+    "meta": {
+      "description": "Arquiteto de aprendizado. Planeja módulos, mapeia recursos, cria cronogramas semanais.",
+      "mode": "primary",
+      "temperature": 0.2,
+      "tools": {
+        "write": true,
+        "edit": true,
+        "bash": true,
+        "skill": true
+      },
+      "permission": {
+        "edit": "ask",
+        "bash": "allow",
+        "skill": {
+          "*": "allow"
+        }
+      },
+      "task": {
+        "*": "deny",
+        "tutor": "allow",
+        "review": "ask"
+      }
+    },
+    "tutor": {
+      "description": "Mentor socrático de ultralearning. Guia sessões com #directness, #feynman, #drill, #quiz.",
+      "mode": "primary",
+      "temperature": 0.5,
+      "tools": {
+        "write": true,
+        "edit": true,
+        "bash": true,
+        "skill": true
+      },
+      "permission": {
+        "edit": "allow",
+        "bash": "allow",
+        "skill": {
+          "*": "allow"
+        }
+      }
+    },
+    "review": {
+      "description": "Revisor arquitetural. Audita qualidade do framework e propõe melhorias.",
+      "mode": "primary",
+      "temperature": 0.1,
+      "tools": {
+        "write": true,
+        "edit": true,
+        "bash": true,
+        "skill": false
+      },
+      "permission": {
+        "edit": "ask",
+        "write": "ask",
+        "bash": "allow",
+        "webfetch": "allow"
+      }
+    }
+  }
+}

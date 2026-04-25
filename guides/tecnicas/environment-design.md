@@ -37,7 +37,7 @@
 ### 🔗 Relação com James Clear (Atomic Habits)
 Esta técnica implementa **Cue-Routine-Reward**:
 - **Cue**: Ambiente preparado (estímulo visual/físico)
-- **Routine**: Comandos `make start` → `make study` → `make end`
+- **Routine**: Comandos `/ul-study-start` → `/ul-study-start` → `/ul-study-end`
 - **Reward**: Streak atualizado, progresso visual
 
 ### 🔗 Princípios Relacionados
@@ -347,7 +347,7 @@ echo "✅ Ambiente pronto! Inicie o Pomodoro."
 ```
 
 ```markdown
-# USO: make start OU ./ritual-setup.sh
+# USO: /ul-study-start OU ./ritual-setup.sh
 
 10:00 | Ritual de Setup (5 min)
 10:05 | Pomodoro 1 iniciado

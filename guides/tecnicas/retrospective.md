@@ -226,7 +226,7 @@ Opções:
 1. Arquivo no projeto: retro-2026-W07.md
 2. Obsidian/Notion: Banco de dados
 3. Caderno físico: Para quem gosta de escrever
-4. make retro: Comando do sistema
+4. /ul-retro-weekly: Command do sistema
 ```
 
 ---
