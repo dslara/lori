@@ -6,6 +6,12 @@ export interface Domain {
   sessions: number;
 }
 
+export interface ActiveSession {
+  domainId: string;
+  startedAt: string;
+  plannedDurationSec: number;
+}
+
 export interface StudySession {
   id: string;
   domainId: string;
