@@ -20,8 +20,8 @@
       "./.pi/extensions/lori/index.ts"
     ],
     "skills": ["./skills"],
-    "prompts": ["./prompts"],
-    "themes": ["./themes"]
+    "prompts": ["./.pi/prompts"],
+    "themes": ["./.pi/themes"]
   },
   "scripts": {
     "test": "vitest run"

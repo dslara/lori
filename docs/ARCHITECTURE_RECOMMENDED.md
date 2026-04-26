@@ -96,6 +96,110 @@ Arquitetura escolhida maximiza **desafio técnico** dentro dessas restrições. 
 
 ---
 
+## 3. Estrutura de Pastas
+
+```
+.
+├── src/
+│   ├── shared/                          # Types + algorithms cross-cutting
+│   │   ├── types.ts
+│   │   ├── algorithms/
+│   │   │   ├── sm2.ts
+│   │   │   ├── jaccard.ts
+│   │   │   ├── xp-calc.ts
+│   │   │   └── level-calc.ts
+│   │   └── utils/
+│   │       └── (compose, clamp, deepEquals)
+│   │
+│   ├── domain/                          # 100% puro, zero deps externas
+│   │   ├── player/
+│   │   │   ├── index.ts
+│   │   │   ├── types.ts
+│   │   │   ├── reducer.ts
+│   │   │   ├── selectors.ts
+│   │   │   └── player.test.ts
+│   │   ├── quests/
+│   │   │   ├── index.ts
+│   │   │   └── ...
+│   │   ├── skill-tree/
+│   │   ├── session/
+│   │   ├── techniques/
+│   │   ├── inventory/
+│   │   ├── srs/
+│   │   ├── weaknesses/
+│   │   ├── achievements/
+│   │   ├── story/
+│   │   └── processors/                  # Cross-cutting (não são features)
+│   │       ├── runtime/
+│   │       ├── lifecycle/
+│   │       ├── content/
+│   │       └── ghost/
+│   │
+│   ├── store/                           # Redux-like à mão
+│   │   ├── index.ts
+│   │   ├── store.ts
+│   │   ├── root-reducer.ts
+│   │   ├── middleware/
+│   │   │   └── persist.ts
+│   │   └── store.test.ts
+│   │
+│   ├── effects/                         # Imperative shell (side effects)
+│   │   ├── pi-extension.ts              # Único entry point Pi
+│   │   ├── pi-commands.ts
+│   │   ├── pi-tools.ts
+│   │   ├── persist.ts
+│   │   ├── timer.ts
+│   │   └── ui.ts
+│   │
+│   └── presentation/                    # Skin + Persona (runtime only)
+│       ├── skin/
+│       │   ├── provider.ts
+│       │   ├── loader.ts
+│       │   ├── validator.ts
+│       │   ├── template-engine.ts
+│       │   └── expression-evaluator.ts
+│       └── persona/
+│           ├── loader.ts
+│           ├── builder.ts
+│           └── switcher.ts
+│
+├── skins/                               # Assets de skins (JSON/TS)
+│   ├── minimal.json
+│   ├── rpg.json
+│   └── ...
+│
+├── .pi/
+│   ├── extensions/
+│   │   └── lori/
+│   │       └── index.ts                 # Adapter puro; importa de src/
+│   ├── prompts/                         # Prompts Pi
+│   │   └── ...
+│   └── themes/                          # Temas Pi
+│       └── ...
+│
+├── tests/                               # Testes de integração + e2e Pi
+│   └── ...
+│
+├── package.json
+└── docs/
+```
+
+**Regras de localização:**
+
+| Onde | O que | Não pode |
+|------|-------|----------|
+| `src/shared/` | Types base, algorithms genéricos, helpers puros | Importar de `domain/`, `effects/`, `presentation/` |
+| `src/domain/` | Regras de negócio, estado, processors | Importar `fs`, Pi SDK, ou qualquer dep externa |
+| `src/store/` | Single source of truth, middleware | Conter regra de negócio (só orquestra reducers) |
+| `src/effects/` | Side effects: SQLite, Pi SDK, timer | Conter regra de negócio (só orquestra) |
+| `src/presentation/` | Skin system, persona builder | Modificar estado (só traduz core → string) |
+| `.pi/extensions/lori/` | Entry point Pi, adapter | Conter domain (só importa de `src/`) |
+| `tests/` na raiz | Integração Pi + e2e | Conter testes unitários (estes são co-located) |
+
+**Testes unitários são co-located.** Cada feature/ arquivo em `src/` leva seu `.test.ts` ao lado. Testes de integração (store + effects + Pi adapter) ficam em `tests/` na raiz.
+
+---
+
 ## 4. Conceitos Técnicos e Patterns Explorados
 
 ### 4.1 Event Sourcing Enxuto
@@ -196,7 +300,7 @@ Commands (`/lori-*`), tools (`lori_timer_status`), widgets (`setWidget`), status
 
 ---
 
-## 5. Trade-offs Explícitos
+## 6. Trade-offs Explícitos
 
 | Trade-off | Escolha | Custo |
 |-----------|---------|-------|
@@ -209,7 +313,7 @@ Commands (`/lori-*`), tools (`lori_timer_status`), widgets (`setWidget`), status
 
 ---
 
-## 6. Roadmap de Implementação
+## 7. Roadmap de Implementação
 
 ### Fase 1 — Fundação
 1. `store/` (Redux-like à mão) + `domain/reducers/` (player, session)
@@ -248,7 +352,7 @@ Commands (`/lori-*`), tools (`lori_timer_status`), widgets (`setWidget`), status
 
 ---
 
-## 7. Regras de Ouro
+## 8. Regras de Ouro
 
 | # | Regra | Violação = |
 |---|-------|-----------|
@@ -267,7 +371,7 @@ Commands (`/lori-*`), tools (`lori_timer_status`), widgets (`setWidget`), status
 
 ---
 
-## 8. Conclusão
+## 9. Conclusão
 
 Arquitetura recomendada é **síntese híbrida** que:
 
