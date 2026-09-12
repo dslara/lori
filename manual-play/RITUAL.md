@@ -8,7 +8,7 @@
 - Modo: abre na persona Metalearning (nivelamento + curadoria); Tutora Lori só sob Consult; review do diff no fecho continua dever meu.
 - Domain, técnica primária, intenção suave (sem countdown)
 - Timer: anotar startedAt
-- Metalearning: abre com nivelamento (uma pergunta fixa por pré-requisito, máx 5: "Familiaridade de 1 a 5 com X?", 1 nunca toquei, 5 uso fluente; mais formato preferido: 1 livro, 2 artigo web, 3 vídeo; sem XP, sem barreira); a partir dele, curadoria em 3 itens, todos no arquivo da sessão: padrão (conceito nomeado em 1 linha + quando se aplica), problema no nosso caso (falha concreta que evitamos na Fase 1), 1-2 fontes (primárias primeiro, respondendo aos 1s do nivelamento).
+- Metalearning: abre com nivelamento (uma pergunta fixa por pré-requisito, máx 5: "Familiaridade de 1 a 5 com X?", 1 nunca toquei, 5 uso fluente; mais formato preferido: 1 livro, 2 artigo web, 3 vídeo; sem XP, sem barreira); a partir dele, curadoria em 2 itens, todos no arquivo da sessão: padrões (lista, um ou mais por Quest; cada item com nome do princípio, padrão, arquitetura ou conceito + falha concreta que evitamos sem ele), 1-2 fontes (primárias primeiro, no formato pedido, respondendo aos 1s do nivelamento).
 - Arquivo: Tutor cria `manual-play/sessions/YYYY-MM-DD-n.md` do template na abertura
 
 ## Close (Player fecha com veredito)
