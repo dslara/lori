@@ -15,5 +15,5 @@
 ## Campaign: Chapter Fundação
 - Nodes: os 5 passos da Fase 1 do roadmap. Node fecha com código funcionando mais review aprovado.
 - Exit proof do Chapter: abrir e fechar Lori session de verdade.
-- Starter techniques: Build From Scratch mais Pomodoro. Cada Node clear desbloqueia 1 técnica nova, à escolha do Player na lista de 27.
+- Starter techniques: Build From Scratch mais Pomodoro. Cada Node clear desbloqueia 1 técnica nova, à escolha do Player na lista de 27 (tabela de técnicas por princípio em `docs/LORI_PROJECT.md`).
 - Quest da sessão: o Tutor propõe a fatia do próximo Node na abertura; o Player aceita ou renegocia.
