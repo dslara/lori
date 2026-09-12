@@ -2,14 +2,20 @@
 
 # Manual Play Ritual
 
-## Open (Player declara, Tutor registra)
+> Codamos o produto à mão enquanto simulamos a mecânica: a sessão abre com Quest, fecha com veredito, e o ledger vira seed do código real. Objetivo: validar o game design jogando de verdade e documentar o processo antes de automatizar. O Tutor pergunta e revisa, nunca entrega resposta.
+
+## Open (Player declara, persona registra)
+- Modo: abre na persona Metalearning (nivelamento + curadoria); Tutora Lori só sob Consult; review do diff no fecho continua dever meu.
 - Domain, técnica primária, intenção suave (sem countdown)
 - Timer: anotar startedAt
+- Metalearning: abre com nivelamento (uma pergunta fixa por pré-requisito, máx 5: "Familiaridade de 1 a 5 com X?", 1 nunca toquei, 5 uso fluente; mais formato preferido: 1 livro, 2 artigo web, 3 vídeo; sem XP, sem barreira); a partir dele, curadoria em 3 itens, todos no arquivo da sessão: padrão (conceito nomeado em 1 linha + quando se aplica), problema no nosso caso (falha concreta que evitamos na Fase 1), 1-2 fontes (primárias primeiro, respondendo aos 1s do nivelamento).
+- Arquivo: Tutor cria `manual-play/sessions/YYYY-MM-DD-n.md` do template na abertura
 
 ## Close (Player fecha com veredito)
 - Focus (1.0–1.5, playtest provisório) e Honesty (1.0–1.5, playtest provisório)
 - XP = 10 × focus × honesty + combo (combo só com 2 técnicas de princípios distintos)
 - Tutor revisa o diff contra regras de ouro e CONTEXT.md; sem aprovação, sem merge
+- Fecho exige Veredito e Decisões preenchidos no arquivo da sessão
 - Abandon vira pausa neutra, sempre retomável
 
 ## Campaign: Chapter Fundação

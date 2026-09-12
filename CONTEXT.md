@@ -90,7 +90,21 @@ Ubiquitous language of Lori, a gamified accelerated-learning extension. Technica
 | **Persona**  | A standalone AI personality tied to one of the 9 ultralearning principles. The technique in use elects the active voice | Voice, character, role |
 | **Tutor**    | Lori as invoked guide answering only with questions, renamed per skin   | Assistant, teacher            |
 | **Consult**  | Manual switch to the Tutor voice mid-session, without pausing anything   | Ask, help                     |
-| **Principle**| One of the 9 core ultralearning philosophies (e.g. Focus, Retrieval)     | Rule, law, pillar             |
+| **Principle**| One of the 9 ultralearning principles detailed below | Rule, law, pillar             |
+
+### Principles
+
+| Principle        | Definition                                                                                              | Function (problem it solves)                                                              |
+| ---------------- | ------------------------------------------------------------------------------------------------------- | ----------------------------------------------------------------------------------------- |
+| **Metalearning**   | Map how learning works in the subject before studying: research methods, benchmark others, emphasize and exclude | Wasted months on methods that cannot work for this subject                                |
+| **Focus**          | Start, sustain and protect concentration; manage distractions and entry rituals                          | Procrastinated starts and shallow, distracted study time                                  |
+| **Directness**     | Learn by doing the real thing instead of a proxy                                                        | Knowledge that fails to transfer to the skill actually wanted                             |
+| **Drill**          | Isolate the weakest subskill and attack it directly                                                     | Plateaus where one bottleneck subskill holds the whole performance back                  |
+| **Retrieval**      | Recall from memory instead of re-reading; test to learn                                                 | Illusion of knowing and fast forgetting after passive review                              |
+| **Feedback**       | Seek corrective information that pierces the illusion of knowing                                        | Practicing errors unknowingly and miscalibrated self-judgment                             |
+| **Retention**      | Plan against forgetting with spacing and revisiting                                                     | Knowledge that evaporates weeks after it felt solid                                       |
+| **Intuition**      | Build deep understanding from concrete examples before abstraction; ask why                              | Fragile rote knowledge that breaks on novel problems                                      |
+| **Experimentation**| Explore outside the comfort zone; vary resources and combine ideas                                      | Stagnation from repeating the same comfortable routine                                    |
 
 ### State & Persistence
 
@@ -111,6 +125,7 @@ Ubiquitous language of Lori, a gamified accelerated-learning extension. Technica
 - A **Clear** grants an **Unlock**: the next **Chapter**, one **Technique**, one **Quest**
 - A **Session** belongs to exactly one **Domain** and closes with a **Verdict**
 - A **Technique** starts as a **Ritual** and becomes a **Passive** at mastery level
+- Each **Principle** owns a family of **Techniques** and lends its voice to the elected **Persona**
 - A **Session** generates zero or more **Cards** for the **SRS**
 - A **Session** produces one **Fingerprint** used for **Ghost Run Matching**
 - A **Weakness** is **Forged** during a **Session** and can be **Resolved** later
