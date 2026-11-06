@@ -6,7 +6,11 @@ import { createSkinProvider, type SkinProvider } from "../../src/presentation/sk
 import { createStore, type LoriStore } from "../../src/store/store.ts";
 import type { LoriState } from "../../src/state.ts";
 
-type SessionDisplayEvent = "session.open" | "session.paused" | "session.resumed" | "session.restored";
+type SessionDisplayEvent =
+  | "session.open"
+  | "session.paused"
+  | "session.resumed"
+  | "session.restored";
 
 function formatElapsed(elapsedMs: number): string {
   const totalSeconds = Math.floor(elapsedMs / 1_000);
@@ -24,6 +28,16 @@ function renderStatus(
 ): string {
   if (state.session === null) {
     return skin.render("status.idle", { totalXp: state.player.totalXp });
+  }
+
+  if (state.session.status === "closed") {
+    return skin.render("session.closed", {
+      domain: state.session.domain,
+      technique: state.session.primaryTechnique,
+      elapsed: formatElapsed(selectElapsedMs(state.session, now)),
+      focus: state.session.verdict.focus,
+      honesty: state.session.verdict.honesty,
+    });
   }
 
   const sessionEvent = event ?? (state.session.status === "open" ? "session.open" : "session.paused");
@@ -59,6 +73,20 @@ function parseStartArgs(args: string): { domain: string; primaryTechnique: strin
   const primaryTechnique = args.slice(separator + 1).trim();
   if (domain.length === 0 || primaryTechnique.length === 0) return null;
   return { domain, primaryTechnique };
+}
+
+function parseCloseArgs(args: string): { focus: number; honesty: number } | null {
+  const separator = args.indexOf("|");
+  if (separator < 0) return null;
+
+  const focusInput = args.slice(0, separator).trim();
+  const honestyInput = args.slice(separator + 1).trim();
+  if (focusInput.length === 0 || honestyInput.length === 0) return null;
+
+  const focus = Number(focusInput);
+  const honesty = Number(honestyInput);
+  if (!Number.isFinite(focus) || !Number.isFinite(honesty)) return null;
+  return { focus, honesty };
 }
 
 export default function loriExtension(pi: ExtensionAPI): void {
@@ -125,6 +153,61 @@ export default function loriExtension(pi: ExtensionAPI): void {
 
       showStatus(ctx, nextState, skin, "session.open");
       ctx.ui.notify(`Lori: Session iniciada em ${input.domain} com ${input.primaryTechnique}.`, "info");
+    },
+  });
+
+  pi.registerCommand("lori-close", {
+    description: "Fechar uma Session com Verdict: /lori-close <Focus> | <Honesty>",
+    handler: async (args, ctx) => {
+      if (startupError) {
+        ctx.ui.notify(startupError, "error");
+        return;
+      }
+      if (!store || !projectDir || !skin) {
+        ctx.ui.notify("Lori ainda não foi inicializada nesta sessão.", "warning");
+        return;
+      }
+
+      const verdict = parseCloseArgs(args);
+      if (!verdict) {
+        ctx.ui.notify("Uso: /lori-close <Focus> | <Honesty> (ambos devem ser números finitos)", "warning");
+        return;
+      }
+
+      const previousState = store.getState();
+      const session = previousState.session;
+      if (session?.status !== "open" && session?.status !== "paused") {
+        ctx.ui.notify("Lori: não há Session aberta ou pausada para fechar.", "warning");
+        return;
+      }
+      const closedAt = Date.now();
+      const earliestCloseAt = session.status === "open"
+        ? session.startedAt + session.totalPausedMs
+        : session.pausedAt;
+      if (!Number.isFinite(closedAt) || closedAt < earliestCloseAt) {
+        ctx.ui.notify("Lori: horário inválido; a Session não foi alterada.", "warning");
+        return;
+      }
+
+      store.dispatch({ type: "session/close", closedAt, ...verdict });
+      const nextState = store.getState();
+      if (nextState === previousState) {
+        ctx.ui.notify("Lori: não foi possível fechar esta Session.", "warning");
+        return;
+      }
+      try {
+        await writeSnapshot(projectDir, nextState);
+      } catch {
+        store = createStore(previousState);
+        ctx.ui.notify("Lori: Session não fechada porque não foi possível persistir o snapshot.", "error");
+        return;
+      }
+
+      showStatus(ctx, nextState, skin);
+      ctx.ui.notify(
+        `Lori: Session fechada. Focus: ${verdict.focus} · Honesty: ${verdict.honesty}.`,
+        "info",
+      );
     },
   });
 

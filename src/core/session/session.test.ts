@@ -125,6 +125,116 @@ describe("Session core", () => {
     expect(reduceSession(opened, { type: "session/resume", resumedAt: 5_000 })).toBe(opened);
   });
 
+  test("closes an open Session with a required Verdict and freezes elapsed without a minimum duration", () => {
+    const opened = reduceSession(null, {
+      type: "session/open",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+      startedAt: 1_000,
+    });
+    const closed = reduceSession(opened, {
+      type: "session/close",
+      closedAt: 1_000,
+      focus: 2.5,
+      honesty: 4,
+    });
+
+    expect(closed).toEqual({
+      status: "closed",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+      startedAt: 1_000,
+      totalPausedMs: 0,
+      closedAt: 1_000,
+      verdict: { focus: 2.5, honesty: 4 },
+    });
+    expect(selectElapsedMs(closed!, 9_000)).toBe(0);
+  });
+
+  test("closes a paused Session while preserving elapsed before the pause", () => {
+    const opened = reduceSession(null, {
+      type: "session/open",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+      startedAt: 1_000,
+    });
+    const paused = reduceSession(opened, { type: "session/abandon", pausedAt: 4_000 });
+    const closed = reduceSession(paused, {
+      type: "session/close",
+      closedAt: 10_000,
+      focus: 0,
+      honesty: 0,
+    });
+
+    expect(closed).toMatchObject({
+      status: "closed",
+      closedAt: 10_000,
+      pausedAt: 4_000,
+      verdict: { focus: 0, honesty: 0 },
+    });
+    expect(selectElapsedMs(closed!, 20_000)).toBe(3_000);
+  });
+
+  test("rejects invalid Verdict values and closed Session transitions", () => {
+    const opened = reduceSession(null, {
+      type: "session/open",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+      startedAt: 1_000,
+    });
+    const closed = reduceSession(opened, {
+      type: "session/close",
+      closedAt: 2_000,
+      focus: 1,
+      honesty: 1,
+    });
+
+    for (const [focus, honesty] of [[Number.NaN, 2], [2, Number.POSITIVE_INFINITY]]) {
+      expect(reduceSession(opened, { type: "session/close", closedAt: 2_000, focus, honesty })).toBe(opened);
+    }
+    expect(reduceSession(opened, {
+      type: "session/close",
+      closedAt: 999,
+      focus: 1,
+      honesty: 1,
+    })).toBe(opened);
+    expect(reduceSession(closed, { type: "session/resume", resumedAt: 3_000 })).toBe(closed);
+    expect(reduceSession(closed, {
+      type: "session/close",
+      closedAt: 3_000,
+      focus: 5,
+      honesty: 5,
+    })).toBe(closed);
+  });
+
+  test("allows a new Session to replace a closed current Session", () => {
+    const opened = reduceSession(null, {
+      type: "session/open",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+      startedAt: 1_000,
+    });
+    const closed = reduceSession(opened, {
+      type: "session/close",
+      closedAt: 2_000,
+      focus: 1,
+      honesty: 1,
+    });
+
+    expect(reduceSession(closed, {
+      type: "session/open",
+      domain: "Japanese",
+      primaryTechnique: "Direct Practice",
+      startedAt: 3_000,
+    })).toEqual({
+      status: "open",
+      domain: "Japanese",
+      primaryTechnique: "Direct Practice",
+      startedAt: 3_000,
+      totalPausedMs: 0,
+    });
+  });
+
   test("does not replace an open Session", () => {
     const session = reduceSession(null, {
       type: "session/open",

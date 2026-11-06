@@ -18,7 +18,7 @@ function decodeSession(value: unknown): NonNullable<LoriState["session"]> | null
   if (value === null) return null;
   if (
     !isRecord(value) ||
-    (value.status !== "open" && value.status !== "paused") ||
+    (value.status !== "open" && value.status !== "paused" && value.status !== "closed") ||
     typeof value.domain !== "string" || value.domain.trim().length === 0 ||
     typeof value.primaryTechnique !== "string" || value.primaryTechnique.trim().length === 0 ||
     typeof value.startedAt !== "number" || !Number.isFinite(value.startedAt)
@@ -41,19 +41,46 @@ function decodeSession(value: unknown): NonNullable<LoriState["session"]> | null
     };
   }
 
+  if (value.status === "paused") {
+    if (
+      typeof value.pausedAt !== "number" || !Number.isFinite(value.pausedAt) ||
+      value.pausedAt < value.startedAt + totalPausedMs
+    ) {
+      return undefined;
+    }
+    return {
+      status: "paused",
+      domain: value.domain,
+      primaryTechnique: value.primaryTechnique,
+      startedAt: value.startedAt,
+      totalPausedMs,
+      pausedAt: value.pausedAt,
+    };
+  }
+
+  const pausedAt = value.pausedAt;
   if (
-    typeof value.pausedAt !== "number" || !Number.isFinite(value.pausedAt) ||
-    value.pausedAt < value.startedAt + totalPausedMs
+    typeof value.closedAt !== "number" || !Number.isFinite(value.closedAt) ||
+    value.closedAt < value.startedAt + totalPausedMs ||
+    (pausedAt !== undefined && (
+      typeof pausedAt !== "number" || !Number.isFinite(pausedAt) ||
+      pausedAt < value.startedAt + totalPausedMs || pausedAt > value.closedAt
+    )) ||
+    !isRecord(value.verdict) ||
+    typeof value.verdict.focus !== "number" || !Number.isFinite(value.verdict.focus) ||
+    typeof value.verdict.honesty !== "number" || !Number.isFinite(value.verdict.honesty)
   ) {
     return undefined;
   }
   return {
-    status: "paused",
+    status: "closed",
     domain: value.domain,
     primaryTechnique: value.primaryTechnique,
     startedAt: value.startedAt,
     totalPausedMs,
-    pausedAt: value.pausedAt,
+    closedAt: value.closedAt,
+    ...(typeof pausedAt === "number" ? { pausedAt } : {}),
+    verdict: { focus: value.verdict.focus, honesty: value.verdict.honesty },
   };
 }
 
