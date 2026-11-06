@@ -67,7 +67,9 @@ const eventParameterDefaults: { [Event in CoreEvent]: CoreEventParameters[Event]
 };
 
 function validateTemplates(data: unknown, expectedId: string): Templates {
-  if (!isRecord(data) || data.id !== expectedId || !isRecord(data.templates)) return {};
+  if (!isRecord(data) || data.id !== expectedId || !isRecord(data.templates)) {
+    return {};
+  }
   const templates: Templates = {};
   for (const event of CORE_EVENTS) {
     const template = data.templates[event];

@@ -2,10 +2,14 @@ import type { Session, SessionAction } from "./types.ts";
 
 export function reduceSession(state: Session | null, action: SessionAction): Session | null {
   if (action.type === "session/open") {
-    if (state !== null && state.status !== "closed") return state;
+    if (state !== null && state.status !== "closed") {
+      return state;
+    }
     if (
-      typeof action.domain !== "string" || action.domain.trim().length === 0 ||
-      typeof action.primaryTechnique !== "string" || action.primaryTechnique.trim().length === 0 ||
+      typeof action.domain !== "string" ||
+      action.domain.trim().length === 0 ||
+      typeof action.primaryTechnique !== "string" ||
+      action.primaryTechnique.trim().length === 0 ||
       !Number.isFinite(action.startedAt)
     ) {
       return state;
@@ -21,8 +25,12 @@ export function reduceSession(state: Session | null, action: SessionAction): Ses
   }
 
   if (action.type === "session/abandon") {
-    if (state?.status !== "open" || !Number.isFinite(action.pausedAt)) return state;
-    if (action.pausedAt < state.startedAt + state.totalPausedMs) return state;
+    if (state?.status !== "open" || !Number.isFinite(action.pausedAt)) {
+      return state;
+    }
+    if (action.pausedAt < state.startedAt + state.totalPausedMs) {
+      return state;
+    }
 
     return {
       ...state,
@@ -32,8 +40,12 @@ export function reduceSession(state: Session | null, action: SessionAction): Ses
   }
 
   if (action.type === "session/resume") {
-    if (state?.status !== "paused" || !Number.isFinite(action.resumedAt)) return state;
-    if (action.resumedAt < state.pausedAt) return state;
+    if (state?.status !== "paused" || !Number.isFinite(action.resumedAt)) {
+      return state;
+    }
+    if (action.resumedAt < state.pausedAt) {
+      return state;
+    }
 
     return {
       status: "open",
@@ -56,7 +68,9 @@ export function reduceSession(state: Session | null, action: SessionAction): Ses
   const earliestCloseAt = state.status === "open"
     ? state.startedAt + state.totalPausedMs
     : state.pausedAt;
-  if (action.closedAt < earliestCloseAt) return state;
+  if (action.closedAt < earliestCloseAt) {
+    return state;
+  }
 
   return {
     status: "closed",

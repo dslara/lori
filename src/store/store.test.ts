@@ -4,7 +4,7 @@ import { createStore } from "./store.ts";
 
 describe("Lori store", () => {
   test("dispatches Session actions and keeps state unchanged when the reducer rejects replacement", () => {
-    const store = createStore(createInitialState());
+    const store = createStore({ ...createInitialState(), player: { totalXp: 23 } });
     store.dispatch({
       type: "session/open",
       domain: "React",
@@ -21,6 +21,7 @@ describe("Lori store", () => {
     });
 
     expect(openedState.session?.domain).toBe("React");
+    expect(store.getState().player.totalXp).toBe(23);
     expect(store.getState()).toBe(openedState);
   });
 });
