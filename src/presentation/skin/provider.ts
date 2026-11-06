@@ -62,7 +62,7 @@ const eventParameterDefaults: { [Event in CoreEvent]: CoreEventParameters[Event]
   "session.resumed": { domain: "", technique: "", elapsed: "" },
   "session.resumeRejected": { domain: "", technique: "" },
   "session.restored": { domain: "", technique: "", elapsed: "" },
-  "session.closed": { domain: "", technique: "", elapsed: "", focus: 0, honesty: 0, xp: 0 },
+  "session.closed": { domain: "", technique: "", elapsed: "", focus: 0, honesty: 0 },
   "session.closeRejected": { domain: "", technique: "" },
 };
 

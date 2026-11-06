@@ -7,7 +7,13 @@ export type SessionDetails = {
 
 export type Session =
   | (SessionDetails & { status: "open" })
-  | (SessionDetails & { status: "paused"; pausedAt: number });
+  | (SessionDetails & { status: "paused"; pausedAt: number })
+  | (SessionDetails & {
+      status: "closed";
+      closedAt: number;
+      pausedAt?: number;
+      verdict: { focus: number; honesty: number };
+    });
 
 export type SessionAction =
   | {
@@ -23,4 +29,10 @@ export type SessionAction =
   | {
       type: "session/resume";
       resumedAt: number;
+    }
+  | {
+      type: "session/close";
+      closedAt: number;
+      focus: number;
+      honesty: number;
     };

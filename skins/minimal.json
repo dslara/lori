@@ -9,7 +9,7 @@
     "session.resumed": "Lori · Session retomada · Domain: {domain} · Primary Technique: {technique} · Elapsed: {elapsed}",
     "session.resumeRejected": "Lori · Não foi possível retomar a Session · Domain: {domain} · Primary Technique: {technique}",
     "session.restored": "Lori · Session restaurada como pausada · Domain: {domain} · Primary Technique: {technique} · Elapsed: {elapsed}",
-    "session.closed": "Lori · Session fechada · Domain: {domain} · Primary Technique: {technique} · Elapsed: {elapsed} · Focus: {focus} · Honesty: {honesty} · XP: {xp}",
+    "session.closed": "Lori · Session fechada · Domain: {domain} · Primary Technique: {technique} · Elapsed: {elapsed} · Focus: {focus} · Honesty: {honesty}",
     "session.closeRejected": "Lori · Não foi possível fechar a Session · Domain: {domain} · Primary Technique: {technique}"
   }
 }

@@ -43,7 +43,6 @@ describe("Skin provider", () => {
         elapsed: "5m",
         focus: 3,
         honesty: 4,
-        xp: 20,
       }),
       provider.render("session.closeRejected", { domain: "Math", technique: "Recall" }),
     ]).toEqual([
@@ -55,7 +54,7 @@ describe("Skin provider", () => {
       "Lori · Session retomada · Domain: Math · Primary Technique: Recall · Elapsed: 5m",
       "Lori · Não foi possível retomar a Session · Domain: Math · Primary Technique: Recall",
       "Lori · Session restaurada como pausada · Domain: Math · Primary Technique: Recall · Elapsed: 5m",
-      "Lori · Session fechada · Domain: Math · Primary Technique: Recall · Elapsed: 5m · Focus: 3 · Honesty: 4 · XP: 20",
+      "Lori · Session fechada · Domain: Math · Primary Technique: Recall · Elapsed: 5m · Focus: 3 · Honesty: 4",
       "Lori · Não foi possível fechar a Session · Domain: Math · Primary Technique: Recall",
     ]);
   });
@@ -106,9 +105,8 @@ describe("Skin provider", () => {
       elapsed: "5m",
       focus: 2,
       honesty: 3,
-      xp: 20,
     })).toBe(
-      "Lori · Session fechada · Domain: Math · Primary Technique: Recall · Elapsed: 5m · Focus: 2 · Honesty: 3 · XP: 20",
+      "Lori · Session fechada · Domain: Math · Primary Technique: Recall · Elapsed: 5m · Focus: 2 · Honesty: 3",
     );
   });
 

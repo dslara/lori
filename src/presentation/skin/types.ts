@@ -13,7 +13,6 @@ export type CoreEventParameters = {
     elapsed: string;
     focus: number;
     honesty: number;
-    xp: number;
   };
   "session.closeRejected": { domain: string; technique: string };
 };

@@ -21,6 +21,7 @@ type Harness = {
   start(): Promise<void>;
   runStatus(): Promise<void>;
   runStart(args: string): Promise<void>;
+  runClose(args: string): Promise<void>;
   runAbandon(): Promise<void>;
   runResume(): Promise<void>;
   ui: UI;
@@ -78,6 +79,11 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
       },
       async runStart(args) {
         const handler = commandHandlers.get("lori-start");
+        expect(handler).toBeDefined();
+        await handler?.(args, { ui });
+      },
+      async runClose(args) {
+        const handler = commandHandlers.get("lori-close");
         expect(handler).toBeDefined();
         await handler?.(args, { ui });
       },
@@ -146,6 +152,134 @@ describe("Lori startup and status", () => {
     await harness.runStatus();
     expect(harness.ui.notifications.at(-1)?.message).toContain("Domain: React");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Primary Technique: Active Recall");
+  });
+
+  test("closes an open Session, persists its Verdict, and restores it without awarding XP", async () => {
+    const { cwd, harness } = await createHarness();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    await mkdir(join(cwd, ".lori"), { recursive: true });
+    await writeFile(snapshotPath, JSON.stringify({
+      schemaVersion: 1,
+      player: { totalXp: 17 },
+      session: null,
+      skinConfig: { skin: "minimal" },
+    }));
+    await harness.start();
+    await harness.runStart("React | Active Recall");
+    const before = JSON.parse(await readFile(snapshotPath, "utf8"));
+
+    await harness.runClose("  2.5  |  4  ");
+
+    const closedSnapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(closedSnapshot.schemaVersion).toBe(1);
+    expect(closedSnapshot.player.totalXp).toBe(before.player.totalXp);
+    expect(closedSnapshot.session).toMatchObject({
+      status: "closed",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+      verdict: { focus: 2.5, honesty: 4 },
+    });
+    expect(closedSnapshot.session.closedAt).toBeGreaterThanOrEqual(closedSnapshot.session.startedAt);
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Session fechada");
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Focus: 2.5 · Honesty: 4");
+    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toContain("Focus: 2.5 · Honesty: 4");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Session fechada");
+
+    const { harness: restored } = await createHarness(cwd);
+    await restored.start();
+    await restored.runStatus();
+    expect(restored.ui.statuses.at(-1)?.text).toContain("Session fechada");
+    expect(restored.ui.notifications.at(-1)?.message).toContain("Focus: 2.5 · Honesty: 4");
+    expect(JSON.parse(await readFile(snapshotPath, "utf8")).session.verdict).toEqual({ focus: 2.5, honesty: 4 });
+  });
+
+  test("renders a closed Verdict through the configured session.closed Skin template", async () => {
+    const { cwd, harness } = await createHarness();
+    await mkdir(join(cwd, ".lori", "skins"), { recursive: true });
+    await writeFile(
+      join(cwd, ".lori", "snapshot.json"),
+      JSON.stringify({
+        schemaVersion: 1,
+        player: { totalXp: 0 },
+        session: null,
+        skinConfig: { skin: "terminal" },
+      }),
+    );
+    await writeFile(
+      join(cwd, ".lori", "skins", "terminal.json"),
+      JSON.stringify({
+        id: "terminal",
+        templates: { "session.closed": "Terminal close {domain} · {elapsed} · {focus}/{honesty}" },
+      }),
+    );
+
+    await harness.start();
+    await harness.runStart("React | Active Recall");
+    await harness.runClose("3 | 4");
+
+    expect(harness.ui.statuses.at(-1)?.text).toMatch(/^Terminal close React · 00:00:00 · 3\/4$/);
+    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toMatch(/^Lori Terminal close React · 00:00:00 · 3\/4$/);
+  });
+
+  test("closes a paused Session without adding paused time or applying a rating range", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    await harness.runStart("React | Active Recall");
+    await harness.runAbandon();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const pausedSession = JSON.parse(await readFile(snapshotPath, "utf8")).session;
+    const xpBeforeClose = JSON.parse(await readFile(snapshotPath, "utf8")).player.totalXp;
+
+    await harness.runClose("0 | -7.25");
+
+    const snapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(snapshot.session).toMatchObject({
+      status: "closed",
+      pausedAt: pausedSession.pausedAt,
+      verdict: { focus: 0, honesty: -7.25 },
+    });
+    expect(snapshot.session.pausedAt - snapshot.session.startedAt - snapshot.session.totalPausedMs).toBe(
+      pausedSession.pausedAt - pausedSession.startedAt - pausedSession.totalPausedMs,
+    );
+    expect(snapshot.player.totalXp).toBe(xpBeforeClose);
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Focus: 0 · Honesty: -7.25");
+  });
+
+  test("rejects missing, non-numeric, and non-finite close values before changing state", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    await harness.runStart("React | Active Recall");
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const initialSnapshot = await readFile(snapshotPath, "utf8");
+
+    for (const args of ["", "4", " | 2", "2 | ", "NaN | 1", "Infinity | 2", "1 | -Infinity", "2 | nope", "1 | 2 | 3"]) {
+      await harness.runClose(args);
+    }
+
+    expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
+    expect(harness.ui.notifications.slice(-9).every(({ type }) => type === "warning")).toBe(true);
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Session: open");
+  });
+
+  test("does not resume or close a closed Session again, but allows a fresh Session", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    await harness.runStart("React | Active Recall");
+    await harness.runClose("1 | 1");
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const closedSnapshot = await readFile(snapshotPath, "utf8");
+
+    await harness.runResume();
+    await harness.runClose("5 | 5");
+    expect(await readFile(snapshotPath, "utf8")).toBe(closedSnapshot);
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Session fechada");
+
+    await harness.runStart("Japanese | Direct Practice");
+    expect(JSON.parse(await readFile(snapshotPath, "utf8")).session).toMatchObject({
+      status: "open",
+      domain: "Japanese",
+      primaryTechnique: "Direct Practice",
+    });
   });
 
   test("abandons and resumes a Session without losing accumulated study time", async () => {
