@@ -17,7 +17,7 @@ Pergunta do ticket: SQLite ou flat files para a persistência da Fase 1 em exten
 
 Os dois caminhos são viáveis, mas os fatos pesam para snapshot direto em JSON atômico na Fase 1: zero dep, precedente do Pi, nenhuma query para pagar o SQLite. `node:sqlite` é o upgrade zero-dep preferido quando SRS e ghost pedirem query (portátil); `bun:sqlite` segue como alternativa. A decisão final sai no ticket de event log contra snapshot.
 
-## Sources
+## Sources/n
 
 - `docs/extensions.md` (Pi 1.5.0): Available Imports, package with dependencies
 - `docs/sessions.md` (Pi 1.5.0): Session Storage, JSONL em `~/.pi/agent/sessions/`
