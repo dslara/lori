@@ -1,16 +1,38 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { selectElapsedMs } from "../../src/core/session/selectors.ts";
 import { loadOrCreateSnapshot, writeSnapshot } from "../../src/effects/persist.ts";
+import { createSkinProvider, type SkinProvider } from "../../src/presentation/skin/provider.ts";
 import { createStore, type LoriStore } from "../../src/store/store.ts";
-import { formatStatus, type LoriState } from "../../src/state.ts";
+import type { LoriState } from "../../src/state.ts";
 
-function showStatus(ctx: Pick<ExtensionContext, "ui">, state: LoriState): void {
-  const status = formatStatus(state);
+function formatElapsed(elapsedMs: number): string {
+  const totalSeconds = Math.floor(elapsedMs / 1_000);
+  const hours = Math.floor(totalSeconds / 3_600);
+  const minutes = Math.floor((totalSeconds % 3_600) / 60);
+  const seconds = totalSeconds % 60;
+  return [hours, minutes, seconds].map((part) => String(part).padStart(2, "0")).join(":");
+}
+
+function renderStatus(state: LoriState, skin: SkinProvider, now = Date.now()): string {
+  if (state.session === null) {
+    return skin.render("status.idle", { totalXp: state.player.totalXp });
+  }
+
+  return skin.render("session.open", {
+    domain: state.session.domain,
+    technique: state.session.primaryTechnique,
+    elapsed: formatElapsed(selectElapsedMs(state.session, now)),
+  });
+}
+
+function showStatus(
+  ctx: Pick<ExtensionContext, "ui">,
+  state: LoriState,
+  skin: SkinProvider,
+): void {
+  const status = renderStatus(state, skin);
   ctx.ui.setStatus("lori", status);
-  ctx.ui.setWidget(
-    "lori",
-    ["Lori", `Player: ${state.player.totalXp} XP`, status, "Skin Minimal"],
-    { placement: "belowEditor" },
-  );
+  ctx.ui.setWidget("lori", ["Lori", status], { placement: "belowEditor" });
 }
 
 function showError(ctx: Pick<ExtensionContext, "ui">, error: string): void {
@@ -32,6 +54,7 @@ function parseStartArgs(args: string): { domain: string; primaryTechnique: strin
 export default function loriExtension(pi: ExtensionAPI): void {
   let store: LoriStore | undefined;
   let projectDir: string | undefined;
+  let skin: SkinProvider | undefined;
   let startupError: string | undefined;
 
   pi.registerCommand("lori-status", {
@@ -41,11 +64,11 @@ export default function loriExtension(pi: ExtensionAPI): void {
         ctx.ui.notify(startupError, "error");
         return;
       }
-      if (!store) {
+      if (!store || !skin) {
         ctx.ui.notify("Lori ainda não foi inicializada nesta sessão.", "warning");
         return;
       }
-      ctx.ui.notify(formatStatus(store.getState()), "info");
+      ctx.ui.notify(renderStatus(store.getState(), skin), "info");
     },
   });
 
@@ -56,7 +79,7 @@ export default function loriExtension(pi: ExtensionAPI): void {
         ctx.ui.notify(startupError, "error");
         return;
       }
-      if (!store || !projectDir) {
+      if (!store || !projectDir || !skin) {
         ctx.ui.notify("Lori ainda não foi inicializada nesta sessão.", "warning");
         return;
       }
@@ -90,7 +113,7 @@ export default function loriExtension(pi: ExtensionAPI): void {
         return;
       }
 
-      showStatus(ctx, nextState);
+      showStatus(ctx, nextState, skin);
       ctx.ui.notify(`Lori: Session iniciada em ${input.domain} com ${input.primaryTechnique}.`, "info");
     },
   });
@@ -100,6 +123,7 @@ export default function loriExtension(pi: ExtensionAPI): void {
     if (!result.ok) {
       store = undefined;
       projectDir = undefined;
+      skin = undefined;
       startupError = result.error;
       showError(ctx, result.error);
       return;
@@ -107,7 +131,8 @@ export default function loriExtension(pi: ExtensionAPI): void {
 
     store = createStore(result.state);
     projectDir = ctx.cwd;
+    skin = await createSkinProvider(ctx.cwd, result.state.skinConfig);
     startupError = undefined;
-    showStatus(ctx, store.getState());
+    showStatus(ctx, store.getState(), skin);
   });
 }

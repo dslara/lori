@@ -45,7 +45,8 @@ function decodeSnapshot(value: unknown): SnapshotResult {
     player.totalXp < 0 ||
     (value.session !== null && !isSession(value.session)) ||
     !isRecord(skinConfig) ||
-    skinConfig.skin !== "minimal"
+    typeof skinConfig.skin !== "string" ||
+    skinConfig.skin.trim().length === 0
   ) {
     return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
   }
@@ -62,7 +63,7 @@ function decodeSnapshot(value: unknown): SnapshotResult {
             primaryTechnique: value.session.primaryTechnique,
             startedAt: value.session.startedAt,
           },
-      skinConfig: { skin: "minimal" },
+      skinConfig: { skin: skinConfig.skin },
     },
   };
 }

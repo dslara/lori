@@ -1,0 +1,15 @@
+{
+  "id": "minimal",
+  "templates": {
+    "status.idle": "Lori · Session: nenhuma ativa · XP: {totalXp} · Skin Minimal",
+    "session.open": "Lori · Session: open · Domain: {domain} · Primary Technique: {technique} · Elapsed: {elapsed}",
+    "session.startRejected": "Lori · Session não iniciada · já existe uma Session ativa · Domain solicitado: {domain} · Primary Technique: {technique}",
+    "session.paused": "Lori · Session pausada · Domain: {domain} · Primary Technique: {technique} · Elapsed: {elapsed}",
+    "session.pauseRejected": "Lori · Não foi possível pausar a Session · Domain: {domain} · Primary Technique: {technique}",
+    "session.resumed": "Lori · Session retomada · Domain: {domain} · Primary Technique: {technique} · Elapsed: {elapsed}",
+    "session.resumeRejected": "Lori · Não foi possível retomar a Session · Domain: {domain} · Primary Technique: {technique}",
+    "session.restored": "Lori · Session restaurada como pausada · Domain: {domain} · Primary Technique: {technique} · Elapsed: {elapsed}",
+    "session.closed": "Lori · Session fechada · Domain: {domain} · Primary Technique: {technique} · Elapsed: {elapsed} · Focus: {focus} · Honesty: {honesty} · XP: {xp}",
+    "session.closeRejected": "Lori · Não foi possível fechar a Session · Domain: {domain} · Primary Technique: {technique}"
+  }
+}
