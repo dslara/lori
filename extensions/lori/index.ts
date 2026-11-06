@@ -1,6 +1,7 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { restoreSessionAsPaused } from "../../src/core/processors/lifecycle.ts";
 import { selectElapsedMs } from "../../src/core/session/selectors.ts";
+import type { SessionAction } from "../../src/core/session/types.ts";
 import { loadOrCreateSnapshot, writeSnapshot } from "../../src/effects/persist.ts";
 import { createSkinProvider, type SkinProvider } from "../../src/presentation/skin/provider.ts";
 import { createStore, type LoriStore } from "../../src/store/store.ts";
@@ -11,6 +12,12 @@ type SessionDisplayEvent =
   | "session.paused"
   | "session.resumed"
   | "session.restored";
+
+type DispatchAndPersistResult = {
+  status: "unchanged" | "persisted" | "persistence-failed";
+  store: LoriStore;
+  state: LoriState;
+};
 
 function formatElapsed(elapsedMs: number): string {
   const totalSeconds = Math.floor(elapsedMs / 1_000);
@@ -53,10 +60,11 @@ function showStatus(
   state: LoriState,
   skin: SkinProvider,
   event?: SessionDisplayEvent,
-): void {
+): string {
   const status = renderStatus(state, skin, Date.now(), event);
   ctx.ui.setStatus("lori", status);
   ctx.ui.setWidget("lori", ["Lori", status], { placement: "belowEditor" });
+  return status;
 }
 
 function showError(ctx: Pick<ExtensionContext, "ui">, error: string): void {
@@ -67,26 +75,61 @@ function showError(ctx: Pick<ExtensionContext, "ui">, error: string): void {
 
 function parseStartArgs(args: string): { domain: string; primaryTechnique: string } | null {
   const separator = args.indexOf("|");
-  if (separator < 0) return null;
+  if (separator < 0) {
+    return null;
+  }
 
   const domain = args.slice(0, separator).trim();
   const primaryTechnique = args.slice(separator + 1).trim();
-  if (domain.length === 0 || primaryTechnique.length === 0) return null;
+  if (domain.length === 0 || primaryTechnique.length === 0) {
+    return null;
+  }
   return { domain, primaryTechnique };
 }
 
 function parseCloseArgs(args: string): { focus: number; honesty: number } | null {
   const separator = args.indexOf("|");
-  if (separator < 0) return null;
+  if (separator < 0) {
+    return null;
+  }
 
   const focusInput = args.slice(0, separator).trim();
   const honestyInput = args.slice(separator + 1).trim();
-  if (focusInput.length === 0 || honestyInput.length === 0) return null;
+  if (focusInput.length === 0 || honestyInput.length === 0) {
+    return null;
+  }
 
   const focus = Number(focusInput);
   const honesty = Number(honestyInput);
-  if (!Number.isFinite(focus) || !Number.isFinite(honesty)) return null;
+  if (!Number.isFinite(focus) || !Number.isFinite(honesty)) {
+    return null;
+  }
   return { focus, honesty };
+}
+
+async function dispatchAndPersist(
+  store: LoriStore,
+  projectDir: string,
+  action: SessionAction,
+): Promise<DispatchAndPersistResult> {
+  const previousState = store.getState();
+  store.dispatch(action);
+  const nextState = store.getState();
+  if (nextState === previousState) {
+    return { status: "unchanged", store, state: previousState };
+  }
+
+  try {
+    await writeSnapshot(projectDir, nextState);
+  } catch {
+    return {
+      status: "persistence-failed",
+      store: createStore(previousState),
+      state: previousState,
+    };
+  }
+
+  return { status: "persisted", store, state: nextState };
 }
 
 export default function loriExtension(pi: ExtensionAPI): void {
@@ -106,7 +149,8 @@ export default function loriExtension(pi: ExtensionAPI): void {
         ctx.ui.notify("Lori ainda não foi inicializada nesta sessão.", "warning");
         return;
       }
-      ctx.ui.notify(renderStatus(store.getState(), skin), "info");
+      const status = showStatus(ctx, store.getState(), skin);
+      ctx.ui.notify(status, "info");
     },
   });
 
@@ -128,30 +172,25 @@ export default function loriExtension(pi: ExtensionAPI): void {
         return;
       }
 
-      const previousState = store.getState();
-      store.dispatch({
+      const result = await dispatchAndPersist(store, projectDir, {
         type: "session/open",
         ...input,
         startedAt: Date.now(),
       });
-      const nextState = store.getState();
-      if (nextState === previousState) {
+      store = result.store;
+      if (result.status === "unchanged") {
         ctx.ui.notify(
-          `Lori: já existe uma Session ${previousState.session?.status === "paused" ? "pausada" : "aberta"} no Domain ${previousState.session?.domain}; ela não foi substituída.`,
+          `Lori: já existe uma Session ${result.state.session?.status === "paused" ? "pausada" : "aberta"} no Domain ${result.state.session?.domain}; ela não foi substituída.`,
           "warning",
         );
         return;
       }
-
-      try {
-        await writeSnapshot(projectDir, nextState);
-      } catch {
-        store = createStore(previousState);
+      if (result.status === "persistence-failed") {
         ctx.ui.notify("Lori: Session não iniciada porque não foi possível persistir o snapshot.", "error");
         return;
       }
 
-      showStatus(ctx, nextState, skin, "session.open");
+      showStatus(ctx, result.state, skin, "session.open");
       ctx.ui.notify(`Lori: Session iniciada em ${input.domain} com ${input.primaryTechnique}.`, "info");
     },
   });
@@ -189,21 +228,22 @@ export default function loriExtension(pi: ExtensionAPI): void {
         return;
       }
 
-      store.dispatch({ type: "session/close", closedAt, ...verdict });
-      const nextState = store.getState();
-      if (nextState === previousState) {
+      const result = await dispatchAndPersist(store, projectDir, {
+        type: "session/close",
+        closedAt,
+        ...verdict,
+      });
+      store = result.store;
+      if (result.status === "unchanged") {
         ctx.ui.notify("Lori: não foi possível fechar esta Session.", "warning");
         return;
       }
-      try {
-        await writeSnapshot(projectDir, nextState);
-      } catch {
-        store = createStore(previousState);
+      if (result.status === "persistence-failed") {
         ctx.ui.notify("Lori: Session não fechada porque não foi possível persistir o snapshot.", "error");
         return;
       }
 
-      showStatus(ctx, nextState, skin);
+      showStatus(ctx, result.state, skin);
       ctx.ui.notify(
         `Lori: Session fechada. Focus: ${verdict.focus} · Honesty: ${verdict.honesty}.`,
         "info",
@@ -235,21 +275,18 @@ export default function loriExtension(pi: ExtensionAPI): void {
         return;
       }
 
-      store.dispatch({ type: "session/abandon", pausedAt });
-      const nextState = store.getState();
-      if (nextState === previousState) {
+      const result = await dispatchAndPersist(store, projectDir, { type: "session/abandon", pausedAt });
+      store = result.store;
+      if (result.status === "unchanged") {
         ctx.ui.notify("Lori: não foi possível abandonar esta Session.", "warning");
         return;
       }
-      try {
-        await writeSnapshot(projectDir, nextState);
-      } catch {
-        store = createStore(previousState);
+      if (result.status === "persistence-failed") {
         ctx.ui.notify("Lori: Session não pausada porque não foi possível persistir o snapshot.", "error");
         return;
       }
 
-      showStatus(ctx, nextState, skin, "session.paused");
+      showStatus(ctx, result.state, skin, "session.paused");
       ctx.ui.notify("Lori: Session pausada. Você pode retomá-la quando quiser.", "info");
     },
   });
@@ -278,21 +315,18 @@ export default function loriExtension(pi: ExtensionAPI): void {
         return;
       }
 
-      store.dispatch({ type: "session/resume", resumedAt });
-      const nextState = store.getState();
-      if (nextState === previousState) {
+      const result = await dispatchAndPersist(store, projectDir, { type: "session/resume", resumedAt });
+      store = result.store;
+      if (result.status === "unchanged") {
         ctx.ui.notify("Lori: não foi possível retomar esta Session.", "warning");
         return;
       }
-      try {
-        await writeSnapshot(projectDir, nextState);
-      } catch {
-        store = createStore(previousState);
+      if (result.status === "persistence-failed") {
         ctx.ui.notify("Lori: Session não retomada porque não foi possível persistir o snapshot.", "error");
         return;
       }
 
-      showStatus(ctx, nextState, skin, "session.resumed");
+      showStatus(ctx, result.state, skin, "session.resumed");
       ctx.ui.notify("Lori: Session retomada.", "info");
     },
   });
@@ -340,5 +374,12 @@ export default function loriExtension(pi: ExtensionAPI): void {
       restored = true;
     }
     showStatus(ctx, store.getState(), skin, restored ? "session.restored" : undefined);
+  });
+
+  pi.on("session_shutdown", () => {
+    store = undefined;
+    projectDir = undefined;
+    skin = undefined;
+    startupError = undefined;
   });
 }

@@ -15,19 +15,32 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 }
 
 function decodeSession(value: unknown): NonNullable<LoriState["session"]> | null | undefined {
-  if (value === null) return null;
+  if (value === null) {
+    return null;
+  }
   if (
     !isRecord(value) ||
-    (value.status !== "open" && value.status !== "paused" && value.status !== "closed") ||
-    typeof value.domain !== "string" || value.domain.trim().length === 0 ||
-    typeof value.primaryTechnique !== "string" || value.primaryTechnique.trim().length === 0 ||
-    typeof value.startedAt !== "number" || !Number.isFinite(value.startedAt)
+    (
+      value.status !== "open" &&
+      value.status !== "paused" &&
+      value.status !== "closed"
+    ) ||
+    typeof value.domain !== "string" ||
+    value.domain.trim().length === 0 ||
+    typeof value.primaryTechnique !== "string" ||
+    value.primaryTechnique.trim().length === 0 ||
+    typeof value.startedAt !== "number" ||
+    !Number.isFinite(value.startedAt)
   ) {
     return undefined;
   }
 
   const totalPausedMs = value.totalPausedMs === undefined ? 0 : value.totalPausedMs;
-  if (typeof totalPausedMs !== "number" || !Number.isFinite(totalPausedMs) || totalPausedMs < 0) {
+  if (
+    typeof totalPausedMs !== "number" ||
+    !Number.isFinite(totalPausedMs) ||
+    totalPausedMs < 0
+  ) {
     return undefined;
   }
 
@@ -43,7 +56,8 @@ function decodeSession(value: unknown): NonNullable<LoriState["session"]> | null
 
   if (value.status === "paused") {
     if (
-      typeof value.pausedAt !== "number" || !Number.isFinite(value.pausedAt) ||
+      typeof value.pausedAt !== "number" ||
+      !Number.isFinite(value.pausedAt) ||
       value.pausedAt < value.startedAt + totalPausedMs
     ) {
       return undefined;
@@ -60,15 +74,20 @@ function decodeSession(value: unknown): NonNullable<LoriState["session"]> | null
 
   const pausedAt = value.pausedAt;
   if (
-    typeof value.closedAt !== "number" || !Number.isFinite(value.closedAt) ||
+    typeof value.closedAt !== "number" ||
+    !Number.isFinite(value.closedAt) ||
     value.closedAt < value.startedAt + totalPausedMs ||
     (pausedAt !== undefined && (
-      typeof pausedAt !== "number" || !Number.isFinite(pausedAt) ||
-      pausedAt < value.startedAt + totalPausedMs || pausedAt > value.closedAt
+      typeof pausedAt !== "number" ||
+      !Number.isFinite(pausedAt) ||
+      pausedAt < value.startedAt + totalPausedMs ||
+      pausedAt > value.closedAt
     )) ||
     !isRecord(value.verdict) ||
-    typeof value.verdict.focus !== "number" || !Number.isFinite(value.verdict.focus) ||
-    typeof value.verdict.honesty !== "number" || !Number.isFinite(value.verdict.honesty)
+    typeof value.verdict.focus !== "number" ||
+    !Number.isFinite(value.verdict.focus) ||
+    typeof value.verdict.honesty !== "number" ||
+    !Number.isFinite(value.verdict.honesty)
   ) {
     return undefined;
   }
