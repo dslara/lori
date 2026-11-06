@@ -164,7 +164,7 @@ describe("Lori startup and status", () => {
       startedAt: opened.startedAt,
     });
     expect(paused.pausedAt).toBeGreaterThanOrEqual(opened.startedAt);
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Session: paused");
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Session pausada");
     expect(harness.ui.statuses.at(-1)?.text).toContain("Elapsed:");
 
     await harness.runResume();
@@ -176,7 +176,7 @@ describe("Lori startup and status", () => {
       startedAt: opened.startedAt,
     });
     expect(resumed.totalPausedMs).toBeGreaterThanOrEqual(0);
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Session: open");
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Session retomada");
   });
 
   test("rejects abandon and resume when the Session is in the wrong state", async () => {
@@ -264,7 +264,7 @@ describe("Lori startup and status", () => {
     await harness.start();
     await harness.runStatus();
 
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Session: paused");
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Session restaurada como pausada");
     expect(harness.ui.statuses.at(-1)?.text).toContain("Elapsed: 00:01:05");
     expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toContain("Elapsed: 00:01:05");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Elapsed: 00:01:05");
@@ -286,7 +286,7 @@ describe("Lori startup and status", () => {
     await reloadedInstance.start();
     await reloadedInstance.runStatus();
 
-    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Session: paused");
+    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Session restaurada como pausada");
     expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Domain: Japanese");
     expect(reloadedInstance.ui.widgets.at(-1)?.content?.join(" ")).toContain("Primary Technique: Direct Practice");
     expect(reloadedInstance.ui.notifications.at(-1)?.message).toContain("Elapsed: 00:00:00");
@@ -325,6 +325,124 @@ describe("Lori startup and status", () => {
     expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toContain("ilegível");
     expect(harness.ui.notifications.at(-1)?.message).toContain("preservado");
     expect(await readFile(snapshotPath, "utf8")).toBe(originalContents);
+  });
+
+  test("uses the configured custom Skin in status and dashboard output", async () => {
+    const { cwd, harness } = await createHarness();
+    await mkdir(join(cwd, ".lori", "skins"), { recursive: true });
+    await writeFile(
+      join(cwd, ".lori", "snapshot.json"),
+      JSON.stringify({
+        schemaVersion: 1,
+        player: { totalXp: 15 },
+        session: null,
+        skinConfig: { skin: "terminal" },
+      }),
+    );
+    await writeFile(
+      join(cwd, ".lori", "skins", "terminal.json"),
+      JSON.stringify({ id: "terminal", templates: { "status.idle": "Terminal XP={totalXp}" } }),
+    );
+
+    await harness.start();
+    await harness.runStatus();
+
+    expect(harness.ui.statuses.at(-1)?.text).toBe("Terminal XP=15");
+    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toBe("Lori Terminal XP=15");
+    expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal XP=15");
+  });
+
+  test("renders a restored and paused Session with the configured custom Skin", async () => {
+    const { cwd, harness } = await createHarness();
+    await mkdir(join(cwd, ".lori", "skins"), { recursive: true });
+    await writeFile(
+      join(cwd, ".lori", "snapshot.json"),
+      JSON.stringify({
+        schemaVersion: 1,
+        player: { totalXp: 15 },
+        session: {
+          status: "open",
+          domain: "React",
+          primaryTechnique: "Active Recall",
+          startedAt: Date.now() - 65_000,
+        },
+        skinConfig: { skin: "terminal" },
+      }),
+    );
+    await writeFile(
+      join(cwd, ".lori", "skins", "terminal.json"),
+      JSON.stringify({
+        id: "terminal",
+        templates: {
+          "session.restored": "Terminal restored Session {domain} | {technique} | {elapsed}",
+          "session.paused": "Terminal paused Session {domain} | {technique} | {elapsed}",
+        },
+      }),
+    );
+
+    await harness.start();
+    await harness.runStatus();
+
+    expect(harness.ui.statuses.at(-1)?.text).toBe(
+      "Terminal restored Session React | Active Recall | 00:01:05",
+    );
+    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toBe(
+      "Lori Terminal restored Session React | Active Recall | 00:01:05",
+    );
+
+    await harness.runStatus();
+    expect(harness.ui.notifications.at(-1)?.message).toBe(
+      "Terminal paused Session React | Active Recall | 00:01:05",
+    );
+  });
+
+  test("preserves a missing custom Skin ID in the snapshot and uses Minimal", async () => {
+    const { cwd, harness } = await createHarness();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    await mkdir(join(cwd, ".lori"), { recursive: true });
+    await writeFile(
+      snapshotPath,
+      JSON.stringify({
+        schemaVersion: 1,
+        player: { totalXp: 6 },
+        session: null,
+        skinConfig: { skin: "not-installed" },
+      }),
+    );
+
+    await harness.start();
+    await harness.runStatus();
+
+    expect(harness.ui.statuses.at(-1)?.text).toBe(
+      "Lori · Session: nenhuma ativa · XP: 6 · Skin Minimal",
+    );
+    expect(harness.ui.notifications.at(-1)?.message).toBe(
+      "Lori · Session: nenhuma ativa · XP: 6 · Skin Minimal",
+    );
+    expect(JSON.parse(await readFile(snapshotPath, "utf8")).skinConfig.skin).toBe("not-installed");
+  });
+
+  test("preserves a configured ID when its custom Skin file is invalid", async () => {
+    const { cwd, harness } = await createHarness();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    await mkdir(join(cwd, ".lori", "skins"), { recursive: true });
+    await writeFile(
+      snapshotPath,
+      JSON.stringify({
+        schemaVersion: 1,
+        player: { totalXp: 4 },
+        session: null,
+        skinConfig: { skin: "broken" },
+      }),
+    );
+    await writeFile(join(cwd, ".lori", "skins", "broken.json"), "{not json");
+
+    await harness.start();
+
+    expect(harness.ui.statuses.at(-1)?.text).toBe(
+      "Lori · Session: nenhuma ativa · XP: 4 · Skin Minimal",
+    );
+    expect(JSON.parse(await readFile(snapshotPath, "utf8")).skinConfig.skin).toBe("broken");
   });
 
   test("reports and preserves a snapshot with an unsupported schema version", async () => {
