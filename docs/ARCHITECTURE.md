@@ -3,7 +3,7 @@
 > **Status:** Fase 1 travada via [Mapa: arquitetura da Lori](https://github.com/dslara/lori/issues/25), 7 de 7
 > **Data:** 2026-09-12
 > **Driver:** Simplicidade e YAGNI > Didático > Desafio técnico
-> **Base:** `CONTEXT.md`, `docs/GAME_DESIGN.md`, `docs/LORI_PROJECT.md`, `docs/adr/0001-no-malus-regime.md`, `docs/wayfinder/research/`
+> **Base:** `GLOSSARY.md`, `docs/GAME_DESIGN.md`, `docs/LORI_PROJECT.md`, `docs/adr/0001-no-malus-regime.md`, `docs/wayfinder/research/`
 
 ---
 
