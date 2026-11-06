@@ -19,6 +19,9 @@
   "pi": {
     "extensions": ["./extensions/lori/index.ts"]
   },
+  "scripts": {
+    "test": "bun test"
+  },
   "devDependencies": {
     "@types/bun": "latest"
   }
