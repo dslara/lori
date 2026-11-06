@@ -4,7 +4,7 @@ export type LoriState = {
   };
   session: null;
   skinConfig: {
-    skin: "minimal";
+    skin: string;
   };
 };
 
@@ -14,8 +14,4 @@ export function createInitialState(): LoriState {
     session: null,
     skinConfig: { skin: "minimal" },
   };
-}
-
-export function formatStatus(state: LoriState): string {
-  return `Lori · Session: nenhuma ativa · XP: ${state.player.totalXp} · Skin Minimal`;
 }

@@ -1,15 +1,16 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { loadOrCreateSnapshot } from "../../src/effects/persist.ts";
-import { formatStatus, type LoriState } from "../../src/state.ts";
+import { createSkinProvider, type SkinProvider } from "../../src/presentation/skin/provider.ts";
+import type { LoriState } from "../../src/state.ts";
 
-function showStatus(ctx: Pick<ExtensionContext, "ui">, state: LoriState): void {
-  const status = formatStatus(state);
+function showStatus(
+  ctx: Pick<ExtensionContext, "ui">,
+  state: LoriState,
+  skin: SkinProvider,
+): void {
+  const status = skin.render("status.idle", { totalXp: state.player.totalXp });
   ctx.ui.setStatus("lori", status);
-  ctx.ui.setWidget(
-    "lori",
-    ["Lori", `Player: ${state.player.totalXp} XP`, "Session: nenhuma ativa", "Skin Minimal"],
-    { placement: "belowEditor" },
-  );
+  ctx.ui.setWidget("lori", ["Lori", status], { placement: "belowEditor" });
 }
 
 function showError(ctx: Pick<ExtensionContext, "ui">, error: string): void {
@@ -20,6 +21,7 @@ function showError(ctx: Pick<ExtensionContext, "ui">, error: string): void {
 
 export default function loriExtension(pi: ExtensionAPI): void {
   let state: LoriState | undefined;
+  let skin: SkinProvider | undefined;
   let startupError: string | undefined;
 
   pi.registerCommand("lori-status", {
@@ -29,11 +31,11 @@ export default function loriExtension(pi: ExtensionAPI): void {
         ctx.ui.notify(startupError, "error");
         return;
       }
-      if (!state) {
+      if (!state || !skin) {
         ctx.ui.notify("Lori ainda não foi inicializada nesta sessão.", "warning");
         return;
       }
-      ctx.ui.notify(formatStatus(state), "info");
+      ctx.ui.notify(skin.render("status.idle", { totalXp: state.player.totalXp }), "info");
     },
   });
 
@@ -47,7 +49,8 @@ export default function loriExtension(pi: ExtensionAPI): void {
     }
 
     state = result.state;
+    skin = await createSkinProvider(ctx.cwd, state.skinConfig);
     startupError = undefined;
-    showStatus(ctx, state);
+    showStatus(ctx, state, skin);
   });
 }

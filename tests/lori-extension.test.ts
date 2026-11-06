@@ -134,6 +134,80 @@ describe("Lori startup and status", () => {
     expect(await readFile(snapshotPath, "utf8")).toBe(originalContents);
   });
 
+  test("uses the configured custom Skin in status and dashboard output", async () => {
+    const { cwd, harness } = await createHarness();
+    await mkdir(join(cwd, ".lori", "skins"), { recursive: true });
+    await writeFile(
+      join(cwd, ".lori", "snapshot.json"),
+      JSON.stringify({
+        schemaVersion: 1,
+        player: { totalXp: 15 },
+        session: null,
+        skinConfig: { skin: "terminal" },
+      }),
+    );
+    await writeFile(
+      join(cwd, ".lori", "skins", "terminal.json"),
+      JSON.stringify({ id: "terminal", templates: { "status.idle": "Terminal XP={totalXp}" } }),
+    );
+
+    await harness.start();
+    await harness.runStatus();
+
+    expect(harness.ui.statuses.at(-1)?.text).toBe("Terminal XP=15");
+    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toBe("Lori Terminal XP=15");
+    expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal XP=15");
+  });
+
+  test("preserves a missing custom Skin ID in the snapshot and uses Minimal", async () => {
+    const { cwd, harness } = await createHarness();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    await mkdir(join(cwd, ".lori"), { recursive: true });
+    await writeFile(
+      snapshotPath,
+      JSON.stringify({
+        schemaVersion: 1,
+        player: { totalXp: 6 },
+        session: null,
+        skinConfig: { skin: "not-installed" },
+      }),
+    );
+
+    await harness.start();
+    await harness.runStatus();
+
+    expect(harness.ui.statuses.at(-1)?.text).toBe(
+      "Lori · Session: nenhuma ativa · XP: 6 · Skin Minimal",
+    );
+    expect(harness.ui.notifications.at(-1)?.message).toBe(
+      "Lori · Session: nenhuma ativa · XP: 6 · Skin Minimal",
+    );
+    expect(JSON.parse(await readFile(snapshotPath, "utf8")).skinConfig.skin).toBe("not-installed");
+  });
+
+  test("preserves a configured ID when its custom Skin file is invalid", async () => {
+    const { cwd, harness } = await createHarness();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    await mkdir(join(cwd, ".lori", "skins"), { recursive: true });
+    await writeFile(
+      snapshotPath,
+      JSON.stringify({
+        schemaVersion: 1,
+        player: { totalXp: 4 },
+        session: null,
+        skinConfig: { skin: "broken" },
+      }),
+    );
+    await writeFile(join(cwd, ".lori", "skins", "broken.json"), "{not json");
+
+    await harness.start();
+
+    expect(harness.ui.statuses.at(-1)?.text).toBe(
+      "Lori · Session: nenhuma ativa · XP: 4 · Skin Minimal",
+    );
+    expect(JSON.parse(await readFile(snapshotPath, "utf8")).skinConfig.skin).toBe("broken");
+  });
+
   test("reports and preserves a snapshot with an unsupported schema version", async () => {
     const { cwd, harness } = await createHarness();
     const snapshotPath = join(cwd, ".lori", "snapshot.json");

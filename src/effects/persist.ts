@@ -37,7 +37,7 @@ function decodeSnapshot(value: unknown): SnapshotResult {
     player.totalXp < 0 ||
     value.session !== null ||
     !isRecord(skinConfig) ||
-    skinConfig.skin !== "minimal"
+    typeof skinConfig.skin !== "string"
   ) {
     return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
   }
@@ -47,7 +47,7 @@ function decodeSnapshot(value: unknown): SnapshotResult {
     state: {
       player: { totalXp: player.totalXp },
       session: null,
-      skinConfig: { skin: "minimal" },
+      skinConfig: { skin: skinConfig.skin },
     },
   };
 }
