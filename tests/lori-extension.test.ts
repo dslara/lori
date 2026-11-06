@@ -20,6 +20,7 @@ type CommandHandler = (args: string, ctx: { ui: UI }) => void | Promise<void>;
 type Harness = {
   start(): Promise<void>;
   runStatus(): Promise<void>;
+  runStart(args: string): Promise<void>;
   ui: UI;
 };
 
@@ -30,10 +31,10 @@ afterEach(async () => {
 });
 
 async function createHarness(existingCwd?: string): Promise<{ cwd: string; harness: Harness }> {
-  const cwd = existingCwd ?? (await mkdtemp(join(tmpdir(), "lori-issue-34-")));
+  const cwd = existingCwd ?? (await mkdtemp(join(tmpdir(), "lori-issue-35-")));
   if (!existingCwd) projectDirs.push(cwd);
   let startHandler: StartHandler | undefined;
-  let statusHandler: CommandHandler | undefined;
+  const commandHandlers = new Map<string, CommandHandler>();
   const ui: UI = {
     notifications: [],
     statuses: [],
@@ -54,7 +55,7 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
       if (event === "session_start") startHandler = handler;
     },
     registerCommand(name: string, options: { handler: CommandHandler }) {
-      if (name === "lori-status") statusHandler = options.handler;
+      commandHandlers.set(name, options.handler);
     },
   } as unknown as ExtensionAPI;
 
@@ -69,8 +70,14 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
         await startHandler?.({ type: "session_start", reason: "startup" }, { cwd, ui });
       },
       async runStatus() {
-        expect(statusHandler).toBeDefined();
-        await statusHandler?.("", { ui });
+        const handler = commandHandlers.get("lori-status");
+        expect(handler).toBeDefined();
+        await handler?.("", { ui });
+      },
+      async runStart(args) {
+        const handler = commandHandlers.get("lori-start");
+        expect(handler).toBeDefined();
+        await handler?.(args, { ui });
       },
     },
   };
@@ -98,6 +105,120 @@ describe("Lori startup and status", () => {
     await harness.runStatus();
     expect(harness.ui.notifications.at(-1)?.message).toContain("Session: nenhuma ativa");
     expect(harness.ui.notifications.at(-1)?.message).toContain("XP: 0");
+  });
+
+  test("starts and persists a Session and shows its live details", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+
+    await harness.runStart("  React  |  Active Recall  ");
+
+    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(snapshot.session).toMatchObject({
+      status: "open",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+    });
+    expect(typeof snapshot.session.startedAt).toBe("number");
+    for (const display of [
+      harness.ui.statuses.at(-1)?.text,
+      harness.ui.widgets.at(-1)?.content?.join(" "),
+    ]) {
+      expect(display).toContain("Session: open");
+      expect(display).toContain("Domain: React");
+      expect(display).toContain("Primary Technique: Active Recall");
+      expect(display).toContain("Elapsed: 00:00:00");
+    }
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Session iniciada");
+
+    await harness.runStatus();
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Domain: React");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Primary Technique: Active Recall");
+  });
+
+  test("rejects invalid start arguments without changing or persisting state", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const initialSnapshot = await readFile(snapshotPath, "utf8");
+
+    for (const args of ["", "React", " | Active Recall", "React | ", "   |   "]) {
+      await harness.runStart(args);
+    }
+
+    expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
+    expect(harness.ui.notifications.slice(-5).every(({ type }) => type === "warning")).toBe(true);
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Session: nenhuma ativa");
+  });
+
+  test("does not retain a Session in memory when its snapshot cannot be persisted", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    await rm(join(cwd, ".lori"), { recursive: true, force: true });
+    await writeFile(join(cwd, ".lori"), "not a directory");
+
+    await harness.runStart("React | Active Recall");
+    await harness.runStatus();
+
+    expect(harness.ui.notifications.at(-2)?.type).toBe("error");
+    expect(harness.ui.notifications.at(-2)?.message).toContain("não foi possível persistir");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Session: nenhuma ativa");
+  });
+
+  test("rejects replacing an open Session without changing its persisted snapshot", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    await harness.runStart("React | Active Recall");
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const openedSnapshot = await readFile(snapshotPath, "utf8");
+
+    await harness.runStart("Japanese | Direct Practice");
+
+    expect(await readFile(snapshotPath, "utf8")).toBe(openedSnapshot);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("já existe uma Session aberta");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("não foi substituída");
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Domain: React");
+    expect(harness.ui.statuses.at(-1)?.text).not.toContain("Japanese");
+  });
+
+  test("derives elapsed on status and dashboard refreshes from the persisted timestamp", async () => {
+    const { cwd, harness } = await createHarness();
+    await mkdir(join(cwd, ".lori"), { recursive: true });
+    await writeFile(join(cwd, ".lori", "snapshot.json"), JSON.stringify({
+      schemaVersion: 1,
+      player: { totalXp: 0 },
+      session: {
+        status: "open",
+        domain: "React",
+        primaryTechnique: "Active Recall",
+        startedAt: Date.now() - 65_000,
+      },
+      skinConfig: { skin: "minimal" },
+    }));
+
+    await harness.start();
+    await harness.runStatus();
+
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Elapsed: 00:01:05");
+    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toContain("Elapsed: 00:01:05");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Elapsed: 00:01:05");
+  });
+
+  test("restores an open Session from the project snapshot", async () => {
+    const { cwd, harness: firstInstance } = await createHarness();
+    await firstInstance.start();
+    await firstInstance.runStart("Japanese | Direct Practice");
+    const savedSnapshot = await readFile(join(cwd, ".lori", "snapshot.json"), "utf8");
+
+    const { harness: reloadedInstance } = await createHarness(cwd);
+    await reloadedInstance.start();
+    await reloadedInstance.runStatus();
+
+    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Session: open");
+    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Domain: Japanese");
+    expect(reloadedInstance.ui.widgets.at(-1)?.content?.join(" ")).toContain("Primary Technique: Direct Practice");
+    expect(reloadedInstance.ui.notifications.at(-1)?.message).toContain("Elapsed: 00:00:00");
+    expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).toBe(savedSnapshot);
   });
 
   test("restores the initial project snapshot when a fresh extension instance starts", async () => {

@@ -14,6 +14,14 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
+function isSession(value: unknown): value is NonNullable<LoriState["session"]> {
+  return isRecord(value) &&
+    value.status === "open" &&
+    typeof value.domain === "string" && value.domain.trim().length > 0 &&
+    typeof value.primaryTechnique === "string" && value.primaryTechnique.trim().length > 0 &&
+    typeof value.startedAt === "number" && Number.isFinite(value.startedAt);
+}
+
 function decodeSnapshot(value: unknown): SnapshotResult {
   if (!isRecord(value)) {
     return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
@@ -35,7 +43,7 @@ function decodeSnapshot(value: unknown): SnapshotResult {
     typeof player.totalXp !== "number" ||
     !Number.isFinite(player.totalXp) ||
     player.totalXp < 0 ||
-    value.session !== null ||
+    (value.session !== null && !isSession(value.session)) ||
     !isRecord(skinConfig) ||
     skinConfig.skin !== "minimal"
   ) {
@@ -46,7 +54,14 @@ function decodeSnapshot(value: unknown): SnapshotResult {
     ok: true,
     state: {
       player: { totalXp: player.totalXp },
-      session: null,
+      session: value.session === null
+        ? null
+        : {
+            status: "open",
+            domain: value.session.domain,
+            primaryTechnique: value.session.primaryTechnique,
+            startedAt: value.session.startedAt,
+          },
       skinConfig: { skin: "minimal" },
     },
   };
