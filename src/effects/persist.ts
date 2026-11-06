@@ -14,12 +14,47 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function isSession(value: unknown): value is NonNullable<LoriState["session"]> {
-  return isRecord(value) &&
-    value.status === "open" &&
-    typeof value.domain === "string" && value.domain.trim().length > 0 &&
-    typeof value.primaryTechnique === "string" && value.primaryTechnique.trim().length > 0 &&
-    typeof value.startedAt === "number" && Number.isFinite(value.startedAt);
+function decodeSession(value: unknown): NonNullable<LoriState["session"]> | null | undefined {
+  if (value === null) return null;
+  if (
+    !isRecord(value) ||
+    (value.status !== "open" && value.status !== "paused") ||
+    typeof value.domain !== "string" || value.domain.trim().length === 0 ||
+    typeof value.primaryTechnique !== "string" || value.primaryTechnique.trim().length === 0 ||
+    typeof value.startedAt !== "number" || !Number.isFinite(value.startedAt)
+  ) {
+    return undefined;
+  }
+
+  const totalPausedMs = value.totalPausedMs === undefined ? 0 : value.totalPausedMs;
+  if (typeof totalPausedMs !== "number" || !Number.isFinite(totalPausedMs) || totalPausedMs < 0) {
+    return undefined;
+  }
+
+  if (value.status === "open") {
+    return {
+      status: "open",
+      domain: value.domain,
+      primaryTechnique: value.primaryTechnique,
+      startedAt: value.startedAt,
+      totalPausedMs,
+    };
+  }
+
+  if (
+    typeof value.pausedAt !== "number" || !Number.isFinite(value.pausedAt) ||
+    value.pausedAt < value.startedAt + totalPausedMs
+  ) {
+    return undefined;
+  }
+  return {
+    status: "paused",
+    domain: value.domain,
+    primaryTechnique: value.primaryTechnique,
+    startedAt: value.startedAt,
+    totalPausedMs,
+    pausedAt: value.pausedAt,
+  };
 }
 
 function decodeSnapshot(value: unknown): SnapshotResult {
@@ -37,13 +72,14 @@ function decodeSnapshot(value: unknown): SnapshotResult {
   }
 
   const player = value.player;
+  const session = decodeSession(value.session);
   const skinConfig = value.skinConfig;
   if (
     !isRecord(player) ||
     typeof player.totalXp !== "number" ||
     !Number.isFinite(player.totalXp) ||
     player.totalXp < 0 ||
-    (value.session !== null && !isSession(value.session)) ||
+    session === undefined ||
     !isRecord(skinConfig) ||
     skinConfig.skin !== "minimal"
   ) {
@@ -54,14 +90,7 @@ function decodeSnapshot(value: unknown): SnapshotResult {
     ok: true,
     state: {
       player: { totalXp: player.totalXp },
-      session: value.session === null
-        ? null
-        : {
-            status: "open",
-            domain: value.session.domain,
-            primaryTechnique: value.session.primaryTechnique,
-            startedAt: value.session.startedAt,
-          },
+      session,
       skinConfig: { skin: "minimal" },
     },
   };

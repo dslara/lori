@@ -31,7 +31,7 @@ export function formatStatus(state: LoriState, now = Date.now()): string {
   const sessionStatus = state.session === null
     ? "Session: nenhuma ativa"
     : [
-        "Session: open",
+        `Session: ${state.session.status}`,
         `Domain: ${state.session.domain}`,
         `Primary Technique: ${state.session.primaryTechnique}`,
         `Elapsed: ${formatElapsed(selectElapsedMs(state.session, now))}`,

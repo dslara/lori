@@ -1,4 +1,5 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { restoreSessionAsPaused } from "../../src/core/processors/lifecycle.ts";
 import { loadOrCreateSnapshot, writeSnapshot } from "../../src/effects/persist.ts";
 import { createStore, type LoriStore } from "../../src/store/store.ts";
 import { formatStatus, type LoriState } from "../../src/state.ts";
@@ -76,7 +77,7 @@ export default function loriExtension(pi: ExtensionAPI): void {
       const nextState = store.getState();
       if (nextState === previousState) {
         ctx.ui.notify(
-          `Lori: já existe uma Session aberta no Domain ${previousState.session?.domain}; ela não foi substituída.`,
+          `Lori: já existe uma Session ${previousState.session?.status === "paused" ? "pausada" : "aberta"} no Domain ${previousState.session?.domain}; ela não foi substituída.`,
           "warning",
         );
         return;
@@ -95,6 +96,92 @@ export default function loriExtension(pi: ExtensionAPI): void {
     },
   });
 
+  pi.registerCommand("lori-abandon", {
+    description: "Abandonar a Session aberta como pausa neutra",
+    handler: async (_args, ctx) => {
+      if (startupError) {
+        ctx.ui.notify(startupError, "error");
+        return;
+      }
+      if (!store || !projectDir) {
+        ctx.ui.notify("Lori ainda não foi inicializada nesta sessão.", "warning");
+        return;
+      }
+
+      const previousState = store.getState();
+      const session = previousState.session;
+      if (session?.status !== "open") {
+        ctx.ui.notify("Lori: não há Session aberta para abandonar.", "warning");
+        return;
+      }
+      const pausedAt = Date.now();
+      if (!Number.isFinite(pausedAt) || pausedAt < session.startedAt + session.totalPausedMs) {
+        ctx.ui.notify("Lori: horário inválido; a Session não foi alterada.", "warning");
+        return;
+      }
+
+      store.dispatch({ type: "session/abandon", pausedAt });
+      const nextState = store.getState();
+      if (nextState === previousState) {
+        ctx.ui.notify("Lori: não foi possível abandonar esta Session.", "warning");
+        return;
+      }
+      try {
+        await writeSnapshot(projectDir, nextState);
+      } catch {
+        store = createStore(previousState);
+        ctx.ui.notify("Lori: Session não pausada porque não foi possível persistir o snapshot.", "error");
+        return;
+      }
+
+      showStatus(ctx, nextState);
+      ctx.ui.notify("Lori: Session pausada. Você pode retomá-la quando quiser.", "info");
+    },
+  });
+
+  pi.registerCommand("lori-resume", {
+    description: "Retomar uma Session pausada",
+    handler: async (_args, ctx) => {
+      if (startupError) {
+        ctx.ui.notify(startupError, "error");
+        return;
+      }
+      if (!store || !projectDir) {
+        ctx.ui.notify("Lori ainda não foi inicializada nesta sessão.", "warning");
+        return;
+      }
+
+      const previousState = store.getState();
+      const session = previousState.session;
+      if (session?.status !== "paused") {
+        ctx.ui.notify("Lori: não há Session pausada para retomar.", "warning");
+        return;
+      }
+      const resumedAt = Date.now();
+      if (!Number.isFinite(resumedAt) || resumedAt < session.pausedAt) {
+        ctx.ui.notify("Lori: horário inválido; a Session não foi alterada.", "warning");
+        return;
+      }
+
+      store.dispatch({ type: "session/resume", resumedAt });
+      const nextState = store.getState();
+      if (nextState === previousState) {
+        ctx.ui.notify("Lori: não foi possível retomar esta Session.", "warning");
+        return;
+      }
+      try {
+        await writeSnapshot(projectDir, nextState);
+      } catch {
+        store = createStore(previousState);
+        ctx.ui.notify("Lori: Session não retomada porque não foi possível persistir o snapshot.", "error");
+        return;
+      }
+
+      showStatus(ctx, nextState);
+      ctx.ui.notify("Lori: Session retomada.", "info");
+    },
+  });
+
   pi.on("session_start", async (_event, ctx) => {
     const result = await loadOrCreateSnapshot(ctx.cwd);
     if (!result.ok) {
@@ -108,6 +195,29 @@ export default function loriExtension(pi: ExtensionAPI): void {
     store = createStore(result.state);
     projectDir = ctx.cwd;
     startupError = undefined;
+
+    const restoreAction = restoreSessionAsPaused(store.getState().session, Date.now());
+    if (restoreAction) {
+      const previousState = store.getState();
+      store.dispatch(restoreAction);
+      const nextState = store.getState();
+      if (nextState === previousState) {
+        store = undefined;
+        projectDir = undefined;
+        startupError = "Lori: a Session aberta não pôde ser restaurada como pausa.";
+        showError(ctx, startupError);
+        return;
+      }
+      try {
+        await writeSnapshot(ctx.cwd, nextState);
+      } catch {
+        store = undefined;
+        projectDir = undefined;
+        startupError = "Lori: Session não restaurada porque não foi possível persistir o snapshot.";
+        showError(ctx, startupError);
+        return;
+      }
+    }
     showStatus(ctx, store.getState());
   });
 }
