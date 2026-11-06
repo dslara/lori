@@ -16,6 +16,7 @@ describe("Session core", () => {
       domain: "React",
       primaryTechnique: "Active Recall",
       startedAt: 1_000,
+      totalPausedMs: 0,
     });
     expect(selectElapsedMs(session!, 3_500)).toBe(2_500);
   });
@@ -39,6 +40,89 @@ describe("Session core", () => {
       primaryTechnique: "Active Recall",
       startedAt: Number.NaN,
     })).toBeNull();
+  });
+
+  test("abandons an open Session and excludes the paused duration from elapsed", () => {
+    const opened = reduceSession(null, {
+      type: "session/open",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+      startedAt: 1_000,
+    });
+    const paused = reduceSession(opened, {
+      type: "session/abandon",
+      pausedAt: 4_000,
+    });
+
+    expect(paused).toEqual({
+      status: "paused",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+      startedAt: 1_000,
+      totalPausedMs: 0,
+      pausedAt: 4_000,
+    });
+    expect(selectElapsedMs(paused!, 9_000)).toBe(3_000);
+  });
+
+  test("resumes a paused Session without adding pause duration to elapsed", () => {
+    const opened = reduceSession(null, {
+      type: "session/open",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+      startedAt: 1_000,
+    });
+    const paused = reduceSession(opened, {
+      type: "session/abandon",
+      pausedAt: 4_000,
+    });
+    const resumed = reduceSession(paused, {
+      type: "session/resume",
+      resumedAt: 10_000,
+    });
+
+    expect(resumed).toEqual({
+      status: "open",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+      startedAt: 1_000,
+      totalPausedMs: 6_000,
+    });
+    expect(selectElapsedMs(resumed!, 12_000)).toBe(5_000);
+  });
+
+  test("accumulates elapsed across repeated abandon and resume cycles", () => {
+    const opened = reduceSession(null, {
+      type: "session/open",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+      startedAt: 1_000,
+    });
+    const firstPause = reduceSession(opened, { type: "session/abandon", pausedAt: 4_000 });
+    const firstResume = reduceSession(firstPause, { type: "session/resume", resumedAt: 10_000 });
+    const secondPause = reduceSession(firstResume, { type: "session/abandon", pausedAt: 13_000 });
+    const secondResume = reduceSession(secondPause, { type: "session/resume", resumedAt: 15_000 });
+
+    expect(selectElapsedMs(secondPause!, 20_000)).toBe(6_000);
+    expect(selectElapsedMs(secondResume!, 17_000)).toBe(8_000);
+  });
+
+  test("rejects invalid pause and resume transitions without changing state", () => {
+    const opened = reduceSession(null, {
+      type: "session/open",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+      startedAt: 1_000,
+    });
+    const alreadyPaused = reduceSession(opened, {
+      type: "session/abandon",
+      pausedAt: 4_000,
+    });
+
+    expect(reduceSession(opened, { type: "session/abandon", pausedAt: 999 })).toBe(opened);
+    expect(reduceSession(alreadyPaused, { type: "session/abandon", pausedAt: 5_000 })).toBe(alreadyPaused);
+    expect(reduceSession(alreadyPaused, { type: "session/resume", resumedAt: 3_999 })).toBe(alreadyPaused);
+    expect(reduceSession(opened, { type: "session/resume", resumedAt: 5_000 })).toBe(opened);
   });
 
   test("does not replace an open Session", () => {

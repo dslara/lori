@@ -21,6 +21,8 @@ type Harness = {
   start(): Promise<void>;
   runStatus(): Promise<void>;
   runStart(args: string): Promise<void>;
+  runAbandon(): Promise<void>;
+  runResume(): Promise<void>;
   ui: UI;
 };
 
@@ -79,6 +81,16 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
         expect(handler).toBeDefined();
         await handler?.(args, { ui });
       },
+      async runAbandon() {
+        const handler = commandHandlers.get("lori-abandon");
+        expect(handler).toBeDefined();
+        await handler?.("", { ui });
+      },
+      async runResume() {
+        const handler = commandHandlers.get("lori-resume");
+        expect(handler).toBeDefined();
+        await handler?.("", { ui });
+      },
     },
   };
 }
@@ -136,6 +148,59 @@ describe("Lori startup and status", () => {
     expect(harness.ui.notifications.at(-1)?.message).toContain("Primary Technique: Active Recall");
   });
 
+  test("abandons and resumes a Session without losing accumulated study time", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    await harness.runStart("React | Active Recall");
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const opened = JSON.parse(await readFile(snapshotPath, "utf8")).session;
+
+    await harness.runAbandon();
+    const paused = JSON.parse(await readFile(snapshotPath, "utf8")).session;
+    expect(paused).toMatchObject({
+      status: "paused",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+      startedAt: opened.startedAt,
+    });
+    expect(paused.pausedAt).toBeGreaterThanOrEqual(opened.startedAt);
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Session pausada");
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Elapsed:");
+
+    await harness.runResume();
+    const resumed = JSON.parse(await readFile(snapshotPath, "utf8")).session;
+    expect(resumed).toMatchObject({
+      status: "open",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+      startedAt: opened.startedAt,
+    });
+    expect(resumed.totalPausedMs).toBeGreaterThanOrEqual(0);
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Session retomada");
+  });
+
+  test("rejects abandon and resume when the Session is in the wrong state", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const initialSnapshot = await readFile(snapshotPath, "utf8");
+
+    await harness.runAbandon();
+    await harness.runResume();
+    expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
+
+    await harness.runStart("React | Active Recall");
+    const openSnapshot = await readFile(snapshotPath, "utf8");
+    await harness.runResume();
+    expect(await readFile(snapshotPath, "utf8")).toBe(openSnapshot);
+
+    await harness.runAbandon();
+    const pausedSnapshot = await readFile(snapshotPath, "utf8");
+    await harness.runAbandon();
+    expect(await readFile(snapshotPath, "utf8")).toBe(pausedSnapshot);
+    expect(harness.ui.notifications.at(-1)?.type).toBe("warning");
+  });
+
   test("rejects invalid start arguments without changing or persisting state", async () => {
     const { cwd, harness } = await createHarness();
     await harness.start();
@@ -181,7 +246,7 @@ describe("Lori startup and status", () => {
     expect(harness.ui.statuses.at(-1)?.text).not.toContain("Japanese");
   });
 
-  test("derives elapsed on status and dashboard refreshes from the persisted timestamp", async () => {
+  test("restores an open Session as paused and persists its excluded pause time", async () => {
     const { cwd, harness } = await createHarness();
     await mkdir(join(cwd, ".lori"), { recursive: true });
     await writeFile(join(cwd, ".lori", "snapshot.json"), JSON.stringify({
@@ -199,12 +264,19 @@ describe("Lori startup and status", () => {
     await harness.start();
     await harness.runStatus();
 
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Session restaurada como pausada");
     expect(harness.ui.statuses.at(-1)?.text).toContain("Elapsed: 00:01:05");
     expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toContain("Elapsed: 00:01:05");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Elapsed: 00:01:05");
+
+    const restoredSnapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(restoredSnapshot.session).toMatchObject({ status: "paused" });
+    expect(typeof restoredSnapshot.session.pausedAt).toBe("number");
+    await harness.runStatus();
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Elapsed: 00:01:05");
   });
 
-  test("restores an open Session from the project snapshot", async () => {
+  test("restores a paused Session from the project snapshot", async () => {
     const { cwd, harness: firstInstance } = await createHarness();
     await firstInstance.start();
     await firstInstance.runStart("Japanese | Direct Practice");
@@ -214,11 +286,11 @@ describe("Lori startup and status", () => {
     await reloadedInstance.start();
     await reloadedInstance.runStatus();
 
-    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Session: open");
+    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Session restaurada como pausada");
     expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Domain: Japanese");
     expect(reloadedInstance.ui.widgets.at(-1)?.content?.join(" ")).toContain("Primary Technique: Direct Practice");
     expect(reloadedInstance.ui.notifications.at(-1)?.message).toContain("Elapsed: 00:00:00");
-    expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).toBe(savedSnapshot);
+    expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).not.toBe(savedSnapshot);
   });
 
   test("restores the initial project snapshot when a fresh extension instance starts", async () => {
@@ -280,7 +352,7 @@ describe("Lori startup and status", () => {
     expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal XP=15");
   });
 
-  test("renders an active Session with the configured custom Skin", async () => {
+  test("renders a restored and paused Session with the configured custom Skin", async () => {
     const { cwd, harness } = await createHarness();
     await mkdir(join(cwd, ".lori", "skins"), { recursive: true });
     await writeFile(
@@ -301,20 +373,27 @@ describe("Lori startup and status", () => {
       join(cwd, ".lori", "skins", "terminal.json"),
       JSON.stringify({
         id: "terminal",
-        templates: { "session.open": "Terminal Session {domain} | {technique} | {elapsed}" },
+        templates: {
+          "session.restored": "Terminal restored Session {domain} | {technique} | {elapsed}",
+          "session.paused": "Terminal paused Session {domain} | {technique} | {elapsed}",
+        },
       }),
     );
 
     await harness.start();
     await harness.runStatus();
 
-    for (const display of [
-      harness.ui.statuses.at(-1)?.text,
-      harness.ui.widgets.at(-1)?.content?.join(" "),
-      harness.ui.notifications.at(-1)?.message,
-    ]) {
-      expect(display).toContain("Terminal Session React | Active Recall | 00:01:05");
-    }
+    expect(harness.ui.statuses.at(-1)?.text).toBe(
+      "Terminal restored Session React | Active Recall | 00:01:05",
+    );
+    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toBe(
+      "Lori Terminal restored Session React | Active Recall | 00:01:05",
+    );
+
+    await harness.runStatus();
+    expect(harness.ui.notifications.at(-1)?.message).toBe(
+      "Terminal paused Session React | Active Recall | 00:01:05",
+    );
   });
 
   test("preserves a missing custom Skin ID in the snapshot and uses Minimal", async () => {
