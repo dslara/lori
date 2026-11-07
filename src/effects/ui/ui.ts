@@ -1,13 +1,8 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { selectElapsedMs } from "../core/session/selectors.ts";
-import type { SkinProvider } from "../presentation/skin/provider.ts";
-import type { LoriState } from "../state.ts";
-
-export type SessionDisplayEvent =
-  | "session.open"
-  | "session.paused"
-  | "session.resumed"
-  | "session.restored";
+import { selectElapsedMs } from "../../core/session/selectors.ts";
+import type { SkinProvider } from "../../presentation/skin/provider.ts";
+import type { LoriState } from "../../state.ts";
+import type { SessionDisplayEvent } from "./types.ts";
 
 const STATUS_KEY = "lori";
 

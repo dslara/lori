@@ -2,19 +2,11 @@ import { mkdir, readFile, realpath, rename, rm, writeFile } from "node:fs/promis
 import { lock as acquireFileLock } from "proper-lockfile";
 import { randomUUID } from "node:crypto";
 import { dirname, isAbsolute, join, relative, sep } from "node:path";
-import { createInitialState, type LoriState } from "../state.ts";
+import { createInitialState, type LoriState } from "../../state.ts";
+import type { SnapshotResult, SnapshotTransaction } from "./types.ts";
 
 export const SNAPSHOT_SCHEMA_VERSION = 1;
 export const SNAPSHOT_RELATIVE_PATH = ".lori/snapshot.json";
-
-export type SnapshotResult =
-  | { ok: true; state: LoriState }
-  | { ok: false; error: string };
-
-export type SnapshotTransaction = {
-  loadOrCreate(): Promise<SnapshotResult>;
-  write(state: LoriState): Promise<void>;
-};
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);

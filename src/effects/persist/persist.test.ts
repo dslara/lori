@@ -2,7 +2,7 @@ import { lstat, mkdir, mkdtemp, readFile, readdir, rm, symlink, writeFile } from
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, test } from "bun:test";
-import { createInitialState } from "../state.ts";
+import { createInitialState } from "../../state.ts";
 import {
   loadOrCreateSnapshot,
   SNAPSHOT_RELATIVE_PATH,

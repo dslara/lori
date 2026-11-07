@@ -1,36 +1,20 @@
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { restoreSessionAsPaused } from "../core/processors/lifecycle.ts";
-import { selectCanOpenSession } from "../core/session/selectors.ts";
-import type { SessionAction } from "../core/session/types.ts";
-import { createStore, type LoriStore } from "../store/store.ts";
-import type { LoriState } from "../state.ts";
-import type { SkinProvider } from "../presentation/skin/provider.ts";
-import { loadOrCreateSnapshot, withSnapshotLock, type SnapshotResult } from "./persist.ts";
-import { showError, showStatus } from "./ui.ts";
-
-export type DispatchAndPersistResult =
-  | { status: "unchanged" | "persisted"; state: LoriState }
-  | { status: "load-failed"; error: string }
-  | { status: "persistence-failed"; state: LoriState }
-  | { status: "lock-failed" };
-
-export type SessionInitializationResult =
-  | { ok: true; state: LoriState; restored: boolean }
-  | { ok: false; error: string };
-
-export type SessionActionFactory = (state: LoriState) => SessionAction | undefined;
-
-export type LoriExtensionState = {
-  store: LoriStore | undefined;
-  projectDir: string | undefined;
-  skin: SkinProvider | undefined;
-  startupError: string | undefined;
-};
-
-type StartInput = {
-  domain?: string;
-  primaryTechnique?: string;
-};
+import { restoreSessionAsPaused } from "../../core/processors/lifecycle.ts";
+import { selectCanOpenSession } from "../../core/session/selectors.ts";
+import { createStore, type LoriStore } from "../../store/store.ts";
+import type { LoriState } from "../../state.ts";
+import type { SkinProvider } from "../../presentation/skin/provider.ts";
+import { loadOrCreateSnapshot, withSnapshotLock } from "../persist/persist.ts";
+import type { SnapshotResult } from "../persist/types.ts";
+import { showError, showStatus } from "../ui/ui.ts";
+import type {
+  DispatchAndPersistResult,
+  LoriExtensionState,
+  ResolvedStartInput,
+  SessionActionFactory,
+  SessionInitializationResult,
+  StartInput,
+} from "./types.ts";
 
 function splitPipeArgs(args: string): [string, string] | null {
   const separator = args.indexOf("|");
@@ -61,8 +45,6 @@ export function parseStartArgs(args: string): StartInput | null {
     ...(primaryTechnique.length > 0 ? { primaryTechnique } : {}),
   };
 }
-
-type ResolvedStartInput = Required<StartInput>;
 
 async function promptStartValue(
   ctx: Pick<ExtensionContext, "ui">,
