@@ -134,4 +134,14 @@ describe("Skin provider", () => {
       "Lori · Session: nenhuma ativa · XP: 0 · Skin Minimal",
     );
   });
+
+  test("keeps placeholder-like parameter text literal", async () => {
+    const provider = await createSkinProvider(await createProjectDir(), { skin: "minimal" });
+
+    expect(provider.render("session.open", {
+      domain: "{elapsed}",
+      technique: "Recall",
+      elapsed: "00:00:10",
+    })).toBe("Lori · Session: open · Domain: {elapsed} · Primary Technique: Recall · Elapsed: 00:00:10");
+  });
 });

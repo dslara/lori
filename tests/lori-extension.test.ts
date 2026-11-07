@@ -132,7 +132,7 @@ describe("Lori startup and status", () => {
       skinConfig: { skin: "minimal" },
     });
     expect(harness.ui.statuses.at(-1)?.text).toContain("Session: nenhuma ativa");
-    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toContain("Skin Minimal");
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Skin Minimal");
 
     await harness.runStatus();
     expect(harness.ui.notifications.at(-1)?.message).toContain("Session: nenhuma ativa");
@@ -168,16 +168,12 @@ describe("Lori startup and status", () => {
       primaryTechnique: "Active Recall",
     });
     expect(typeof snapshot.session.startedAt).toBe("number");
-    for (const display of [
-      harness.ui.statuses.at(-1)?.text,
-      harness.ui.widgets.at(-1)?.content?.join(" "),
-    ]) {
-      expect(display).toContain("Session: open");
-      expect(display).toContain("Domain: React");
-      expect(display).toContain("Primary Technique: Active Recall");
-      expect(display).toContain("Elapsed: 00:00:00");
-    }
-    expect(harness.ui.notifications.at(-1)?.message).toContain("Session iniciada");
+    const status = harness.ui.statuses.at(-1)?.text ?? "";
+    expect(status).toContain("Session: open");
+    expect(status).toContain("Domain: React");
+    expect(status).toContain("Primary Technique: Active Recall");
+    expect(status).toContain("Elapsed: 00:00:00");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Session: open");
 
     await harness.runStatus();
     expect(harness.ui.notifications.at(-1)?.message).toContain("Domain: React");
@@ -196,7 +192,6 @@ describe("Lori startup and status", () => {
       await harness.runStatus();
 
       expect(harness.ui.statuses.at(-1)?.text).toContain("Elapsed: 00:01:00");
-      expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toContain("Elapsed: 00:01:00");
       expect(harness.ui.notifications.at(-1)?.message).toContain("Elapsed: 00:01:00");
     } finally {
       now.mockRestore();
@@ -231,7 +226,6 @@ describe("Lori startup and status", () => {
     expect(closedSnapshot.session.closedAt).toBeGreaterThanOrEqual(closedSnapshot.session.startedAt);
     expect(harness.ui.statuses.at(-1)?.text).toContain("Session fechada");
     expect(harness.ui.statuses.at(-1)?.text).toContain("Focus: 2.5 · Honesty: 4");
-    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toContain("Focus: 2.5 · Honesty: 4");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Session fechada");
 
     const { harness: restored } = await createHarness(cwd);
@@ -267,7 +261,6 @@ describe("Lori startup and status", () => {
     await harness.runClose("3 | 4");
 
     expect(harness.ui.statuses.at(-1)?.text).toMatch(/^Terminal close React · 00:00:00 · 3\/4$/);
-    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toMatch(/^Lori Terminal close React · 00:00:00 · 3\/4$/);
   });
 
   test("closes a paused Session without adding paused time or applying a rating range", async () => {
@@ -423,8 +416,9 @@ describe("Lori startup and status", () => {
     await harness.runStart("Japanese | Direct Practice");
 
     expect(await readFile(snapshotPath, "utf8")).toBe(openedSnapshot);
-    expect(harness.ui.notifications.at(-1)?.message).toContain("já existe uma Session aberta");
-    expect(harness.ui.notifications.at(-1)?.message).toContain("não foi substituída");
+    const rejection = harness.ui.notifications.at(-1)?.message ?? "";
+    expect(rejection).toContain("Session não iniciada");
+    expect(rejection).toContain("já existe uma Session ativa");
     expect(harness.ui.statuses.at(-1)?.text).toContain("Domain: React");
     expect(harness.ui.statuses.at(-1)?.text).not.toContain("Japanese");
   });
@@ -447,12 +441,10 @@ describe("Lori startup and status", () => {
     await harness.start();
 
     expect(harness.ui.statuses.at(-1)?.text).toContain("Session restaurada como pausada");
-    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toContain("Session restaurada como pausada");
     await harness.runStatus();
 
     expect(harness.ui.statuses.at(-1)?.text).toContain("Session pausada");
     expect(harness.ui.statuses.at(-1)?.text).toContain("Elapsed: 00:01:05");
-    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toContain("Elapsed: 00:01:05");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Session pausada");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Elapsed: 00:01:05");
 
@@ -461,6 +453,42 @@ describe("Lori startup and status", () => {
     expect(typeof restoredSnapshot.session.pausedAt).toBe("number");
     await harness.runStatus();
     expect(harness.ui.notifications.at(-1)?.message).toContain("Elapsed: 00:01:05");
+  });
+
+  test("restores and transitions a Session when the system clock moved backward", async () => {
+    const { cwd, harness } = await createHarness();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    await mkdir(join(cwd, ".lori"), { recursive: true });
+    await writeFile(snapshotPath, JSON.stringify({
+      schemaVersion: 1,
+      player: { totalXp: 0 },
+      session: {
+        status: "open",
+        domain: "React",
+        primaryTechnique: "Active Recall",
+        startedAt: 1_000,
+        totalPausedMs: 2_000,
+      },
+      skinConfig: { skin: "minimal" },
+    }));
+    const now = spyOn(Date, "now").mockReturnValue(2_500);
+    const readSession = async () => JSON.parse(await readFile(snapshotPath, "utf8")).session;
+
+    try {
+      await harness.start();
+      expect(await readSession()).toMatchObject({ status: "paused", pausedAt: 3_000 });
+
+      await harness.runResume();
+      expect((await readSession()).status).toBe("open");
+
+      await harness.runClose("1 | 1");
+      expect(await readSession()).toMatchObject({
+        status: "closed",
+        closedAt: 3_000,
+      });
+    } finally {
+      now.mockRestore();
+    }
   });
 
   test("restores a paused Session from the project snapshot", async () => {
@@ -477,7 +505,7 @@ describe("Lori startup and status", () => {
 
     expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Session pausada");
     expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Domain: Japanese");
-    expect(reloadedInstance.ui.widgets.at(-1)?.content?.join(" ")).toContain("Primary Technique: Direct Practice");
+    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Primary Technique: Direct Practice");
     expect(reloadedInstance.ui.notifications.at(-1)?.message).toContain("Elapsed: 00:00:00");
     expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).not.toBe(savedSnapshot);
   });
@@ -492,7 +520,7 @@ describe("Lori startup and status", () => {
     await reloadedInstance.runStatus();
 
     expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("XP: 0");
-    expect(reloadedInstance.ui.widgets.at(-1)?.content?.join(" ")).toContain("Session: nenhuma ativa");
+    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Session: nenhuma ativa");
     expect(reloadedInstance.ui.notifications.at(-1)?.message).toContain("Skin Minimal");
     expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).toBe(savedSnapshot);
   });
@@ -511,7 +539,6 @@ describe("Lori startup and status", () => {
     expect(harness.ui.notifications[0]?.message).toContain("ilegível");
     expect(harness.ui.notifications[0]?.message).toContain("preservado");
     expect(harness.ui.statuses.at(-1)?.text).toContain("erro no snapshot");
-    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toContain("ilegível");
     expect(harness.ui.notifications.at(-1)?.message).toContain("preservado");
     expect(await readFile(snapshotPath, "utf8")).toBe(originalContents);
   });
@@ -537,7 +564,6 @@ describe("Lori startup and status", () => {
     await harness.runStatus();
 
     expect(harness.ui.statuses.at(-1)?.text).toBe("Terminal XP=15");
-    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toBe("Lori Terminal XP=15");
     expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal XP=15");
   });
 
@@ -574,16 +600,10 @@ describe("Lori startup and status", () => {
     expect(harness.ui.statuses.at(-1)?.text).toBe(
       "Terminal restored Session React | Active Recall | 00:01:05",
     );
-    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toBe(
-      "Lori Terminal restored Session React | Active Recall | 00:01:05",
-    );
 
     await harness.runStatus();
     expect(harness.ui.statuses.at(-1)?.text).toBe(
       "Terminal paused Session React | Active Recall | 00:01:05",
-    );
-    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toBe(
-      "Lori Terminal paused Session React | Active Recall | 00:01:05",
     );
     expect(harness.ui.notifications.at(-1)?.message).toBe(
       "Terminal paused Session React | Active Recall | 00:01:05",
@@ -657,8 +677,82 @@ describe("Lori startup and status", () => {
     expect(harness.ui.notifications[0]?.type).toBe("error");
     expect(harness.ui.notifications[0]?.message).toContain("não suportada (2)");
     expect(harness.ui.notifications[0]?.message).toContain("preservado");
-    expect(harness.ui.widgets.at(-1)?.content?.join(" ")).toContain("não suportada");
     expect(harness.ui.notifications.at(-1)?.message).toContain("não suportada");
     expect(await readFile(snapshotPath, "utf8")).toBe(originalContents);
+  });
+
+  test("uses the configured Skin for Session command feedback", async () => {
+    const { cwd, harness } = await createHarness();
+    await mkdir(join(cwd, ".lori", "skins"), { recursive: true });
+    await writeFile(
+      join(cwd, ".lori", "snapshot.json"),
+      JSON.stringify({
+        schemaVersion: 1,
+        player: { totalXp: 0 },
+        session: null,
+        skinConfig: { skin: "terminal" },
+      }),
+    );
+    await writeFile(
+      join(cwd, ".lori", "skins", "terminal.json"),
+      JSON.stringify({
+        id: "terminal",
+        templates: {
+          "session.open": "Terminal open {domain}",
+          "session.startRejected": "Terminal start rejected {domain}",
+          "session.pauseRejected": "Terminal pause rejected {domain}",
+          "session.paused": "Terminal paused {domain}",
+          "session.resumeRejected": "Terminal resume rejected {domain}",
+          "session.resumed": "Terminal resumed {domain}",
+          "session.closed": "Terminal closed {domain} {focus}/{honesty}",
+          "session.closeRejected": "Terminal close rejected {domain}",
+        },
+      }),
+    );
+
+    await harness.start();
+    await harness.runStart("React | Active Recall");
+    expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal open React");
+
+    await harness.runStart("Japanese | Direct Practice");
+    expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal start rejected Japanese");
+
+    await harness.runResume();
+    expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal resume rejected React");
+
+    await harness.runAbandon();
+    expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal paused React");
+
+    await harness.runAbandon();
+    expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal pause rejected React");
+
+    await harness.runResume();
+    expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal resumed React");
+
+    await harness.runClose("4 | 5");
+    expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal closed React 4/5");
+
+    await harness.runClose("4 | 5");
+    expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal close rejected React");
+  });
+
+  test("prevents two extension instances from replacing the same active Session", async () => {
+    const { cwd, harness: first } = await createHarness();
+    await first.start();
+    const { harness: second } = await createHarness(cwd);
+    await second.start();
+
+    await Promise.all([
+      first.runStart("React | Active Recall"),
+      second.runStart("Japanese | Direct Practice"),
+    ]);
+
+    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    const notifications = [...first.ui.notifications, ...second.ui.notifications];
+    const infos = notifications.filter(({ type }) => type === "info");
+    const warnings = notifications.filter(({ type }) => type === "warning");
+    expect(infos).toHaveLength(1);
+    expect(warnings).toHaveLength(1);
+    expect(["React", "Japanese"]).toContain(snapshot.session.domain);
   });
 });

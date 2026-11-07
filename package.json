@@ -20,9 +20,15 @@
     "extensions": ["./extensions/lori/index.ts"]
   },
   "scripts": {
-    "test": "bun test"
+    "test": "bun test",
+    "typecheck": "tsc --noEmit"
   },
   "devDependencies": {
-    "@types/bun": "latest"
+    "@types/bun": "latest",
+    "@types/proper-lockfile": "^4.1.4",
+    "typescript": "^7.0.2"
+  },
+  "dependencies": {
+    "proper-lockfile": "4.1.2"
   }
 }

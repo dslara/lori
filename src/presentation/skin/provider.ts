@@ -81,11 +81,12 @@ function validateTemplates(data: unknown, expectedId: string): Templates {
 }
 
 function interpolate(template: string, parameters: Record<string, string | number>): string {
-  let result = template;
-  for (const [name, value] of Object.entries(parameters)) {
-    result = result.replaceAll(`{${name}}`, String(value));
-  }
-  return result;
+  return template.replace(/\{([^{}]+)\}/g, (placeholder, name: string) => {
+    if (!Object.hasOwn(parameters, name)) {
+      return placeholder;
+    }
+    return String(parameters[name]);
+  });
 }
 
 export async function createSkinProvider(projectDir: string, skinConfig: SkinConfig): Promise<SkinProvider> {

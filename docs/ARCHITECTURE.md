@@ -23,7 +23,7 @@ Arquitetura escolhe o mais simples que fecha a Fase 1: abrir e fechar Lori sessi
 |---|---------|----------------------|---------|
 | 1 | **Store simples, sem `subscribe`** | Redux-like com middleware | Sem processo persistente, effects chamam direto. Persist é chamada explícita após `dispatch`. |
 | 2 | **Core funcional puro com ban de imports** | OO com classes mutáveis | Dados planos mais funções puras serializam de graça e testam sem mock. `core/` não importa `fs`, Pi SDK, skin ou store. |
-| 3 | **Snapshot JSON atômico versionado** | Event log com replay | Zero query na Fase 1. Replay vira fog para quando SRS e ghost pedirem audit. Tipos Action e Event mantidos para migração barata. |
+| 3 | **Snapshot JSON atômico, versionado e locked entre processos** | Event log com replay | Snapshot pequeno dispensa query. Lock serializa load-check-dispatch-write entre TUI e `pi -p`; rename impede arquivo parcial e `proper-lockfile` evita lost updates. Replay vira fog para SRS e ghost. Tipos Action e Event mantidos para migração barata. |
 | 4 | **`bun:sqlite` como upgrade, `better-sqlite3` fora** | SQLite via `better-sqlite3` | Pi embute Bun: `node:sqlite` não resolve, `better-sqlite3` é risco nativo sem necessidade. Research em `docs/wayfinder/research/sqlite-vs-flat-files.md`. |
 | 5 | **Lifecycle com timer stateless e abandon neutro** | Timeout punitivo de 24h | ADR sem malus enterrou punição. Timestamps sobrevivem ao processo, pausa sempre retoma. |
 | 6 | **Skin Minimal sem DSL** | Mini-DSL já | Template é função pura `(params) => string`. Parser e condicionais esperam uso real. |
@@ -44,7 +44,7 @@ Arquitetura escolhe o mais simples que fecha a Fase 1: abrir e fechar Lori sessi
 ├─────────────────────────────────────────────────────────────┤
 │  EFFECTS (side effects isolados)                            │
 │  - Pi adapter: entry point único, rebuild em session_start  │
-│  - Persist: snapshot JSON atômico + schemaVersion no projeto│
+│  - Persist: snapshot atômico/versionado com lock por projeto│
 │  - UI: commands /lori-*, setStatus, setWidget               │
 │  - Sem timers, processos ou watchers. Timer é derivado.     │
 ├─────────────────────────────────────────────────────────────┤
@@ -207,7 +207,7 @@ SM-2 puro sem penalty, cards manuais, técnicas e combos com bônus-ou-nada, ski
 | 2 | `skin/` e `persona/` não modificam estado. Só traduzem. | Bug |
 | 3 | `effects/` não contém regra de negócio. Só orquestra. | Refatorar |
 | 4 | Actions são serializáveis (JSON). Tipos Action e Event seguem distintos. | Corrigir |
-| 5 | Snapshot guarda `player`, `session` e `skinConfig` com `schemaVersion`, escrita atômica, no projeto de estudo | Corrigir |
+| 5 | Snapshot guarda `player`, `session` e `skinConfig` com `schemaVersion`, rename atômico e lock, no projeto de estudo | Corrigir |
 | 6 | Pi SDK vive só no adapter e em `ui.ts`. Nada na factory além de registro. | Isolar |
 | 7 | `runtime.*` nunca persiste quando existir. Sempre recalcula no boot. | Bug |
 | 8 | Modifiers são bônus derivados, nunca abaixo do neutro. | Refatorar |
