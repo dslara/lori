@@ -1,8 +1,9 @@
+import { selectCanOpenSession } from "./selectors.ts";
 import type { Session, SessionAction } from "./types.ts";
 
 export function reduceSession(state: Session | null, action: SessionAction): Session | null {
   if (action.type === "session/open") {
-    if (state !== null && state.status !== "closed") {
+    if (!selectCanOpenSession(state)) {
       return state;
     }
     if (

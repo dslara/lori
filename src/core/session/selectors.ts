@@ -1,5 +1,9 @@
 import type { Session } from "./types.ts";
 
+export function selectCanOpenSession(session: Session | null): boolean {
+  return session === null || session.status === "closed";
+}
+
 export function selectElapsedMs(session: Session, now: number): number {
   if (session.status === "closed") {
     const elapsedUntil = session.pausedAt ?? session.closedAt;

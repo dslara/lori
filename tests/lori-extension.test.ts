@@ -9,9 +9,15 @@ type UI = {
   notifications: Array<{ message: string; type?: string }>;
   statuses: Array<{ key: string; text: string | undefined }>;
   widgets: Array<{ key: string; content: string[] | undefined }>;
+  selectCalls: Array<{ title: string; options: string[] }>;
+  selectResponses: Array<string | undefined>;
+  inputCalls: Array<{ title: string; placeholder: string | undefined }>;
+  inputResponses: Array<string | undefined>;
   notify(message: string, type?: "info" | "warning" | "error"): void;
   setStatus(key: string, text: string | undefined): void;
   setWidget(key: string, content: string[] | undefined): void;
+  select(title: string, options: string[]): Promise<string | undefined>;
+  input(title: string, placeholder?: string): Promise<string | undefined>;
 };
 
 type StartHandler = (event: { type: "session_start"; reason: "startup" }, ctx: { cwd: string; ui: UI }) => void | Promise<void>;
@@ -47,6 +53,10 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
     notifications: [],
     statuses: [],
     widgets: [],
+    selectCalls: [],
+    selectResponses: [],
+    inputCalls: [],
+    inputResponses: [],
     notify(message, type) {
       this.notifications.push({ message, type });
     },
@@ -55,6 +65,14 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
     },
     setWidget(key, content) {
       this.widgets.push({ key, content });
+    },
+    async select(title, options) {
+      this.selectCalls.push({ title, options });
+      return this.selectResponses.shift();
+    },
+    async input(title, placeholder) {
+      this.inputCalls.push({ title, placeholder });
+      return this.inputResponses.shift();
     },
   };
 
@@ -168,6 +186,8 @@ describe("Lori startup and status", () => {
       primaryTechnique: "Active Recall",
     });
     expect(typeof snapshot.session.startedAt).toBe("number");
+    expect(harness.ui.selectCalls).toHaveLength(0);
+    expect(harness.ui.inputCalls).toHaveLength(0);
     const status = harness.ui.statuses.at(-1)?.text ?? "";
     expect(status).toContain("Session: open");
     expect(status).toContain("Domain: React");
@@ -178,6 +198,201 @@ describe("Lori startup and status", () => {
     await harness.runStatus();
     expect(harness.ui.notifications.at(-1)?.message).toContain("Domain: React");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Primary Technique: Active Recall");
+  });
+
+  test("does not persist when a start prompt is cancelled or blank", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const initialSnapshot = await readFile(snapshotPath, "utf8");
+
+    harness.ui.inputResponses.push("   ");
+    await harness.runStart("");
+    expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
+    expect(harness.ui.inputCalls).toHaveLength(1);
+
+    harness.ui.inputResponses.push("Rust", undefined);
+    await harness.runStart("");
+    expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
+    expect(harness.ui.inputCalls).toHaveLength(3);
+  });
+
+  test("cancelling the previous-pair menu leaves the closed Session unchanged", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    await harness.runStart("React | Active Recall");
+    await harness.runClose("1 | 1");
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const closedSnapshot = await readFile(snapshotPath, "utf8");
+    harness.ui.selectResponses.push(undefined);
+
+    await harness.runStart("");
+
+    expect(await readFile(snapshotPath, "utf8")).toBe(closedSnapshot);
+    expect(harness.ui.inputCalls).toHaveLength(0);
+  });
+
+  test("offers the last closed Session pair for reuse when starting without args", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    await harness.runStart("React | Active Recall");
+    await harness.runClose("1 | 1");
+    harness.ui.selectResponses.push("Reutilizar: React | Active Recall");
+
+    await harness.runStart("");
+
+    expect(harness.ui.selectCalls).toEqual([
+      {
+        title: "Iniciar com os valores anteriores?",
+        options: ["Reutilizar: React | Active Recall", "Informar um novo par"],
+      },
+    ]);
+    expect(harness.ui.inputCalls).toHaveLength(0);
+    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(snapshot.session).toMatchObject({
+      status: "open",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+    });
+  });
+
+  test("uses the latest closed Session from the project snapshot", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const snapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
+    snapshot.session = {
+      status: "closed",
+      domain: "Japanese",
+      primaryTechnique: "Direct Practice",
+      startedAt: 1_000,
+      totalPausedMs: 0,
+      closedAt: 2_000,
+      verdict: { focus: 1, honesty: 1 },
+    };
+    await writeFile(snapshotPath, JSON.stringify(snapshot));
+    harness.ui.selectResponses.push("Reutilizar: Japanese | Direct Practice");
+
+    await harness.runStart("");
+
+    expect(harness.ui.selectCalls).toEqual([
+      {
+        title: "Iniciar com os valores anteriores?",
+        options: ["Reutilizar: Japanese | Direct Practice", "Informar um novo par"],
+      },
+    ]);
+    const savedSnapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(savedSnapshot.session).toMatchObject({
+      status: "open",
+      domain: "Japanese",
+      primaryTechnique: "Direct Practice",
+    });
+  });
+
+  test("prompts only for the missing Domain in a partial command", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    harness.ui.inputResponses.push("Math");
+
+    await harness.runStart(" | Active Recall");
+
+    expect(harness.ui.inputCalls).toEqual([
+      { title: "Domain da Session", placeholder: undefined },
+    ]);
+    expect(harness.ui.selectCalls).toHaveLength(0);
+    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(snapshot.session).toMatchObject({
+      status: "open",
+      domain: "Math",
+      primaryTechnique: "Active Recall",
+    });
+  });
+
+  test("suggests only the missing primary Technique for a partial command", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    await harness.runStart("React | Active Recall");
+    await harness.runClose("1 | 1");
+    harness.ui.selectResponses.push("Reutilizar: Active Recall");
+
+    await harness.runStart("Japanese |");
+
+    expect(harness.ui.selectCalls).toEqual([
+      {
+        title: "Escolher Primary Technique",
+        options: ["Reutilizar: Active Recall", "Informar outro Primary Technique"],
+      },
+    ]);
+    expect(harness.ui.inputCalls).toHaveLength(0);
+    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(snapshot.session).toMatchObject({
+      status: "open",
+      domain: "Japanese",
+      primaryTechnique: "Active Recall",
+    });
+  });
+
+  test("lets the Player replace only the missing value from the last closed Session", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    await harness.runStart("React | Active Recall");
+    await harness.runClose("1 | 1");
+    harness.ui.selectResponses.push("Informar outro Primary Technique");
+    harness.ui.inputResponses.push("Direct Practice");
+
+    await harness.runStart("Japanese |");
+
+    expect(harness.ui.inputCalls).toEqual([
+      { title: "Primary Technique da Session", placeholder: undefined },
+    ]);
+    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(snapshot.session).toMatchObject({
+      status: "open",
+      domain: "Japanese",
+      primaryTechnique: "Direct Practice",
+    });
+  });
+
+  test("lets the Player enter a new pair instead of reusing the last closed Session", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    await harness.runStart("React | Active Recall");
+    await harness.runClose("1 | 1");
+    harness.ui.selectResponses.push("Informar um novo par");
+    harness.ui.inputResponses.push("Rust", "Direct Practice");
+
+    await harness.runStart("");
+
+    expect(harness.ui.inputCalls).toEqual([
+      { title: "Domain da Session", placeholder: undefined },
+      { title: "Primary Technique da Session", placeholder: undefined },
+    ]);
+    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(snapshot.session).toMatchObject({
+      status: "open",
+      domain: "Rust",
+      primaryTechnique: "Direct Practice",
+    });
+  });
+
+  test("prompts for a Domain and primary Technique on the first Session", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    harness.ui.inputResponses.push("Rust", "Active Recall");
+
+    await harness.runStart("");
+
+    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(harness.ui.inputCalls).toEqual([
+      { title: "Domain da Session", placeholder: undefined },
+      { title: "Primary Technique da Session", placeholder: undefined },
+    ]);
+    expect(harness.ui.selectCalls).toHaveLength(0);
+    expect(snapshot.session).toMatchObject({
+      status: "open",
+      domain: "Rust",
+      primaryTechnique: "Active Recall",
+    });
   });
 
   test("refreshes the dashboard elapsed time when /lori-status is run", async () => {
@@ -383,12 +598,14 @@ describe("Lori startup and status", () => {
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
     const initialSnapshot = await readFile(snapshotPath, "utf8");
 
-    for (const args of ["", "React", " | Active Recall", "React | ", "   |   "]) {
+    for (const args of ["React", "|", "   |   "]) {
       await harness.runStart(args);
     }
 
     expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
-    expect(harness.ui.notifications.slice(-5).every(({ type }) => type === "warning")).toBe(true);
+    expect(harness.ui.notifications.slice(-3).every(({ type }) => type === "warning")).toBe(true);
+    expect(harness.ui.inputCalls).toHaveLength(0);
+    expect(harness.ui.selectCalls).toHaveLength(0);
     expect(harness.ui.statuses.at(-1)?.text).toContain("Session: nenhuma ativa");
   });
 
@@ -404,6 +621,59 @@ describe("Lori startup and status", () => {
     expect(harness.ui.notifications.at(-2)?.type).toBe("error");
     expect(harness.ui.notifications.at(-2)?.message).toContain("não foi possível persistir");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Session: nenhuma ativa");
+  });
+
+  test("does not reject a full pair using stale in-memory Session state", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    await harness.runStart("React | Active Recall");
+
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const snapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
+    snapshot.session = {
+      ...snapshot.session,
+      status: "closed",
+      closedAt: snapshot.session.startedAt + snapshot.session.totalPausedMs,
+      verdict: { focus: 1, honesty: 1 },
+    };
+    await writeFile(snapshotPath, JSON.stringify(snapshot));
+
+    await harness.runStart("Japanese | Direct Practice");
+
+    const savedSnapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(savedSnapshot.session).toMatchObject({
+      status: "open",
+      domain: "Japanese",
+      primaryTechnique: "Direct Practice",
+    });
+  });
+
+  test("rejects start before prompting when a Session is open or paused", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    await harness.runStart("React | Active Recall");
+
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const openSnapshot = await readFile(snapshotPath, "utf8");
+    const inputCallCount = harness.ui.inputCalls.length;
+    const selectCallCount = harness.ui.selectCalls.length;
+    await harness.runStart("");
+
+    expect(await readFile(snapshotPath, "utf8")).toBe(openSnapshot);
+    expect(harness.ui.inputCalls).toHaveLength(inputCallCount);
+    expect(harness.ui.selectCalls).toHaveLength(selectCallCount);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("já existe uma Session ativa");
+
+    await harness.runAbandon();
+    const pausedSnapshot = await readFile(snapshotPath, "utf8");
+    const pausedInputCallCount = harness.ui.inputCalls.length;
+    const pausedSelectCallCount = harness.ui.selectCalls.length;
+    await harness.runStart("| Active Recall");
+
+    expect(await readFile(snapshotPath, "utf8")).toBe(pausedSnapshot);
+    expect(harness.ui.inputCalls).toHaveLength(pausedInputCallCount);
+    expect(harness.ui.selectCalls).toHaveLength(pausedSelectCallCount);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("já existe uma Session ativa");
   });
 
   test("rejects replacing an open Session without changing its persisted snapshot", async () => {
