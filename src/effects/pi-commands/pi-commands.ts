@@ -1,8 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Value } from "typebox/value";
-import { validateChapterProposal, validateProposalForDraft } from "../../core/domain/chapter.ts";
-import type { Baseline, DomainDraft, DomainDraftAnswerAction } from "../../core/domain/types.ts";
+import { validateChapterProposal, validateProposalForDraft, validateProposalForQuestionnaire } from "../../core/domain/chapter.ts";
+import type { ActiveDomain, Baseline, DomainDraft, DomainDraftAnswerAction } from "../../core/domain/types.ts";
 import { restoreSessionAsPaused } from "../../core/processors/lifecycle.ts";
 import { selectCanOpenSession } from "../../core/session/selectors.ts";
 import { createStore, type LoriStore } from "../../store/store.ts";
@@ -154,6 +154,21 @@ async function promptVerdictScore(
     if (value.length > 0 && Number.isFinite(score)) return score;
     ctx.ui.notify("Informe um número finito; não há escala ou limite definido.", "warning");
   }
+}
+
+function activeDomainDraft(domain: ActiveDomain): DomainDraft {
+  return {
+    id: domain.id,
+    phase: "awaiting_curation",
+    name: domain.name,
+    learningObjective: domain.learningObjective,
+    motivation: domain.questionnaire.motivation,
+    deadline: domain.questionnaire.deadline,
+    hoursPerWeek: domain.questionnaire.hoursPerWeek,
+    baseline: domain.questionnaire.baseline,
+    preferences: domain.questionnaire.preferences,
+    materialRestrictions: domain.questionnaire.materialRestrictions,
+  };
 }
 
 function sessionPresentation(state: LoriState): { domain: string; technique: string } {
@@ -578,6 +593,53 @@ async function continueDomainPreparation(
   }
 }
 
+async function approveActiveDomainChapter(
+  domain: ActiveDomain,
+  projectDir: string,
+  skin: SkinProvider,
+  shared: LoriExtensionState,
+  ctx: Pick<ExtensionContext, "ui">,
+): Promise<void> {
+  const proposal = domain.pendingChapter;
+  if (proposal === undefined) return;
+  ctx.ui.notify(renderChapterProposal(activeDomainDraft(domain), proposal, {
+    currentChapterVersionId: domain.currentChapterVersionId,
+  }), "info");
+  const confirmed = await ctx.ui.confirm(
+    `Aprovar uma nova versão do Chapter de ${domain.name}?`,
+    `A aprovação cria uma versão nova e atualiza a atual. A versão ${domain.currentChapterVersionId} e as referências históricas serão preservadas.`,
+  );
+  if (!confirmed) {
+    ctx.ui.notify("Aprovação cancelada; a proposta pendente permanece intacta e o Chapter atual permanece ativo.", "info");
+    return;
+  }
+
+  const result = await dispatchAndPersist(projectDir, (current) => {
+    const currentDomain = current.domains.find(({ id }) => id === domain.id);
+    if (
+      shared.projectDir !== projectDir ||
+      currentDomain?.currentChapterVersionId !== domain.currentChapterVersionId ||
+      currentDomain.pendingChapter === undefined ||
+      JSON.stringify(currentDomain.pendingChapter) !== JSON.stringify(proposal)
+    ) {
+      return undefined;
+    }
+    return {
+      type: "domain/approve",
+      id: domain.id,
+      chapterVersionId: randomUUID(),
+      approvedAt: Date.now(),
+    };
+  });
+  if (!acceptDispatchResult(shared, ctx, result, "Lori: Chapter atual não alterado porque não foi possível persistir a aprovação.")) return;
+  if (result.status !== "persisted") {
+    ctx.ui.notify("Lori: a proposta ou a versão atual mudou durante a confirmação; nenhuma aprovação foi persistida.", "warning");
+    return;
+  }
+  showStatus(ctx, result.state, skin);
+  ctx.ui.notify("Nova versão do Chapter aprovada e atualizada; versões anteriores e Verdicts históricos permanecem intactos.", "info");
+}
+
 function requireReadyState(
   shared: LoriExtensionState,
   ctx: Pick<ExtensionContext, "ui">,
@@ -606,7 +668,7 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
     name: "lori_submit_chapter",
     label: "Submit Lori Chapter proposal",
     description: "Submit the structured proposal or explicit research blocker for the current /lori-curate request.",
-    promptSnippet: "Submit the researched first Chapter proposal through Lori's TypeBox tool",
+    promptSnippet: "Submit the researched Chapter proposal through Lori's TypeBox tool",
     promptGuidelines: [
       "Use lori_submit_chapter only for the requestId and domainId in the current /lori-curate message.",
       "Use lori_submit_chapter with status blocked when no verifiable, compatible sources satisfy the Player's restrictions.",
@@ -632,14 +694,14 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
         return toolMessage("Lori não conseguiu validar a request atual; nenhuma proposta foi salva.", true);
       }
       const currentDraft = latest.state.domainDraft;
+      const currentDomain = latest.state.domains.find(({ id }) => id === request.domainId);
+      const isAuthorizedPhase = request.target === "draft"
+        ? latest.state.session?.kind === "metalearning" && latest.state.session.status === "open" && latest.state.session.domainId === request.domainId && currentDraft?.id === request.domainId && currentDraft.phase === "awaiting_curation"
+        : currentDomain !== undefined && currentDomain.currentChapterVersionId === request.expectedCurrentChapterVersionId;
       if (
-        latest.state.session?.kind !== "metalearning" ||
-        latest.state.session.status !== "open" ||
-        latest.state.session.domainId !== request.domainId ||
+        !isAuthorizedPhase ||
         shared.projectDir !== projectDir ||
-        shared.curationRequest?.requestId !== request.requestId ||
-        currentDraft?.id !== request.domainId ||
-        currentDraft.phase !== "awaiting_curation"
+        shared.curationRequest?.requestId !== request.requestId
       ) {
         const message = "Lori recusou o tool: a fase ou a request atual mudou; nenhuma proposta foi salva.";
         toolCtx.ui.notify(message, "warning");
@@ -654,14 +716,14 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
       }
       const submission = params as ChapterCurationToolResult;
       if (submission.result.status === "blocked") {
-        const blocker = renderCurationBlocker(submission.result.reason);
+        const blocker = renderCurationBlocker(submission.result.reason, request.target === "active");
         toolCtx.ui.notify(blocker, "warning");
         if (shared.curationRequest?.requestId === request.requestId) shared.curationRequest = undefined;
         return { ...toolMessage(blocker), terminate: true };
       }
 
       if (!Array.isArray(submission.result.proposal.resources) || submission.result.proposal.resources.length === 0) {
-        const blocker = renderCurationBlocker("a pesquisa não encontrou recurso adequado para sustentar os Nodes e seus trechos de evidência.");
+        const blocker = renderCurationBlocker("a pesquisa não encontrou recurso adequado para sustentar os Nodes e seus trechos de evidência.", request.target === "active");
         toolCtx.ui.notify(blocker, "warning");
         if (shared.curationRequest?.requestId === request.requestId) shared.curationRequest = undefined;
         return { ...toolMessage(blocker), terminate: true };
@@ -673,7 +735,9 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
         toolCtx.ui.notify(message, "warning");
         return toolMessage(message, true);
       }
-      const incompatibility = validateProposalForDraft(validation.proposal, currentDraft);
+      const incompatibility = request.target === "draft"
+        ? currentDraft === null ? "O draft da curadoria deixou de existir." : validateProposalForDraft(validation.proposal, currentDraft)
+        : currentDomain === undefined ? "O Domain ativo deixou de existir." : validateProposalForQuestionnaire(validation.proposal, currentDomain.questionnaire);
       if (incompatibility !== undefined) {
         const hasCompatibleResource = validation.proposal.resources.some(({ compatibility }) => compatibility.compatible);
         const hasIncompatibleResource = validation.proposal.resources.some(({ compatibility }) => !compatibility.compatible);
@@ -683,7 +747,7 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
           return toolMessage(message, true);
         }
         if (hasIncompatibleResource) {
-          const blocker = renderCurationBlocker(incompatibility);
+          const blocker = renderCurationBlocker(incompatibility, request.target === "active");
           toolCtx.ui.notify(blocker, "warning");
           if (shared.curationRequest?.requestId === request.requestId) shared.curationRequest = undefined;
           return { ...toolMessage(blocker), terminate: true };
@@ -694,21 +758,41 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
       }
 
       const saved = await dispatchAndPersist(projectDir, (state) => {
-        const draft = state.domainDraft;
         if (
           shared.projectDir !== projectDir ||
           shared.curationRequest?.requestId !== request.requestId ||
-          shared.curationRequest.domainId !== request.domainId ||
-          state.session?.kind !== "metalearning" ||
-          state.session.status !== "open" ||
-          state.session.domainId !== request.domainId ||
-          draft?.id !== request.domainId ||
-          draft.phase !== "awaiting_curation" ||
-          validateProposalForDraft(validation.proposal, draft) !== undefined
+          shared.curationRequest.domainId !== request.domainId
         ) {
           return undefined;
         }
-        return { type: "domain-draft/propose-chapter", id: draft.id, proposal: validation.proposal };
+        if (request.target === "draft") {
+          const draft = state.domainDraft;
+          if (
+            state.session?.kind !== "metalearning" ||
+            state.session.status !== "open" ||
+            state.session.domainId !== request.domainId ||
+            draft?.id !== request.domainId ||
+            draft.phase !== "awaiting_curation" ||
+            validateProposalForDraft(validation.proposal, draft) !== undefined
+          ) {
+            return undefined;
+          }
+          return { type: "domain-draft/propose-chapter", id: draft.id, proposal: validation.proposal };
+        }
+        const domain = state.domains.find(({ id }) => id === request.domainId);
+        if (
+          domain === undefined ||
+          domain.currentChapterVersionId !== request.expectedCurrentChapterVersionId ||
+          validateProposalForQuestionnaire(validation.proposal, domain.questionnaire) !== undefined
+        ) {
+          return undefined;
+        }
+        return {
+          type: "domain/propose-chapter",
+          id: domain.id,
+          expectedCurrentChapterVersionId: domain.currentChapterVersionId,
+          proposal: validation.proposal,
+        };
       });
       if (!acceptDispatchResult(shared, toolCtx, saved, "Lori: proposta não salva porque não foi possível persistir o snapshot.")) {
         return toolMessage("Lori não conseguiu salvar a proposta; nenhuma aprovação ou ativação ocorreu.", true);
@@ -720,14 +804,24 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
       }
 
       if (shared.curationRequest?.requestId === request.requestId) shared.curationRequest = undefined;
-      const pending = saved.state.domainDraft?.pendingChapter;
-      if (pending === undefined || saved.state.domainDraft === null) {
-        const message = "Lori não encontrou a proposta pendente no estado salvo; o Domain permanece inativo.";
+      const pendingDomain = request.target === "active"
+        ? saved.state.domains.find(({ id }) => id === request.domainId)
+        : undefined;
+      const pendingDraft = request.target === "draft"
+        ? saved.state.domainDraft
+        : pendingDomain === undefined ? null : activeDomainDraft(pendingDomain);
+      const pending = request.target === "draft"
+        ? saved.state.domainDraft?.pendingChapter
+        : pendingDomain?.pendingChapter;
+      if (pending === undefined || pendingDraft === null || pendingDraft === undefined) {
+        const message = "Lori não encontrou a proposta pendente no estado salvo; a versão aprovada permanece ativa.";
         toolCtx.ui.notify(message, "error");
         return toolMessage(message, true);
       }
       if (shared.skin) showStatus(toolCtx, saved.state, shared.skin);
-      const presentation = renderChapterProposal(saved.state.domainDraft, pending);
+      const presentation = renderChapterProposal(pendingDraft, pending, request.target === "active"
+        ? { currentChapterVersionId: request.expectedCurrentChapterVersionId }
+        : {});
       toolCtx.ui.notify(presentation, "info");
       return { ...toolMessage(presentation), terminate: true };
     },
@@ -738,7 +832,7 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
   registerChapterCurationTool(api, shared);
 
   api.registerCommand("lori-curate", {
-    description: "Solicitar explicitamente ao agent uma proposta estruturada para o primeiro Chapter",
+    description: "Solicitar explicitamente uma proposta para um Domain em preparação ou ativo",
     handler: async (args, ctx) => {
       const ready = requireReadyState(shared, ctx);
       if (!ready) return;
@@ -755,31 +849,65 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
       if (!acceptDispatchResult(shared, ctx, latest, "Lori: não foi possível consultar o snapshot antes da curadoria.")) return;
       const { state } = latest;
       const draft = state.domainDraft;
-      if (draft === null) {
-        ctx.ui.notify("Lori: /lori-curate atende somente ao Domain inicial em preparação; re-curation de Domain ativo não está disponível.", "warning");
-        return;
-      }
-      if (draft.phase === "awaiting_approval") {
-        ctx.ui.notify("Lori: já existe uma proposta pendente. Ela permanece para revisão; re-curation não está disponível neste fluxo.", "warning");
-        return;
-      }
-      if (
-        state.session?.kind !== "metalearning" ||
-        state.session.domainId !== draft.id ||
-        state.session.status !== "open"
-      ) {
-        ctx.ui.notify("Lori: retome a Session de Metalearning antes de solicitar a curadoria.", "warning");
-        return;
-      }
-      if (draft.phase !== "awaiting_curation") {
-        ctx.ui.notify("Lori: conclua o questionário antes de solicitar a curadoria.", "warning");
-        return;
+      const canCurateDraft = draft?.phase === "awaiting_curation" &&
+        state.session?.kind === "metalearning" && state.session.status === "open" && state.session.domainId === draft.id;
+      const activeDomains = state.domains;
+      let selectedDraft: DomainDraft | undefined;
+      let selectedDomain: ActiveDomain | undefined;
+
+      if (activeDomains.length === 0) {
+        if (draft === null) {
+          ctx.ui.notify("Lori: não há Domain ativo ou preparo pronto para curadoria.", "warning");
+          return;
+        }
+        if (draft.phase === "awaiting_approval") {
+          ctx.ui.notify("Lori: já existe uma proposta pendente. Ela permanece para revisão; não será substituída automaticamente.", "warning");
+          return;
+        }
+        if (!canCurateDraft) {
+          ctx.ui.notify("Lori: retome a Session de Metalearning e conclua o questionário antes de solicitar a curadoria.", "warning");
+          return;
+        }
+        selectedDraft = draft;
+      } else {
+        const draftOption = canCurateDraft ? `Domain em preparo: ${draft.name ?? draft.id} [${draft.id}]` : undefined;
+        const domainOptions = activeDomains.map((domain) => `${domain.name} · ${domain.learningObjective} [${domain.id}]`);
+        const options = [...(draftOption === undefined ? [] : [draftOption]), ...domainOptions];
+        const selected = await ctx.ui.select("Escolher Domain para re-curar", options);
+        if (selected === undefined) return;
+        selectedDomain = activeDomains.find((domain) => `${domain.name} · ${domain.learningObjective} [${domain.id}]` === selected);
+        if (selectedDomain === undefined && selected === draftOption && canCurateDraft) {
+          selectedDraft = draft;
+        }
+        if (selectedDomain === undefined && selectedDraft === undefined) {
+          ctx.ui.notify("Lori: escolha um Domain ativo ou o preparo disponível.", "warning");
+          return;
+        }
       }
 
       const requestId = randomUUID();
-      shared.curationRequest = { requestId, domainId: draft.id };
+      if (selectedDomain !== undefined) {
+        shared.curationRequest = {
+          requestId,
+          domainId: selectedDomain.id,
+          target: "active",
+          expectedCurrentChapterVersionId: selectedDomain.currentChapterVersionId,
+        };
+        try {
+          api.sendUserMessage(buildChapterCurationPrompt(requestId, activeDomainDraft(selectedDomain), {
+            currentChapterVersionId: selectedDomain.currentChapterVersionId,
+          }));
+        } catch {
+          shared.curationRequest = undefined;
+          ctx.ui.notify("Lori: não foi possível iniciar a curadoria pelo agent; nenhuma proposta foi salva.", "error");
+        }
+        return;
+      }
+
+      if (selectedDraft === undefined) return;
+      shared.curationRequest = { requestId, domainId: selectedDraft.id, target: "draft" };
       try {
-        api.sendUserMessage(buildChapterCurationPrompt(requestId, draft));
+        api.sendUserMessage(buildChapterCurationPrompt(requestId, selectedDraft));
       } catch {
         shared.curationRequest = undefined;
         ctx.ui.notify("Lori: não foi possível iniciar a curadoria pelo agent; nenhuma proposta foi salva.", "error");
@@ -788,7 +916,7 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
   });
 
   api.registerCommand("lori-approve", {
-    description: "Revisar e aprovar explicitamente a proposta pendente do primeiro Chapter",
+    description: "Revisar e aprovar explicitamente uma proposta pendente de Chapter",
     handler: async (args, ctx) => {
       const ready = requireReadyState(shared, ctx);
       if (!ready) return;
@@ -803,7 +931,31 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
       const { state } = latest;
       const draft = state.domainDraft;
       const session = state.session;
-      if (draft === null || draft.phase !== "awaiting_approval" || draft.pendingChapter === undefined) {
+      const draftHasPending = draft?.phase === "awaiting_approval" && draft.pendingChapter !== undefined;
+      const activePending = state.domains.filter(({ pendingChapter }) => pendingChapter !== undefined);
+      if (activePending.length > 0) {
+        const draftOption = draftHasPending ? `First Chapter: ${draft?.name ?? draft?.id} [${draft?.id}]` : undefined;
+        const activeOptions = activePending.map((domain) => `Re-curation: ${domain.name} [${domain.id}]`);
+        const options = [...(draftOption === undefined ? [] : [draftOption]), ...activeOptions];
+        let selected: string;
+        if (options.length === 1) {
+          selected = options[0]!;
+        } else {
+          const choice = await ctx.ui.select("Escolher proposta de Chapter para aprovar", options);
+          if (choice === undefined) return;
+          selected = choice;
+        }
+        const selectedDomain = activePending.find((domain) => `Re-curation: ${domain.name} [${domain.id}]` === selected);
+        if (selectedDomain !== undefined) {
+          await approveActiveDomainChapter(selectedDomain, projectDir, skin, shared, ctx);
+          return;
+        }
+        if (selected !== draftOption || !draftHasPending) {
+          ctx.ui.notify("Lori: escolha uma proposta pendente para aprovar.", "warning");
+          return;
+        }
+      }
+      if (!draftHasPending || draft === null || draft.pendingChapter === undefined) {
         ctx.ui.notify("Lori: não há proposta pendente para aprovar. Nenhum Domain foi ativado.", "warning");
         return;
       }

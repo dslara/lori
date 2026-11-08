@@ -122,6 +122,7 @@ export function isSessionAction(action: LoriAction): action is SessionAction {
     case "domain-draft/propose-chapter":
     case "domain/approve":
     case "domain-draft/save-verdict-focus":
+    case "domain/propose-chapter":
       return false;
   }
 }

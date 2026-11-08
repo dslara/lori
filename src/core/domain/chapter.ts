@@ -1,4 +1,4 @@
-import type { DomainDraft } from "./types.ts";
+import type { DomainDraft, DomainQuestionnaire } from "./types.ts";
 
 export type ChapterPrinciple =
   | "Metalearning"
@@ -287,12 +287,22 @@ export function validateChapterProposal(value: unknown): ChapterProposalValidati
   };
 }
 
-export function validateProposalForDraft(proposal: ChapterProposal, draft: DomainDraft): string | undefined {
+export function validateProposalForQuestionnaire(
+  proposal: ChapterProposal,
+  questionnaire: Pick<DomainQuestionnaire, "deadline" | "hoursPerWeek">,
+): string | undefined {
   if (proposal.resources.some(({ compatibility }) => !compatibility.compatible)) {
     return "A proposta incluiu fonte incompatível com as preferências ou restrições declaradas.";
   }
-  if (proposal.effort.deadline !== draft.deadline || proposal.effort.hoursPerWeek !== draft.hoursPerWeek) {
+  if (proposal.effort.deadline !== questionnaire.deadline || proposal.effort.hoursPerWeek !== questionnaire.hoursPerWeek) {
     return "A estimativa não corresponde ao prazo e à disponibilidade salvos no questionário.";
   }
   return undefined;
+}
+
+export function validateProposalForDraft(proposal: ChapterProposal, draft: DomainDraft): string | undefined {
+  return validateProposalForQuestionnaire(proposal, {
+    deadline: draft.deadline ?? null,
+    hoursPerWeek: draft.hoursPerWeek ?? Number.NaN,
+  });
 }
