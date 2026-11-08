@@ -13,11 +13,14 @@ type UI = {
   selectResponses: Array<string | undefined>;
   inputCalls: Array<{ title: string; placeholder: string | undefined }>;
   inputResponses: Array<string | undefined>;
+  confirmCalls: Array<{ title: string; message: string }>;
+  confirmResponses: boolean[];
   notify(message: string, type?: "info" | "warning" | "error"): void;
   setStatus(key: string, text: string | undefined): void;
   setWidget(key: string, content: string[] | undefined): void;
   select(title: string, options: string[]): Promise<string | undefined>;
   input(title: string, placeholder?: string): Promise<string | undefined>;
+  confirm(title: string, message: string): Promise<boolean>;
 };
 
 type StartHandler = (event: { type: "session_start"; reason: "startup" }, ctx: { cwd: string; ui: UI }) => void | Promise<void>;
@@ -38,6 +41,7 @@ type Harness = {
   runAbandon(): Promise<void>;
   runResume(): Promise<void>;
   runCurate(args?: string): Promise<void>;
+  runApprove(args?: string): Promise<void>;
   submitCuration(params: unknown): Promise<unknown>;
   toolParameters(name: string): unknown;
   sentUserMessages: string[];
@@ -68,6 +72,8 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
     selectResponses: [],
     inputCalls: [],
     inputResponses: [],
+    confirmCalls: [],
+    confirmResponses: [],
     notify(message, type) {
       this.notifications.push({ message, type });
     },
@@ -84,6 +90,10 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
     async input(title, placeholder) {
       this.inputCalls.push({ title, placeholder });
       return this.inputResponses.shift();
+    },
+    async confirm(title, message) {
+      this.confirmCalls.push({ title, message });
+      return this.confirmResponses.shift() ?? false;
     },
   };
 
@@ -153,6 +163,11 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
       },
       async runCurate(args = "") {
         const handler = commandHandlers.get("lori-curate");
+        expect(handler).toBeDefined();
+        await handler?.(args, { ui, isIdle: () => true });
+      },
+      async runApprove(args = "") {
+        const handler = commandHandlers.get("lori-approve");
         expect(handler).toBeDefined();
         await handler?.(args, { ui, isIdle: () => true });
       },
@@ -259,6 +274,104 @@ function validCuration(params: { requestId: string; domainId: string }): Record<
 }
 
 describe("Lori Chapter curation", () => {
+  test("a rejected Chapter approval leaves the draft and proposal unchanged", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await harness.runCurate();
+    await harness.submitCuration(validCuration(curationRequestIds(harness)));
+    const before = await readFile(join(cwd, ".lori", "snapshot.json"), "utf8");
+
+    harness.ui.confirmResponses.push(false);
+    await harness.runApprove();
+
+    expect(harness.ui.confirmCalls).toHaveLength(1);
+    expect(harness.ui.confirmCalls[0]?.title).toContain("Chapter");
+    expect(harness.ui.confirmCalls[0]?.message).toContain("Domain");
+    expect(harness.ui.notifications.some(({ message }) => message.includes("Proposta pendente"))).toBe(true);
+    expect(JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"))).toEqual(JSON.parse(before));
+    expect(harness.ui.notifications.at(-1)?.message).toContain("proposta pendente permanecem intactos");
+  });
+
+  test("canceling Chapter approval preserves the proposal for another explicit review", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await harness.runCurate();
+    await harness.submitCuration(validCuration(curationRequestIds(harness)));
+    const before = await readFile(join(cwd, ".lori", "snapshot.json"), "utf8");
+
+    harness.ui.confirmResponses.push(false, false);
+    await harness.runApprove();
+    await harness.runApprove();
+
+    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(snapshot).toEqual(JSON.parse(before));
+    expect(snapshot.domainDraft.phase).toBe("awaiting_approval");
+    expect(snapshot.domains).toEqual([]);
+    expect(harness.ui.confirmCalls).toHaveLength(2);
+    expect(harness.ui.notifications.some(({ message }) => message.includes("Proposta pendente"))).toBe(true);
+  });
+
+  test("explicit approval activates the reserved Domain and links the open Metalearning Session to its first Chapter version", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await harness.runCurate();
+    const { domainId } = curationRequestIds(harness);
+    await harness.submitCuration(validCuration(curationRequestIds(harness)));
+    const proposal = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).domainDraft.pendingChapter;
+
+    harness.ui.confirmResponses.push(true);
+    await harness.runApprove();
+
+    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(snapshot.schemaVersion).toBe(3);
+    expect(snapshot.domains).toHaveLength(1);
+    const domain = snapshot.domains[0];
+    expect(domain).toMatchObject({
+      id: domainId,
+      name: "Spanish",
+      learningObjective: "Hold a basic conversation while traveling",
+      status: "active",
+      questionnaire: {
+        motivation: "I am visiting family this summer",
+        deadline: null,
+        hoursPerWeek: 4,
+        baseline: 4,
+        preferences: "Audio and short dialogues",
+        materialRestrictions: "No paid-only materials",
+      },
+      chapters: [{ version: 1, chapter: proposal }],
+    });
+    expect(domain.chapters[0].id).toEqual(expect.any(String));
+    expect(domain.chapters[0].approvedAt).toEqual(expect.any(Number));
+    expect(domain.currentChapterVersionId).toBe(domain.chapters[0].id);
+    expect(snapshot.domainDraft).toMatchObject({ id: domainId, phase: "awaiting_verdict" });
+    expect(snapshot.domainDraft.pendingChapter).toBeUndefined();
+    expect(snapshot.session).toMatchObject({
+      kind: "metalearning",
+      status: "open",
+      domainId,
+      chapterRef: { domainId, chapterVersionId: domain.chapters[0].id },
+    });
+    expect(snapshot.session.verdict).toBeUndefined();
+    expect(snapshot.sessionHistory).toEqual([]);
+    expect(snapshot.player.totalXp).toBe(0);
+
+    await harness.runClose("4 | 4");
+    const afterCloseAttempt = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(afterCloseAttempt.session.status).toBe("open");
+    expect(afterCloseAttempt.session.verdict).toBeUndefined();
+
+    const { harness: restored } = await createHarness(cwd);
+    await restored.start();
+    const restoredSnapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(restoredSnapshot.domains).toEqual(snapshot.domains);
+    expect(restoredSnapshot.domainDraft.phase).toBe("awaiting_verdict");
+    expect(restoredSnapshot.session).toMatchObject({ status: "paused", chapterRef: snapshot.session.chapterRef });
+    await restored.runResume();
+    expect(restored.ui.notifications.at(-1)?.message).toContain("aguardando seu Verdict");
+    expect(restored.ui.inputCalls).toEqual([]);
+  });
+
   test("sends the saved questionnaire only after explicit /lori-curate and registers a TypeBox tool", async () => {
     const { cwd, harness } = await createHarness();
     await prepareCurationDraft(harness);
@@ -612,6 +725,7 @@ describe("Lori startup and status", () => {
       player: { totalXp: 0 },
       session: null,
       sessionHistory: [],
+      domains: [],
       domainDraft: null,
       skinConfig: { skin: "minimal" },
     });

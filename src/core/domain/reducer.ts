@@ -21,6 +21,21 @@ export function reduceDomainDraft(
   draft: DomainDraft | null,
   action: LoriAction,
 ): DomainDraft | null {
+  if (action.type === "domain/approve") {
+    if (
+      draft === null ||
+      draft.id !== action.id ||
+      draft.phase !== "awaiting_approval" ||
+      draft.pendingChapter === undefined ||
+      action.chapterVersionId.trim().length === 0 ||
+      !Number.isFinite(action.approvedAt)
+    ) {
+      return draft;
+    }
+    const { pendingChapter: _pendingChapter, ...approvedDraft } = draft;
+    return { ...approvedDraft, phase: "awaiting_verdict" };
+  }
+
   if (action.type === "domain-draft/propose-chapter") {
     if (draft === null || draft.id !== action.id || draft.phase !== "awaiting_curation") {
       return draft;
@@ -92,6 +107,7 @@ export function isSessionAction(action: LoriAction): action is SessionAction {
       return true;
     case "domain-draft/answer":
     case "domain-draft/propose-chapter":
+    case "domain/approve":
       return false;
   }
 }

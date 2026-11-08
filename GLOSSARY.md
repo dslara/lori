@@ -17,8 +17,9 @@ Ubiquitous language of Lori, a gamified accelerated-learning extension. Technica
 
 | Term          | Definition                                                              | Aliases to avoid              |
 | ------------- | ----------------------------------------------------------------------- | ----------------------------- |
-| **Domain**    | A subject or skill being learned (e.g. Japanese, React, calculus)       | Subject, topic, territory     |
-| **Baseline** | The Player's self-reported familiarity with a learning objective before curation, rated from 1 to 5; not a performance test | Assessment, skill test |
+| **Domain**    | A subject or skill the Player wants to learn (e.g. Japanese, React, calculus), distinct from its desired outcome. It becomes active only after the Player approves its first Chapter. | Subject, topic, territory     |
+| **Learning Objective** | The specific outcome the Player wants to achieve by learning a Domain. | Goal, subject |
+| **Baseline** | The Player's self-reported familiarity with a Learning Objective before curation, rated from 1 to 5; not a performance test | Assessment, skill test |
 | **Skill Tree**| Visual map of concepts and prerequisites inside a domain                | Tree, roadmap, tech tree      |
 | **Node**      | A single concept, technique, or milestone in a skill tree. Starts locked, becomes cleared by an exit proof | Item, skill, lesson |
 | **Locked**    | Initial state of a Node, not yet conquered                              | Dim, closed, apagado          |
@@ -119,8 +120,8 @@ Ubiquitous language of Lori, a gamified accelerated-learning extension. Technica
 
 ## Relationships
 
-- A **Player** studies one or more **Domains**
-- A **Domain** contains exactly one **Skill Tree**
+- A **Player** prepares one or more **Domains**; a **Domain** becomes active only after the Player approves its first **Chapter**.
+- A **Domain** has one **Learning Objective** and contains exactly one **Skill Tree**
 - A **Skill Tree** has many **Nodes** with prerequisite edges
 - A **Chapter** is a finite arc of a **Skill Tree** closed by an **Exit Proof**
 - A **Chapter** has one primary **Principle** that guides its **Exit Proof** form; the learning outcome and **Domain** determine its success criteria.

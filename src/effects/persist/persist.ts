@@ -4,6 +4,7 @@ import { dirname, isAbsolute, join, relative, sep } from "node:path";
 import { createInitialState, type LoriState } from "../../store/state.ts";
 import type { Session } from "../../core/session/types.ts";
 import { validateChapterProposal, validateProposalForDraft } from "../../core/domain/chapter.ts";
+import type { ActiveDomain, ChapterVersionReference, DomainQuestionnaire } from "../../core/domain/types.ts";
 import type { SnapshotResult } from "./types.ts";
 
 export const SNAPSHOT_SCHEMA_VERSION = 3;
@@ -13,7 +14,19 @@ function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function decodeSession(value: unknown, version: 1 | 2): Session | null | undefined {
+function decodeChapterReference(value: unknown): ChapterVersionReference | null | undefined {
+  if (value === undefined) return null;
+  if (
+    !isRecord(value) ||
+    typeof value.domainId !== "string" || value.domainId.trim().length === 0 ||
+    typeof value.chapterVersionId !== "string" || value.chapterVersionId.trim().length === 0
+  ) {
+    return undefined;
+  }
+  return { domainId: value.domainId, chapterVersionId: value.chapterVersionId };
+}
+
+function decodeSession(value: unknown, version: 1 | 2 | 3): Session | null | undefined {
   if (value === null) {
     return null;
   }
@@ -21,7 +34,7 @@ function decodeSession(value: unknown, version: 1 | 2): Session | null | undefin
     return undefined;
   }
 
-  if (version === 2 && value.kind === "metalearning") {
+  if (version !== 1 && value.kind === "metalearning") {
     if (
       typeof value.domainId !== "string" ||
       value.domainId.trim().length === 0 ||
@@ -31,6 +44,8 @@ function decodeSession(value: unknown, version: 1 | 2): Session | null | undefin
     ) {
       return undefined;
     }
+    const chapterRef = decodeChapterReference(version === 3 ? value.chapterRef : undefined);
+    if (chapterRef === undefined) return undefined;
     const totalPausedMs = value.totalPausedMs === undefined ? 0 : value.totalPausedMs;
     if (typeof totalPausedMs !== "number" || !Number.isFinite(totalPausedMs) || totalPausedMs < 0) {
       return undefined;
@@ -40,6 +55,7 @@ function decodeSession(value: unknown, version: 1 | 2): Session | null | undefin
       domainId: value.domainId,
       startedAt: value.startedAt,
       totalPausedMs,
+      ...(chapterRef !== null ? { chapterRef } : {}),
     };
     if (value.status === "open") {
       return { ...details, status: "open" };
@@ -56,7 +72,7 @@ function decodeSession(value: unknown, version: 1 | 2): Session | null | undefin
 
   const name = version === 1 ? value.domain : value.name;
   if (
-    (version === 2 && value.kind !== "legacyStudy") ||
+    (version !== 1 && value.kind !== "legacyStudy") ||
     (value.status !== "open" && value.status !== "paused" && value.status !== "closed") ||
     typeof name !== "string" ||
     name.trim().length === 0 ||
@@ -119,12 +135,18 @@ function decodeSession(value: unknown, version: 1 | 2): Session | null | undefin
   ) {
     return undefined;
   }
+  const chapterRef = decodeChapterReference(version === 3 ? value.verdict.chapterRef : undefined);
+  if (chapterRef === undefined) return undefined;
   return {
     ...details,
     status: "closed",
     closedAt: value.closedAt,
     ...(typeof pausedAt === "number" ? { pausedAt } : {}),
-    verdict: { focus: value.verdict.focus, honesty: value.verdict.honesty },
+    verdict: {
+      focus: value.verdict.focus,
+      honesty: value.verdict.honesty,
+      ...(chapterRef !== null ? { chapterRef } : {}),
+    },
   };
 }
 
@@ -148,8 +170,8 @@ function decodeDomainDraft(value: unknown, schemaVersion: 2 | 3): LoriState["dom
     !isRecord(value) ||
     typeof value.id !== "string" ||
     value.id.trim().length === 0 ||
-    (value.phase !== "collecting" && value.phase !== "awaiting_curation" && value.phase !== "awaiting_approval") ||
-    (schemaVersion === 2 && value.phase === "awaiting_approval")
+    (value.phase !== "collecting" && value.phase !== "awaiting_curation" && value.phase !== "awaiting_approval" && value.phase !== "awaiting_verdict") ||
+    (schemaVersion === 2 && (value.phase === "awaiting_approval" || value.phase === "awaiting_verdict"))
   ) {
     return undefined;
   }
@@ -212,6 +234,70 @@ function decodeDomainDraft(value: unknown, schemaVersion: 2 | 3): LoriState["dom
   return draft;
 }
 
+function decodeActiveDomain(value: unknown): ActiveDomain | undefined {
+  if (
+    !isRecord(value) ||
+    typeof value.id !== "string" || value.id.trim().length === 0 ||
+    typeof value.name !== "string" || value.name.trim().length === 0 ||
+    typeof value.learningObjective !== "string" || value.learningObjective.trim().length === 0 ||
+    value.status !== "active" ||
+    !isRecord(value.questionnaire) ||
+    !Array.isArray(value.chapters) || value.chapters.length === 0 ||
+    typeof value.currentChapterVersionId !== "string" || value.currentChapterVersionId.trim().length === 0
+  ) {
+    return undefined;
+  }
+  const questionnaire = value.questionnaire;
+  if (
+    typeof questionnaire.motivation !== "string" || questionnaire.motivation.trim().length === 0 ||
+    (questionnaire.deadline !== null && (typeof questionnaire.deadline !== "string" || questionnaire.deadline.trim().length === 0)) ||
+    typeof questionnaire.hoursPerWeek !== "number" || !Number.isFinite(questionnaire.hoursPerWeek) || questionnaire.hoursPerWeek < 0 ||
+    typeof questionnaire.baseline !== "number" || !Number.isInteger(questionnaire.baseline) || questionnaire.baseline < 1 || questionnaire.baseline > 5 ||
+    (questionnaire.preferences !== null && typeof questionnaire.preferences !== "string") ||
+    (questionnaire.materialRestrictions !== null && typeof questionnaire.materialRestrictions !== "string")
+  ) {
+    return undefined;
+  }
+
+  const chapters: ActiveDomain["chapters"] = [];
+  const versionIds = new Set<string>();
+  const versionNumbers = new Set<number>();
+  for (const entry of value.chapters) {
+    if (
+      !isRecord(entry) ||
+      typeof entry.id !== "string" || entry.id.trim().length === 0 || versionIds.has(entry.id) ||
+      typeof entry.version !== "number" || !Number.isInteger(entry.version) || entry.version < 1 || versionNumbers.has(entry.version) ||
+      typeof entry.approvedAt !== "number" || !Number.isFinite(entry.approvedAt)
+    ) {
+      return undefined;
+    }
+    const chapter = validateChapterProposal(entry.chapter);
+    if (!chapter.ok) return undefined;
+    versionIds.add(entry.id);
+    versionNumbers.add(entry.version);
+    chapters.push({ id: entry.id, version: entry.version, approvedAt: entry.approvedAt, chapter: chapter.proposal });
+  }
+  if (!versionIds.has(value.currentChapterVersionId)) return undefined;
+
+  const answers: DomainQuestionnaire = {
+    motivation: questionnaire.motivation,
+    deadline: questionnaire.deadline,
+    hoursPerWeek: questionnaire.hoursPerWeek,
+    baseline: questionnaire.baseline as DomainQuestionnaire["baseline"],
+    preferences: questionnaire.preferences,
+    materialRestrictions: questionnaire.materialRestrictions,
+  };
+  return {
+    id: value.id,
+    name: value.name,
+    learningObjective: value.learningObjective,
+    questionnaire: answers,
+    status: "active",
+    chapters,
+    currentChapterVersionId: value.currentChapterVersionId,
+  };
+}
+
 function decodeSkinConfig(value: Record<string, unknown>): LoriState["skinConfig"] | undefined {
   if (
     !isRecord(value.skinConfig) ||
@@ -233,37 +319,66 @@ function decodeSnapshotV1(value: Record<string, unknown>): SnapshotResult {
 
   return {
     ok: true,
-    state: { player, session, sessionHistory: [], domainDraft: null, skinConfig },
+    state: { player, session, sessionHistory: [], domains: [], domainDraft: null, skinConfig },
   };
 }
 
 function decodeSnapshotCurrent(value: Record<string, unknown>, schemaVersion: 2 | 3): SnapshotResult {
   const player = decodePlayer(value);
   const skinConfig = decodeSkinConfig(value);
-  const session = decodeSession(value.session, 2);
+  const session = decodeSession(value.session, schemaVersion);
   const domainDraft = value.domainDraft === undefined ? null : decodeDomainDraft(value.domainDraft, schemaVersion);
   const history = value.sessionHistory;
-  if (!player || !skinConfig || session === undefined || domainDraft === undefined || !Array.isArray(history)) {
+  const domainValues = value.domains === undefined ? [] : value.domains;
+  if (
+    !player || !skinConfig || session === undefined || domainDraft === undefined ||
+    !Array.isArray(history) || !Array.isArray(domainValues)
+  ) {
     return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
   }
 
   const sessionHistory: Session[] = [];
   for (const entry of history) {
-    const archivedSession = decodeSession(entry, 2);
+    const archivedSession = decodeSession(entry, schemaVersion);
     if (archivedSession === undefined || archivedSession === null || archivedSession.status !== "closed") {
       return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
     }
     sessionHistory.push(archivedSession);
   }
 
+  const domains: ActiveDomain[] = [];
+  const domainIds = new Set<string>();
+  for (const entry of domainValues) {
+    const domain = decodeActiveDomain(entry);
+    if (domain === undefined || domainIds.has(domain.id)) {
+      return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
+    }
+    domainIds.add(domain.id);
+    domains.push(domain);
+  }
+
+  const hasChapterReference = (reference: ChapterVersionReference): boolean => domains.some((domain) =>
+    domain.id === reference.domainId && domain.chapters.some(({ id }) => id === reference.chapterVersionId)
+  );
   if (
     (session?.kind === "metalearning" && domainDraft?.id !== session.domainId) ||
-    (domainDraft !== null && session?.kind !== "metalearning")
+    (domainDraft !== null && session?.kind !== "metalearning") ||
+    (domainDraft !== null && domainIds.has(domainDraft.id) && domainDraft.phase !== "awaiting_verdict") ||
+    (session?.kind === "metalearning" && session.chapterRef !== undefined && (
+      session.chapterRef.domainId !== session.domainId || !hasChapterReference(session.chapterRef)
+    )) ||
+    sessionHistory.some((archived) => archived.status === "closed" && archived.verdict.chapterRef !== undefined && !hasChapterReference(archived.verdict.chapterRef)) ||
+    (session?.status === "closed" && session.verdict.chapterRef !== undefined && !hasChapterReference(session.verdict.chapterRef)) ||
+    (domainDraft?.phase === "awaiting_verdict" && (
+      session?.kind !== "metalearning" ||
+      session.chapterRef?.domainId !== domainDraft.id ||
+      !domains.some((domain) => domain.id === domainDraft.id && domain.currentChapterVersionId === session.chapterRef?.chapterVersionId)
+    ))
   ) {
     return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
   }
 
-  return { ok: true, state: { player, session, sessionHistory, domainDraft, skinConfig } };
+  return { ok: true, state: { player, session, sessionHistory, domains, domainDraft, skinConfig } };
 }
 
 function decodeSnapshot(value: unknown): SnapshotResult {

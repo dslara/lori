@@ -429,6 +429,10 @@ async function continueDomainPreparation(
       ctx.ui.notify(renderChapterProposal(draft, proposal), "info");
       return;
     }
+    if (draft.phase === "awaiting_verdict") {
+      ctx.ui.notify("Domain ativo; a Session de Metalearning continua aberta aguardando seu Verdict. O Chapter aprovado está salvo como versão vinculada.", "info");
+      return;
+    }
 
     const field = nextDomainDraftField(draft);
     if (field === undefined) {
@@ -683,6 +687,74 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
         shared.curationRequest = undefined;
         ctx.ui.notify("Lori: não foi possível iniciar a curadoria pelo agent; nenhuma proposta foi salva.", "error");
       }
+    },
+  });
+
+  api.registerCommand("lori-approve", {
+    description: "Revisar e aprovar explicitamente a proposta pendente do primeiro Chapter",
+    handler: async (args, ctx) => {
+      const ready = requireReadyState(shared, ctx);
+      if (!ready) return;
+      if (args.trim().length > 0) {
+        ctx.ui.notify("Uso: /lori-approve (sem argumentos)", "warning");
+        return;
+      }
+
+      const { projectDir, skin } = ready;
+      const latest = await dispatchAndPersist(projectDir, () => undefined);
+      if (!acceptDispatchResult(shared, ctx, latest, "Lori: não foi possível consultar o snapshot antes da aprovação.")) return;
+      const { state } = latest;
+      const draft = state.domainDraft;
+      const session = state.session;
+      if (draft === null || draft.phase !== "awaiting_approval" || draft.pendingChapter === undefined) {
+        ctx.ui.notify("Lori: não há proposta pendente para aprovar. Nenhum Domain foi ativado.", "warning");
+        return;
+      }
+      if (session?.kind !== "metalearning" || session.domainId !== draft.id || session.status !== "open") {
+        ctx.ui.notify("Lori: retome a Session de Metalearning antes de aprovar a proposta.", "warning");
+        return;
+      }
+
+      const proposal = draft.pendingChapter;
+      ctx.ui.notify(renderChapterProposal(draft, proposal), "info");
+      const confirmed = await ctx.ui.confirm(
+        `Aprovar o primeiro Chapter de ${draft.name ?? "Domain"}?`,
+        "A aprovação ativa este Domain e salva uma versão do Chapter. A Session de Metalearning continuará aberta aguardando Verdict; nenhuma nota ou XP será lançado agora.",
+      );
+      if (!confirmed) {
+        ctx.ui.notify("Aprovação cancelada; o draft e a proposta pendente permanecem intactos e o Domain continua inativo.", "info");
+        return;
+      }
+
+      const result = await dispatchAndPersist(projectDir, (current) => {
+        const currentDraft = current.domainDraft;
+        if (
+          current.session?.kind !== "metalearning" ||
+          current.session.status !== "open" ||
+          current.session.domainId !== draft.id ||
+          currentDraft?.id !== draft.id ||
+          currentDraft.phase !== "awaiting_approval" ||
+          currentDraft.pendingChapter === undefined ||
+          JSON.stringify(currentDraft.pendingChapter) !== JSON.stringify(proposal) ||
+          current.domains.some(({ id }) => id === draft.id)
+        ) {
+          return undefined;
+        }
+        return {
+          type: "domain/approve",
+          id: draft.id,
+          chapterVersionId: randomUUID(),
+          approvedAt: Date.now(),
+        };
+      });
+      if (!acceptDispatchResult(shared, ctx, result, "Lori: Domain não ativado porque não foi possível persistir a aprovação.")) return;
+      if (result.status !== "persisted") {
+        ctx.ui.notify("Lori: a proposta ou Session mudou durante a confirmação; nenhuma aprovação foi persistida.", "warning");
+        return;
+      }
+
+      showStatus(ctx, result.state, skin);
+      ctx.ui.notify("Domain aprovado e ativo. A primeira versão do Chapter foi salva; a Session de Metalearning continua aberta aguardando Verdict.", "info");
     },
   });
 

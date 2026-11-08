@@ -13,7 +13,7 @@ Lori é **extensão Pi** que transforma terminal em RPG single-player de aprendi
 
 Não é app standalone. Não tem backend. Não roda fora do Pi.
 
-Arquitetura escolhe o mais simples que fecha a Fase 1: abrir e fechar Lori session com veredito sobre persistência local. Cada camada futura paga seu didático quando chegar, nunca antes. Regime sem malus em tudo: nada subtrai, fazer soma mais.
+Arquitetura escolhe o mais simples que fecha a jornada inicial: preparar e aprovar um Domain, depois abrir e fechar Lori Sessions com Verdict sobre persistência local. Cada camada futura paga seu didático quando chegar, nunca antes. Regime sem malus em tudo: nada subtrai, fazer soma mais.
 
 ---
 
@@ -23,11 +23,11 @@ Arquitetura escolhe o mais simples que fecha a Fase 1: abrir e fechar Lori sessi
 |---|---------|----------------------|---------|
 | 1 | **Store simples, sem `subscribe`** | Redux-like com middleware | Sem processo persistente, effects chamam direto. Persist é chamada explícita após `dispatch`. |
 | 2 | **Core funcional puro com ban de imports** | OO com classes mutáveis | Dados planos mais funções puras serializam de graça e testam sem mock. `core/` não importa `fs`, Pi SDK, skin ou store. |
-| 3 | **Snapshot JSON atômico, versionado, um processo por projeto** | Event log com replay | Snapshot pequeno dispensa query. A Fase 1 assume uma única instância Pi por projeto; rename impede arquivo parcial. Processos simultâneos não são suportados. Replay vira fog para SRS e ghost. Tipos Action e Event mantidos para migração barata. |
+| 3 | **Snapshot JSON atômico, versionado, um processo por projeto** | Event log com replay | O snapshot mantém Player, Domains ativos com versões de Chapter, Session atual, drafts e histórico fechado; rename impede arquivo parcial. Uma única instância Pi por projeto; processos simultâneos não são suportados. Replay vira fog para SRS e ghost. Tipos Action e Event mantidos para migração barata. |
 | 4 | **`bun:sqlite` como upgrade, `better-sqlite3` fora** | SQLite via `better-sqlite3` | Pi embute Bun: `node:sqlite` não resolve, `better-sqlite3` é risco nativo sem necessidade. Research em `docs/wayfinder/research/sqlite-vs-flat-files.md`. |
 | 5 | **Lifecycle com timer stateless e abandon neutro** | Timeout punitivo de 24h | ADR sem malus enterrou punição. Timestamps sobrevivem ao processo, pausa sempre retoma. |
 | 6 | **Skin Minimal sem DSL** | Mini-DSL já | Template é função pura `(params) => string`. Parser e condicionais esperam uso real. |
-| 7 | **`State.hot` só com player, session e skinConfig** | Hot completo mais cold lazy | YAGNI até SRS e ghost existirem. Cold split é fog. |
+| 7 | **State local completo no snapshot JSON** | Hot/cold split com SQLite lazy | Domains, draft de Metalearning, Session atual, histórico de Sessions, Player e skinConfig são pequenos o bastante para carregar juntos. Cold split é fog até SRS ou volume real justificá-lo. |
 | 8 | **Rebuild em `session_start`, nada na factory** | Processo próprio ou init na factory | Instância é religada por sessão. Research em `docs/wayfinder/research/pi-extension-lifecycle.md`. `appendEntry` só para metadados de agent session. |
 
 ---
@@ -50,7 +50,8 @@ Arquitetura escolhe o mais simples que fecha a Fase 1: abrir e fechar Lori sessi
 ├─────────────────────────────────────────────────────────────┤
 │  STORE (single source of truth, sem regra de negócio)       │
 │  - dispatch + getState, sem subscribe, sem middleware       │
-│  - State.hot: { player, session, skinConfig }               │
+│  - State: player, domains, domainDraft, session,            │
+│    sessionHistory, skinConfig                               │
 │  - rootReducer em src/store/, só combina slices             │
 │  - Selectors co-located por reducer                         │
 ├─────────────────────────────────────────────────────────────┤
@@ -128,7 +129,7 @@ Arquitetura escolhe o mais simples que fecha a Fase 1: abrir e fechar Lori sessi
 
 ### 4.1 Snapshot direto, event sourcing no fog
 
-Toda mutação passa por action serializável. Fase 1 persiste snapshot direto; replay vira fog. Distinção Action contra Event segue nos tipos.
+Toda mutação passa por action serializável. O snapshot JSON versionado contém Player, Domains ativos e suas versões de Chapter, o draft de Metalearning, a Session atual, histórico de Sessions fechadas e skinConfig. Um Verdict pode guardar somente a referência à versão aprovada, sem copiar o Chapter. Replay vira fog. Distinção Action contra Event segue nos tipos.
 
 **Patterns:** Unidirectional Data Flow, Functional Composition.
 
@@ -150,9 +151,9 @@ Skin é `(params) => string` com interpolação direta. Sem parser, sem `eval`, 
 
 Só timestamps (`startedAt`, `pausedAt`, `totalPaused`). Elapsed derivado no boot e no veredito. Sem `setInterval`, sem timeout de 24h, sem auto-pause punitivo.
 
-### 4.6 Hot mínimo, cold no fog
+### 4.6 Estado local completo, cold no fog
 
-Hot é player, session e skinConfig. Lazy loading de cards e histórico espera medição de boot real.
+Domains, draft, Session atual, histórico fechado, Player e skinConfig permanecem no snapshot local e no State carregado. Lazy loading de cards e armazenamento separado do histórico esperam volume ou medição de boot que os justifiquem.
 
 ### 4.7 Fingerprint Jaccard (fog)
 
@@ -215,7 +216,7 @@ SM-2 puro sem penalty, cards manuais, técnicas e combos com bônus-ou-nada, ski
 | 2 | `skin/` e `persona/` não modificam estado. Só traduzem. | Bug |
 | 3 | `effects/` não contém regra de negócio. Só orquestra. | Refatorar |
 | 4 | Actions são serializáveis (JSON). Tipos Action e Event seguem distintos. | Corrigir |
-| 5 | Snapshot guarda `player`, `session` e `skinConfig` com `schemaVersion` e rename atômico no projeto de estudo. Um processo Pi por projeto. | Corrigir |
+| 5 | Snapshot guarda `player`, `domains`, `domainDraft`, `session`, `sessionHistory` e `skinConfig` com `schemaVersion` e rename atômico no projeto de estudo. Um processo Pi por projeto. | Corrigir |
 | 6 | Pi SDK vive só no adapter e em `src/effects/ui/`. Nada na factory além de registro. | Isolar |
 | 7 | `runtime.*` nunca persiste quando existir. Sempre recalcula no boot. | Bug |
 | 8 | Modifiers são bônus derivados, nunca abaixo do neutro. | Refatorar |
@@ -228,6 +229,6 @@ SM-2 puro sem penalty, cards manuais, técnicas e combos com bônus-ou-nada, ski
 
 ## 9. Conclusão
 
-Fase 1 travada é **store simples mais core puro mais snapshot versionado**: abrir e fechar Lori session com veredito, timer derivado, abandon neutro, Skin Minimal sem DSL. Didático na medida: data flow unidirecional, functional core, derivation, plugin mínimo e Pi Extension API, sem pagar event sourcing ou DSL antes da hora.
+A direção atual é **store simples mais core puro mais snapshot versionado**: preparar e aprovar Domains com sua primeira versão de Chapter, mantendo Sessions e histórico local. Após a aprovação, a Session de Metalearning permanece aberta aguardando Verdict; esse fechamento e o estudo ligado ao Chapter são fatias separadas. Timer derivado, abandon neutro e Skin Minimal sem DSL. Didático na medida: data flow unidirecional, functional core, derivation, plugin mínimo e Pi Extension API, sem pagar event sourcing ou DSL antes da hora.
 
 Fog consciente: SRS, combos, passivas, ghost, DSL, personas, cold split, export e package. Cada um vira mapa próprio. Nada aqui redecide game design; tudo aqui respeita o ADR sem malus.

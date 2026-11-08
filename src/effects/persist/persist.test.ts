@@ -80,6 +80,27 @@ describe("Lori snapshot persistence", () => {
     expect(await readdir(join(projectDir, ".lori"))).toEqual(["snapshot.json"]);
   });
 
+  test("loads the pre-approval v3 snapshot shape with an empty active Domain collection", async () => {
+    const projectDir = await mkdtemp(join(tmpdir(), "lori-snapshot-v3-domains-"));
+    projectDirs.push(projectDir);
+    const snapshotPath = join(projectDir, SNAPSHOT_RELATIVE_PATH);
+    await mkdir(join(projectDir, ".lori"), { recursive: true });
+    const previousV3 = {
+      schemaVersion: 3,
+      player: { totalXp: 17 },
+      session: null,
+      sessionHistory: [],
+      domainDraft: null,
+      skinConfig: { skin: "minimal" },
+    };
+    await writeFile(snapshotPath, JSON.stringify(previousV3));
+
+    const result = await loadOrCreateSnapshot(projectDir);
+
+    expect(result).toMatchObject({ ok: true, state: { player: { totalXp: 17 }, domains: [] } });
+    expect(JSON.parse(await readFile(snapshotPath, "utf8"))).toEqual(previousV3);
+  });
+
   test("migrates a valid v2 snapshot to the Chapter proposal schema without losing Player state", async () => {
     const projectDir = await mkdtemp(join(tmpdir(), "lori-snapshot-v2-migration-"));
     projectDirs.push(projectDir);

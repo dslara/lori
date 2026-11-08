@@ -1,3 +1,11 @@
+import type { ChapterVersionReference } from "../domain/types.ts";
+
+export type Verdict = {
+  focus: number;
+  honesty: number;
+  chapterRef?: ChapterVersionReference;
+};
+
 export type StudySessionDetails = {
   kind: "legacyStudy";
   name: string;
@@ -11,6 +19,7 @@ export type MetalearningSessionDetails = {
   domainId: string;
   startedAt: number;
   totalPausedMs: number;
+  chapterRef?: ChapterVersionReference;
 };
 
 export type Session =
@@ -20,7 +29,7 @@ export type Session =
       status: "closed";
       closedAt: number;
       pausedAt?: number;
-      verdict: { focus: number; honesty: number };
+      verdict: Verdict;
     })
   | (MetalearningSessionDetails & { status: "open" })
   | (MetalearningSessionDetails & { status: "paused"; pausedAt: number });
