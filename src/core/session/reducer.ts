@@ -71,11 +71,12 @@ export function reduceSession(state: Session | null, action: SessionAction): Ses
   }
 
   if (
-    state?.kind !== "legacyStudy" ||
+    state === null ||
     (state.status !== "open" && state.status !== "paused") ||
     !Number.isFinite(action.closedAt) ||
     !Number.isFinite(action.focus) ||
-    !Number.isFinite(action.honesty)
+    !Number.isFinite(action.honesty) ||
+    (state.kind === "metalearning" && state.chapterRef === undefined)
   ) {
     return state;
   }
@@ -87,15 +88,31 @@ export function reduceSession(state: Session | null, action: SessionAction): Ses
     return state;
   }
 
+  if (state.kind === "legacyStudy") {
+    return {
+      kind: state.kind,
+      status: "closed",
+      name: state.name,
+      primaryTechnique: state.primaryTechnique,
+      startedAt: state.startedAt,
+      totalPausedMs: state.totalPausedMs,
+      closedAt: action.closedAt,
+      ...(state.status === "paused" ? { pausedAt: state.pausedAt } : {}),
+      verdict: { focus: action.focus, honesty: action.honesty },
+    };
+  }
+
+  const chapterRef = state.chapterRef;
+  if (chapterRef === undefined) return state;
   return {
     kind: state.kind,
     status: "closed",
-    name: state.name,
-    primaryTechnique: state.primaryTechnique,
+    domainId: state.domainId,
     startedAt: state.startedAt,
     totalPausedMs: state.totalPausedMs,
+    chapterRef,
     closedAt: action.closedAt,
     ...(state.status === "paused" ? { pausedAt: state.pausedAt } : {}),
-    verdict: { focus: action.focus, honesty: action.honesty },
+    verdict: { focus: action.focus, honesty: action.honesty, chapterRef },
   };
 }

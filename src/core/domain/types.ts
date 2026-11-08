@@ -38,6 +38,7 @@ export type DomainDraft = {
   id: string;
   phase: DomainDraftPhase;
   pendingChapter?: ChapterProposal;
+  verdictFocus?: number;
   name?: string;
   learningObjective?: string;
   motivation?: string;
@@ -57,7 +58,8 @@ export type DomainDraftAction =
   | { type: "domain-draft/answer"; id: string; field: "baseline"; value: Baseline }
   | { type: "domain-draft/answer"; id: string; field: "preferences"; value: string | null }
   | { type: "domain-draft/answer"; id: string; field: "materialRestrictions"; value: string | null }
-  | { type: "domain-draft/propose-chapter"; id: string; proposal: ChapterProposal };
+  | { type: "domain-draft/propose-chapter"; id: string; proposal: ChapterProposal }
+  | { type: "domain-draft/save-verdict-focus"; id: string; focus: number };
 
 export type DomainDraftAnswerAction = Extract<DomainDraftAction, { type: "domain-draft/answer" }>;
 

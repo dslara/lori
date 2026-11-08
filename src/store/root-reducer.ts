@@ -33,6 +33,40 @@ export function rootReducer(state: LoriState, action: LoriAction): LoriState {
   ) {
     return state;
   }
+  if (action.type === "domain-draft/save-verdict-focus") {
+    const draft = state.domainDraft;
+    const session = state.session;
+    if (
+      draft === null ||
+      draft.id !== action.id ||
+      draft.phase !== "awaiting_verdict" ||
+      draft.verdictFocus !== undefined ||
+      !Number.isFinite(action.focus) ||
+      session?.kind !== "metalearning" ||
+      session.status !== "open" ||
+      session.domainId !== draft.id ||
+      session.chapterRef === undefined ||
+      !state.domains.some((domain) => domain.id === session.domainId && domain.currentChapterVersionId === session.chapterRef?.chapterVersionId)
+    ) {
+      return state;
+    }
+  }
+  if (action.type === "session/close" && state.session?.kind === "metalearning") {
+    const draft = state.domainDraft;
+    const session = state.session;
+    if (
+      session.status !== "open" ||
+      session.chapterRef === undefined ||
+      draft?.id !== session.domainId ||
+      draft.phase !== "awaiting_verdict" ||
+      !Number.isFinite(draft.verdictFocus) ||
+      !Number.isFinite(action.focus) ||
+      !Number.isFinite(action.honesty) ||
+      !state.domains.some((domain) => domain.id === session.domainId && domain.currentChapterVersionId === session.chapterRef?.chapterVersionId)
+    ) {
+      return state;
+    }
+  }
   if (action.type === "domain/approve") {
     const draft = state.domainDraft;
     if (
@@ -64,7 +98,15 @@ export function rootReducer(state: LoriState, action: LoriAction): LoriState {
   const session = action.type === "domain/approve" && reducedSession?.kind === "metalearning"
     ? { ...reducedSession, chapterRef: { domainId: action.id, chapterVersionId: action.chapterVersionId } }
     : reducedSession;
-  const domainDraft = reduceDomainDraft(state.domainDraft, action);
+  let domainDraft = reduceDomainDraft(state.domainDraft, action);
+  if (
+    action.type === "session/close" &&
+    state.session?.kind === "metalearning" &&
+    session?.kind === "metalearning" &&
+    session.status === "closed"
+  ) {
+    domainDraft = null;
+  }
   let domains = state.domains;
   const draft = state.domainDraft;
   const pendingChapter = draft?.pendingChapter;

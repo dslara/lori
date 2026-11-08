@@ -26,23 +26,41 @@ export function renderStatus(
   }
 
   const elapsed = formatElapsed(selectElapsedMs(session, now));
+  let status: string;
   if (session.status === "closed") {
-    return skin.render("session.closed", {
-      domain: session.name,
-      technique: session.primaryTechnique,
+    const isMetalearning = session.kind === "metalearning";
+    status = skin.render("session.closed", {
+      domain: isMetalearning
+        ? state.domains.find(({ id }) => id === session.domainId)?.name ?? "Domain"
+        : session.name,
+      technique: isMetalearning ? "Metalearning" : session.primaryTechnique,
       elapsed,
       focus: session.verdict.focus,
       honesty: session.verdict.honesty,
     });
+  } else {
+    const sessionEvent = event ?? (session.status === "open" ? "session.open" : "session.paused");
+    const isMetalearning = session.kind === "metalearning";
+    status = skin.render(sessionEvent, {
+      domain: isMetalearning ? state.domainDraft?.name ?? "Domain em preparação" : session.name,
+      technique: isMetalearning ? "Metalearning" : session.primaryTechnique,
+      elapsed,
+    });
   }
 
-  const sessionEvent = event ?? (session.status === "open" ? "session.open" : "session.paused");
-  const isMetalearning = session.kind === "metalearning";
-  return skin.render(sessionEvent, {
-    domain: isMetalearning ? state.domainDraft?.name ?? "Domain em preparação" : session.name,
-    technique: isMetalearning ? "Metalearning" : session.primaryTechnique,
-    elapsed,
-  });
+  if (session.status !== "closed") {
+    const previousVerdict = state.sessionHistory.at(-1);
+    if (previousVerdict?.status === "closed") {
+      const isMetalearning = previousVerdict.kind === "metalearning";
+      const domain = isMetalearning
+        ? state.domains.find(({ id }) => id === previousVerdict.domainId)?.name ?? "Domain"
+        : previousVerdict.name;
+      const chapterVersion = previousVerdict.verdict.chapterRef?.chapterVersionId;
+      const reference = chapterVersion === undefined ? "" : ` · Chapter version: ${chapterVersion}`;
+      status += `\nÚltimo Verdict no histórico: ${domain} · Focus: ${previousVerdict.verdict.focus} · Honesty: ${previousVerdict.verdict.honesty}${reference}`;
+    }
+  }
+  return status;
 }
 
 export function showStatus(

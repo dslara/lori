@@ -32,7 +32,13 @@ export type Session =
       verdict: Verdict;
     })
   | (MetalearningSessionDetails & { status: "open" })
-  | (MetalearningSessionDetails & { status: "paused"; pausedAt: number });
+  | (MetalearningSessionDetails & { status: "paused"; pausedAt: number })
+  | (MetalearningSessionDetails & {
+      status: "closed";
+      closedAt: number;
+      pausedAt?: number;
+      verdict: Verdict & { chapterRef: ChapterVersionReference };
+    });
 
 export type SessionAction =
   | {

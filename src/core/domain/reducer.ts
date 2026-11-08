@@ -43,6 +43,19 @@ export function reduceDomainDraft(
     return { ...draft, phase: "awaiting_approval", pendingChapter: action.proposal };
   }
 
+  if (action.type === "domain-draft/save-verdict-focus") {
+    if (
+      draft === null ||
+      draft.id !== action.id ||
+      draft.phase !== "awaiting_verdict" ||
+      draft.verdictFocus !== undefined ||
+      !Number.isFinite(action.focus)
+    ) {
+      return draft;
+    }
+    return { ...draft, verdictFocus: action.focus };
+  }
+
   if (action.type === "session/open-metalearning") {
     if (draft !== null || action.domainId.trim().length === 0 || !Number.isFinite(action.startedAt)) {
       return draft;
@@ -108,6 +121,7 @@ export function isSessionAction(action: LoriAction): action is SessionAction {
     case "domain-draft/answer":
     case "domain-draft/propose-chapter":
     case "domain/approve":
+    case "domain-draft/save-verdict-focus":
       return false;
   }
 }

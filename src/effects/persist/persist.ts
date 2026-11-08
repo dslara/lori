@@ -38,7 +38,7 @@ function decodeSession(value: unknown, version: 1 | 2 | 3): Session | null | und
     if (
       typeof value.domainId !== "string" ||
       value.domainId.trim().length === 0 ||
-      (value.status !== "open" && value.status !== "paused") ||
+      (value.status !== "open" && value.status !== "paused" && value.status !== "closed") ||
       typeof value.startedAt !== "number" ||
       !Number.isFinite(value.startedAt)
     ) {
@@ -60,14 +60,52 @@ function decodeSession(value: unknown, version: 1 | 2 | 3): Session | null | und
     if (value.status === "open") {
       return { ...details, status: "open" };
     }
+    if (value.status === "paused") {
+      if (
+        typeof value.pausedAt !== "number" ||
+        !Number.isFinite(value.pausedAt) ||
+        value.pausedAt < value.startedAt + totalPausedMs
+      ) {
+        return undefined;
+      }
+      return { ...details, status: "paused", pausedAt: value.pausedAt };
+    }
+
+    const pausedAt = value.pausedAt;
+    const verdictChapterRef = isRecord(value.verdict)
+      ? decodeChapterReference(value.verdict.chapterRef)
+      : undefined;
     if (
-      typeof value.pausedAt !== "number" ||
-      !Number.isFinite(value.pausedAt) ||
-      value.pausedAt < value.startedAt + totalPausedMs
+      version !== 3 ||
+      chapterRef === null ||
+      verdictChapterRef === null ||
+      verdictChapterRef === undefined ||
+      verdictChapterRef.domainId !== chapterRef.domainId ||
+      verdictChapterRef.chapterVersionId !== chapterRef.chapterVersionId ||
+      typeof value.closedAt !== "number" ||
+      !Number.isFinite(value.closedAt) ||
+      value.closedAt < value.startedAt + totalPausedMs ||
+      (pausedAt !== undefined && (
+        typeof pausedAt !== "number" ||
+        !Number.isFinite(pausedAt) ||
+        pausedAt < value.startedAt + totalPausedMs ||
+        pausedAt > value.closedAt
+      )) ||
+      !isRecord(value.verdict) ||
+      typeof value.verdict.focus !== "number" ||
+      !Number.isFinite(value.verdict.focus) ||
+      typeof value.verdict.honesty !== "number" ||
+      !Number.isFinite(value.verdict.honesty)
     ) {
       return undefined;
     }
-    return { ...details, status: "paused", pausedAt: value.pausedAt };
+    return {
+      ...details,
+      status: "closed",
+      closedAt: value.closedAt,
+      ...(typeof pausedAt === "number" ? { pausedAt } : {}),
+      verdict: { focus: value.verdict.focus, honesty: value.verdict.honesty, chapterRef },
+    };
   }
 
   const name = version === 1 ? value.domain : value.name;
@@ -209,6 +247,12 @@ function decodeDomainDraft(value: unknown, schemaVersion: 2 | 3): LoriState["dom
       return undefined;
     }
     draft.baseline = value.baseline as NonNullable<typeof draft.baseline>;
+  }
+  if (value.verdictFocus !== undefined) {
+    if (draft.phase !== "awaiting_verdict" || typeof value.verdictFocus !== "number" || !Number.isFinite(value.verdictFocus)) {
+      return undefined;
+    }
+    draft.verdictFocus = value.verdictFocus;
   }
   if (draft.phase !== "collecting" && (
     draft.name === undefined ||
@@ -361,8 +405,8 @@ function decodeSnapshotCurrent(value: Record<string, unknown>, schemaVersion: 2 
     domain.id === reference.domainId && domain.chapters.some(({ id }) => id === reference.chapterVersionId)
   );
   if (
-    (session?.kind === "metalearning" && domainDraft?.id !== session.domainId) ||
-    (domainDraft !== null && session?.kind !== "metalearning") ||
+    (session?.kind === "metalearning" && session.status !== "closed" && domainDraft?.id !== session.domainId) ||
+    (domainDraft !== null && (session?.kind !== "metalearning" || session.status === "closed")) ||
     (domainDraft !== null && domainIds.has(domainDraft.id) && domainDraft.phase !== "awaiting_verdict") ||
     (session?.kind === "metalearning" && session.chapterRef !== undefined && (
       session.chapterRef.domainId !== session.domainId || !hasChapterReference(session.chapterRef)
@@ -371,6 +415,7 @@ function decodeSnapshotCurrent(value: Record<string, unknown>, schemaVersion: 2 
     (session?.status === "closed" && session.verdict.chapterRef !== undefined && !hasChapterReference(session.verdict.chapterRef)) ||
     (domainDraft?.phase === "awaiting_verdict" && (
       session?.kind !== "metalearning" ||
+      session.status === "closed" ||
       session.chapterRef?.domainId !== domainDraft.id ||
       !domains.some((domain) => domain.id === domainDraft.id && domain.currentChapterVersionId === session.chapterRef?.chapterVersionId)
     ))

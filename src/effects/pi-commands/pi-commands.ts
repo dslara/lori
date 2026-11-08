@@ -65,7 +65,7 @@ const BASELINE_OPTIONS = [
   "5 · Familiaridade profunda: explico, adapto e resolvo casos novos",
 ] as const;
 
-type DomainDraftField = keyof Omit<DomainDraft, "id" | "phase" | "pendingChapter">;
+type DomainDraftField = keyof Omit<DomainDraft, "id" | "phase" | "pendingChapter" | "verdictFocus">;
 
 function nextDomainDraftField(draft: DomainDraft): DomainDraftField | undefined {
   return ([
@@ -142,11 +142,25 @@ async function promptDomainDraftAnswer(
   return { type: "domain-draft/answer", id, field, value };
 }
 
+async function promptVerdictScore(
+  title: "Focus — informe um número finito" | "Honesty — informe um número finito",
+  ctx: Pick<ExtensionContext, "ui">,
+): Promise<number | undefined> {
+  while (true) {
+    const response = await ctx.ui.input(title);
+    if (response === undefined) return undefined;
+    const value = response.trim();
+    const score = Number(value);
+    if (value.length > 0 && Number.isFinite(score)) return score;
+    ctx.ui.notify("Informe um número finito; não há escala ou limite definido.", "warning");
+  }
+}
+
 function sessionPresentation(state: LoriState): { domain: string; technique: string } {
   const session = state.session;
   if (session?.kind === "metalearning") {
     return {
-      domain: state.domainDraft?.name ?? "Domain em preparação",
+      domain: state.domainDraft?.name ?? state.domains.find(({ id }) => id === session.domainId)?.name ?? "Domain em preparação",
       technique: "Metalearning",
     };
   }
@@ -430,7 +444,90 @@ async function continueDomainPreparation(
       return;
     }
     if (draft.phase === "awaiting_verdict") {
-      ctx.ui.notify("Domain ativo; a Session de Metalearning continua aberta aguardando seu Verdict. O Chapter aprovado está salvo como versão vinculada.", "info");
+      const isFocusPending = draft.verdictFocus === undefined;
+      const score = await promptVerdictScore(
+        isFocusPending ? "Focus — informe um número finito" : "Honesty — informe um número finito",
+        ctx,
+      );
+      if (score === undefined) {
+        const paused = await dispatchAndPersist(projectDir, (current) => {
+          if (current.session?.kind !== "metalearning" || current.session.status !== "open") {
+            return undefined;
+          }
+          return {
+            type: "session/abandon",
+            pausedAt: Math.max(Date.now(), current.session.startedAt + current.session.totalPausedMs),
+          };
+        });
+        if (!acceptDispatchResult(shared, ctx, paused, "Lori: avaliação não pausada porque não foi possível persistir o snapshot.")) {
+          return;
+        }
+        if (paused.status === "persisted") {
+          const status = showStatus(ctx, paused.state, skin, "session.paused");
+          const pending = isFocusPending ? "Focus" : "Honesty";
+          const savedFocus = isFocusPending ? "" : "Focus já salvo; ";
+          ctx.ui.notify(`${status}\n${savedFocus}${pending} ainda não foi enviada; use /lori-resume para continuar.`, "info");
+        }
+        return;
+      }
+
+      if (isFocusPending) {
+        const saved = await dispatchAndPersist(projectDir, (current) => {
+          if (
+            current.session?.kind !== "metalearning" ||
+            current.session.status !== "open" ||
+            current.domainDraft?.id !== draft.id ||
+            current.domainDraft.phase !== "awaiting_verdict" ||
+            current.domainDraft.verdictFocus !== undefined
+          ) {
+            return undefined;
+          }
+          return { type: "domain-draft/save-verdict-focus", id: draft.id, focus: score };
+        });
+        if (!acceptDispatchResult(shared, ctx, saved, "Lori: Focus não salvo porque não foi possível persistir o snapshot.")) {
+          return;
+        }
+        if (saved.status === "unchanged") {
+          ctx.ui.notify("Lori: Focus não foi salvo porque o preparo mudou.", "warning");
+          return;
+        }
+        continue;
+      }
+
+      const closed = await dispatchAndPersist(projectDir, (current) => {
+        const currentSession = current.session;
+        const currentDraft = current.domainDraft;
+        if (
+          currentSession?.kind !== "metalearning" ||
+          currentSession.status !== "open" ||
+          currentSession.domainId !== draft.id ||
+          currentDraft?.id !== draft.id ||
+          currentDraft.phase !== "awaiting_verdict" ||
+          currentDraft.verdictFocus === undefined
+        ) {
+          return undefined;
+        }
+        const closedAt = Math.max(Date.now(), currentSession.startedAt + currentSession.totalPausedMs);
+        if (!Number.isFinite(closedAt)) return undefined;
+        return {
+          type: "session/close",
+          closedAt,
+          focus: currentDraft.verdictFocus,
+          honesty: score,
+        };
+      });
+      if (!acceptDispatchResult(shared, ctx, closed, "Lori: Verdict não fechado porque não foi possível persistir o snapshot.")) {
+        return;
+      }
+      if (closed.status === "unchanged" || closed.state.session?.kind !== "metalearning" || closed.state.session.status !== "closed") {
+        ctx.ui.notify("Lori: Verdict não foi fechado porque a Session ou o Chapter aprovado mudou.", "warning");
+        return;
+      }
+      const status = showStatus(ctx, closed.state, skin);
+      ctx.ui.notify(
+        `${status}\nVerdict ligado ao Chapter version ${closed.state.session.verdict.chapterRef.chapterVersionId}.`,
+        "info",
+      );
       return;
     }
 
@@ -754,7 +851,8 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
       }
 
       showStatus(ctx, result.state, skin);
-      ctx.ui.notify("Domain aprovado e ativo. A primeira versão do Chapter foi salva; a Session de Metalearning continua aberta aguardando Verdict.", "info");
+      ctx.ui.notify("Domain aprovado e ativo. Informe Focus e Honesty para fechar a Session de Metalearning; nenhuma fórmula de XP será aplicada.", "info");
+      await continueDomainPreparation(shared, ctx, projectDir, skin);
     },
   });
 
@@ -875,7 +973,7 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
         }
       }
 
-      const previous = currentSession?.status === "closed"
+      const previous = currentSession?.kind === "legacyStudy" && currentSession.status === "closed"
         ? { domain: currentSession.name, primaryTechnique: currentSession.primaryTechnique }
         : undefined;
       const resolvedInput = await resolveStartInput(input, previous, ctx);

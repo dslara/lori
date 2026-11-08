@@ -348,7 +348,7 @@ describe("Lori Chapter curation", () => {
     expect(snapshot.domainDraft.pendingChapter).toBeUndefined();
     expect(snapshot.session).toMatchObject({
       kind: "metalearning",
-      status: "open",
+      status: "paused",
       domainId,
       chapterRef: { domainId, chapterVersionId: domain.chapters[0].id },
     });
@@ -358,7 +358,7 @@ describe("Lori Chapter curation", () => {
 
     await harness.runClose("4 | 4");
     const afterCloseAttempt = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
-    expect(afterCloseAttempt.session.status).toBe("open");
+    expect(afterCloseAttempt.session.status).toBe("paused");
     expect(afterCloseAttempt.session.verdict).toBeUndefined();
 
     const { harness: restored } = await createHarness(cwd);
@@ -368,8 +368,94 @@ describe("Lori Chapter curation", () => {
     expect(restoredSnapshot.domainDraft.phase).toBe("awaiting_verdict");
     expect(restoredSnapshot.session).toMatchObject({ status: "paused", chapterRef: snapshot.session.chapterRef });
     await restored.runResume();
-    expect(restored.ui.notifications.at(-1)?.message).toContain("aguardando seu Verdict");
-    expect(restored.ui.inputCalls).toEqual([]);
+    expect(restored.ui.notifications.at(-1)?.message).toContain("Focus ainda não foi enviada");
+    expect(restored.ui.inputCalls.map(({ title }) => title)).toEqual(["Focus — informe um número finito"]);
+  });
+
+  test("approval collects Focus and Honesty separately, closes with the approved Chapter reference, and preserves the Verdict in later history", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await harness.runCurate();
+    const { domainId } = curationRequestIds(harness);
+    await harness.submitCuration(validCuration(curationRequestIds(harness)));
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const beforeApproval = JSON.parse(await readFile(snapshotPath, "utf8"));
+    beforeApproval.player.totalXp = 37;
+    await writeFile(snapshotPath, JSON.stringify(beforeApproval));
+    harness.ui.confirmResponses.push(true);
+    harness.ui.inputResponses.push("NaN", "-123.5", "Infinity", "1e200");
+
+    await harness.runApprove();
+
+    const closed = JSON.parse(await readFile(snapshotPath, "utf8"));
+    const chapterRef = { domainId, chapterVersionId: closed.domains[0].currentChapterVersionId };
+    expect(harness.ui.inputCalls.slice(-4)).toEqual([
+      { title: "Focus — informe um número finito", placeholder: undefined },
+      { title: "Focus — informe um número finito", placeholder: undefined },
+      { title: "Honesty — informe um número finito", placeholder: undefined },
+      { title: "Honesty — informe um número finito", placeholder: undefined },
+    ]);
+    expect(harness.ui.notifications.filter(({ type }) => type === "warning")).toHaveLength(2);
+    expect(closed.session).toMatchObject({
+      kind: "metalearning",
+      status: "closed",
+      domainId,
+      verdict: { focus: -123.5, honesty: 1e200, chapterRef },
+    });
+    expect(closed.session.verdict).not.toHaveProperty("chapter");
+    expect(closed.domainDraft).toBeNull();
+    expect(closed.player.totalXp).toBe(37);
+    expect(closed).not.toHaveProperty("cards");
+    expect(closed).not.toHaveProperty("weaknesses");
+    expect(closed.domains[0].chapters).toHaveLength(1);
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Focus: -123.5 · Honesty: 1e+200");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Session fechada");
+
+    await harness.runStart("Later | Active Recall");
+
+    const continued = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(continued.sessionHistory).toEqual([closed.session]);
+    expect(continued.session).toMatchObject({ status: "open", name: "Later" });
+    expect(continued.player.totalXp).toBe(37);
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Focus: -123.5 · Honesty: 1e+200");
+    expect(harness.ui.statuses.at(-1)?.text).toContain(chapterRef.chapterVersionId);
+  });
+
+  test("resuming after Focus was saved asks only for Honesty and keeps the saved answer", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await harness.runCurate();
+    await harness.submitCuration(validCuration(curationRequestIds(harness)));
+    harness.ui.confirmResponses.push(true);
+    harness.ui.inputResponses.push("0.125", undefined);
+
+    await harness.runApprove();
+
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const paused = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(paused.domainDraft).toMatchObject({ phase: "awaiting_verdict", verdictFocus: 0.125 });
+    expect(paused.session).toMatchObject({ kind: "metalearning", status: "paused" });
+    expect(harness.ui.inputCalls.slice(-2).map(({ title }) => title)).toEqual([
+      "Focus — informe um número finito",
+      "Honesty — informe um número finito",
+    ]);
+
+    const { harness: restored } = await createHarness(cwd);
+    await restored.start();
+    restored.ui.inputResponses.push("-1e200");
+    await restored.runResume();
+
+    const closed = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(restored.ui.inputCalls).toEqual([
+      { title: "Honesty — informe um número finito", placeholder: undefined },
+    ]);
+    expect(closed.domainDraft).toBeNull();
+    expect(closed.session).toMatchObject({
+      kind: "metalearning",
+      status: "closed",
+      verdict: { focus: 0.125, honesty: -1e200 },
+    });
+    expect(closed.player.totalXp).toBe(0);
   });
 
   test("sends the saved questionnaire only after explicit /lori-curate and registers a TypeBox tool", async () => {
