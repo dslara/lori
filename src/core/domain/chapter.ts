@@ -60,11 +60,17 @@ export type ChapterNodeExitProofContribution = {
   rationale: string;
 };
 
+export type ChapterNodePrerequisiteRationale = {
+  prerequisiteNodeId: string;
+  rationale: string;
+};
+
 export type ChapterNode = {
   id: string;
   order: number;
   objective: string;
   prerequisiteNodeIds: string[];
+  prerequisiteRationales?: ChapterNodePrerequisiteRationale[];
   exitProofContributions?: ChapterNodeExitProofContribution[];
   /** Legacy review detail retained when decoding older snapshots. */
   exitProofCriterion?: string;
@@ -113,6 +119,31 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function decodePrerequisiteRationales(
+  value: unknown,
+  prerequisiteNodeIds: string[],
+): ChapterNodePrerequisiteRationale[] | undefined {
+  if (!Array.isArray(value) || value.length !== prerequisiteNodeIds.length) {
+    return undefined;
+  }
+  const rationales: ChapterNodePrerequisiteRationale[] = [];
+  const seenPrerequisiteIds = new Set<string>();
+  for (const entry of value) {
+    if (
+      !isRecord(entry) ||
+      !isNonEmptyString(entry.prerequisiteNodeId) ||
+      !prerequisiteNodeIds.includes(entry.prerequisiteNodeId) ||
+      seenPrerequisiteIds.has(entry.prerequisiteNodeId) ||
+      !isNonEmptyString(entry.rationale)
+    ) {
+      return undefined;
+    }
+    seenPrerequisiteIds.add(entry.prerequisiteNodeId);
+    rationales.push({ prerequisiteNodeId: entry.prerequisiteNodeId, rationale: entry.rationale });
+  }
+  return rationales;
 }
 
 function decodeExitProofContributions(
@@ -312,6 +343,14 @@ export function validateChapterProposal(
       return { ok: false, reason: "Cada pré-requisito deve apontar para um Node anterior, válido e sem repetição." };
     }
 
+    const prerequisiteRationales = decodePrerequisiteRationales(entry.prerequisiteRationales, prerequisiteNodeIds);
+    if (
+      (entry.prerequisiteRationales !== undefined && prerequisiteRationales === undefined) ||
+      (!options.allowMissingReviewDetails && prerequisiteRationales === undefined)
+    ) {
+      return { ok: false, reason: "Cada pré-requisito precisa ter um rationale específico não vazio no Node downstream." };
+    }
+
     const contributions = decodeExitProofContributions(entry.exitProofContributions, value.exitProof.criteria);
     if (
       (entry.exitProofContributions !== undefined && contributions === undefined) ||
@@ -349,6 +388,7 @@ export function validateChapterProposal(
       order: entry.order,
       objective: entry.objective,
       prerequisiteNodeIds,
+      ...(prerequisiteRationales === undefined ? {} : { prerequisiteRationales }),
       ...(contributions === undefined ? {} : { exitProofContributions: contributions }),
       ...(entry.exitProofCriterion === undefined ? {} : { exitProofCriterion: entry.exitProofCriterion as string }),
       evidenceRefs: nodeEvidenceRefs,
@@ -357,10 +397,13 @@ export function validateChapterProposal(
   }
 
   if (!options.allowMissingReviewDetails) {
-    if (value.exitProof.criteria.some((criterion) =>
-      !nodes.some(({ exitProofContributions }) => exitProofContributions?.some((contribution) => contribution.criterion === criterion))
-    )) {
-      return { ok: false, reason: "Cada critério do Exit Proof precisa estar ligado à contribuição justificada de ao menos um Node necessário." };
+    for (const criterion of value.exitProof.criteria) {
+      const contributorCount = nodes.filter(({ exitProofContributions }) =>
+        exitProofContributions?.some((contribution) => contribution.criterion === criterion)
+      ).length;
+      if (contributorCount !== 1) {
+        return { ok: false, reason: "Cada critério do Exit Proof precisa ter exatamente um Node contribuinte." };
+      }
     }
 
     const nodesById = new Map(nodes.map((node) => [node.id, node]));
@@ -389,19 +432,6 @@ export function validateChapterProposal(
       );
       if (!contributesToExitProof && !requiredByContributor) {
         return { ok: false, reason: "Cada Node precisa contribuir ao Exit Proof ou ser pré-requisito estrutural de um Node contribuinte." };
-      }
-    }
-
-    for (const criterion of value.exitProof.criteria) {
-      const contributors = nodes.filter(({ exitProofContributions }) =>
-        exitProofContributions?.some((contribution) => contribution.criterion === criterion)
-      );
-      for (let index = 1; index < contributors.length; index += 1) {
-        const earlier = contributors[index - 1]!;
-        const later = contributors[index]!;
-        if (!ancestorsByNodeId.get(later.id)?.has(earlier.id)) {
-          return { ok: false, reason: "Nodes que repetem um critério do Exit Proof precisam ter dependência estrutural entre si." };
-        }
       }
     }
   }

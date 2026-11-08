@@ -338,6 +338,7 @@ function validCuration(params: { requestId: string; domainId: string }): Record<
             order: 1,
             objective: "Recognize and use common greetings in a short exchange.",
             prerequisiteNodeIds: [],
+            prerequisiteRationales: [],
             exitProofContributions: [{
               criterion: "The recording includes a greeting.",
               rationale: "This Node gives the Player the greeting needed to open the role-play recording.",
@@ -350,6 +351,7 @@ function validCuration(params: { requestId: string; domainId: string }): Record<
             order: 2,
             objective: "Ask for a meal and respond to a simple follow-up question.",
             prerequisiteNodeIds: [],
+            prerequisiteRationales: [],
             exitProofContributions: [{
               criterion: "The recording includes an order and a relevant response to one follow-up question.",
               rationale: "This Node supplies the order and response practice needed for the second observable part of the role-play.",
@@ -655,8 +657,8 @@ describe("Lori Chapter curation", () => {
     expect(JSON.stringify(snapshot)).not.toContain("sourceToolCalls");
     expect(harness.ui.notifications.at(-1)?.message).toContain("1. greetings");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Exit Proof");
-    expect(harness.ui.notifications.at(-1)?.message).toContain("Critério do Exit Proof:");
-    expect(harness.ui.notifications.at(-1)?.message).toContain("Contribuição necessária:");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Contribuição única ao Exit Proof:");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Necessidade desta contribuição:");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Scope: Short beginner greeting and ordering exchanges");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Example Language Institute");
     expect(harness.ui.notifications.at(-1)?.message).toContain("ainda não está ativo");

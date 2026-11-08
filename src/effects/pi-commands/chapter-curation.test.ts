@@ -29,6 +29,7 @@ const validSubmission = () => ({
         order: 1,
         objective: "Use a greeting in context.",
         prerequisiteNodeIds: [] as string[],
+        prerequisiteRationales: [] as { prerequisiteNodeId: string; rationale: string }[],
         exitProofContributions: [{
           criterion: "Open and close the conversation politely.",
           rationale: "This Node supplies the greeting and closing language used in that criterion.",
@@ -75,7 +76,10 @@ describe("chapter curation prompt and proposal presentation", () => {
     expect(prompt).toContain("omita qualquer Node não essencial");
     expect(prompt).toContain("rationale específico");
     expect(prompt).toContain("prerequisiteNodeIds");
-    expect(prompt).toContain("cadeia explícita de pré-requisitos");
+    expect(prompt).toContain("prerequisiteRationales");
+    expect(prompt).toContain("exatamente um Node contribuinte");
+    expect(prompt).toContain("não permita que outro Node também o declare");
+    expect(prompt).toContain("exitProofContributions: []");
   });
 
   test("redacts ambiguous paths from the prompt without changing the draft data", () => {
@@ -101,6 +105,10 @@ describe("chapter curation prompt and proposal presentation", () => {
     delete (noPrerequisites.result.proposal.nodes[0] as { prerequisiteNodeIds?: unknown }).prerequisiteNodeIds;
     expect(Value.Check(chapterCurationToolParameters, noPrerequisites)).toBe(false);
 
+    const noPrerequisiteRationale = validSubmission();
+    delete (noPrerequisiteRationale.result.proposal.nodes[0] as { prerequisiteRationales?: unknown }).prerequisiteRationales;
+    expect(Value.Check(chapterCurationToolParameters, noPrerequisiteRationale)).toBe(false);
+
     const structuralPrerequisite = validSubmission();
     const contributor = structuralPrerequisite.result.proposal.nodes[0]!;
     structuralPrerequisite.result.proposal.nodes = [
@@ -110,12 +118,17 @@ describe("chapter curation prompt and proposal presentation", () => {
         order: 1,
         objective: "Recognize the basic sounds.",
         prerequisiteNodeIds: [],
+        prerequisiteRationales: [],
         exitProofContributions: [],
       },
       {
         ...contributor,
         order: 2,
         prerequisiteNodeIds: ["foundation"],
+        prerequisiteRationales: [{
+          prerequisiteNodeId: "foundation",
+          rationale: "Recognizing the basic sounds is necessary to distinguish the greeting phrases.",
+        }],
       },
     ];
     expect(Value.Check(chapterCurationToolParameters, structuralPrerequisite)).toBe(true);
@@ -133,9 +146,9 @@ describe("chapter curation prompt and proposal presentation", () => {
 
     const presentation = renderChapterProposal(draft, validation.proposal);
 
-    expect(presentation).toContain("Critério do Exit Proof: Open and close the conversation politely.");
+    expect(presentation).toContain("Contribuição única ao Exit Proof: Open and close the conversation politely.");
     expect(presentation).toContain("Pré-requisitos: nenhum");
-    expect(presentation).toContain("Contribuição necessária: This Node supplies the greeting and closing language used in that criterion.");
+    expect(presentation).toContain("Necessidade desta contribuição: This Node supplies the greeting and closing language used in that criterion.");
   });
 
   test("presents a structural prerequisite and its dependency to the Player", () => {
@@ -148,12 +161,17 @@ describe("chapter curation prompt and proposal presentation", () => {
         order: 1,
         objective: "Recognize the basic sounds.",
         prerequisiteNodeIds: [],
+        prerequisiteRationales: [],
         exitProofContributions: [],
       },
       {
         ...contributor,
         order: 2,
         prerequisiteNodeIds: ["foundation"],
+        prerequisiteRationales: [{
+          prerequisiteNodeId: "foundation",
+          rationale: "Recognizing the basic sounds is necessary to distinguish the greeting phrases.",
+        }],
       },
     ];
     const validation = validateChapterProposal(proposal);
@@ -163,7 +181,8 @@ describe("chapter curation prompt and proposal presentation", () => {
 
     const presentation = renderChapterProposal(draft, validation.proposal);
 
-    expect(presentation).toContain("Papel: pré-requisito estrutural para greetings");
+    expect(presentation).toContain("Papel: Node preparatório sem claim duplicado; pré-requisito estrutural para greetings");
     expect(presentation).toContain("Pré-requisitos: foundation");
+    expect(presentation).toContain("Motivo da dependência em foundation: Recognizing the basic sounds is necessary to distinguish the greeting phrases.");
   });
 });

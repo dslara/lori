@@ -8,6 +8,7 @@ const validProposal = () => ({
     order: 1,
     objective: "Use a greeting in context.",
     prerequisiteNodeIds: [] as string[],
+    prerequisiteRationales: [] as { prerequisiteNodeId: string; rationale: string }[],
     exitProofContributions: [{
       criterion: "Open and close the conversation politely.",
       rationale: "The Node provides the greeting and closing language needed for this observable action.",
@@ -171,21 +172,31 @@ describe("validateChapterProposal", () => {
         order: 1,
         objective: "Recognize the basic sounds.",
         prerequisiteNodeIds: [],
+        prerequisiteRationales: [],
         exitProofContributions: [],
       },
       {
         ...proposal.nodes[0]!,
-        id: "greetings",
+        id: "conversation-basics",
         order: 2,
-        objective: "Use a greeting in context.",
+        objective: "Recognize the phrases used in a short conversation.",
         prerequisiteNodeIds: ["sounds"],
+        prerequisiteRationales: [{
+          prerequisiteNodeId: "sounds",
+          rationale: "Recognizing the sounds is necessary to distinguish the words used in the phrases.",
+        }],
+        exitProofContributions: [],
       },
       {
         ...proposal.nodes[0]!,
         id: "polite-closing",
         order: 3,
         objective: "Use a polite closing in context.",
-        prerequisiteNodeIds: ["greetings"],
+        prerequisiteNodeIds: ["conversation-basics"],
+        prerequisiteRationales: [{
+          prerequisiteNodeId: "conversation-basics",
+          rationale: "Understanding the basic phrases is necessary before using a polite closing in conversation.",
+        }],
         exitProofContributions: [{
           criterion: "Open and close the conversation politely.",
           rationale: "This Node provides the separate closing language needed to complete the observable conversation.",
@@ -197,7 +208,11 @@ describe("validateChapterProposal", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
-      expect(result.proposal.nodes.map(({ prerequisiteNodeIds }) => prerequisiteNodeIds)).toEqual([[], ["sounds"], ["greetings"]]);
+      expect(result.proposal.nodes.map(({ prerequisiteNodeIds }) => prerequisiteNodeIds)).toEqual([[], ["sounds"], ["conversation-basics"]]);
+      expect(result.proposal.nodes[2]?.prerequisiteRationales).toEqual([{
+        prerequisiteNodeId: "conversation-basics",
+        rationale: "Understanding the basic phrases is necessary before using a polite closing in conversation.",
+      }]);
     }
   });
 
@@ -209,13 +224,14 @@ describe("validateChapterProposal", () => {
       order: 2,
       objective: "Study an unrelated topic.",
       prerequisiteNodeIds: [],
+      prerequisiteRationales: [],
       exitProofContributions: [],
     });
 
     expect(validateChapterProposal(proposal)).toMatchObject({ ok: false });
   });
 
-  test("rejects repeated objectives and repeated Exit Proof criteria without dependency", () => {
+  test("rejects repeated objectives and repeated Exit Proof criteria even when dependent", () => {
     const duplicateObjective = validProposal();
     duplicateObjective.nodes.push({
       ...duplicateObjective.nodes[0]!,
@@ -228,12 +244,55 @@ describe("validateChapterProposal", () => {
     const duplicateCriterion = validProposal();
     duplicateCriterion.nodes.push({
       ...duplicateCriterion.nodes[0]!,
-      id: "independent-greetings",
+      id: "dependent-greetings",
       order: 2,
       objective: "Use a different greeting in context.",
-      prerequisiteNodeIds: [],
+      prerequisiteNodeIds: ["greetings"],
+      prerequisiteRationales: [{
+        prerequisiteNodeId: "greetings",
+        rationale: "The earlier greeting practice is necessary before this second attempt.",
+      }],
     });
     expect(validateChapterProposal(duplicateCriterion)).toMatchObject({ ok: false });
+  });
+
+  test("requires non-empty rationales for prerequisite relationships", () => {
+    const proposal = validProposal();
+    proposal.nodes = [
+      {
+        ...proposal.nodes[0]!,
+        id: "sounds",
+        order: 1,
+        objective: "Recognize the basic sounds.",
+        exitProofContributions: [],
+      },
+      {
+        ...proposal.nodes[0]!,
+        id: "greetings",
+        order: 2,
+        prerequisiteNodeIds: ["sounds"],
+        prerequisiteRationales: [{ prerequisiteNodeId: "sounds", rationale: "   " }],
+      },
+    ];
+
+    expect(validateChapterProposal(proposal)).toMatchObject({ ok: false });
+
+    delete (proposal.nodes[1] as { prerequisiteRationales?: unknown }).prerequisiteRationales;
+    expect(validateChapterProposal(proposal)).toMatchObject({ ok: false });
+  });
+
+  test("preserves legacy Chapter nodes without newly introduced review details", () => {
+    const proposal = validProposal();
+    delete (proposal.nodes[0] as { prerequisiteRationales?: unknown }).prerequisiteRationales;
+    delete (proposal.nodes[0] as { exitProofContributions?: unknown }).exitProofContributions;
+
+    const result = validateChapterProposal(proposal, { allowMissingReviewDetails: true });
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.proposal.nodes[0]).not.toHaveProperty("prerequisiteRationales");
+      expect(result.proposal.nodes[0]).not.toHaveProperty("exitProofContributions");
+    }
   });
 
   test("rejects prerequisite references to later or unknown Nodes", () => {
