@@ -7,7 +7,7 @@ export type DispatchAndPersistResult =
   | { status: "unchanged" | "persisted"; state: LoriState }
   | { status: "load-failed"; error: string }
   | { status: "persistence-failed"; state: LoriState }
-  | { status: "lock-failed" };
+  | { status: "snapshot-unavailable" };
 
 export type SessionInitializationResult =
   | { ok: true; state: LoriState; restored: boolean }

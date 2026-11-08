@@ -1,9 +1,8 @@
 import { mkdir, readFile, realpath, rename, rm, writeFile } from "node:fs/promises";
-import { lock as acquireFileLock } from "proper-lockfile";
 import { randomUUID } from "node:crypto";
 import { dirname, isAbsolute, join, relative, sep } from "node:path";
 import { createInitialState, type LoriState } from "../../state.ts";
-import type { SnapshotResult, SnapshotTransaction } from "./types.ts";
+import type { SnapshotResult } from "./types.ts";
 
 export const SNAPSHOT_SCHEMA_VERSION = 1;
 export const SNAPSHOT_RELATIVE_PATH = ".lori/snapshot.json";
@@ -141,10 +140,7 @@ function decodeSnapshot(value: unknown): SnapshotResult {
   };
 }
 
-export async function withSnapshotLock<T>(
-  projectDir: string,
-  action: (transaction: SnapshotTransaction) => Promise<T>,
-): Promise<T> {
+async function prepareSnapshotDirectory(projectDir: string): Promise<void> {
   await mkdir(projectDir, { recursive: true });
   const projectRoot = await realpath(projectDir);
   const directory = join(projectRoot, dirname(SNAPSHOT_RELATIVE_PATH));
@@ -159,33 +155,19 @@ export async function withSnapshotLock<T>(
   ) {
     throw new Error("Lori snapshot directory must remain inside the study project.");
   }
-  const release = await acquireFileLock(canonicalDirectory, {
-    lockfilePath: join(canonicalDirectory, ".snapshot.lock"),
-    stale: 5_000,
-    retries: { retries: 80, factor: 1, minTimeout: 100, maxTimeout: 100 },
-  });
-
-  try {
-    return await action({
-      loadOrCreate: () => loadOrCreateSnapshotUnlocked(projectDir),
-      write: (state) => writeSnapshotUnlocked(projectDir, state),
-    });
-  } finally {
-    await release();
-  }
 }
 
-export function writeSnapshot(projectDir: string, state: LoriState): Promise<void> {
-  return withSnapshotLock(projectDir, (transaction) => transaction.write(state));
+export async function writeSnapshot(projectDir: string, state: LoriState): Promise<void> {
+  await prepareSnapshotDirectory(projectDir);
+  await writeSnapshotFile(projectDir, state);
 }
 
-async function writeSnapshotUnlocked(projectDir: string, state: LoriState): Promise<void> {
+async function writeSnapshotFile(projectDir: string, state: LoriState): Promise<void> {
   const snapshotPath = join(projectDir, SNAPSHOT_RELATIVE_PATH);
   const directory = dirname(snapshotPath);
   const temporaryPath = join(directory, `.snapshot.json.tmp-${process.pid}-${randomUUID()}`);
   const snapshot = `${JSON.stringify({ schemaVersion: SNAPSHOT_SCHEMA_VERSION, ...state }, null, 2)}\n`;
 
-  await mkdir(directory, { recursive: true });
   try {
     await writeFile(temporaryPath, snapshot, { encoding: "utf8", flag: "wx" });
     await rename(temporaryPath, snapshotPath);
@@ -194,11 +176,12 @@ async function writeSnapshotUnlocked(projectDir: string, state: LoriState): Prom
   }
 }
 
-export function loadOrCreateSnapshot(projectDir: string): Promise<SnapshotResult> {
-  return withSnapshotLock(projectDir, (transaction) => transaction.loadOrCreate());
+export async function loadOrCreateSnapshot(projectDir: string): Promise<SnapshotResult> {
+  await prepareSnapshotDirectory(projectDir);
+  return loadOrCreateSnapshotFile(projectDir);
 }
 
-async function loadOrCreateSnapshotUnlocked(projectDir: string): Promise<SnapshotResult> {
+async function loadOrCreateSnapshotFile(projectDir: string): Promise<SnapshotResult> {
   const snapshotPath = join(projectDir, SNAPSHOT_RELATIVE_PATH);
   let contents: string;
   try {
@@ -213,7 +196,7 @@ async function loadOrCreateSnapshotUnlocked(projectDir: string): Promise<Snapsho
 
     const state = createInitialState();
     try {
-      await writeSnapshotUnlocked(projectDir, state);
+      await writeSnapshotFile(projectDir, state);
       return { ok: true, state };
     } catch {
       return {

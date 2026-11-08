@@ -4,7 +4,7 @@ import { selectCanOpenSession } from "../../core/session/selectors.ts";
 import { createStore, type LoriStore } from "../../store/store.ts";
 import type { LoriState } from "../../state.ts";
 import type { SkinProvider } from "../../presentation/skin/provider.ts";
-import { loadOrCreateSnapshot, withSnapshotLock } from "../persist/persist.ts";
+import { loadOrCreateSnapshot, writeSnapshot } from "../persist/persist.ts";
 import type { SnapshotResult } from "../persist/types.ts";
 import { showError, showStatus } from "../ui/ui.ts";
 import type {
@@ -15,6 +15,37 @@ import type {
   SessionInitializationResult,
   StartInput,
 } from "./types.ts";
+
+const TECHNIQUES = [
+  { name: "Benchmarking", principle: "Metalearning" },
+  { name: "Emphasize", principle: "Metalearning" },
+  { name: "Exclude", principle: "Metalearning" },
+  { name: "Pomodoro", principle: "Focus" },
+  { name: "Timeboxing", principle: "Focus" },
+  { name: "Digital Detox", principle: "Focus" },
+  { name: "Build From Scratch", principle: "Directness" },
+  { name: "Immersive Project", principle: "Directness" },
+  { name: "Copycat", principle: "Directness" },
+  { name: "Time Slicer", principle: "Drill" },
+  { name: "Rate Limiter", principle: "Drill" },
+  { name: "Cognitive Load Limiter", principle: "Drill" },
+  { name: "Active Recall", principle: "Retrieval" },
+  { name: "Closed Book", principle: "Retrieval" },
+  { name: "Blindfold", principle: "Retrieval" },
+  { name: "Feynman Technique", principle: "Feedback" },
+  { name: "Self-Explanation", principle: "Feedback" },
+  { name: "Rubber Duck", principle: "Feedback" },
+  { name: "SRS", principle: "Retention" },
+  { name: "Interleaving", principle: "Retention" },
+  { name: "Overlearning", principle: "Retention" },
+  { name: "Elaborative Interrogation", principle: "Intuition" },
+  { name: "Dual Coding", principle: "Intuition" },
+  { name: "Analogy Creation", principle: "Intuition" },
+  { name: "Anti-Expert", principle: "Experimentation" },
+  { name: "Constraint Removal", principle: "Experimentation" },
+  { name: "Teach to Learn", principle: "Experimentation" },
+] as const;
+const CUSTOM_TECHNIQUE_OPTION = "Informar outra técnica";
 
 function splitPipeArgs(args: string): [string, string] | null {
   const separator = args.indexOf("|");
@@ -62,6 +93,22 @@ async function promptStartValue(
       return previousValue.trim();
     }
     if (selected !== otherOption) {
+      return undefined;
+    }
+  }
+
+  if (label === "Primary Technique") {
+    const selected = await ctx.ui.select("Escolher Primary Technique", [
+      ...TECHNIQUES.map(({ name, principle }) => `${name} · ${principle}`),
+      CUSTOM_TECHNIQUE_OPTION,
+    ]);
+    const technique = TECHNIQUES.find(
+      ({ name, principle }) => `${name} · ${principle}` === selected,
+    );
+    if (technique !== undefined) {
+      return technique.name;
+    }
+    if (selected !== CUSTOM_TECHNIQUE_OPTION) {
       return undefined;
     }
   }
@@ -137,72 +184,70 @@ export async function dispatchAndPersist(
   projectDir: string,
   createAction: SessionActionFactory,
 ): Promise<DispatchAndPersistResult> {
+  let loaded: SnapshotResult;
   try {
-    return await withSnapshotLock(projectDir, async (snapshot) => {
-      const loaded = await snapshot.loadOrCreate();
-      if (!loaded.ok) {
-        return { status: "load-failed", error: loaded.error };
-      }
-
-      const action = createAction(loaded.state);
-      if (!action) {
-        return { status: "unchanged", state: loaded.state };
-      }
-
-      const store = createStore(loaded.state);
-      store.dispatch(action);
-      const nextState = store.getState();
-      if (nextState === loaded.state) {
-        return { status: "unchanged", state: loaded.state };
-      }
-
-      try {
-        await snapshot.write(nextState);
-      } catch {
-        return { status: "persistence-failed", state: loaded.state };
-      }
-
-      return { status: "persisted", state: nextState };
-    });
+    loaded = await loadOrCreateSnapshot(projectDir);
   } catch {
-    return { status: "lock-failed" };
+    return { status: "snapshot-unavailable" };
   }
+  if (!loaded.ok) {
+    return { status: "load-failed", error: loaded.error };
+  }
+
+  const action = createAction(loaded.state);
+  if (!action) {
+    return { status: "unchanged", state: loaded.state };
+  }
+
+  const store = createStore(loaded.state);
+  store.dispatch(action);
+  const nextState = store.getState();
+  if (nextState === loaded.state) {
+    return { status: "unchanged", state: loaded.state };
+  }
+
+  try {
+    await writeSnapshot(projectDir, nextState);
+  } catch {
+    return { status: "persistence-failed", state: loaded.state };
+  }
+
+  return { status: "persisted", state: nextState };
 }
 
 export async function initializeSessionState(projectDir: string): Promise<SessionInitializationResult> {
+  let loaded: SnapshotResult;
   try {
-    return await withSnapshotLock(projectDir, async (snapshot) => {
-      const loaded = await snapshot.loadOrCreate();
-      if (!loaded.ok) {
-        return loaded;
-      }
-
-      const restoreAction = restoreSessionAsPaused(loaded.state.session, Date.now());
-      if (!restoreAction) {
-        if (loaded.state.session?.status === "open") {
-          return { ok: false, error: "Lori: a Session aberta tem timestamps inválidos." };
-        }
-        return { ok: true, state: loaded.state, restored: false };
-      }
-
-      const store = createStore(loaded.state);
-      store.dispatch(restoreAction);
-      const state = store.getState();
-      if (state === loaded.state) {
-        return { ok: false, error: "Lori: a Session aberta não pôde ser restaurada como pausa." };
-      }
-
-      try {
-        await snapshot.write(state);
-      } catch {
-        return { ok: false, error: "Lori: Session não restaurada porque não foi possível persistir o snapshot." };
-      }
-
-      return { ok: true, state, restored: true };
-    });
+    loaded = await loadOrCreateSnapshot(projectDir);
   } catch {
     return { ok: false, error: "Lori: não foi possível acessar o snapshot do projeto." };
   }
+  if (!loaded.ok) {
+    return loaded;
+  }
+
+  const restoreAction = restoreSessionAsPaused(loaded.state.session, Date.now());
+  if (!restoreAction) {
+    if (loaded.state.session?.status === "open") {
+      return { ok: false, error: "Lori: a Session aberta tem timestamps inválidos." };
+    }
+    return { ok: true, state: loaded.state, restored: false };
+  }
+
+  const store = createStore(loaded.state);
+  store.dispatch(restoreAction);
+  const state = store.getState();
+  if (state === loaded.state) {
+    return { ok: false, error: "Lori: a Session aberta não pôde ser restaurada como pausa." };
+  }
+
+  try {
+    await writeSnapshot(projectDir, state);
+  } catch {
+    return { ok: false, error: "Lori: Session não restaurada porque não foi possível persistir o snapshot." };
+  }
+
+  return { ok: true, state, restored: true };
 }
 
 function acceptDispatchResult(
@@ -229,7 +274,6 @@ function acceptDispatchResult(
     return false;
   }
 
-  // Covers lock-failed: no state to preserve, only notify.
   ctx.ui.notify(persistenceError, "error");
   return false;
 }

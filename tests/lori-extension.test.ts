@@ -211,10 +211,11 @@ describe("Lori startup and status", () => {
     expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
     expect(harness.ui.inputCalls).toHaveLength(1);
 
-    harness.ui.inputResponses.push("Rust", undefined);
+    harness.ui.inputResponses.push("Rust");
+    harness.ui.selectResponses.push(undefined);
     await harness.runStart("");
     expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
-    expect(harness.ui.inputCalls).toHaveLength(3);
+    expect(harness.ui.inputCalls).toHaveLength(2);
   });
 
   test("cancelling the previous-pair menu leaves the closed Session unchanged", async () => {
@@ -337,11 +338,13 @@ describe("Lori startup and status", () => {
     await harness.start();
     await harness.runStart("React | Active Recall");
     await harness.runClose("1 | 1");
-    harness.ui.selectResponses.push("Informar outro Primary Technique");
+    harness.ui.selectResponses.push("Informar outro Primary Technique", "Informar outra técnica");
     harness.ui.inputResponses.push("Direct Practice");
 
     await harness.runStart("Japanese |");
 
+    expect(harness.ui.selectCalls[1]?.options).toContain("Active Recall · Retrieval");
+    expect(harness.ui.selectCalls[1]?.options).toContain("Informar outra técnica");
     expect(harness.ui.inputCalls).toEqual([
       { title: "Primary Technique da Session", placeholder: undefined },
     ]);
@@ -358,11 +361,12 @@ describe("Lori startup and status", () => {
     await harness.start();
     await harness.runStart("React | Active Recall");
     await harness.runClose("1 | 1");
-    harness.ui.selectResponses.push("Informar um novo par");
+    harness.ui.selectResponses.push("Informar um novo par", "Informar outra técnica");
     harness.ui.inputResponses.push("Rust", "Direct Practice");
 
     await harness.runStart("");
 
+    expect(harness.ui.selectCalls[1]?.options).toContain("Active Recall · Retrieval");
     expect(harness.ui.inputCalls).toEqual([
       { title: "Domain da Session", placeholder: undefined },
       { title: "Primary Technique da Session", placeholder: undefined },
@@ -378,16 +382,18 @@ describe("Lori startup and status", () => {
   test("prompts for a Domain and primary Technique on the first Session", async () => {
     const { cwd, harness } = await createHarness();
     await harness.start();
-    harness.ui.inputResponses.push("Rust", "Active Recall");
+    harness.ui.inputResponses.push("Rust");
+    harness.ui.selectResponses.push("Active Recall · Retrieval");
 
     await harness.runStart("");
 
     const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
     expect(harness.ui.inputCalls).toEqual([
       { title: "Domain da Session", placeholder: undefined },
-      { title: "Primary Technique da Session", placeholder: undefined },
     ]);
-    expect(harness.ui.selectCalls).toHaveLength(0);
+    expect(harness.ui.selectCalls[0]?.title).toBe("Escolher Primary Technique");
+    expect(harness.ui.selectCalls[0]?.options).toContain("Active Recall · Retrieval");
+    expect(harness.ui.selectCalls[0]?.options).toContain("Informar outra técnica");
     expect(snapshot.session).toMatchObject({
       status: "open",
       domain: "Rust",
@@ -1006,23 +1012,4 @@ describe("Lori startup and status", () => {
     expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal close rejected React");
   });
 
-  test("prevents two extension instances from replacing the same active Session", async () => {
-    const { cwd, harness: first } = await createHarness();
-    await first.start();
-    const { harness: second } = await createHarness(cwd);
-    await second.start();
-
-    await Promise.all([
-      first.runStart("React | Active Recall"),
-      second.runStart("Japanese | Direct Practice"),
-    ]);
-
-    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
-    const notifications = [...first.ui.notifications, ...second.ui.notifications];
-    const infos = notifications.filter(({ type }) => type === "info");
-    const warnings = notifications.filter(({ type }) => type === "warning");
-    expect(infos).toHaveLength(1);
-    expect(warnings).toHaveLength(1);
-    expect(["React", "Japanese"]).toContain(snapshot.session.domain);
-  });
 });

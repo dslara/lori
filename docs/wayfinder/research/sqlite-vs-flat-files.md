@@ -11,17 +11,17 @@ Pergunta do ticket: SQLite ou flat files para a persistência da Fase 1 em exten
 - O próprio Pi persiste sessions como JSONL flat em `~/.pi/agent/sessions/` (docs `sessions.md`). Precedente oficial de flat file para dado persistente.
 - Extensões têm `node:fs` e `node:path` garantidos (docs `extensions.md`, Available Imports) e podem declarar npm deps com install de produção sem devDeps.
 - Snapshot da Fase 1 é só player, session e skinConfig: cabe num JSON pequeno, sem query. Due cards e ghost matching, que pediriam query, são fog de fases futuras.
-- Risco do flat: escrita concorrente entre TUI e `pi -p` simultâneos. Rename impede snapshots parciais, mas não lost updates. A implementação serializa read-check-dispatch-write com lock inter-processo via `proper-lockfile`; `withFileMutationQueue` cobre apenas tool calls no mesmo processo.
+- Risco do flat: escrita concorrente entre TUI e `pi -p` simultâneos. Rename impede snapshots parciais, mas não lost updates. A Fase 1 assume um único processo Pi por projeto; se suporte a processos simultâneos entrar no escopo, será necessário reintroduzir serialização interprocesso.
 
 ## Implicação
 
-Os dois caminhos são viáveis, mas os fatos pesam para snapshot JSON atômico e locked na Fase 1: uma dependência pequena, precedente do Pi, sem query para pagar o SQLite. `node:sqlite` é o upgrade zero-dep preferido quando SRS e ghost pedirem query (portátil); `bun:sqlite` segue como alternativa. A decisão final sai no ticket de event log contra snapshot.
+Os dois caminhos são viáveis, mas os fatos pesam para snapshot JSON atômico na Fase 1: o estado cabe num arquivo pequeno, sem query para pagar o SQLite. A Fase 1 assume um único processo Pi por projeto; processos simultâneos podem causar lost updates. `node:sqlite` é o upgrade zero-dep preferido quando SRS e ghost pedirem query (portátil); `bun:sqlite` segue como alternativa. A decisão final sai no ticket de event log contra snapshot.
 
 ## Sources/n
 
 - `docs/extensions.md` (Pi 1.5.0): Available Imports, package with dependencies
 - `docs/sessions.md` (Pi 1.5.0): Session Storage, JSONL em `~/.pi/agent/sessions/`
-- `docs/extensions.md` (Pi 1.5.0): `withFileMutationQueue` serializa tool calls no mesmo processo; a Lori usa `proper-lockfile` entre processos
+- `docs/extensions.md` (Pi 1.5.0): `withFileMutationQueue` serializa tool calls no mesmo processo; a Fase 1 da Lori assume um processo Pi por projeto
 - https://nodejs.org/docs/latest/api/sqlite.html: `node:sqlite` sem flag desde v22.13.0 e v23.4.0, ainda experimental
 - https://github.com/WiseLibs/better-sqlite3: prebuilds para plataformas principais
 - https://github.com/WiseLibs/better-sqlite3/issues/1503: install invocando node-gyp e Python mesmo com prebuilt
