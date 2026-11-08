@@ -20,6 +20,39 @@ function decodeSession(value: unknown, version: 1 | 2): Session | null | undefin
     return undefined;
   }
 
+  if (version === 2 && value.kind === "metalearning") {
+    if (
+      typeof value.domainId !== "string" ||
+      value.domainId.trim().length === 0 ||
+      (value.status !== "open" && value.status !== "paused") ||
+      typeof value.startedAt !== "number" ||
+      !Number.isFinite(value.startedAt)
+    ) {
+      return undefined;
+    }
+    const totalPausedMs = value.totalPausedMs === undefined ? 0 : value.totalPausedMs;
+    if (typeof totalPausedMs !== "number" || !Number.isFinite(totalPausedMs) || totalPausedMs < 0) {
+      return undefined;
+    }
+    const details = {
+      kind: "metalearning" as const,
+      domainId: value.domainId,
+      startedAt: value.startedAt,
+      totalPausedMs,
+    };
+    if (value.status === "open") {
+      return { ...details, status: "open" };
+    }
+    if (
+      typeof value.pausedAt !== "number" ||
+      !Number.isFinite(value.pausedAt) ||
+      value.pausedAt < value.startedAt + totalPausedMs
+    ) {
+      return undefined;
+    }
+    return { ...details, status: "paused", pausedAt: value.pausedAt };
+  }
+
   const name = version === 1 ? value.domain : value.name;
   if (
     (version === 2 && value.kind !== "legacyStudy") ||
@@ -106,6 +139,68 @@ function decodePlayer(value: Record<string, unknown>): LoriState["player"] | und
   return { totalXp: value.player.totalXp };
 }
 
+function decodeDomainDraft(value: unknown): LoriState["domainDraft"] | undefined {
+  if (value === null) {
+    return null;
+  }
+  if (
+    !isRecord(value) ||
+    typeof value.id !== "string" ||
+    value.id.trim().length === 0 ||
+    (value.phase !== "collecting" && value.phase !== "awaiting_curation")
+  ) {
+    return undefined;
+  }
+
+  const draft: NonNullable<LoriState["domainDraft"]> = { id: value.id, phase: value.phase };
+  for (const field of ["name", "learningObjective", "motivation"] as const) {
+    const answer = value[field];
+    if (answer !== undefined) {
+      if (typeof answer !== "string" || answer.trim().length === 0) {
+        return undefined;
+      }
+      draft[field] = answer;
+    }
+  }
+  for (const field of ["deadline", "preferences", "materialRestrictions"] as const) {
+    const answer = value[field];
+    if (answer !== undefined) {
+      if (answer !== null && typeof answer !== "string") {
+        return undefined;
+      }
+      if (field === "deadline" && typeof answer === "string" && answer.trim().length === 0) {
+        return undefined;
+      }
+      draft[field] = typeof answer === "string" && answer.trim().length === 0 ? null : answer;
+    }
+  }
+  if (value.hoursPerWeek !== undefined) {
+    if (typeof value.hoursPerWeek !== "number" || !Number.isFinite(value.hoursPerWeek) || value.hoursPerWeek < 0) {
+      return undefined;
+    }
+    draft.hoursPerWeek = value.hoursPerWeek;
+  }
+  if (value.baseline !== undefined) {
+    if (typeof value.baseline !== "number" || !Number.isInteger(value.baseline) || value.baseline < 1 || value.baseline > 5) {
+      return undefined;
+    }
+    draft.baseline = value.baseline as NonNullable<typeof draft.baseline>;
+  }
+  if (draft.phase === "awaiting_curation" && (
+    draft.name === undefined ||
+    draft.learningObjective === undefined ||
+    draft.motivation === undefined ||
+    draft.deadline === undefined ||
+    draft.hoursPerWeek === undefined ||
+    draft.baseline === undefined ||
+    draft.preferences === undefined ||
+    draft.materialRestrictions === undefined
+  )) {
+    return undefined;
+  }
+  return draft;
+}
+
 function decodeSkinConfig(value: Record<string, unknown>): LoriState["skinConfig"] | undefined {
   if (
     !isRecord(value.skinConfig) ||
@@ -127,7 +222,7 @@ function decodeSnapshotV1(value: Record<string, unknown>): SnapshotResult {
 
   return {
     ok: true,
-    state: { player, session, sessionHistory: [], skinConfig },
+    state: { player, session, sessionHistory: [], domainDraft: null, skinConfig },
   };
 }
 
@@ -135,8 +230,9 @@ function decodeSnapshotV2(value: Record<string, unknown>): SnapshotResult {
   const player = decodePlayer(value);
   const skinConfig = decodeSkinConfig(value);
   const session = decodeSession(value.session, 2);
+  const domainDraft = value.domainDraft === undefined ? null : decodeDomainDraft(value.domainDraft);
   const history = value.sessionHistory;
-  if (!player || !skinConfig || session === undefined || !Array.isArray(history)) {
+  if (!player || !skinConfig || session === undefined || domainDraft === undefined || !Array.isArray(history)) {
     return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
   }
 
@@ -149,7 +245,14 @@ function decodeSnapshotV2(value: Record<string, unknown>): SnapshotResult {
     sessionHistory.push(archivedSession);
   }
 
-  return { ok: true, state: { player, session, sessionHistory, skinConfig } };
+  if (
+    (session?.kind === "metalearning" && domainDraft?.id !== session.domainId) ||
+    (domainDraft !== null && session?.kind !== "metalearning")
+  ) {
+    return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
+  }
+
+  return { ok: true, state: { player, session, sessionHistory, domainDraft, skinConfig } };
 }
 
 function decodeSnapshot(value: unknown): SnapshotResult {

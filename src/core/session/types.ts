@@ -1,4 +1,4 @@
-export type SessionDetails = {
+export type StudySessionDetails = {
   kind: "legacyStudy";
   name: string;
   primaryTechnique: string;
@@ -6,21 +6,35 @@ export type SessionDetails = {
   totalPausedMs: number;
 };
 
+export type MetalearningSessionDetails = {
+  kind: "metalearning";
+  domainId: string;
+  startedAt: number;
+  totalPausedMs: number;
+};
+
 export type Session =
-  | (SessionDetails & { status: "open" })
-  | (SessionDetails & { status: "paused"; pausedAt: number })
-  | (SessionDetails & {
+  | (StudySessionDetails & { status: "open" })
+  | (StudySessionDetails & { status: "paused"; pausedAt: number })
+  | (StudySessionDetails & {
       status: "closed";
       closedAt: number;
       pausedAt?: number;
       verdict: { focus: number; honesty: number };
-    });
+    })
+  | (MetalearningSessionDetails & { status: "open" })
+  | (MetalearningSessionDetails & { status: "paused"; pausedAt: number });
 
 export type SessionAction =
   | {
       type: "session/open";
       domain: string;
       primaryTechnique: string;
+      startedAt: number;
+    }
+  | {
+      type: "session/open-metalearning";
+      domainId: string;
       startedAt: number;
     }
   | {

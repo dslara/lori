@@ -1,4 +1,6 @@
+import { randomUUID } from "node:crypto";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import type { Baseline, DomainDraft, DomainDraftAnswerAction } from "../../core/domain/types.ts";
 import { restoreSessionAsPaused } from "../../core/processors/lifecycle.ts";
 import { selectCanOpenSession } from "../../core/session/selectors.ts";
 import { createStore, type LoriStore } from "../../store/store.ts";
@@ -11,7 +13,7 @@ import type {
   DispatchAndPersistResult,
   LoriExtensionState,
   ResolvedStartInput,
-  SessionActionFactory,
+  LoriActionFactory,
   SessionInitializationResult,
   StartInput,
 } from "./types.ts";
@@ -46,6 +48,104 @@ const TECHNIQUES = [
   { name: "Teach to Learn", principle: "Experimentation" },
 ] as const;
 const CUSTOM_TECHNIQUE_OPTION = "Informar outra técnica";
+const BASELINE_OPTIONS = [
+  "1 · Nenhuma familiaridade: nunca estudei ou usei",
+  "2 · Familiaridade inicial: reconheço alguns conceitos",
+  "3 · Familiaridade intermediária: aplico o básico com consulta",
+  "4 · Consigo aplicar sem orientação na maioria dos casos",
+  "5 · Familiaridade profunda: explico, adapto e resolvo casos novos",
+] as const;
+
+type DomainDraftField = keyof Omit<DomainDraft, "id" | "phase">;
+
+function nextDomainDraftField(draft: DomainDraft): DomainDraftField | undefined {
+  return ([
+    "name",
+    "learningObjective",
+    "motivation",
+    "deadline",
+    "hoursPerWeek",
+    "baseline",
+    "preferences",
+    "materialRestrictions",
+  ] as const).find((field) => draft[field] === undefined);
+}
+
+function domainDraftQuestionTitle(field: DomainDraftField): string {
+  switch (field) {
+    case "name": return "Nome do Domain";
+    case "learningObjective": return "Learning Objective";
+    case "motivation": return "Motivação";
+    case "deadline": return "Prazo ou 'sem prazo'";
+    case "hoursPerWeek": return "Horas por semana";
+    case "baseline": return "Baseline — selecione sua familiaridade atual (não é um teste)";
+    case "preferences": return "Preferências de materiais (opcional)";
+    case "materialRestrictions": return "Restrições de materiais (opcional)";
+  }
+}
+
+async function promptDomainDraftAnswer(
+  id: string,
+  field: DomainDraftField,
+  ctx: Pick<ExtensionContext, "ui">,
+): Promise<DomainDraftAnswerAction | undefined> {
+  if (field === "baseline") {
+    const selected = await ctx.ui.select(domainDraftQuestionTitle(field), [...BASELINE_OPTIONS]);
+    const index = BASELINE_OPTIONS.indexOf(selected as (typeof BASELINE_OPTIONS)[number]);
+    if (index < 0) {
+      return undefined;
+    }
+    return { type: "domain-draft/answer", id, field, value: (index + 1) as Baseline };
+  }
+
+  const response = await ctx.ui.input(domainDraftQuestionTitle(field));
+  if (response === undefined) {
+    return undefined;
+  }
+  const value = response.trim();
+  if (field === "hoursPerWeek") {
+    const hours = Number(value);
+    if (value.length === 0 || !Number.isFinite(hours) || hours < 0) {
+      ctx.ui.notify("Informe um número finito de horas por semana (zero também é válido).", "warning");
+      return undefined;
+    }
+    return { type: "domain-draft/answer", id, field, value: hours };
+  }
+  if (field === "deadline") {
+    if (value.length === 0) {
+      ctx.ui.notify("Informe um prazo ou declare explicitamente 'sem prazo'.", "warning");
+      return undefined;
+    }
+    return {
+      type: "domain-draft/answer",
+      id,
+      field,
+      value: value.toLocaleLowerCase() === "sem prazo" ? null : value,
+    };
+  }
+  if (field === "preferences" || field === "materialRestrictions") {
+    return { type: "domain-draft/answer", id, field, value: value || null };
+  }
+  if (value.length === 0) {
+    ctx.ui.notify("A resposta não pode ficar vazia.", "warning");
+    return undefined;
+  }
+  return { type: "domain-draft/answer", id, field, value };
+}
+
+function sessionPresentation(state: LoriState): { domain: string; technique: string } {
+  const session = state.session;
+  if (session?.kind === "metalearning") {
+    return {
+      domain: state.domainDraft?.name ?? "Domain em preparação",
+      technique: "Metalearning",
+    };
+  }
+  return {
+    domain: session?.name ?? "",
+    technique: session?.primaryTechnique ?? "",
+  };
+}
 
 function splitPipeArgs(args: string): [string, string] | null {
   const separator = args.indexOf("|");
@@ -182,7 +282,7 @@ export function parseCloseArgs(args: string): { focus: number; honesty: number }
 
 export async function dispatchAndPersist(
   projectDir: string,
-  createAction: SessionActionFactory,
+  createAction: LoriActionFactory,
 ): Promise<DispatchAndPersistResult> {
   let loaded: SnapshotResult;
   try {
@@ -284,6 +384,81 @@ type ReadyState = {
   skin: SkinProvider;
 };
 
+async function continueDomainPreparation(
+  shared: LoriExtensionState,
+  ctx: Pick<ExtensionContext, "ui">,
+  projectDir: string,
+  skin: SkinProvider,
+): Promise<void> {
+  while (true) {
+    const latest = await dispatchAndPersist(projectDir, () => undefined);
+    if (!acceptDispatchResult(shared, ctx, latest, "Lori: não foi possível ler o snapshot do preparo.")) {
+      return;
+    }
+    const { state } = latest;
+    const session = state.session;
+    const draft = state.domainDraft;
+    if (session?.kind !== "metalearning" || draft === null || session.domainId !== draft.id) {
+      ctx.ui.notify("Lori: o preparo do Domain não está disponível no snapshot.", "error");
+      return;
+    }
+    if (session.status !== "open") {
+      ctx.ui.notify("Lori: use /lori-resume para continuar o preparo pausado.", "warning");
+      return;
+    }
+    if (draft.phase === "awaiting_curation") {
+      const status = showStatus(ctx, state, skin);
+      ctx.ui.notify(`${status}\nQuestionário salvo; o Domain continua em preparação e ainda não está ativo.`, "info");
+      return;
+    }
+
+    const field = nextDomainDraftField(draft);
+    if (field === undefined) {
+      ctx.ui.notify("Lori: o questionário não pode avançar porque faltam dados do snapshot.", "error");
+      return;
+    }
+    const answer = await promptDomainDraftAnswer(draft.id, field, ctx);
+    if (answer === undefined) {
+      const paused = await dispatchAndPersist(projectDir, (current) => {
+        if (current.session?.kind !== "metalearning" || current.session.status !== "open") {
+          return undefined;
+        }
+        return {
+          type: "session/abandon",
+          pausedAt: Math.max(Date.now(), current.session.startedAt + current.session.totalPausedMs),
+        };
+      });
+      if (!acceptDispatchResult(shared, ctx, paused, "Lori: preparo não pausado porque não foi possível persistir o snapshot.")) {
+        return;
+      }
+      if (paused.status === "persisted") {
+        const status = showStatus(ctx, paused.state, skin, "session.paused");
+        ctx.ui.notify(`${status}\nRespostas salvas; use /lori-resume para continuar na próxima pergunta.`, "info");
+      }
+      return;
+    }
+
+    const saved = await dispatchAndPersist(projectDir, (current) => {
+      if (
+        current.session?.kind !== "metalearning" ||
+        current.session.status !== "open" ||
+        current.domainDraft?.id !== answer.id ||
+        current.domainDraft.phase !== "collecting"
+      ) {
+        return undefined;
+      }
+      return answer;
+    });
+    if (!acceptDispatchResult(shared, ctx, saved, "Lori: resposta não salva porque não foi possível persistir o snapshot.")) {
+      return;
+    }
+    if (saved.status === "unchanged") {
+      ctx.ui.notify("Lori: a resposta não foi salva porque o preparo mudou.", "warning");
+      return;
+    }
+  }
+}
+
 function requireReadyState(
   shared: LoriExtensionState,
   ctx: Pick<ExtensionContext, "ui">,
@@ -300,6 +475,50 @@ function requireReadyState(
 }
 
 export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionState): void {
+  api.registerCommand("lori-init", {
+    description: "Preparar um Domain com objetivo e questionário de Metalearning; sem argumentos",
+    handler: async (args, ctx) => {
+      const ready = requireReadyState(shared, ctx);
+      if (!ready) {
+        return;
+      }
+      if (args.trim().length > 0) {
+        ctx.ui.notify("Uso: /lori-init (sem argumentos)", "warning");
+        return;
+      }
+      const { projectDir, skin } = ready;
+      const latest = await dispatchAndPersist(projectDir, () => undefined);
+      if (!acceptDispatchResult(shared, ctx, latest, "Lori: não foi possível consultar o snapshot antes do preparo.")) {
+        return;
+      }
+      if (latest.state.domainDraft !== null) {
+        ctx.ui.notify("Já existe um Domain em preparação; use /lori-resume para continuar, se estiver pausado.", "warning");
+        return;
+      }
+      if (!selectCanOpenSession(latest.state.session)) {
+        const { domain, technique } = sessionPresentation(latest.state);
+        ctx.ui.notify(skin.render("session.startRejected", { domain, technique }), "warning");
+        return;
+      }
+
+      const result = await dispatchAndPersist(projectDir, (state) => {
+        if (state.domainDraft !== null || !selectCanOpenSession(state.session)) {
+          return undefined;
+        }
+        return { type: "session/open-metalearning", domainId: randomUUID(), startedAt: Date.now() };
+      });
+      if (!acceptDispatchResult(shared, ctx, result, "Lori: preparo não iniciado porque não foi possível persistir o snapshot.")) {
+        return;
+      }
+      if (result.status === "unchanged") {
+        ctx.ui.notify("Lori: preparo não iniciado porque já existe um Domain ou Session ativo.", "warning");
+        return;
+      }
+      showStatus(ctx, result.state, skin, "session.open");
+      await continueDomainPreparation(shared, ctx, projectDir, skin);
+    },
+  });
+
   api.registerCommand("lori-status", {
     description: "Consultar o estado atual da Lori",
     handler: async (_args, ctx) => {
@@ -340,6 +559,10 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
         return;
       }
       const { store, projectDir, skin } = ready;
+      if (store.getState().domainDraft !== null) {
+        ctx.ui.notify("O Domain em preparação ainda não está ativo e não pode iniciar uma Study Session.", "warning");
+        return;
+      }
 
       const input = parseStartArgs(args);
       if (!input) {
@@ -418,7 +641,7 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
 
       const result = await dispatchAndPersist(projectDir, (state) => {
         const session = state.session;
-        if (session?.status !== "open" && session?.status !== "paused") {
+        if (session?.kind !== "legacyStudy" || (session.status !== "open" && session.status !== "paused")) {
           return undefined;
         }
 
@@ -436,11 +659,8 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
         return;
       }
       if (result.status === "unchanged") {
-        const session = result.state.session;
-        ctx.ui.notify(skin.render("session.closeRejected", {
-          domain: session?.name ?? "",
-          technique: session?.primaryTechnique ?? "",
-        }), "warning");
+        const { domain, technique } = sessionPresentation(result.state);
+        ctx.ui.notify(skin.render("session.closeRejected", { domain, technique }), "warning");
         return;
       }
 
@@ -473,11 +693,8 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
         return;
       }
       if (result.status === "unchanged") {
-        const session = result.state.session;
-        ctx.ui.notify(skin.render("session.pauseRejected", {
-          domain: session?.name ?? "",
-          technique: session?.primaryTechnique ?? "",
-        }), "warning");
+        const { domain, technique } = sessionPresentation(result.state);
+        ctx.ui.notify(skin.render("session.pauseRejected", { domain, technique }), "warning");
         return;
       }
 
@@ -510,14 +727,15 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
         return;
       }
       if (result.status === "unchanged") {
-        const session = result.state.session;
-        ctx.ui.notify(skin.render("session.resumeRejected", {
-          domain: session?.name ?? "",
-          technique: session?.primaryTechnique ?? "",
-        }), "warning");
+        const { domain, technique } = sessionPresentation(result.state);
+        ctx.ui.notify(skin.render("session.resumeRejected", { domain, technique }), "warning");
         return;
       }
 
+      if (result.state.session?.kind === "metalearning") {
+        await continueDomainPreparation(shared, ctx, projectDir, skin);
+        return;
+      }
       const status = showStatus(ctx, result.state, skin, "session.resumed");
       ctx.ui.notify(status, "info");
     },

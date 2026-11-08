@@ -37,9 +37,10 @@ export function renderStatus(
   }
 
   const sessionEvent = event ?? (session.status === "open" ? "session.open" : "session.paused");
+  const isMetalearning = session.kind === "metalearning";
   return skin.render(sessionEvent, {
-    domain: session.name,
-    technique: session.primaryTechnique,
+    domain: isMetalearning ? state.domainDraft?.name ?? "Domain em preparação" : session.name,
+    technique: isMetalearning ? "Metalearning" : session.primaryTechnique,
     elapsed,
   });
 }

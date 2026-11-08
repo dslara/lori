@@ -1,4 +1,4 @@
-import type { SessionAction } from "../../core/session/types.ts";
+import type { LoriAction } from "../../core/actions.ts";
 import type { SkinProvider } from "../../presentation/skin/provider.ts";
 import type { LoriState } from "../../store/state.ts";
 import type { LoriStore } from "../../store/store.ts";
@@ -13,7 +13,7 @@ export type SessionInitializationResult =
   | { ok: true; state: LoriState; restored: boolean }
   | { ok: false; error: string };
 
-export type SessionActionFactory = (state: LoriState) => SessionAction | undefined;
+export type LoriActionFactory = (state: LoriState) => LoriAction | undefined;
 
 export type LoriExtensionState = {
   store: LoriStore | undefined;

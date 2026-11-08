@@ -2,6 +2,19 @@ import { selectCanOpenSession } from "./selectors.ts";
 import type { Session, SessionAction } from "./types.ts";
 
 export function reduceSession(state: Session | null, action: SessionAction): Session | null {
+  if (action.type === "session/open-metalearning") {
+    if (!selectCanOpenSession(state) || action.domainId.trim().length === 0 || !Number.isFinite(action.startedAt)) {
+      return state;
+    }
+    return {
+      kind: "metalearning",
+      status: "open",
+      domainId: action.domainId,
+      startedAt: action.startedAt,
+      totalPausedMs: 0,
+    };
+  }
+
   if (action.type === "session/open") {
     if (!selectCanOpenSession(state)) {
       return state;
@@ -49,18 +62,17 @@ export function reduceSession(state: Session | null, action: SessionAction): Ses
       return state;
     }
 
+    const { pausedAt: _pausedAt, ...details } = state;
     return {
-      kind: state.kind,
+      ...details,
       status: "open",
-      name: state.name,
-      primaryTechnique: state.primaryTechnique,
-      startedAt: state.startedAt,
       totalPausedMs: state.totalPausedMs + action.resumedAt - state.pausedAt,
     };
   }
 
   if (
-    (state?.status !== "open" && state?.status !== "paused") ||
+    state?.kind !== "legacyStudy" ||
+    (state.status !== "open" && state.status !== "paused") ||
     !Number.isFinite(action.closedAt) ||
     !Number.isFinite(action.focus) ||
     !Number.isFinite(action.honesty)

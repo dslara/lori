@@ -1,0 +1,89 @@
+import type { LoriAction } from "../actions.ts";
+import type { DomainDraft } from "./types.ts";
+import type { SessionAction } from "../session/types.ts";
+
+function hasCompletedQuestionnaire(draft: DomainDraft): boolean {
+  return draft.name !== undefined && draft.name.length > 0
+    && draft.learningObjective !== undefined && draft.learningObjective.length > 0
+    && draft.motivation !== undefined && draft.motivation.length > 0
+    && draft.deadline !== undefined
+    && draft.hoursPerWeek !== undefined
+    && draft.baseline !== undefined
+    && draft.preferences !== undefined
+    && draft.materialRestrictions !== undefined;
+}
+
+function isBaseline(value: number): value is 1 | 2 | 3 | 4 | 5 {
+  return Number.isInteger(value) && value >= 1 && value <= 5;
+}
+
+export function reduceDomainDraft(
+  draft: DomainDraft | null,
+  action: LoriAction,
+): DomainDraft | null {
+  if (action.type === "session/open-metalearning") {
+    if (draft !== null || action.domainId.trim().length === 0 || !Number.isFinite(action.startedAt)) {
+      return draft;
+    }
+    return { id: action.domainId, phase: "collecting" };
+  }
+
+  if (action.type !== "domain-draft/answer" || draft === null || action.id !== draft.id || draft.phase !== "collecting") {
+    return draft;
+  }
+
+  let updated: DomainDraft;
+  switch (action.field) {
+    case "name":
+    case "learningObjective":
+    case "motivation":
+      if (typeof action.value !== "string" || action.value.trim().length === 0) {
+        return draft;
+      }
+      updated = { ...draft, [action.field]: action.value.trim() };
+      break;
+    case "deadline":
+      if (action.value !== null && (typeof action.value !== "string" || action.value.trim().length === 0)) {
+        return draft;
+      }
+      updated = { ...draft, deadline: action.value === null ? null : action.value.trim() };
+      break;
+    case "preferences":
+    case "materialRestrictions":
+      if (action.value !== null && typeof action.value !== "string") {
+        return draft;
+      }
+      updated = {
+        ...draft,
+        [action.field]: typeof action.value === "string" ? action.value.trim() || null : null,
+      };
+      break;
+    case "hoursPerWeek":
+      if (typeof action.value !== "number" || !Number.isFinite(action.value) || action.value < 0) {
+        return draft;
+      }
+      updated = { ...draft, hoursPerWeek: action.value };
+      break;
+    case "baseline":
+      if (!isBaseline(action.value)) {
+        return draft;
+      }
+      updated = { ...draft, baseline: action.value };
+      break;
+  }
+
+  return hasCompletedQuestionnaire(updated) ? { ...updated, phase: "awaiting_curation" } : updated;
+}
+
+export function isSessionAction(action: LoriAction): action is SessionAction {
+  switch (action.type) {
+    case "session/open":
+    case "session/open-metalearning":
+    case "session/abandon":
+    case "session/resume":
+    case "session/close":
+      return true;
+    case "domain-draft/answer":
+      return false;
+  }
+}

@@ -28,6 +28,7 @@ type Harness = {
   start(): Promise<void>;
   shutdown(): Promise<void>;
   runStatus(): Promise<void>;
+  runInit(args: string): Promise<void>;
   runStart(args: string): Promise<void>;
   runClose(args: string): Promise<void>;
   runAbandon(): Promise<void>;
@@ -109,6 +110,11 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
         expect(handler).toBeDefined();
         await handler?.("", { ui });
       },
+      async runInit(args) {
+        const handler = commandHandlers.get("lori-init");
+        expect(handler).toBeDefined();
+        await handler?.(args, { ui });
+      },
       async runStart(args) {
         const handler = commandHandlers.get("lori-start");
         expect(handler).toBeDefined();
@@ -134,6 +140,174 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
 }
 
 describe("Lori startup and status", () => {
+  test("collects a Domain draft one question at a time without activating it", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    harness.ui.inputResponses.push(
+      "Spanish",
+      "Hold a basic conversation while traveling",
+      "I am visiting family this summer",
+      "sem prazo",
+      "4",
+      "Audio and short dialogues",
+      "No paid-only materials",
+    );
+    harness.ui.selectResponses.push("4 · Consigo aplicar sem orientação na maioria dos casos");
+
+    await harness.runInit("");
+
+    expect(harness.ui.inputCalls).toEqual([
+      { title: "Nome do Domain", placeholder: undefined },
+      { title: "Learning Objective", placeholder: undefined },
+      { title: "Motivação", placeholder: undefined },
+      { title: "Prazo ou 'sem prazo'", placeholder: undefined },
+      { title: "Horas por semana", placeholder: undefined },
+      { title: "Preferências de materiais (opcional)", placeholder: undefined },
+      { title: "Restrições de materiais (opcional)", placeholder: undefined },
+    ]);
+    expect(harness.ui.selectCalls).toEqual([{
+      title: "Baseline — selecione sua familiaridade atual (não é um teste)",
+      options: [
+        "1 · Nenhuma familiaridade: nunca estudei ou usei",
+        "2 · Familiaridade inicial: reconheço alguns conceitos",
+        "3 · Familiaridade intermediária: aplico o básico com consulta",
+        "4 · Consigo aplicar sem orientação na maioria dos casos",
+        "5 · Familiaridade profunda: explico, adapto e resolvo casos novos",
+      ],
+    }]);
+
+    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(snapshot.domainDraft).toMatchObject({
+      phase: "awaiting_curation",
+      name: "Spanish",
+      learningObjective: "Hold a basic conversation while traveling",
+      motivation: "I am visiting family this summer",
+      deadline: null,
+      hoursPerWeek: 4,
+      baseline: 4,
+      preferences: "Audio and short dialogues",
+      materialRestrictions: "No paid-only materials",
+    });
+    expect(snapshot.domainDraft.id).toEqual(expect.any(String));
+    expect(snapshot.session).toMatchObject({
+      kind: "metalearning",
+      status: "open",
+      domainId: snapshot.domainDraft.id,
+    });
+    expect(snapshot.domains ?? []).toEqual([]);
+
+    await harness.runStart("Spanish | Active Recall");
+
+    const afterStartAttempt = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(afterStartAttempt.session).toMatchObject({ kind: "metalearning", domainId: snapshot.domainDraft.id });
+    expect(harness.ui.notifications.at(-1)?.message).toContain("não está ativo");
+  });
+
+  test("resumes a persisted Domain draft at its next unanswered question", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    harness.ui.inputResponses.push("Rust", undefined);
+
+    await harness.runInit("");
+
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const pausedSnapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
+    const reservedId = pausedSnapshot.domainDraft.id;
+    expect(pausedSnapshot.domainDraft).toEqual({ id: reservedId, phase: "collecting", name: "Rust" });
+    expect(pausedSnapshot.session).toMatchObject({
+      kind: "metalearning",
+      status: "paused",
+      domainId: reservedId,
+    });
+
+    const { harness: restored } = await createHarness(cwd);
+    await restored.start();
+    restored.ui.inputResponses.push(
+      "Build command-line tools",
+      "I want to contribute to an open-source project",
+      "sem prazo",
+      "2",
+      "",
+      "",
+    );
+    restored.ui.selectResponses.push("1 · Nenhuma familiaridade: nunca estudei ou usei");
+
+    await restored.runResume();
+
+    expect(restored.ui.inputCalls.map(({ title }) => title)).toEqual([
+      "Learning Objective",
+      "Motivação",
+      "Prazo ou 'sem prazo'",
+      "Horas por semana",
+      "Preferências de materiais (opcional)",
+      "Restrições de materiais (opcional)",
+    ]);
+    const completedSnapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(completedSnapshot.domainDraft).toMatchObject({
+      id: reservedId,
+      phase: "awaiting_curation",
+      name: "Rust",
+      learningObjective: "Build command-line tools",
+      motivation: "I want to contribute to an open-source project",
+      deadline: null,
+      hoursPerWeek: 2,
+      baseline: 1,
+      preferences: null,
+      materialRestrictions: null,
+    });
+    expect(completedSnapshot.session).toMatchObject({
+      kind: "metalearning",
+      status: "open",
+      domainId: reservedId,
+    });
+    expect(completedSnapshot.domains ?? []).toEqual([]);
+  });
+
+  test("requires an explicit deadline or 'sem prazo' instead of treating an empty answer as no deadline", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    harness.ui.inputResponses.push("Data Science", "Build a small classifier", "Explore this career path", "   ");
+
+    await harness.runInit("");
+
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const paused = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(paused.domainDraft).toMatchObject({
+      phase: "collecting",
+      name: "Data Science",
+      learningObjective: "Build a small classifier",
+      motivation: "Explore this career path",
+    });
+    expect(paused.domainDraft).not.toHaveProperty("deadline");
+    expect(paused.session.status).toBe("paused");
+    expect(harness.ui.notifications.some(({ message }) => message.includes("declare explicitamente 'sem prazo'"))).toBe(true);
+  });
+
+  test("rejects Domain preparation with arguments or another open/paused Session", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const initialSnapshot = await readFile(snapshotPath, "utf8");
+
+    await harness.runInit("Physics");
+    expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("sem argumentos");
+
+    await harness.runStart("React | Active Recall");
+    const openSnapshot = await readFile(snapshotPath, "utf8");
+    const callsBeforeOpenRejection = harness.ui.inputCalls.length;
+    await harness.runInit("");
+    expect(await readFile(snapshotPath, "utf8")).toBe(openSnapshot);
+    expect(harness.ui.inputCalls).toHaveLength(callsBeforeOpenRejection);
+
+    await harness.runAbandon();
+    const pausedSnapshot = await readFile(snapshotPath, "utf8");
+    const callsBeforePausedRejection = harness.ui.inputCalls.length;
+    await harness.runInit("");
+    expect(await readFile(snapshotPath, "utf8")).toBe(pausedSnapshot);
+    expect(harness.ui.inputCalls).toHaveLength(callsBeforePausedRejection);
+  });
+
   test("initializes a new project with Minimal skin and exposes the initial state", async () => {
     const { cwd, harness } = await createHarness();
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
@@ -148,6 +322,7 @@ describe("Lori startup and status", () => {
       player: { totalXp: 0 },
       session: null,
       sessionHistory: [],
+      domainDraft: null,
       skinConfig: { skin: "minimal" },
     });
     expect(harness.ui.statuses.at(-1)?.text).toContain("Session: nenhuma ativa");

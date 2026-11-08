@@ -1,9 +1,9 @@
 import { createInitialState, type LoriState } from "./state.ts";
 import { rootReducer } from "./root-reducer.ts";
-import type { SessionAction } from "../core/session/types.ts";
+import type { LoriAction } from "../core/actions.ts";
 
 export type LoriStore = {
-  dispatch(action: SessionAction): void;
+  dispatch(action: LoriAction): void;
   getState(): LoriState;
 };
 
