@@ -3,7 +3,7 @@
 > **Status:** Fase 1 travada via [Mapa: arquitetura da Lori](https://github.com/dslara/lori/issues/25), 7 de 7
 > **Data:** 2026-09-12
 > **Driver:** Simplicidade e YAGNI > Didático > Desafio técnico
-> **Base:** `CONTEXT.md`, `docs/GAME_DESIGN.md`, `docs/LORI_PROJECT.md`, `docs/adr/0001-no-malus-regime.md`, `docs/wayfinder/research/`
+> **Base:** `GLOSSARY.md`, `docs/GAME_DESIGN.md`, `docs/LORI_PROJECT.md`, `docs/adr/0001-no-malus-regime.md`, `docs/wayfinder/research/`
 
 ---
 
@@ -23,7 +23,7 @@ Arquitetura escolhe o mais simples que fecha a Fase 1: abrir e fechar Lori sessi
 |---|---------|----------------------|---------|
 | 1 | **Store simples, sem `subscribe`** | Redux-like com middleware | Sem processo persistente, effects chamam direto. Persist é chamada explícita após `dispatch`. |
 | 2 | **Core funcional puro com ban de imports** | OO com classes mutáveis | Dados planos mais funções puras serializam de graça e testam sem mock. `core/` não importa `fs`, Pi SDK, skin ou store. |
-| 3 | **Snapshot JSON atômico versionado** | Event log com replay | Zero query na Fase 1. Replay vira fog para quando SRS e ghost pedirem audit. Tipos Action e Event mantidos para migração barata. |
+| 3 | **Snapshot JSON atômico, versionado, um processo por projeto** | Event log com replay | Snapshot pequeno dispensa query. A Fase 1 assume uma única instância Pi por projeto; rename impede arquivo parcial. Processos simultâneos não são suportados. Replay vira fog para SRS e ghost. Tipos Action e Event mantidos para migração barata. |
 | 4 | **`bun:sqlite` como upgrade, `better-sqlite3` fora** | SQLite via `better-sqlite3` | Pi embute Bun: `node:sqlite` não resolve, `better-sqlite3` é risco nativo sem necessidade. Research em `docs/wayfinder/research/sqlite-vs-flat-files.md`. |
 | 5 | **Lifecycle com timer stateless e abandon neutro** | Timeout punitivo de 24h | ADR sem malus enterrou punição. Timestamps sobrevivem ao processo, pausa sempre retoma. |
 | 6 | **Skin Minimal sem DSL** | Mini-DSL já | Template é função pura `(params) => string`. Parser e condicionais esperam uso real. |
@@ -44,7 +44,7 @@ Arquitetura escolhe o mais simples que fecha a Fase 1: abrir e fechar Lori sessi
 ├─────────────────────────────────────────────────────────────┤
 │  EFFECTS (side effects isolados)                            │
 │  - Pi adapter: entry point único, rebuild em session_start  │
-│  - Persist: snapshot JSON atômico + schemaVersion no projeto│
+│  - Persist: snapshot atômico/versionado                     │
 │  - UI: commands /lori-*, setStatus, setWidget               │
 │  - Sem timers, processos ou watchers. Timer é derivado.     │
 ├─────────────────────────────────────────────────────────────┤
@@ -84,10 +84,18 @@ Arquitetura escolhe o mais simples que fecha a Fase 1: abrir e fechar Lori sessi
 │   │   ├── root-reducer.ts              # Só combina, sem lógica
 │   │   └── store.test.ts
 │   ├── effects/
-│   │   ├── pi-extension.ts              # Único entry point Pi
-│   │   ├── pi-commands.ts
-│   │   ├── persist.ts                   # Snapshot atômico + schemaVersion
-│   │   └── ui.ts
+│   │   ├── persist/
+│   │   │   ├── types.ts
+│   │   │   ├── persist.ts               # Snapshot atômico + schemaVersion
+│   │   │   └── persist.test.ts
+│   │   ├── pi-commands/
+│   │   │   ├── types.ts
+│   │   │   └── pi-commands.ts
+│   │   ├── pi-extension/
+│   │   │   └── pi-extension.ts          # Adapter Pi (entry interno)
+│   │   └── ui/
+│   │       ├── types.ts
+│   │       └── ui.ts
 │   └── presentation/
 │       └── skin/
 │           ├── provider.ts              # loadSkin + render + fallback
@@ -189,7 +197,7 @@ Commands `/lori-*`, `setStatus`, `setWidget`, `before_agent_start` para personas
 
 ### Fase 1 — Fundação (travada, executar)
 1. `src/store/` simples + slices `core/player` e `core/session`
-2. `effects/persist.ts` (snapshot JSON atômico + `schemaVersion`)
+2. `src/effects/persist/` (snapshot JSON atômico + `schemaVersion`)
 3. `core/session` com timer stateless + `processors/lifecycle`
 4. Entry point com rebuild em `session_start` + `/lori-status` + dashboard
 5. Skin Minimal (`provider`, `loader`, `validator` + fallback)
@@ -207,13 +215,13 @@ SM-2 puro sem penalty, cards manuais, técnicas e combos com bônus-ou-nada, ski
 | 2 | `skin/` e `persona/` não modificam estado. Só traduzem. | Bug |
 | 3 | `effects/` não contém regra de negócio. Só orquestra. | Refatorar |
 | 4 | Actions são serializáveis (JSON). Tipos Action e Event seguem distintos. | Corrigir |
-| 5 | Snapshot guarda `player`, `session` e `skinConfig` com `schemaVersion`, escrita atômica, no projeto de estudo | Corrigir |
-| 6 | Pi SDK vive só no adapter e em `ui.ts`. Nada na factory além de registro. | Isolar |
+| 5 | Snapshot guarda `player`, `session` e `skinConfig` com `schemaVersion` e rename atômico no projeto de estudo. Um processo Pi por projeto. | Corrigir |
+| 6 | Pi SDK vive só no adapter e em `src/effects/ui/`. Nada na factory além de registro. | Isolar |
 | 7 | `runtime.*` nunca persiste quando existir. Sempre recalcula no boot. | Bug |
 | 8 | Modifiers são bônus derivados, nunca abaixo do neutro. | Refatorar |
 | 9 | Quando SQLite pousar: `bun:sqlite` com prepared statements, nunca interpolação. | Segurança |
 | 10 | Dados sensíveis (paths, tokens) são filtrados antes de virar contexto LLM. | Privacidade |
-| 11 | `pi-extension.ts` é o único entry point. Estado reconstrói em `session_start`. | Manutenção |
+| 11 | `src/effects/pi-extension/pi-extension.ts` é o entry point do adapter (reexportado por `extensions/lori/index.ts`). Estado reconstrói em `session_start`. | Manutenção |
 | 12 | `appendEntry()` só para metadados de agent session, nunca dados de jogo. Validada no doc oficial. | Arquitetura |
 
 ---

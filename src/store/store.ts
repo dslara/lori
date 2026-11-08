@@ -1,15 +1,21 @@
-import { initialState, rootReducer } from "./root-reducer";
-import type { State, Action } from "./store.types";
+import { createInitialState, type LoriState } from "../state.ts";
+import { rootReducer } from "./root-reducer.ts";
+import type { SessionAction } from "../core/session/types.ts";
 
-export function createStore(preloaded: State = initialState) {
-  let current = preloaded;
+export type LoriStore = {
+  dispatch(action: SessionAction): void;
+  getState(): LoriState;
+};
+
+export function createStore(initialState: LoriState = createInitialState()): LoriStore {
+  let state = initialState;
+
   return {
-    getState: (): State => current,
-    dispatch: (action: Action): State => {
-      current = rootReducer(current, action);
-      return current;
+    dispatch(action) {
+      state = rootReducer(state, action);
+    },
+    getState() {
+      return state;
     },
   };
 }
-
-export type Store = ReturnType<typeof createStore>;

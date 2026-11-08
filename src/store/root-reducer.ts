@@ -1,9 +1,13 @@
-import { playerReducer } from "../core/player/player.reducer";
-import type { State, Action } from "./store.types";
+import { reducePlayer } from "../core/player/reducer.ts";
+import { reduceSession } from "../core/session/reducer.ts";
+import type { SessionAction } from "../core/session/types.ts";
+import type { LoriState } from "../state.ts";
 
-// ponytail: player-only State, add session and skinConfig when those slices land.
-export const initialState: State = { player: { xp: 0, level: 1, streak: 0 } };
-
-export function rootReducer(state: State, action: Action): State {
-  return { player: playerReducer(state.player, action) };
+export function rootReducer(state: LoriState, action: SessionAction): LoriState {
+  const player = reducePlayer(state.player, action);
+  const session = reduceSession(state.session, action);
+  if (player === state.player && session === state.session) {
+    return state;
+  }
+  return { ...state, player, session };
 }

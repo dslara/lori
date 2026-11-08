@@ -62,7 +62,6 @@ draft-*.py
 .obsidian
 node_modules
 package-lock.json
-bun.lock
 .env
 .lori
 .pi

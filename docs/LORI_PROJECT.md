@@ -1,5 +1,7 @@
 # Lori — Proposta de Projeto
 
+> Proposta histórica. Para decisões de implementação atuais, consulte `docs/ARCHITECTURE.md`, `docs/GAME_DESIGN.md` e `docs/adr/0001-no-malus-regime.md`. As ideias de timer e punição abaixo não fazem parte da Fase 1.
+
 ## Resumo Executivo
 
 Lori é uma extensão para agentes de código (Pi) que transforma o aprendizado acelerado em jogo single-player no terminal.

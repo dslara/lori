@@ -1,14 +1,27 @@
-import { describe, expect, test } from "vitest";
-import { createStore } from "./store";
+import { describe, expect, test } from "bun:test";
+import { createInitialState } from "../state.ts";
+import { createStore } from "./store.ts";
 
-describe("store", () => {
-  test("dispatch applies reducer and updates getState", () => {
-    const store = createStore();
-    store.dispatch({ type: "player/xpAdded", amount: 20 });
-    expect(store.getState().player.xp).toBe(20);
-  });
-  test("preloaded rebuilds from snapshot", () => {
-    const store = createStore({ player: { xp: 10, level: 1, streak: 0 } });
-    expect(store.getState().player.xp).toBe(10);
+describe("Lori store", () => {
+  test("dispatches Session actions and keeps state unchanged when the reducer rejects replacement", () => {
+    const store = createStore({ ...createInitialState(), player: { totalXp: 23 } });
+    store.dispatch({
+      type: "session/open",
+      domain: "React",
+      primaryTechnique: "Active Recall",
+      startedAt: 1_000,
+    });
+    const openedState = store.getState();
+
+    store.dispatch({
+      type: "session/open",
+      domain: "Japanese",
+      primaryTechnique: "Direct Practice",
+      startedAt: 2_000,
+    });
+
+    expect(openedState.session?.domain).toBe("React");
+    expect(store.getState().player.totalXp).toBe(23);
+    expect(store.getState()).toBe(openedState);
   });
 });
