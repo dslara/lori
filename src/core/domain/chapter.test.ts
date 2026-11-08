@@ -140,6 +140,18 @@ describe("validateChapterProposal", () => {
     expect(validateChapterProposal(proposal)).toMatchObject({ ok: false });
   });
 
+  test("rejects duplicate Exit Proof criteria after whitespace and case normalization", () => {
+    const proposal = validProposal();
+    const duplicateCriterion = "  OPEN   AND CLOSE THE CONVERSATION POLITELY. ";
+    proposal.exitProof.criteria.push(duplicateCriterion);
+    proposal.nodes[0]!.exitProofContributions.push({
+      criterion: duplicateCriterion,
+      rationale: "This is the same observable action with different formatting.",
+    });
+
+    expect(validateChapterProposal(proposal)).toMatchObject({ ok: false });
+  });
+
   test("rejects a Node contribution with an invalid criterion or empty rationale", () => {
     const invalidCriterion = validProposal();
     invalidCriterion.nodes[0]!.exitProofContributions[0]!.criterion = "A different criterion";

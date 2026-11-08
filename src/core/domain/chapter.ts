@@ -251,6 +251,15 @@ export function validateChapterProposal(
     return { ok: false, reason: "A proposta não contém a estrutura, as evidências ou os limites necessários para um Chapter." };
   }
 
+  const criterionKeys = new Set<string>();
+  for (const criterion of value.exitProof.criteria as string[]) {
+    const key = criterion.trim().replace(/\s+/g, " ").toLowerCase();
+    if (criterionKeys.has(key)) {
+      return { ok: false, reason: "Os critérios do Exit Proof devem ser únicos, desconsiderando caixa e espaços extras." };
+    }
+    criterionKeys.add(key);
+  }
+
   const resources: ChapterResource[] = [];
   const resourceIds = new Set<string>();
   const evidenceRefs = new Set<string>();
@@ -267,7 +276,6 @@ export function validateChapterProposal(
   }
 
   const nodes: ChapterNode[] = [];
-  const nodeIds = new Set<string>();
   const priorNodeIds = new Set<string>();
   const objectiveKeys = new Set<string>();
   const referencedResourceIds = new Set<string>();
@@ -276,7 +284,7 @@ export function validateChapterProposal(
     if (
       !isRecord(entry) ||
       !isNonEmptyString(entry.id) ||
-      nodeIds.has(entry.id) ||
+      priorNodeIds.has(entry.id) ||
       entry.order !== index + 1 ||
       !isNonEmptyString(entry.objective) ||
       objectiveKeys.has(entry.objective.trim().toLowerCase()) ||
@@ -312,7 +320,6 @@ export function validateChapterProposal(
       return { ok: false, reason: "Cada Node precisa explicar, com rationale específico, sua contribuição necessária a um critério válido do Exit Proof." };
     }
 
-    nodeIds.add(entry.id);
     priorNodeIds.add(entry.id);
     objectiveKeys.add(entry.objective.trim().toLowerCase());
     const nodeEvidenceRefs: ChapterNodeEvidenceRef[] = [];
