@@ -2,7 +2,8 @@ import { randomUUID } from "node:crypto";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Value } from "typebox/value";
 import { validateChapterProposal, validateProposalForDraft } from "../../core/domain/chapter.ts";
-import type { Baseline, DomainDraft, DomainDraftAnswerAction } from "../../core/domain/types.ts";
+import type { ActiveDomain, Baseline, ChapterVersionReference, DomainDraft, DomainDraftAnswerAction } from "../../core/domain/types.ts";
+import type { ChapterNode, ChapterResource } from "../../core/domain/chapter.ts";
 import { restoreSessionAsPaused } from "../../core/processors/lifecycle.ts";
 import { selectCanOpenSession } from "../../core/session/selectors.ts";
 import { createStore, type LoriStore } from "../../store/store.ts";
@@ -21,10 +22,8 @@ import {
 import type {
   DispatchAndPersistResult,
   LoriExtensionState,
-  ResolvedStartInput,
   LoriActionFactory,
   SessionInitializationResult,
-  StartInput,
 } from "./types.ts";
 
 const TECHNIQUES = [
@@ -164,6 +163,12 @@ function sessionPresentation(state: LoriState): { domain: string; technique: str
       technique: "Metalearning",
     };
   }
+  if (session?.kind === "study") {
+    return {
+      domain: state.domains.find(({ id }) => id === session.domainId)?.name ?? "Domain",
+      technique: session.primaryTechnique,
+    };
+  }
   return {
     domain: session?.name ?? "",
     technique: session?.primaryTechnique ?? "",
@@ -179,109 +184,36 @@ function splitPipeArgs(args: string): [string, string] | null {
   return [args.slice(0, separator).trim(), args.slice(separator + 1).trim()];
 }
 
-export function parseStartArgs(args: string): StartInput | null {
-  if (args.trim().length === 0) {
-    return {};
-  }
+async function promptPrimaryTechnique(ctx: Pick<ExtensionContext, "ui">): Promise<string | undefined> {
+  const selected = await ctx.ui.select("Escolher Primary Technique", [
+    ...TECHNIQUES.map(({ name, principle }) => `${name} · ${principle}`),
+    CUSTOM_TECHNIQUE_OPTION,
+  ]);
+  const technique = TECHNIQUES.find(({ name, principle }) => `${name} · ${principle}` === selected);
+  if (technique !== undefined) return technique.name;
+  if (selected !== CUSTOM_TECHNIQUE_OPTION) return undefined;
 
-  const parts = splitPipeArgs(args);
-  if (parts === null) {
-    return null;
-  }
-
-  const [domain, primaryTechnique] = parts;
-  if (domain.length === 0 && primaryTechnique.length === 0) {
-    return null;
-  }
-
-  return {
-    ...(domain.length > 0 ? { domain } : {}),
-    ...(primaryTechnique.length > 0 ? { primaryTechnique } : {}),
-  };
-}
-
-async function promptStartValue(
-  ctx: Pick<ExtensionContext, "ui">,
-  label: "Domain" | "Primary Technique",
-  previousValue?: string,
-): Promise<string | undefined> {
-  if (previousValue !== undefined) {
-    const reuseOption = `Reutilizar: ${previousValue}`;
-    const otherOption = `Informar outro ${label}`;
-    const selected = await ctx.ui.select(`Escolher ${label}`, [reuseOption, otherOption]);
-    if (selected === undefined) {
-      return undefined;
-    }
-    if (selected === reuseOption) {
-      return previousValue.trim();
-    }
-    if (selected !== otherOption) {
-      return undefined;
-    }
-  }
-
-  if (label === "Primary Technique") {
-    const selected = await ctx.ui.select("Escolher Primary Technique", [
-      ...TECHNIQUES.map(({ name, principle }) => `${name} · ${principle}`),
-      CUSTOM_TECHNIQUE_OPTION,
-    ]);
-    const technique = TECHNIQUES.find(
-      ({ name, principle }) => `${name} · ${principle}` === selected,
-    );
-    if (technique !== undefined) {
-      return technique.name;
-    }
-    if (selected !== CUSTOM_TECHNIQUE_OPTION) {
-      return undefined;
-    }
-  }
-
-  const value = await ctx.ui.input(`${label} da Session`);
-  if (value === undefined || value.trim().length === 0) {
-    return undefined;
-  }
+  const value = await ctx.ui.input("Primary Technique da Session");
+  if (value === undefined || value.trim().length === 0) return undefined;
   return value.trim();
 }
 
-async function resolveStartInput(
-  input: StartInput,
-  previous: ResolvedStartInput | undefined,
-  ctx: Pick<ExtensionContext, "ui">,
-): Promise<ResolvedStartInput | undefined> {
-  const hasNoValues = input.domain === undefined && input.primaryTechnique === undefined;
-  let previousValues = previous;
-  if (hasNoValues && previous !== undefined) {
-    const reuseOption = `Reutilizar: ${previous.domain} | ${previous.primaryTechnique}`;
-    const otherOption = "Informar um novo par";
-    const selected = await ctx.ui.select("Iniciar com os valores anteriores?", [reuseOption, otherOption]);
-    if (selected === undefined) {
-      return undefined;
-    }
-    if (selected === reuseOption) {
-      return {
-        domain: previous.domain.trim(),
-        primaryTechnique: previous.primaryTechnique.trim(),
-      };
-    }
-    if (selected !== otherOption) {
-      return undefined;
-    }
-    previousValues = undefined;
-  }
+type RecommendedStudyTarget = {
+  domain: ActiveDomain;
+  chapter: ActiveDomain["chapters"][number];
+  node: ChapterNode;
+  resource: ChapterResource;
+};
 
-  const domain = input.domain ?? await promptStartValue(ctx, "Domain", previousValues?.domain);
-  if (domain === undefined) {
-    return undefined;
-  }
-  const primaryTechnique = input.primaryTechnique ?? await promptStartValue(
-    ctx,
-    "Primary Technique",
-    previousValues?.primaryTechnique,
-  );
-  if (primaryTechnique === undefined) {
-    return undefined;
-  }
-  return { domain: domain.trim(), primaryTechnique: primaryTechnique.trim() };
+function recommendedStudyTarget(state: LoriState, chapterRef: ChapterVersionReference): RecommendedStudyTarget | undefined {
+  const domain = state.domains.find(({ id }) => id === chapterRef.domainId);
+  const chapter = domain?.chapters.find(({ id }) => id === chapterRef.chapterVersionId);
+  const node = chapter?.chapter.nodes[0];
+  const resource = node === undefined
+    ? undefined
+    : chapter?.chapter.resources.find(({ id }) => id === node.recommendedResourceId);
+  if (domain === undefined || chapter === undefined || node === undefined || resource === undefined) return undefined;
+  return { domain, chapter, node, resource };
 }
 
 export function parseCloseArgs(args: string): { focus: number; honesty: number } | null {
@@ -407,6 +339,74 @@ type ReadyState = {
   skin: SkinProvider;
 };
 
+async function offerRecommendedFirstStudy(
+  shared: LoriExtensionState,
+  ctx: Pick<ExtensionContext, "ui">,
+  projectDir: string,
+  skin: SkinProvider,
+  closedState: LoriState,
+): Promise<void> {
+  const closedSession = closedState.session;
+  if (closedSession?.kind !== "metalearning" || closedSession.status !== "closed") return;
+  const chapterRef = closedSession.verdict.chapterRef;
+  const target = recommendedStudyTarget(closedState, chapterRef);
+  if (target === undefined) {
+    ctx.ui.notify("Lori: o Verdict foi fechado, mas não foi possível localizar o primeiro Node e seu recurso recomendado.", "error");
+    return;
+  }
+
+  const accepted = await ctx.ui.confirm(
+    "Iniciar o primeiro estudo?",
+    [
+      `Domain: ${target.domain.name}`,
+      `Chapter version ${target.chapter.version} (${target.chapter.id})`,
+      `Primeiro Node: ${target.node.id} — ${target.node.objective}`,
+      `Recurso recomendado: ${target.resource.title} — ${target.resource.url} (${target.resource.id})`,
+      "Deseja abrir uma Study Session para este Node?",
+    ].join("\n"),
+  );
+  if (!accepted) {
+    ctx.ui.notify("Nenhuma Study Session foi iniciada; o Verdict permanece fechado e o Domain continua ativo.", "info");
+    return;
+  }
+
+  const primaryTechnique = await promptPrimaryTechnique(ctx);
+  if (primaryTechnique === undefined) {
+    ctx.ui.notify("Nenhuma Study Session foi iniciada; Primary Technique não selecionada.", "info");
+    return;
+  }
+
+  const result = await dispatchAndPersist(projectDir, (current) => {
+    const currentTarget = recommendedStudyTarget(current, chapterRef);
+    if (
+      current.domainDraft !== null ||
+      !selectCanOpenSession(current.session) ||
+      currentTarget?.node.id !== target.node.id ||
+      currentTarget.resource.id !== target.resource.id
+    ) {
+      return undefined;
+    }
+    return {
+      type: "session/open-study",
+      domainId: target.domain.id,
+      chapterRef,
+      nodeId: target.node.id,
+      resourceId: target.resource.id,
+      primaryTechnique,
+      startedAt: Date.now(),
+    };
+  });
+  if (!acceptDispatchResult(shared, ctx, result, "Lori: Study Session não iniciada porque não foi possível persistir o snapshot.")) {
+    return;
+  }
+  if (result.status === "unchanged") {
+    ctx.ui.notify("Lori: Study Session não iniciada porque o Domain ou Chapter mudou após a confirmação.", "warning");
+    return;
+  }
+  const status = showStatus(ctx, result.state, skin, "session.open");
+  ctx.ui.notify(status, "info");
+}
+
 async function continueDomainPreparation(
   shared: LoriExtensionState,
   ctx: Pick<ExtensionContext, "ui">,
@@ -528,6 +528,7 @@ async function continueDomainPreparation(
         `${status}\nVerdict ligado ao Chapter version ${closed.state.session.verdict.chapterRef.chapterVersionId}.`,
         "info",
       );
+      await offerRecommendedFirstStudy(shared, ctx, projectDir, skin, closed.state);
       return;
     }
 
@@ -933,70 +934,78 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
   });
 
   api.registerCommand("lori-start", {
-    description: "Iniciar uma Session, omitindo valores para escolhê-los interativamente: /lori-start [<Domain> | <primary Technique>]",
+    description: "Iniciar uma Study Session escolhendo um Domain ativo e uma Primary Technique",
     handler: async (args, ctx) => {
       const ready = requireReadyState(shared, ctx);
       if (!ready) {
         return;
       }
-      const { store, projectDir, skin } = ready;
-      if (store.getState().domainDraft !== null) {
+      const { projectDir, skin } = ready;
+      if (args.trim().length > 0) {
+        ctx.ui.notify("Uso: /lori-start (sem argumentos; Domain e Primary Technique são escolhidos explicitamente)", "warning");
+        return;
+      }
+
+      const latest = await dispatchAndPersist(projectDir, () => undefined);
+      if (!acceptDispatchResult(shared, ctx, latest, "Lori: não foi possível acessar o snapshot antes de iniciar a Session.")) {
+        return;
+      }
+      const state = latest.state;
+      if (state.domainDraft !== null) {
         ctx.ui.notify("O Domain em preparação ainda não está ativo e não pode iniciar uma Study Session.", "warning");
         return;
       }
-
-      const input = parseStartArgs(args);
-      if (!input) {
-        ctx.ui.notify("Uso: /lori-start [<Domain> | <primary Technique>], omita valores para escolhê-los interativamente.", "warning");
+      if (!selectCanOpenSession(state.session)) {
+        const { domain, technique } = sessionPresentation(state);
+        ctx.ui.notify(skin.render("session.startRejected", { domain, technique }), "warning");
+        return;
+      }
+      if (state.domains.length === 0) {
+        ctx.ui.notify("Nenhum Domain ativo para selecionar; use /lori-init para preparar e aprovar um Domain.", "warning");
         return;
       }
 
-      let currentSession = store.getState().session;
-      if (
-        input.domain === undefined ||
-        input.primaryTechnique === undefined
-      ) {
-        const latest = await dispatchAndPersist(projectDir, () => undefined);
-        if (!acceptDispatchResult(shared, ctx, latest, "Lori: não foi possível acessar o snapshot antes de iniciar a Session.")) {
-          return;
-        }
-        currentSession = latest.state.session;
-        if (!selectCanOpenSession(currentSession)) {
-          ctx.ui.notify(
-            skin.render("session.startRejected", {
-              domain: input.domain ?? "não informado",
-              technique: input.primaryTechnique ?? "não informada",
-            }),
-            "warning",
-          );
-          return;
-        }
-      }
+      const domainOptions = state.domains.map(({ id, name, learningObjective }) => `${name} — ${learningObjective} [${id}]`);
+      const selectedDomain = await ctx.ui.select("Escolher Domain ativo", domainOptions);
+      const domainIndex = domainOptions.indexOf(selectedDomain ?? "");
+      const domain = state.domains[domainIndex];
+      if (domain === undefined) return;
 
-      const previous = currentSession?.kind === "legacyStudy" && currentSession.status === "closed"
-        ? { domain: currentSession.name, primaryTechnique: currentSession.primaryTechnique }
-        : undefined;
-      const resolvedInput = await resolveStartInput(input, previous, ctx);
-      if (resolvedInput === undefined) {
+      const chapterVersionId = domain.currentChapterVersionId;
+      const chapterRef = { domainId: domain.id, chapterVersionId };
+      const target = recommendedStudyTarget(state, chapterRef);
+      if (target === undefined) {
+        ctx.ui.notify("Lori: o Domain ativo não tem um primeiro Node com recurso recomendado; Study Session não iniciada.", "error");
         return;
       }
+      const primaryTechnique = await promptPrimaryTechnique(ctx);
+      if (primaryTechnique === undefined) return;
 
-      const result = await dispatchAndPersist(projectDir, () => ({
-        type: "session/open",
-        ...resolvedInput,
-        startedAt: Date.now(),
-      }));
-      if (!acceptDispatchResult(shared, ctx, result, "Lori: Session não iniciada porque não foi possível persistir o snapshot.")) {
+      const result = await dispatchAndPersist(projectDir, (current) => {
+        const currentTarget = recommendedStudyTarget(current, chapterRef);
+        if (
+          current.domainDraft !== null ||
+          !selectCanOpenSession(current.session) ||
+          currentTarget?.node.id !== target.node.id ||
+          currentTarget.resource.id !== target.resource.id
+        ) {
+          return undefined;
+        }
+        return {
+          type: "session/open-study",
+          domainId: domain.id,
+          chapterRef,
+          nodeId: target.node.id,
+          resourceId: target.resource.id,
+          primaryTechnique,
+          startedAt: Date.now(),
+        };
+      });
+      if (!acceptDispatchResult(shared, ctx, result, "Lori: Study Session não iniciada porque não foi possível persistir o snapshot.")) {
         return;
       }
       if (result.status === "unchanged") {
-        ctx.ui.notify(
-          skin.render("session.startRejected", {
-            domain: resolvedInput.domain,
-            technique: resolvedInput.primaryTechnique,
-          }),
-          "warning",
-        );
+        ctx.ui.notify("Lori: Study Session não iniciada porque o Domain ou Chapter mudou durante a seleção.", "warning");
         return;
       }
 
@@ -1022,7 +1031,7 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
 
       const result = await dispatchAndPersist(projectDir, (state) => {
         const session = state.session;
-        if (session?.kind !== "legacyStudy" || (session.status !== "open" && session.status !== "paused")) {
+        if ((session?.kind !== "legacyStudy" && session?.kind !== "study") || (session.status !== "open" && session.status !== "paused")) {
           return undefined;
         }
 

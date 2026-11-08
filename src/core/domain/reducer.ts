@@ -114,6 +114,7 @@ export function isSessionAction(action: LoriAction): action is SessionAction {
   switch (action.type) {
     case "session/open":
     case "session/open-metalearning":
+    case "session/open-study":
     case "session/abandon":
     case "session/resume":
     case "session/close":

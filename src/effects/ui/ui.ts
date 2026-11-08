@@ -26,13 +26,16 @@ export function renderStatus(
   }
 
   const elapsed = formatElapsed(selectElapsedMs(session, now));
+  const domain = session.kind === "metalearning"
+    ? state.domains.find(({ id }) => id === session.domainId)?.name ?? state.domainDraft?.name ?? "Domain em preparação"
+    : session.kind === "study"
+    ? state.domains.find(({ id }) => id === session.domainId)?.name ?? "Domain"
+    : session.name;
   let status: string;
   if (session.status === "closed") {
     const isMetalearning = session.kind === "metalearning";
     status = skin.render("session.closed", {
-      domain: isMetalearning
-        ? state.domains.find(({ id }) => id === session.domainId)?.name ?? "Domain"
-        : session.name,
+      domain,
       technique: isMetalearning ? "Metalearning" : session.primaryTechnique,
       elapsed,
       focus: session.verdict.focus,
@@ -42,17 +45,24 @@ export function renderStatus(
     const sessionEvent = event ?? (session.status === "open" ? "session.open" : "session.paused");
     const isMetalearning = session.kind === "metalearning";
     status = skin.render(sessionEvent, {
-      domain: isMetalearning ? state.domainDraft?.name ?? "Domain em preparação" : session.name,
+      domain,
       technique: isMetalearning ? "Metalearning" : session.primaryTechnique,
       elapsed,
     });
+  }
+
+  if (session.kind === "study") {
+    const chapter = state.domains.find(({ id }) => id === session.domainId)?.chapters.find(({ id }) => id === session.chapterRef.chapterVersionId);
+    const node = chapter?.chapter.nodes.find(({ id }) => id === session.nodeId);
+    const resource = chapter?.chapter.resources.find(({ id }) => id === session.resourceId);
+    status += `\nStudy references: Chapter version ${chapter?.version ?? session.chapterRef.chapterVersionId} (${session.chapterRef.chapterVersionId}) · Node ${node?.id ?? session.nodeId} · Resource ${resource?.title ?? session.resourceId} (${session.resourceId})`;
   }
 
   if (session.status !== "closed") {
     const previousVerdict = state.sessionHistory.at(-1);
     if (previousVerdict?.status === "closed") {
       const isMetalearning = previousVerdict.kind === "metalearning";
-      const domain = isMetalearning
+      const domain = isMetalearning || previousVerdict.kind === "study"
         ? state.domains.find(({ id }) => id === previousVerdict.domainId)?.name ?? "Domain"
         : previousVerdict.name;
       const chapterVersion = previousVerdict.verdict.chapterRef?.chapterVersionId;

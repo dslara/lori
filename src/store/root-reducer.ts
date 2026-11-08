@@ -92,6 +92,22 @@ export function rootReducer(state: LoriState, action: LoriAction): LoriState {
   if (action.type === "session/open" && state.domainDraft !== null) {
     return state;
   }
+  if (action.type === "session/open-study") {
+    const domain = state.domains.find(({ id }) => id === action.domainId);
+    const chapter = domain?.chapters.find(({ id }) => id === action.chapterRef.chapterVersionId);
+    const node = chapter?.chapter.nodes.find(({ id }) => id === action.nodeId);
+    if (
+      state.domainDraft !== null ||
+      domain === undefined ||
+      chapter === undefined ||
+      action.chapterRef.domainId !== domain.id ||
+      node === undefined ||
+      node.recommendedResourceId !== action.resourceId ||
+      !chapter.chapter.resources.some(({ id }) => id === action.resourceId)
+    ) {
+      return state;
+    }
+  }
 
   const player = reducePlayer(state.player, action);
   const reducedSession = isSessionAction(action) ? reduceSession(state.session, action) : state.session;
@@ -137,7 +153,7 @@ export function rootReducer(state: LoriState, action: LoriAction): LoriState {
   }
   let sessionHistory = state.sessionHistory;
   if (
-    (action.type === "session/open" || action.type === "session/open-metalearning") &&
+    (action.type === "session/open" || action.type === "session/open-metalearning" || action.type === "session/open-study") &&
     state.session?.status === "closed" &&
     session !== state.session
   ) {

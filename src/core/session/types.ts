@@ -6,9 +6,20 @@ export type Verdict = {
   chapterRef?: ChapterVersionReference;
 };
 
-export type StudySessionDetails = {
+export type LegacyStudySessionDetails = {
   kind: "legacyStudy";
   name: string;
+  primaryTechnique: string;
+  startedAt: number;
+  totalPausedMs: number;
+};
+
+export type StudySessionDetails = {
+  kind: "study";
+  domainId: string;
+  chapterRef: ChapterVersionReference;
+  nodeId: string;
+  resourceId: string;
   primaryTechnique: string;
   startedAt: number;
   totalPausedMs: number;
@@ -23,13 +34,21 @@ export type MetalearningSessionDetails = {
 };
 
 export type Session =
+  | (LegacyStudySessionDetails & { status: "open" })
+  | (LegacyStudySessionDetails & { status: "paused"; pausedAt: number })
+  | (LegacyStudySessionDetails & {
+      status: "closed";
+      closedAt: number;
+      pausedAt?: number;
+      verdict: Verdict;
+    })
   | (StudySessionDetails & { status: "open" })
   | (StudySessionDetails & { status: "paused"; pausedAt: number })
   | (StudySessionDetails & {
       status: "closed";
       closedAt: number;
       pausedAt?: number;
-      verdict: Verdict;
+      verdict: Verdict & { chapterRef: ChapterVersionReference };
     })
   | (MetalearningSessionDetails & { status: "open" })
   | (MetalearningSessionDetails & { status: "paused"; pausedAt: number })
@@ -50,6 +69,15 @@ export type SessionAction =
   | {
       type: "session/open-metalearning";
       domainId: string;
+      startedAt: number;
+    }
+  | {
+      type: "session/open-study";
+      domainId: string;
+      chapterRef: ChapterVersionReference;
+      nodeId: string;
+      resourceId: string;
+      primaryTechnique: string;
       startedAt: number;
     }
   | {

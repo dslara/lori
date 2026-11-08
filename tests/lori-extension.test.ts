@@ -32,6 +32,7 @@ type RegisteredTool = {
 };
 
 type Harness = {
+  cwd: string;
   start(): Promise<void>;
   shutdown(): Promise<void>;
   runStatus(): Promise<void>;
@@ -122,6 +123,7 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
   return {
     cwd,
     harness: {
+      cwd,
       ui,
       async start() {
         expect(startHandler).toBeDefined();
@@ -185,10 +187,10 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
   };
 }
 
-async function prepareCurationDraft(harness: Harness): Promise<void> {
-  await harness.start();
+async function prepareCurationDraft(harness: Harness, domainName = "Spanish", start = true): Promise<void> {
+  if (start) await harness.start();
   harness.ui.inputResponses.push(
-    "Spanish",
+    domainName,
     "Hold a basic conversation while traveling",
     "I am visiting family this summer",
     "sem prazo",
@@ -198,6 +200,36 @@ async function prepareCurationDraft(harness: Harness): Promise<void> {
   );
   harness.ui.selectResponses.push("4 · Consigo aplicar sem orientação na maioria dos casos");
   await harness.runInit("");
+}
+
+async function prepareApprovedDomain(
+  harness: Harness,
+  acceptOffer = false,
+  primaryTechnique?: string,
+  domainName = "Spanish",
+  start = true,
+): Promise<void> {
+  await prepareCurationDraft(harness, domainName, start);
+  await harness.runCurate();
+  await harness.submitCuration(validCuration(curationRequestIds(harness)));
+  harness.ui.confirmResponses.push(true, acceptOffer);
+  harness.ui.inputResponses.push("3", "4");
+  if (primaryTechnique !== undefined) harness.ui.selectResponses.push(primaryTechnique);
+  await harness.runApprove();
+}
+
+async function startApprovedStudy(
+  harness: Harness,
+  domainName = "React",
+  primaryTechnique = "Active Recall · Retrieval",
+  start = true,
+): Promise<void> {
+  await prepareApprovedDomain(harness, false, undefined, domainName, start);
+  const snapshot = JSON.parse(await readFile(join(harness.cwd, ".lori", "snapshot.json"), "utf8"));
+  const domain = snapshot.domains.find((entry: { name: string }) => entry.name === domainName);
+  if (!domain) throw new Error(`Expected approved ${domainName} Domain in the harness snapshot.`);
+  harness.ui.selectResponses.push(`${domain.name} — ${domain.learningObjective} [${domain.id}]`, primaryTechnique);
+  await harness.runStart("");
 }
 
 function curationRequestIds(harness: Harness): { requestId: string; domainId: string } {
@@ -323,7 +355,7 @@ describe("Lori Chapter curation", () => {
     await harness.runApprove();
 
     const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
-    expect(snapshot.schemaVersion).toBe(3);
+    expect(snapshot.schemaVersion).toBe(4);
     expect(snapshot.domains).toHaveLength(1);
     const domain = snapshot.domains[0];
     expect(domain).toMatchObject({
@@ -409,13 +441,15 @@ describe("Lori Chapter curation", () => {
     expect(closed).not.toHaveProperty("weaknesses");
     expect(closed.domains[0].chapters).toHaveLength(1);
     expect(harness.ui.statuses.at(-1)?.text).toContain("Focus: -123.5 · Honesty: 1e+200");
-    expect(harness.ui.notifications.at(-1)?.message).toContain("Session fechada");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Verdict permanece fechado");
+    const domain = closed.domains[0];
+    harness.ui.selectResponses.push(`${domain.name} — ${domain.learningObjective} [${domain.id}]`, "Active Recall · Retrieval");
 
-    await harness.runStart("Later | Active Recall");
+    await harness.runStart("");
 
     const continued = JSON.parse(await readFile(snapshotPath, "utf8"));
     expect(continued.sessionHistory).toEqual([closed.session]);
-    expect(continued.session).toMatchObject({ status: "open", name: "Later" });
+    expect(continued.session).toMatchObject({ status: "open", kind: "study", domainId, primaryTechnique: "Active Recall" });
     expect(continued.player.totalXp).toBe(37);
     expect(harness.ui.statuses.at(-1)?.text).toContain("Focus: -123.5 · Honesty: 1e+200");
     expect(harness.ui.statuses.at(-1)?.text).toContain(chapterRef.chapterVersionId);
@@ -628,6 +662,96 @@ describe("Lori Chapter curation", () => {
   });
 });
 
+describe("Lori first Study Session", () => {
+  test("offers the first curated Node and resource after the Verdict, and rejection leaves the Verdict closed", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareApprovedDomain(harness);
+
+    const closed = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    const confirmation = harness.ui.confirmCalls.at(-1);
+    expect(confirmation?.title).toContain("primeiro estudo");
+    expect(confirmation?.message).toContain("greetings");
+    expect(confirmation?.message).toContain("Recognize and use common greetings");
+    expect(confirmation?.message).toContain("Spanish greetings and ordering dialogue");
+    expect(confirmation?.message).toContain("https://example.org/spanish-dialogue");
+    expect(closed.session).toMatchObject({ kind: "metalearning", status: "closed" });
+    expect(closed.sessionHistory).toEqual([]);
+    expect(closed.domains).toHaveLength(1);
+    expect(closed.domainDraft).toBeNull();
+  });
+
+  test("accepting the offer explicitly selects Primary Technique and persists every study reference", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareApprovedDomain(harness, true, "Active Recall · Retrieval");
+
+    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    const domain = snapshot.domains[0];
+    const closedVerdict = snapshot.sessionHistory[0];
+    expect(harness.ui.selectCalls.at(-1)?.title).toBe("Escolher Primary Technique");
+    expect(harness.ui.selectCalls.at(-1)?.options).toContain("Active Recall · Retrieval");
+    expect(snapshot.session).toMatchObject({
+      kind: "study",
+      status: "open",
+      domainId: domain.id,
+      chapterRef: { domainId: domain.id, chapterVersionId: domain.currentChapterVersionId },
+      nodeId: "greetings",
+      resourceId: "resource-1",
+      primaryTechnique: "Active Recall",
+    });
+    expect(closedVerdict).toMatchObject({
+      kind: "metalearning",
+      status: "closed",
+      verdict: { focus: 3, honesty: 4, chapterRef: snapshot.session.chapterRef },
+    });
+    expect(snapshot.player.totalXp).toBe(0);
+
+    await harness.runStatus();
+    expect(harness.ui.notifications.at(-1)?.message).toContain("greetings");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("resource-1");
+    expect(harness.ui.notifications.at(-1)?.message).toContain(domain.currentChapterVersionId);
+  });
+
+  test("cancelling Primary Technique after accepting the offer does not open a Study Session", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareApprovedDomain(harness, true);
+
+    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(snapshot.session).toMatchObject({ kind: "metalearning", status: "closed" });
+    expect(snapshot.sessionHistory).toEqual([]);
+  });
+
+  test("/lori-start requires an active Domain selection and rejects arbitrary Domain text", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareApprovedDomain(harness);
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const before = JSON.parse(await readFile(snapshotPath, "utf8"));
+    harness.ui.selectCalls.length = 0;
+
+    await harness.runStart("Unknown Domain | Active Recall");
+    expect(harness.ui.selectCalls).toHaveLength(0);
+    expect(JSON.parse(await readFile(snapshotPath, "utf8"))).toEqual(before);
+
+    harness.ui.selectResponses.push("Spanish — Hold a basic conversation while traveling [" + before.domains[0].id + "]", "Active Recall · Retrieval");
+    await harness.runStart("");
+
+    const started = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(harness.ui.selectCalls[0]?.title).toContain("Domain");
+    expect(harness.ui.selectCalls[0]?.options).toEqual([
+      `Spanish — Hold a basic conversation while traveling [${before.domains[0].id}]`,
+    ]);
+    expect(started.session).toMatchObject({
+      kind: "study",
+      status: "open",
+      domainId: before.domains[0].id,
+      chapterRef: { domainId: before.domains[0].id, chapterVersionId: before.domains[0].currentChapterVersionId },
+      nodeId: "greetings",
+      resourceId: "resource-1",
+      primaryTechnique: "Active Recall",
+    });
+    expect(started.sessionHistory).toEqual([before.session]);
+  });
+});
+
 describe("Lori startup and status", () => {
   test("collects a Domain draft one question at a time without activating it", async () => {
     const { cwd, harness } = await createHarness();
@@ -685,7 +809,7 @@ describe("Lori startup and status", () => {
     });
     expect(snapshot.domains ?? []).toEqual([]);
 
-    await harness.runStart("Spanish | Active Recall");
+    await harness.runStart("");
 
     const afterStartAttempt = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
     expect(afterStartAttempt.session).toMatchObject({ kind: "metalearning", domainId: snapshot.domainDraft.id });
@@ -772,7 +896,7 @@ describe("Lori startup and status", () => {
     expect(harness.ui.notifications.some(({ message }) => message.includes("declare explicitamente 'sem prazo'"))).toBe(true);
   });
 
-  test("rejects Domain preparation with arguments or another open/paused Session", async () => {
+  test("rejects Domain preparation arguments and blocks Study Session start while onboarding is active", async () => {
     const { cwd, harness } = await createHarness();
     await harness.start();
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
@@ -782,12 +906,11 @@ describe("Lori startup and status", () => {
     expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
     expect(harness.ui.notifications.at(-1)?.message).toContain("sem argumentos");
 
-    await harness.runStart("React | Active Recall");
-    const openSnapshot = await readFile(snapshotPath, "utf8");
-    const callsBeforeOpenRejection = harness.ui.inputCalls.length;
     await harness.runInit("");
-    expect(await readFile(snapshotPath, "utf8")).toBe(openSnapshot);
-    expect(harness.ui.inputCalls).toHaveLength(callsBeforeOpenRejection);
+    const draftSnapshot = await readFile(snapshotPath, "utf8");
+    await harness.runStart("");
+    expect(await readFile(snapshotPath, "utf8")).toBe(draftSnapshot);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("ainda não está ativo");
 
     await harness.runAbandon();
     const pausedSnapshot = await readFile(snapshotPath, "utf8");
@@ -807,7 +930,7 @@ describe("Lori startup and status", () => {
     const snapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
     expect(await readdir(join(cwd, ".lori"))).toEqual(["snapshot.json"]);
     expect(snapshot).toEqual({
-      schemaVersion: 3,
+      schemaVersion: 4,
       player: { totalXp: 0 },
       session: null,
       sessionHistory: [],
@@ -839,91 +962,91 @@ describe("Lori startup and status", () => {
     expect(harness.ui.notifications.at(-1)?.message).toContain("ainda não foi inicializada");
   });
 
-  test("starts and persists a Session and shows its live details", async () => {
+  test("starts and persists a Study Session with explicit Domain and Technique selections", async () => {
     const { cwd, harness } = await createHarness();
-    await harness.start();
-
-    await harness.runStart("  React  |  Active Recall  ");
+    await startApprovedStudy(harness, "React");
 
     const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
     expect(snapshot.session).toMatchObject({
+      kind: "study",
       status: "open",
-      name: "React",
+      domainId: snapshot.domains[0].id,
+      chapterRef: { domainId: snapshot.domains[0].id, chapterVersionId: snapshot.domains[0].currentChapterVersionId },
+      nodeId: "greetings",
+      resourceId: "resource-1",
       primaryTechnique: "Active Recall",
     });
     expect(typeof snapshot.session.startedAt).toBe("number");
-    expect(harness.ui.selectCalls).toHaveLength(0);
-    expect(harness.ui.inputCalls).toHaveLength(0);
+    expect(harness.ui.selectCalls.slice(-2).map(({ title }) => title)).toEqual([
+      "Escolher Domain ativo",
+      "Escolher Primary Technique",
+    ]);
     const status = harness.ui.statuses.at(-1)?.text ?? "";
     expect(status).toContain("Session: open");
     expect(status).toContain("Domain: React");
     expect(status).toContain("Primary Technique: Active Recall");
+    expect(status).toContain("Study references:");
+    expect(status).toContain("greetings");
+    expect(status).toContain("resource-1");
     expect(status).toContain("Elapsed: 00:00:00");
-    expect(harness.ui.notifications.at(-1)?.message).toContain("Session: open");
 
     await harness.runStatus();
     expect(harness.ui.notifications.at(-1)?.message).toContain("Domain: React");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Primary Technique: Active Recall");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("resource-1");
   });
 
-  test("does not persist when a start prompt is cancelled or blank", async () => {
+  test("does not persist when active Domain or Primary Technique selection is cancelled", async () => {
     const { cwd, harness } = await createHarness();
-    await harness.start();
-    const snapshotPath = join(cwd, ".lori", "snapshot.json");
-    const initialSnapshot = await readFile(snapshotPath, "utf8");
-
-    harness.ui.inputResponses.push("   ");
-    await harness.runStart("");
-    expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
-    expect(harness.ui.inputCalls).toHaveLength(1);
-
-    harness.ui.inputResponses.push("Rust");
-    harness.ui.selectResponses.push(undefined);
-    await harness.runStart("");
-    expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
-    expect(harness.ui.inputCalls).toHaveLength(2);
-  });
-
-  test("cancelling the previous-pair menu leaves the closed Session unchanged", async () => {
-    const { cwd, harness } = await createHarness();
-    await harness.start();
-    await harness.runStart("React | Active Recall");
-    await harness.runClose("1 | 1");
+    await prepareApprovedDomain(harness);
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
     const closedSnapshot = await readFile(snapshotPath, "utf8");
+    const domain = JSON.parse(closedSnapshot).domains[0];
+    const option = `${domain.name} — ${domain.learningObjective} [${domain.id}]`;
+
+    harness.ui.selectResponses.push(undefined);
+    await harness.runStart("");
+    expect(await readFile(snapshotPath, "utf8")).toBe(closedSnapshot);
+
+    harness.ui.selectResponses.push(option, "Informar outra técnica");
+    harness.ui.inputResponses.push("   ");
+    await harness.runStart("");
+    expect(await readFile(snapshotPath, "utf8")).toBe(closedSnapshot);
+    expect(harness.ui.inputCalls.at(-1)?.title).toBe("Primary Technique da Session");
+  });
+
+  test("cancelling active Domain selection leaves the closed Verdict unchanged instead of reusing it", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareApprovedDomain(harness);
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const closedSnapshot = await readFile(snapshotPath, "utf8");
+    const inputCallCount = harness.ui.inputCalls.length;
     harness.ui.selectResponses.push(undefined);
 
     await harness.runStart("");
 
     expect(await readFile(snapshotPath, "utf8")).toBe(closedSnapshot);
-    expect(harness.ui.inputCalls).toHaveLength(0);
+    expect(harness.ui.selectCalls.at(-1)?.title).toBe("Escolher Domain ativo");
+    expect(harness.ui.inputCalls).toHaveLength(inputCallCount);
   });
 
-  test("offers the last closed Session pair for reuse when starting without args", async () => {
+  test("starting without args always lists active Domains and never offers the previous Domain for reuse", async () => {
     const { cwd, harness } = await createHarness();
-    await harness.start();
-    await harness.runStart("React | Active Recall");
-    await harness.runClose("1 | 1");
-    harness.ui.selectResponses.push("Reutilizar: React | Active Recall");
+    await prepareApprovedDomain(harness);
+    const before = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    const domain = before.domains[0];
+    harness.ui.selectResponses.push(`${domain.name} — ${domain.learningObjective} [${domain.id}]`, "Active Recall · Retrieval");
 
     await harness.runStart("");
 
-    expect(harness.ui.selectCalls).toEqual([
-      {
-        title: "Iniciar com os valores anteriores?",
-        options: ["Reutilizar: React | Active Recall", "Informar um novo par"],
-      },
-    ]);
-    expect(harness.ui.inputCalls).toHaveLength(0);
+    expect(harness.ui.selectCalls.at(-1)?.title).toBe("Escolher Primary Technique");
+    expect(harness.ui.selectCalls.some(({ title }) => title === "Escolher Domain ativo")).toBe(true);
+    expect(harness.ui.selectCalls.some(({ options }) => options.some((option) => option.startsWith("Reutilizar:")))).toBe(false);
     const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
-    expect(snapshot.session).toMatchObject({
-      status: "open",
-      name: "React",
-      primaryTechnique: "Active Recall",
-    });
+    expect(snapshot.session).toMatchObject({ kind: "study", status: "open", domainId: domain.id });
   });
 
-  test("uses the latest closed Session from the project snapshot", async () => {
+  test("does not reuse a legacy Session as an active Domain", async () => {
     const { cwd, harness } = await createHarness();
     await harness.start();
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
@@ -939,133 +1062,95 @@ describe("Lori startup and status", () => {
       verdict: { focus: 1, honesty: 1 },
     };
     await writeFile(snapshotPath, JSON.stringify(snapshot));
-    harness.ui.selectResponses.push("Reutilizar: Japanese | Direct Practice");
+    const closedSnapshot = await readFile(snapshotPath, "utf8");
 
     await harness.runStart("");
 
-    expect(harness.ui.selectCalls).toEqual([
-      {
-        title: "Iniciar com os valores anteriores?",
-        options: ["Reutilizar: Japanese | Direct Practice", "Informar um novo par"],
-      },
-    ]);
-    const savedSnapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
-    expect(savedSnapshot.session).toMatchObject({
-      status: "open",
-      name: "Japanese",
-      primaryTechnique: "Direct Practice",
-    });
+    expect(await readFile(snapshotPath, "utf8")).toBe(closedSnapshot);
+    expect(harness.ui.selectCalls).toHaveLength(0);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Nenhum Domain ativo");
   });
 
-  test("prompts only for the missing Domain in a partial command", async () => {
+  test("rejects a partial legacy start argument instead of accepting a free-text Domain", async () => {
     const { cwd, harness } = await createHarness();
     await harness.start();
-    harness.ui.inputResponses.push("Math");
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const initialSnapshot = await readFile(snapshotPath, "utf8");
 
     await harness.runStart(" | Active Recall");
 
-    expect(harness.ui.inputCalls).toEqual([
-      { title: "Domain da Session", placeholder: undefined },
-    ]);
-    expect(harness.ui.selectCalls).toHaveLength(0);
-    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
-    expect(snapshot.session).toMatchObject({
-      status: "open",
-      name: "Math",
-      primaryTechnique: "Active Recall",
-    });
-  });
-
-  test("suggests only the missing primary Technique for a partial command", async () => {
-    const { cwd, harness } = await createHarness();
-    await harness.start();
-    await harness.runStart("React | Active Recall");
-    await harness.runClose("1 | 1");
-    harness.ui.selectResponses.push("Reutilizar: Active Recall");
-
-    await harness.runStart("Japanese |");
-
-    expect(harness.ui.selectCalls).toEqual([
-      {
-        title: "Escolher Primary Technique",
-        options: ["Reutilizar: Active Recall", "Informar outro Primary Technique"],
-      },
-    ]);
+    expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
     expect(harness.ui.inputCalls).toHaveLength(0);
-    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
-    expect(snapshot.session).toMatchObject({
-      status: "open",
-      name: "Japanese",
-      primaryTechnique: "Active Recall",
-    });
+    expect(harness.ui.selectCalls).toHaveLength(0);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("sem argumentos");
   });
 
-  test("lets the Player replace only the missing value from the last closed Session", async () => {
+  test("rejects a Domain supplied in a partial command instead of bypassing explicit selection", async () => {
     const { cwd, harness } = await createHarness();
     await harness.start();
-    await harness.runStart("React | Active Recall");
-    await harness.runClose("1 | 1");
-    harness.ui.selectResponses.push("Informar outro Primary Technique", "Informar outra técnica");
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const initialSnapshot = await readFile(snapshotPath, "utf8");
+
+    await harness.runStart("React |");
+
+    expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
+    expect(harness.ui.inputCalls).toHaveLength(0);
+    expect(harness.ui.selectCalls).toHaveLength(0);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("sem argumentos");
+  });
+
+  test("lets the Player explicitly choose a custom Primary Technique", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareApprovedDomain(harness);
+    const before = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    const domain = before.domains[0];
+    harness.ui.selectResponses.push(
+      `${domain.name} — ${domain.learningObjective} [${domain.id}]`,
+      "Informar outra técnica",
+    );
     harness.ui.inputResponses.push("Direct Practice");
 
-    await harness.runStart("Japanese |");
+    await harness.runStart("");
 
-    expect(harness.ui.selectCalls[1]?.options).toContain("Active Recall · Retrieval");
-    expect(harness.ui.selectCalls[1]?.options).toContain("Informar outra técnica");
-    expect(harness.ui.inputCalls).toEqual([
-      { title: "Primary Technique da Session", placeholder: undefined },
-    ]);
+    expect(harness.ui.selectCalls.at(-1)?.options).toContain("Informar outra técnica");
+    expect(harness.ui.inputCalls.at(-1)?.title).toBe("Primary Technique da Session");
     const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
     expect(snapshot.session).toMatchObject({
+      kind: "study",
       status: "open",
-      name: "Japanese",
+      domainId: domain.id,
       primaryTechnique: "Direct Practice",
     });
   });
 
-  test("lets the Player enter a new pair instead of reusing the last closed Session", async () => {
+  test("starts from an explicitly selected active Domain rather than an entered Domain pair", async () => {
     const { cwd, harness } = await createHarness();
-    await harness.start();
-    await harness.runStart("React | Active Recall");
-    await harness.runClose("1 | 1");
-    harness.ui.selectResponses.push("Informar um novo par", "Informar outra técnica");
-    harness.ui.inputResponses.push("Rust", "Direct Practice");
+    await prepareApprovedDomain(harness);
+    const before = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    const domain = before.domains[0];
+    const inputCallCount = harness.ui.inputCalls.length;
+    harness.ui.selectResponses.push(`${domain.name} — ${domain.learningObjective} [${domain.id}]`, "Build From Scratch · Directness");
 
     await harness.runStart("");
 
-    expect(harness.ui.selectCalls[1]?.options).toContain("Active Recall · Retrieval");
-    expect(harness.ui.inputCalls).toEqual([
-      { title: "Domain da Session", placeholder: undefined },
-      { title: "Primary Technique da Session", placeholder: undefined },
-    ]);
     const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
-    expect(snapshot.session).toMatchObject({
-      status: "open",
-      name: "Rust",
-      primaryTechnique: "Direct Practice",
-    });
+    expect(snapshot.session).toMatchObject({ kind: "study", status: "open", domainId: domain.id, primaryTechnique: "Build From Scratch" });
+    expect(snapshot.session.name).toBeUndefined();
+    expect(harness.ui.inputCalls).toHaveLength(inputCallCount);
   });
 
-  test("prompts for a Domain and primary Technique on the first Session", async () => {
+  test("does not start a Study Session when no active Domain exists", async () => {
     const { cwd, harness } = await createHarness();
     await harness.start();
-    harness.ui.inputResponses.push("Rust");
-    harness.ui.selectResponses.push("Active Recall · Retrieval");
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const initialSnapshot = await readFile(snapshotPath, "utf8");
 
     await harness.runStart("");
 
-    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
-    expect(harness.ui.inputCalls).toEqual([
-      { title: "Domain da Session", placeholder: undefined },
-    ]);
-    expect(harness.ui.selectCalls[0]?.title).toBe("Escolher Primary Technique");
-    expect(harness.ui.selectCalls[0]?.options).toContain("Active Recall · Retrieval");
-    expect(harness.ui.selectCalls[0]?.options).toContain("Informar outra técnica");
-    expect(snapshot.session).toMatchObject({
-      status: "open",
-      name: "Rust",
-      primaryTechnique: "Active Recall",
-    });
+    expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
+    expect(harness.ui.inputCalls).toHaveLength(0);
+    expect(harness.ui.selectCalls).toHaveLength(0);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Nenhum Domain ativo");
   });
 
   test("refreshes the dashboard elapsed time when /lori-status is run", async () => {
@@ -1073,8 +1158,7 @@ describe("Lori startup and status", () => {
     const now = spyOn(Date, "now").mockReturnValue(1_000);
 
     try {
-      await harness.start();
-      await harness.runStart("React | Active Recall");
+      await startApprovedStudy(harness, "React");
       now.mockReturnValue(61_000);
 
       await harness.runStatus();
@@ -1097,19 +1181,23 @@ describe("Lori startup and status", () => {
       skinConfig: { skin: "minimal" },
     }));
     await harness.start();
-    await harness.runStart("React | Active Recall");
+    await startApprovedStudy(harness, "React", "Active Recall · Retrieval", false);
     const before = JSON.parse(await readFile(snapshotPath, "utf8"));
 
     await harness.runClose("  2.5  |  4  ");
 
     const closedSnapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
-    expect(closedSnapshot.schemaVersion).toBe(3);
+    expect(closedSnapshot.schemaVersion).toBe(4);
     expect(closedSnapshot.player.totalXp).toBe(before.player.totalXp);
     expect(closedSnapshot.session).toMatchObject({
+      kind: "study",
       status: "closed",
-      name: "React",
+      domainId: before.domains[0].id,
+      chapterRef: before.session.chapterRef,
+      nodeId: "greetings",
+      resourceId: "resource-1",
       primaryTechnique: "Active Recall",
-      verdict: { focus: 2.5, honesty: 4 },
+      verdict: { focus: 2.5, honesty: 4, chapterRef: before.session.chapterRef },
     });
     expect(closedSnapshot.session.closedAt).toBeGreaterThanOrEqual(closedSnapshot.session.startedAt);
     expect(harness.ui.statuses.at(-1)?.text).toContain("Session fechada");
@@ -1121,7 +1209,11 @@ describe("Lori startup and status", () => {
     await restored.runStatus();
     expect(restored.ui.statuses.at(-1)?.text).toContain("Session fechada");
     expect(restored.ui.notifications.at(-1)?.message).toContain("Focus: 2.5 · Honesty: 4");
-    expect(JSON.parse(await readFile(snapshotPath, "utf8")).session.verdict).toEqual({ focus: 2.5, honesty: 4 });
+    expect(JSON.parse(await readFile(snapshotPath, "utf8")).session.verdict).toEqual({
+      focus: 2.5,
+      honesty: 4,
+      chapterRef: before.session.chapterRef,
+    });
   });
 
   test("renders a closed Verdict through the configured session.closed Skin template", async () => {
@@ -1145,16 +1237,15 @@ describe("Lori startup and status", () => {
     );
 
     await harness.start();
-    await harness.runStart("React | Active Recall");
+    await startApprovedStudy(harness, "React", "Active Recall · Retrieval", false);
     await harness.runClose("3 | 4");
 
-    expect(harness.ui.statuses.at(-1)?.text).toMatch(/^Terminal close React · 00:00:00 · 3\/4$/);
+    expect(harness.ui.statuses.at(-1)?.text).toContain("Terminal close React · 00:00:00 · 3/4");
   });
 
   test("closes a paused Session without adding paused time or applying a rating range", async () => {
     const { cwd, harness } = await createHarness();
-    await harness.start();
-    await harness.runStart("React | Active Recall");
+    await startApprovedStudy(harness, "React");
     await harness.runAbandon();
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
     const pausedSession = JSON.parse(await readFile(snapshotPath, "utf8")).session;
@@ -1177,8 +1268,7 @@ describe("Lori startup and status", () => {
 
   test("rejects missing, non-numeric, and non-finite close values before changing state", async () => {
     const { cwd, harness } = await createHarness();
-    await harness.start();
-    await harness.runStart("React | Active Recall");
+    await startApprovedStudy(harness, "React");
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
     const initialSnapshot = await readFile(snapshotPath, "utf8");
 
@@ -1191,39 +1281,44 @@ describe("Lori startup and status", () => {
     expect(harness.ui.statuses.at(-1)?.text).toContain("Session: open");
   });
 
-  test("does not resume or close a closed Session again, but allows a fresh Session", async () => {
+  test("does not resume or close a closed Session again, but allows a fresh selected study", async () => {
     const { cwd, harness } = await createHarness();
-    await harness.start();
-    await harness.runStart("React | Active Recall");
+    await startApprovedStudy(harness, "React");
     await harness.runClose("1 | 1");
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
-    const closedSnapshot = await readFile(snapshotPath, "utf8");
+    const closedSnapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
 
     await harness.runResume();
     await harness.runClose("5 | 5");
-    expect(await readFile(snapshotPath, "utf8")).toBe(closedSnapshot);
+    expect(JSON.parse(await readFile(snapshotPath, "utf8"))).toEqual(closedSnapshot);
     expect(harness.ui.statuses.at(-1)?.text).toContain("Session fechada");
 
-    await harness.runStart("Japanese | Direct Practice");
+    const domain = closedSnapshot.domains[0];
+    harness.ui.selectResponses.push(`${domain.name} — ${domain.learningObjective} [${domain.id}]`, "Build From Scratch · Directness");
+    await harness.runStart("");
     expect(JSON.parse(await readFile(snapshotPath, "utf8")).session).toMatchObject({
+      kind: "study",
       status: "open",
-      name: "Japanese",
-      primaryTechnique: "Direct Practice",
+      domainId: domain.id,
+      primaryTechnique: "Build From Scratch",
     });
   });
 
-  test("abandons and resumes a Session without losing accumulated study time", async () => {
+  test("abandons and resumes a Study Session without losing its references or accumulated time", async () => {
     const { cwd, harness } = await createHarness();
-    await harness.start();
-    await harness.runStart("React | Active Recall");
+    await startApprovedStudy(harness, "React");
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
     const opened = JSON.parse(await readFile(snapshotPath, "utf8")).session;
 
     await harness.runAbandon();
     const paused = JSON.parse(await readFile(snapshotPath, "utf8")).session;
     expect(paused).toMatchObject({
+      kind: "study",
       status: "paused",
-      name: "React",
+      domainId: opened.domainId,
+      chapterRef: opened.chapterRef,
+      nodeId: opened.nodeId,
+      resourceId: opened.resourceId,
       primaryTechnique: "Active Recall",
       startedAt: opened.startedAt,
     });
@@ -1234,8 +1329,12 @@ describe("Lori startup and status", () => {
     await harness.runResume();
     const resumed = JSON.parse(await readFile(snapshotPath, "utf8")).session;
     expect(resumed).toMatchObject({
+      kind: "study",
       status: "open",
-      name: "React",
+      domainId: opened.domainId,
+      chapterRef: opened.chapterRef,
+      nodeId: opened.nodeId,
+      resourceId: opened.resourceId,
       primaryTechnique: "Active Recall",
       startedAt: opened.startedAt,
     });
@@ -1253,7 +1352,7 @@ describe("Lori startup and status", () => {
     await harness.runResume();
     expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
 
-    await harness.runStart("React | Active Recall");
+    await startApprovedStudy(harness, "React");
     const openSnapshot = await readFile(snapshotPath, "utf8");
     await harness.runResume();
     expect(await readFile(snapshotPath, "utf8")).toBe(openSnapshot);
@@ -1282,24 +1381,26 @@ describe("Lori startup and status", () => {
     expect(harness.ui.statuses.at(-1)?.text).toContain("Session: nenhuma ativa");
   });
 
-  test("does not retain a Session in memory when its snapshot cannot be persisted", async () => {
+  test("does not retain an unpersisted Study Session when the snapshot becomes unavailable", async () => {
     const { cwd, harness } = await createHarness();
-    await harness.start();
+    await prepareApprovedDomain(harness);
+    const closedSnapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
     await rm(join(cwd, ".lori"), { recursive: true, force: true });
     await writeFile(join(cwd, ".lori"), "not a directory");
 
-    await harness.runStart("React | Active Recall");
+    await harness.runStart("");
     await harness.runStatus();
 
     expect(harness.ui.notifications.at(-2)?.type).toBe("error");
-    expect(harness.ui.notifications.at(-2)?.message).toContain("não foi possível persistir");
-    expect(harness.ui.notifications.at(-1)?.message).toContain("Session: nenhuma ativa");
+    expect(harness.ui.notifications.at(-2)?.message).toContain("snapshot antes de iniciar");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Session fechada");
+    expect(harness.ui.notifications.at(-1)?.message).not.toContain("Study references");
+    expect(closedSnapshot.session.kind).toBe("metalearning");
   });
 
-  test("does not reject a full pair using stale in-memory Session state", async () => {
+  test("uses the latest closed Session from the snapshot rather than stale in-memory state", async () => {
     const { cwd, harness } = await createHarness();
-    await harness.start();
-    await harness.runStart("React | Active Recall");
+    await startApprovedStudy(harness, "React");
 
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
     const snapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
@@ -1307,24 +1408,25 @@ describe("Lori startup and status", () => {
       ...snapshot.session,
       status: "closed",
       closedAt: snapshot.session.startedAt + snapshot.session.totalPausedMs,
-      verdict: { focus: 1, honesty: 1 },
+      verdict: { focus: 1, honesty: 1, chapterRef: snapshot.session.chapterRef },
     };
     await writeFile(snapshotPath, JSON.stringify(snapshot));
-
-    await harness.runStart("Japanese | Direct Practice");
+    const domain = snapshot.domains[0];
+    harness.ui.selectResponses.push(`${domain.name} — ${domain.learningObjective} [${domain.id}]`, "Build From Scratch · Directness");
+    await harness.runStart("");
 
     const savedSnapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
     expect(savedSnapshot.session).toMatchObject({
+      kind: "study",
       status: "open",
-      name: "Japanese",
-      primaryTechnique: "Direct Practice",
+      domainId: domain.id,
+      primaryTechnique: "Build From Scratch",
     });
   });
 
-  test("rejects start before prompting when a Session is open or paused", async () => {
+  test("rejects Study Session start before prompting when a Session is open or paused", async () => {
     const { cwd, harness } = await createHarness();
-    await harness.start();
-    await harness.runStart("React | Active Recall");
+    await startApprovedStudy(harness, "React");
 
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
     const openSnapshot = await readFile(snapshotPath, "utf8");
@@ -1341,7 +1443,7 @@ describe("Lori startup and status", () => {
     const pausedSnapshot = await readFile(snapshotPath, "utf8");
     const pausedInputCallCount = harness.ui.inputCalls.length;
     const pausedSelectCallCount = harness.ui.selectCalls.length;
-    await harness.runStart("| Active Recall");
+    await harness.runStart("");
 
     expect(await readFile(snapshotPath, "utf8")).toBe(pausedSnapshot);
     expect(harness.ui.inputCalls).toHaveLength(pausedInputCallCount);
@@ -1351,12 +1453,11 @@ describe("Lori startup and status", () => {
 
   test("rejects replacing an open Session without changing its persisted snapshot", async () => {
     const { cwd, harness } = await createHarness();
-    await harness.start();
-    await harness.runStart("React | Active Recall");
+    await startApprovedStudy(harness, "React");
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
     const openedSnapshot = await readFile(snapshotPath, "utf8");
 
-    await harness.runStart("Japanese | Direct Practice");
+    await harness.runStart("");
 
     expect(await readFile(snapshotPath, "utf8")).toBe(openedSnapshot);
     const rejection = harness.ui.notifications.at(-1)?.message ?? "";
@@ -1441,23 +1542,35 @@ describe("Lori startup and status", () => {
     }
   });
 
-  test("restores a paused Session from the project snapshot", async () => {
+  test("restores a paused Study Session with its Domain, Chapter, Node, and resource references", async () => {
     const { cwd, harness: firstInstance } = await createHarness();
-    await firstInstance.start();
-    await firstInstance.runStart("Japanese | Direct Practice");
-    const savedSnapshot = await readFile(join(cwd, ".lori", "snapshot.json"), "utf8");
+    await startApprovedStudy(firstInstance, "Japanese", "Build From Scratch · Directness");
+    const savedSnapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
 
+    await firstInstance.runAbandon();
+    const paused = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).session;
     const { harness: reloadedInstance } = await createHarness(cwd);
     await reloadedInstance.start();
 
-    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Session restaurada como pausada");
+    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Session pausada");
+    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("greetings");    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("resource-1");
+    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain(paused.chapterRef.chapterVersionId);
     await reloadedInstance.runStatus();
 
     expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Session pausada");
     expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Domain: Japanese");
-    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Primary Technique: Direct Practice");
+    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Primary Technique: Build From Scratch");
     expect(reloadedInstance.ui.notifications.at(-1)?.message).toContain("Elapsed: 00:00:00");
-    expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).not.toBe(savedSnapshot);
+    expect(reloadedInstance.ui.notifications.at(-1)?.message).toContain("Study references:");
+    expect(JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).session).toMatchObject({
+      kind: "study",
+      status: "paused",
+      domainId: paused.domainId,
+      chapterRef: paused.chapterRef,
+      nodeId: paused.nodeId,
+      resourceId: paused.resourceId,
+    });
+    expect(savedSnapshot.session.status).toBe("open");
   });
 
   test("restores the initial project snapshot when a fresh extension instance starts", async () => {
@@ -1637,7 +1750,7 @@ describe("Lori startup and status", () => {
     const { cwd, harness } = await createHarness();
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
     const originalContents = JSON.stringify({
-      schemaVersion: 4,
+      schemaVersion: 5,
       player: { totalXp: 0 },
       session: null,
       skinConfig: { skin: "minimal" },
@@ -1649,13 +1762,13 @@ describe("Lori startup and status", () => {
     await harness.runStatus();
 
     expect(harness.ui.notifications[0]?.type).toBe("error");
-    expect(harness.ui.notifications[0]?.message).toContain("não suportada (4)");
+    expect(harness.ui.notifications[0]?.message).toContain("não suportada (5)");
     expect(harness.ui.notifications[0]?.message).toContain("preservado");
     expect(harness.ui.notifications.at(-1)?.message).toContain("não suportada");
     expect(await readFile(snapshotPath, "utf8")).toBe(originalContents);
   });
 
-  test("migrates a closed v1 Session to legacyStudy and archives its Verdict when a new Session starts", async () => {
+  test("migrates a closed v1 Session to legacyStudy without fabricating an active Domain", async () => {
     const { cwd, harness } = await createHarness();
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
     const legacySession = {
@@ -1680,7 +1793,7 @@ describe("Lori startup and status", () => {
 
     const migrated = JSON.parse(await readFile(snapshotPath, "utf8"));
     expect(migrated).toMatchObject({
-      schemaVersion: 3,
+      schemaVersion: 4,
       player: { totalXp: 87 },
       session: {
         kind: "legacyStudy",
@@ -1699,18 +1812,15 @@ describe("Lori startup and status", () => {
     expect(migrated.session.learningObjective).toBeUndefined();
     expect(migrated.domains ?? []).toEqual([]);
 
-    await harness.runStart("Rust | Retrieval");
+    await harness.runStart("");
 
     const continued = JSON.parse(await readFile(snapshotPath, "utf8"));
-    expect(continued.session).toMatchObject({
-      kind: "legacyStudy",
-      status: "open",
-      name: "Rust",
-      primaryTechnique: "Retrieval",
-    });
-    expect(continued.sessionHistory).toEqual([migrated.session]);
+    expect(continued.session).toEqual(migrated.session);
+    expect(continued.sessionHistory).toEqual([]);
+    expect(continued.domains).toEqual([]);
     expect(continued.player.totalXp).toBe(87);
     expect(continued.skinConfig.skin).toBe("terminal");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Nenhum Domain ativo");
   });
 
   test("resumes and closes a migrated paused legacyStudy without losing its original name or timestamps", async () => {
@@ -1842,26 +1952,26 @@ describe("Lori startup and status", () => {
     );
 
     await harness.start();
-    await harness.runStart("React | Active Recall");
-    expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal open React");
+    await startApprovedStudy(harness, "React", "Active Recall · Retrieval", false);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Terminal open React");
 
-    await harness.runStart("Japanese | Direct Practice");
-    expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal start rejected Japanese");
+    await harness.runStart("");
+    expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal start rejected React");
 
     await harness.runResume();
     expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal resume rejected React");
 
     await harness.runAbandon();
-    expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal paused React");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Terminal paused React");
 
     await harness.runAbandon();
     expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal pause rejected React");
 
     await harness.runResume();
-    expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal resumed React");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Terminal resumed React");
 
     await harness.runClose("4 | 5");
-    expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal closed React 4/5");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Terminal closed React 4/5");
 
     await harness.runClose("4 | 5");
     expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal close rejected React");

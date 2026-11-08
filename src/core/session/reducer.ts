@@ -15,6 +15,32 @@ export function reduceSession(state: Session | null, action: SessionAction): Ses
     };
   }
 
+  if (action.type === "session/open-study") {
+    if (
+      !selectCanOpenSession(state) ||
+      action.domainId.trim().length === 0 ||
+      action.chapterRef.domainId !== action.domainId ||
+      action.chapterRef.chapterVersionId.trim().length === 0 ||
+      action.nodeId.trim().length === 0 ||
+      action.resourceId.trim().length === 0 ||
+      action.primaryTechnique.trim().length === 0 ||
+      !Number.isFinite(action.startedAt)
+    ) {
+      return state;
+    }
+    return {
+      kind: "study",
+      status: "open",
+      domainId: action.domainId,
+      chapterRef: action.chapterRef,
+      nodeId: action.nodeId,
+      resourceId: action.resourceId,
+      primaryTechnique: action.primaryTechnique,
+      startedAt: action.startedAt,
+      totalPausedMs: 0,
+    };
+  }
+
   if (action.type === "session/open") {
     if (!selectCanOpenSession(state)) {
       return state;
@@ -99,6 +125,24 @@ export function reduceSession(state: Session | null, action: SessionAction): Ses
       closedAt: action.closedAt,
       ...(state.status === "paused" ? { pausedAt: state.pausedAt } : {}),
       verdict: { focus: action.focus, honesty: action.honesty },
+    };
+  }
+
+  if (state.kind === "study") {
+    const chapterRef = state.chapterRef;
+    return {
+      kind: state.kind,
+      status: "closed",
+      domainId: state.domainId,
+      chapterRef,
+      nodeId: state.nodeId,
+      resourceId: state.resourceId,
+      primaryTechnique: state.primaryTechnique,
+      startedAt: state.startedAt,
+      totalPausedMs: state.totalPausedMs,
+      closedAt: action.closedAt,
+      ...(state.status === "paused" ? { pausedAt: state.pausedAt } : {}),
+      verdict: { focus: action.focus, honesty: action.honesty, chapterRef },
     };
   }
 

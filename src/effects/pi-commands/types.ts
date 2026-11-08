@@ -22,10 +22,3 @@ export type LoriExtensionState = {
   startupError: string | undefined;
   curationRequest: { requestId: string; domainId: string } | undefined;
 };
-
-export type StartInput = {
-  domain?: string;
-  primaryTechnique?: string;
-};
-
-export type ResolvedStartInput = Required<StartInput>;

@@ -7,7 +7,7 @@ import { validateChapterProposal, validateProposalForDraft } from "../../core/do
 import type { ActiveDomain, ChapterVersionReference, DomainQuestionnaire } from "../../core/domain/types.ts";
 import type { SnapshotResult } from "./types.ts";
 
-export const SNAPSHOT_SCHEMA_VERSION = 3;
+export const SNAPSHOT_SCHEMA_VERSION = 4;
 export const SNAPSHOT_RELATIVE_PATH = ".lori/snapshot.json";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -26,12 +26,82 @@ function decodeChapterReference(value: unknown): ChapterVersionReference | null 
   return { domainId: value.domainId, chapterVersionId: value.chapterVersionId };
 }
 
-function decodeSession(value: unknown, version: 1 | 2 | 3): Session | null | undefined {
+function decodeSession(value: unknown, version: 1 | 2 | 3 | 4): Session | null | undefined {
   if (value === null) {
     return null;
   }
   if (!isRecord(value)) {
     return undefined;
+  }
+
+  if (version === 4 && value.kind === "study") {
+    const chapterRef = decodeChapterReference(value.chapterRef);
+    if (
+      typeof value.domainId !== "string" || value.domainId.trim().length === 0 ||
+      chapterRef === null || chapterRef === undefined || chapterRef.domainId !== value.domainId ||
+      typeof value.nodeId !== "string" || value.nodeId.trim().length === 0 ||
+      typeof value.resourceId !== "string" || value.resourceId.trim().length === 0 ||
+      typeof value.primaryTechnique !== "string" || value.primaryTechnique.trim().length === 0 ||
+      (value.status !== "open" && value.status !== "paused" && value.status !== "closed") ||
+      typeof value.startedAt !== "number" || !Number.isFinite(value.startedAt)
+    ) {
+      return undefined;
+    }
+    const totalPausedMs = value.totalPausedMs === undefined ? 0 : value.totalPausedMs;
+    if (typeof totalPausedMs !== "number" || !Number.isFinite(totalPausedMs) || totalPausedMs < 0) {
+      return undefined;
+    }
+    const details = {
+      kind: "study" as const,
+      domainId: value.domainId,
+      chapterRef,
+      nodeId: value.nodeId,
+      resourceId: value.resourceId,
+      primaryTechnique: value.primaryTechnique,
+      startedAt: value.startedAt,
+      totalPausedMs,
+    };
+    if (value.status === "open") return { ...details, status: "open" };
+    if (value.status === "paused") {
+      if (
+        typeof value.pausedAt !== "number" ||
+        !Number.isFinite(value.pausedAt) ||
+        value.pausedAt < value.startedAt + totalPausedMs
+      ) {
+        return undefined;
+      }
+      return { ...details, status: "paused", pausedAt: value.pausedAt };
+    }
+
+    const pausedAt = value.pausedAt;
+    const verdictChapterRef = isRecord(value.verdict)
+      ? decodeChapterReference(value.verdict.chapterRef)
+      : undefined;
+    if (
+      !isRecord(value.verdict) ||
+      verdictChapterRef === null || verdictChapterRef === undefined ||
+      verdictChapterRef.domainId !== chapterRef.domainId ||
+      verdictChapterRef.chapterVersionId !== chapterRef.chapterVersionId ||
+      typeof value.verdict.focus !== "number" || !Number.isFinite(value.verdict.focus) ||
+      typeof value.verdict.honesty !== "number" || !Number.isFinite(value.verdict.honesty) ||
+      typeof value.closedAt !== "number" || !Number.isFinite(value.closedAt) ||
+      value.closedAt < value.startedAt + totalPausedMs ||
+      (pausedAt !== undefined && (
+        typeof pausedAt !== "number" ||
+        !Number.isFinite(pausedAt) ||
+        pausedAt < value.startedAt + totalPausedMs ||
+        pausedAt > value.closedAt
+      ))
+    ) {
+      return undefined;
+    }
+    return {
+      ...details,
+      status: "closed",
+      closedAt: value.closedAt,
+      ...(typeof pausedAt === "number" ? { pausedAt } : {}),
+      verdict: { focus: value.verdict.focus, honesty: value.verdict.honesty, chapterRef },
+    };
   }
 
   if (version !== 1 && value.kind === "metalearning") {
@@ -44,7 +114,7 @@ function decodeSession(value: unknown, version: 1 | 2 | 3): Session | null | und
     ) {
       return undefined;
     }
-    const chapterRef = decodeChapterReference(version === 3 ? value.chapterRef : undefined);
+    const chapterRef = decodeChapterReference(version >= 3 ? value.chapterRef : undefined);
     if (chapterRef === undefined) return undefined;
     const totalPausedMs = value.totalPausedMs === undefined ? 0 : value.totalPausedMs;
     if (typeof totalPausedMs !== "number" || !Number.isFinite(totalPausedMs) || totalPausedMs < 0) {
@@ -76,7 +146,7 @@ function decodeSession(value: unknown, version: 1 | 2 | 3): Session | null | und
       ? decodeChapterReference(value.verdict.chapterRef)
       : undefined;
     if (
-      version !== 3 ||
+      version < 3 ||
       chapterRef === null ||
       verdictChapterRef === null ||
       verdictChapterRef === undefined ||
@@ -173,7 +243,7 @@ function decodeSession(value: unknown, version: 1 | 2 | 3): Session | null | und
   ) {
     return undefined;
   }
-  const chapterRef = decodeChapterReference(version === 3 ? value.verdict.chapterRef : undefined);
+  const chapterRef = decodeChapterReference(version >= 3 ? value.verdict.chapterRef : undefined);
   if (chapterRef === undefined) return undefined;
   return {
     ...details,
@@ -200,7 +270,7 @@ function decodePlayer(value: Record<string, unknown>): LoriState["player"] | und
   return { totalXp: value.player.totalXp };
 }
 
-function decodeDomainDraft(value: unknown, schemaVersion: 2 | 3): LoriState["domainDraft"] | undefined {
+function decodeDomainDraft(value: unknown, schemaVersion: 2 | 3 | 4): LoriState["domainDraft"] | undefined {
   if (value === null) {
     return null;
   }
@@ -367,7 +437,7 @@ function decodeSnapshotV1(value: Record<string, unknown>): SnapshotResult {
   };
 }
 
-function decodeSnapshotCurrent(value: Record<string, unknown>, schemaVersion: 2 | 3): SnapshotResult {
+function decodeSnapshotCurrent(value: Record<string, unknown>, schemaVersion: 2 | 3 | 4): SnapshotResult {
   const player = decodePlayer(value);
   const skinConfig = decodeSkinConfig(value);
   const session = decodeSession(value.session, schemaVersion);
@@ -404,6 +474,13 @@ function decodeSnapshotCurrent(value: Record<string, unknown>, schemaVersion: 2 
   const hasChapterReference = (reference: ChapterVersionReference): boolean => domains.some((domain) =>
     domain.id === reference.domainId && domain.chapters.some(({ id }) => id === reference.chapterVersionId)
   );
+  const hasStudyReference = (study: Extract<Session, { kind: "study" }>): boolean => {
+    if (study.chapterRef.domainId !== study.domainId || !hasChapterReference(study.chapterRef)) return false;
+    const domain = domains.find(({ id }) => id === study.domainId);
+    const chapter = domain?.chapters.find(({ id }) => id === study.chapterRef.chapterVersionId);
+    const node = chapter?.chapter.nodes.find(({ id }) => id === study.nodeId);
+    return node?.recommendedResourceId === study.resourceId && chapter?.chapter.resources.some(({ id }) => id === study.resourceId) === true;
+  };
   if (
     (session?.kind === "metalearning" && session.status !== "closed" && domainDraft?.id !== session.domainId) ||
     (domainDraft !== null && (session?.kind !== "metalearning" || session.status === "closed")) ||
@@ -411,7 +488,9 @@ function decodeSnapshotCurrent(value: Record<string, unknown>, schemaVersion: 2 
     (session?.kind === "metalearning" && session.chapterRef !== undefined && (
       session.chapterRef.domainId !== session.domainId || !hasChapterReference(session.chapterRef)
     )) ||
+    (session?.kind === "study" && !hasStudyReference(session)) ||
     sessionHistory.some((archived) => archived.status === "closed" && archived.verdict.chapterRef !== undefined && !hasChapterReference(archived.verdict.chapterRef)) ||
+    sessionHistory.some((archived) => archived.kind === "study" && !hasStudyReference(archived)) ||
     (session?.status === "closed" && session.verdict.chapterRef !== undefined && !hasChapterReference(session.verdict.chapterRef)) ||
     (domainDraft?.phase === "awaiting_verdict" && (
       session?.kind !== "metalearning" ||
@@ -436,7 +515,7 @@ function decodeSnapshot(value: unknown): SnapshotResult {
   if (value.schemaVersion === 1) {
     return decodeSnapshotV1(value);
   }
-  if (value.schemaVersion === 2 || value.schemaVersion === SNAPSHOT_SCHEMA_VERSION) {
+  if (value.schemaVersion === 2 || value.schemaVersion === 3 || value.schemaVersion === SNAPSHOT_SCHEMA_VERSION) {
     return decodeSnapshotCurrent(value, value.schemaVersion);
   }
   return {
