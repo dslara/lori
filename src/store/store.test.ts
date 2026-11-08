@@ -50,6 +50,7 @@ describe("Lori store", () => {
             id: "first-node",
             order: 1,
             objective: "Use a greeting.",
+            prerequisiteNodeIds: [],
             exitProofCriterion: criterion,
             evidenceRefs: [{ resourceId: "resource-1", evidenceId: "excerpt-1" }],
             recommendedResourceId: "resource-1",

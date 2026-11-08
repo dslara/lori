@@ -28,6 +28,7 @@ const validSubmission = () => ({
         id: "greetings",
         order: 1,
         objective: "Use a greeting in context.",
+        prerequisiteNodeIds: [] as string[],
         exitProofContributions: [{
           criterion: "Open and close the conversation politely.",
           rationale: "This Node supplies the greeting and closing language used in that criterion.",
@@ -73,6 +74,8 @@ describe("chapter curation prompt and proposal presentation", () => {
     expect(prompt).toContain("menor conjunto ordenado de Nodes necessário");
     expect(prompt).toContain("omita qualquer Node não essencial");
     expect(prompt).toContain("rationale específico");
+    expect(prompt).toContain("prerequisiteNodeIds");
+    expect(prompt).toContain("cadeia explícita de pré-requisitos");
   });
 
   test("redacts ambiguous paths from the prompt without changing the draft data", () => {
@@ -94,6 +97,29 @@ describe("chapter curation prompt and proposal presentation", () => {
     delete (noContribution.result.proposal.nodes[0] as { exitProofContributions?: unknown }).exitProofContributions;
     expect(Value.Check(chapterCurationToolParameters, noContribution)).toBe(false);
 
+    const noPrerequisites = validSubmission();
+    delete (noPrerequisites.result.proposal.nodes[0] as { prerequisiteNodeIds?: unknown }).prerequisiteNodeIds;
+    expect(Value.Check(chapterCurationToolParameters, noPrerequisites)).toBe(false);
+
+    const structuralPrerequisite = validSubmission();
+    const contributor = structuralPrerequisite.result.proposal.nodes[0]!;
+    structuralPrerequisite.result.proposal.nodes = [
+      {
+        ...contributor,
+        id: "foundation",
+        order: 1,
+        objective: "Recognize the basic sounds.",
+        prerequisiteNodeIds: [],
+        exitProofContributions: [],
+      },
+      {
+        ...contributor,
+        order: 2,
+        prerequisiteNodeIds: ["foundation"],
+      },
+    ];
+    expect(Value.Check(chapterCurationToolParameters, structuralPrerequisite)).toBe(true);
+
     const noRationale = validSubmission();
     noRationale.result.proposal.nodes[0]!.exitProofContributions[0]!.rationale = " ";
     expect(Value.Check(chapterCurationToolParameters, noRationale)).toBe(false);
@@ -101,11 +127,43 @@ describe("chapter curation prompt and proposal presentation", () => {
 
   test("presents each Node's explicit contribution and rationale to the Player", () => {
     const validation = validateChapterProposal(validSubmission().result.proposal);
-    if (!validation.ok) throw new Error("Expected a valid Chapter proposal fixture.");
+    if (!validation.ok) {
+      throw new Error("Expected a valid Chapter proposal fixture.");
+    }
 
     const presentation = renderChapterProposal(draft, validation.proposal);
 
     expect(presentation).toContain("Critério do Exit Proof: Open and close the conversation politely.");
+    expect(presentation).toContain("Pré-requisitos: nenhum");
     expect(presentation).toContain("Contribuição necessária: This Node supplies the greeting and closing language used in that criterion.");
+  });
+
+  test("presents a structural prerequisite and its dependency to the Player", () => {
+    const proposal = validSubmission().result.proposal;
+    const contributor = proposal.nodes[0]!;
+    proposal.nodes = [
+      {
+        ...contributor,
+        id: "foundation",
+        order: 1,
+        objective: "Recognize the basic sounds.",
+        prerequisiteNodeIds: [],
+        exitProofContributions: [],
+      },
+      {
+        ...contributor,
+        order: 2,
+        prerequisiteNodeIds: ["foundation"],
+      },
+    ];
+    const validation = validateChapterProposal(proposal);
+    if (!validation.ok) {
+      throw new Error("Expected a valid proposal with a structural prerequisite.");
+    }
+
+    const presentation = renderChapterProposal(draft, validation.proposal);
+
+    expect(presentation).toContain("Papel: pré-requisito estrutural para greetings");
+    expect(presentation).toContain("Pré-requisitos: foundation");
   });
 });

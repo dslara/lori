@@ -41,10 +41,13 @@ const chapterSchema = Type.Object({
     id: nonEmptyString("Unique Node ID within this Chapter."),
     order: Type.Integer({ minimum: 1, description: "One-based contiguous order in the Chapter." }),
     objective: nonEmptyString("Specific learning objective for this Node."),
+    prerequisiteNodeIds: Type.Array(nonEmptyString("ID of an earlier prerequisite Node."), {
+      description: "Only earlier Node IDs required before this Node; empty when it has no prerequisite.",
+    }),
     exitProofContributions: Type.Array(Type.Object({
       criterion: nonEmptyString("Exact Exit Proof criterion this Node contributes to satisfying."),
       rationale: nonEmptyString("Specific reason this Node is needed to satisfy that criterion."),
-    }, { additionalProperties: false }), { minItems: 1, description: "Every Node must justify its necessity through at least one Exit Proof criterion." }),
+    }, { additionalProperties: false }), { description: "Exit Proof criteria this Node directly contributes to; empty only for a structural prerequisite Node." }),
     evidenceRefs: Type.Array(Type.Object({
       resourceId: nonEmptyString("ID of a resource in this proposal."),
       evidenceId: nonEmptyString("ID of an excerpt registered on that resource."),
@@ -111,7 +114,7 @@ export function buildChapterCurationPrompt(
     `Restrições: ${draft.materialRestrictions === null || draft.materialRestrictions === undefined ? "nenhuma declarada" : redactSensitiveText(draft.materialRestrictions)}`,
     "Pesquise fontes reais com as ferramentas disponíveis. Considere uma fonte verificável somente se uma ferramenta desta sessão permitiu inspecionar o conteúdo; cite trechos exatos e localização. Se não puder acessar o conteúdo, use status blocked. Retorne a proposta somente por lori_submit_chapter; nunca use texto livre como substituto do tool.",
     "Uma proposta exige 1–3 recursos compatíveis, URLs HTTPS, trechos textuais rastreáveis com localização, Nodes em ordem com objetivos, referências consistentes aos trechos e recurso recomendado por Node. Registre separadamente scope, justificativa e limitações de cada recurso; inclua metadados relevantes e não atribua score universal Tier 1.",
-    "Proponha o menor conjunto ordenado de Nodes necessário para satisfazer o Exit Proof; omita qualquer Node não essencial. Cada Node deve declarar uma ou mais exitProofContributions: copie exatamente cada critério observável relacionado e forneça um rationale específico de por que esse Node é necessário para satisfazê-lo. Relacione todo critério do Exit Proof a pelo menos um Node.",
+    "Proponha o menor conjunto ordenado de Nodes necessário para satisfazer o Exit Proof; omita qualquer Node não essencial e não repita objetivos. Declare prerequisiteNodeIds com apenas IDs de Nodes anteriores que sejam dependências necessárias, ou [] quando não houver pré-requisito. Cada Node deve declarar exitProofContributions com os critérios observáveis que contribui, copiando-os exatamente, e um rationale específico não vazio de por que é necessário. Use [] somente para um Node que seja pré-requisito estrutural de algum Node contribuinte. Se o mesmo critério aparecer em Nodes diferentes, ligue-os por uma cadeia explícita de pré-requisitos ou não repita o critério. Relacione todo critério do Exit Proof a pelo menos um Node.",
     "Se não encontrar recurso verificável e compatível com todas as restrições, use result.status=blocked com a razão. Não submeta Chapter vazio, não invente fonte e não proponha relaxar as restrições.",
     "O Chapter precisa ter outcome, Principle, Exit Proof com critérios observáveis, faixa de esforço e uma explicação que relacione explicitamente o prazo e as horas semanais fornecidas. Copie deadline e hoursPerWeek exatamente no objeto effort.",
     isRecuration
@@ -137,11 +140,15 @@ export function renderChapterProposal(
   for (const node of proposal.nodes) {
     const recommended = proposal.resources.find(({ id }) => id === node.recommendedResourceId);
     lines.push(`${node.order}. ${node.id}: ${node.objective}`);
-    if (node.exitProofContributions !== undefined) {
+    lines.push(`   Pré-requisitos: ${node.prerequisiteNodeIds.length === 0 ? "nenhum" : node.prerequisiteNodeIds.join(", ")}`);
+    if (node.exitProofContributions !== undefined && node.exitProofContributions.length > 0) {
       for (const contribution of node.exitProofContributions) {
         lines.push(`   Critério do Exit Proof: ${contribution.criterion}`);
         lines.push(`   Contribuição necessária: ${contribution.rationale}`);
       }
+    } else if (node.exitProofContributions !== undefined) {
+      const dependentNodes = proposal.nodes.filter(({ prerequisiteNodeIds }) => prerequisiteNodeIds.includes(node.id));
+      lines.push(`   Papel: pré-requisito estrutural para ${dependentNodes.map(({ id }) => id).join(", ")}`);
     } else {
       lines.push(`   Critério do Exit Proof atendido: ${node.exitProofCriterion ?? "Não registrado na proposta original."}`);
     }

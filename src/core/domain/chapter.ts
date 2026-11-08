@@ -64,6 +64,7 @@ export type ChapterNode = {
   id: string;
   order: number;
   objective: string;
+  prerequisiteNodeIds: string[];
   exitProofContributions?: ChapterNodeExitProofContribution[];
   /** Legacy review detail retained when decoding older snapshots. */
   exitProofCriterion?: string;
@@ -118,7 +119,9 @@ function decodeExitProofContributions(
   value: unknown,
   criteria: unknown[],
 ): ChapterNodeExitProofContribution[] | undefined {
-  if (!Array.isArray(value) || value.length === 0) return undefined;
+  if (!Array.isArray(value)) {
+    return undefined;
+  }
   const contributions: ChapterNodeExitProofContribution[] = [];
   const seenCriteria = new Set<string>();
   for (const entry of value) {
@@ -138,7 +141,9 @@ function decodeExitProofContributions(
 }
 
 function isHttpUrl(value: unknown): value is string {
-  if (typeof value !== "string") return false;
+  if (typeof value !== "string") {
+    return false;
+  }
   try {
     const url = new URL(value);
     return url.protocol === "https:" && url.hostname.length > 0 && url.username.length === 0 && url.password.length === 0;
@@ -186,7 +191,9 @@ function decodeResource(value: unknown, allowMissingScope = false): ChapterResou
   const metadata: Partial<Pick<ChapterResource, "author" | "publishedAt" | "version" | "updatedAt" | "language" | "format" | "access" | "cost" | "license">> = {};
   for (const field of ["author", "publishedAt", "version", "updatedAt", "language", "format", "access", "cost", "license"] as const) {
     if (value[field] !== undefined) {
-      if (!isNonEmptyString(value[field])) return undefined;
+      if (!isNonEmptyString(value[field])) {
+        return undefined;
+      }
       metadata[field] = value[field];
     }
   }
@@ -261,6 +268,8 @@ export function validateChapterProposal(
 
   const nodes: ChapterNode[] = [];
   const nodeIds = new Set<string>();
+  const priorNodeIds = new Set<string>();
+  const objectiveKeys = new Set<string>();
   const referencedResourceIds = new Set<string>();
   for (let index = 0; index < value.nodes.length; index += 1) {
     const entry = value.nodes[index];
@@ -270,6 +279,13 @@ export function validateChapterProposal(
       nodeIds.has(entry.id) ||
       entry.order !== index + 1 ||
       !isNonEmptyString(entry.objective) ||
+      objectiveKeys.has(entry.objective.trim().toLowerCase()) ||
+      (!options.allowMissingReviewDetails && !Array.isArray(entry.prerequisiteNodeIds)) ||
+      (entry.prerequisiteNodeIds !== undefined &&
+        (
+          !Array.isArray(entry.prerequisiteNodeIds) ||
+          !entry.prerequisiteNodeIds.every(isNonEmptyString)
+        )) ||
       (!options.allowMissingReviewDetails && !Array.isArray(entry.exitProofContributions)) ||
       (entry.exitProofCriterion !== undefined && (!isNonEmptyString(entry.exitProofCriterion) || !value.exitProof.criteria.includes(entry.exitProofCriterion))) ||
       !Array.isArray(entry.evidenceRefs) ||
@@ -278,6 +294,14 @@ export function validateChapterProposal(
       !resourceIds.has(entry.recommendedResourceId)
     ) {
       return { ok: false, reason: "A proposta contém Nodes fora de ordem, sem objetivo, sem recurso recomendado ou sem referências consistentes." };
+    }
+
+    const prerequisiteNodeIds = entry.prerequisiteNodeIds === undefined ? [] : entry.prerequisiteNodeIds as string[];
+    if (
+      new Set(prerequisiteNodeIds).size !== prerequisiteNodeIds.length ||
+      prerequisiteNodeIds.some((nodeId) => !priorNodeIds.has(nodeId))
+    ) {
+      return { ok: false, reason: "Cada pré-requisito deve apontar para um Node anterior, válido e sem repetição." };
     }
 
     const contributions = decodeExitProofContributions(entry.exitProofContributions, value.exitProof.criteria);
@@ -289,6 +313,8 @@ export function validateChapterProposal(
     }
 
     nodeIds.add(entry.id);
+    priorNodeIds.add(entry.id);
+    objectiveKeys.add(entry.objective.trim().toLowerCase());
     const nodeEvidenceRefs: ChapterNodeEvidenceRef[] = [];
     const nodeRefKeys = new Set<string>();
     for (const ref of entry.evidenceRefs) {
@@ -315,6 +341,7 @@ export function validateChapterProposal(
       id: entry.id,
       order: entry.order,
       objective: entry.objective,
+      prerequisiteNodeIds,
       ...(contributions === undefined ? {} : { exitProofContributions: contributions }),
       ...(entry.exitProofCriterion === undefined ? {} : { exitProofCriterion: entry.exitProofCriterion as string }),
       evidenceRefs: nodeEvidenceRefs,
@@ -322,10 +349,54 @@ export function validateChapterProposal(
     });
   }
 
-  if (!options.allowMissingReviewDetails && value.exitProof.criteria.some((criterion) =>
-    !nodes.some(({ exitProofContributions }) => exitProofContributions?.some((contribution) => contribution.criterion === criterion))
-  )) {
-    return { ok: false, reason: "Cada critério do Exit Proof precisa estar ligado à contribuição justificada de ao menos um Node necessário." };
+  if (!options.allowMissingReviewDetails) {
+    if (value.exitProof.criteria.some((criterion) =>
+      !nodes.some(({ exitProofContributions }) => exitProofContributions?.some((contribution) => contribution.criterion === criterion))
+    )) {
+      return { ok: false, reason: "Cada critério do Exit Proof precisa estar ligado à contribuição justificada de ao menos um Node necessário." };
+    }
+
+    const nodesById = new Map(nodes.map((node) => [node.id, node]));
+    const ancestorsByNodeId = new Map<string, Set<string>>();
+    for (const node of nodes) {
+      const ancestors = new Set<string>();
+      const pending = [...node.prerequisiteNodeIds];
+      while (pending.length > 0) {
+        const prerequisiteId = pending.pop()!;
+        if (ancestors.has(prerequisiteId)) {
+          continue;
+        }
+        ancestors.add(prerequisiteId);
+        const prerequisite = nodesById.get(prerequisiteId);
+        if (prerequisite !== undefined) {
+          pending.push(...prerequisite.prerequisiteNodeIds);
+        }
+      }
+      ancestorsByNodeId.set(node.id, ancestors);
+    }
+
+    for (const node of nodes) {
+      const contributesToExitProof = (node.exitProofContributions?.length ?? 0) > 0;
+      const requiredByContributor = nodes.some(({ id, exitProofContributions }) =>
+        (exitProofContributions?.length ?? 0) > 0 && ancestorsByNodeId.get(id)?.has(node.id)
+      );
+      if (!contributesToExitProof && !requiredByContributor) {
+        return { ok: false, reason: "Cada Node precisa contribuir ao Exit Proof ou ser pré-requisito estrutural de um Node contribuinte." };
+      }
+    }
+
+    for (const criterion of value.exitProof.criteria) {
+      const contributors = nodes.filter(({ exitProofContributions }) =>
+        exitProofContributions?.some((contribution) => contribution.criterion === criterion)
+      );
+      for (let index = 1; index < contributors.length; index += 1) {
+        const earlier = contributors[index - 1]!;
+        const later = contributors[index]!;
+        if (!ancestorsByNodeId.get(later.id)?.has(earlier.id)) {
+          return { ok: false, reason: "Nodes que repetem um critério do Exit Proof precisam ter dependência estrutural entre si." };
+        }
+      }
+    }
   }
 
   if (resources.some(({ id }) => !referencedResourceIds.has(id))) {
@@ -374,11 +445,15 @@ export function validateChapterSourceEvidence(
       result.text.length > 0
     );
   for (const resource of proposal.resources) {
-    const hasVerifiedExcerpts = resource.evidence.every(({ excerpt }) =>
-      currentRunResults.some((result) => result.text.includes(resource.url) && result.text.includes(excerpt))
+    const hasVerifiedExcerpts = resource.evidence.every(({ excerpt, locator }) =>
+      currentRunResults.some((result) => (
+        result.text.includes(resource.url) &&
+        result.text.includes(excerpt) &&
+        result.text.includes(locator)
+      ))
     );
     if (!hasVerifiedExcerpts) {
-      return `A URL ${resource.url} ou um dos trechos citados não aparece junto em resultado bem-sucedido de ferramenta host apropriada ligado à request e ao run atuais.`;
+      return `A URL ${resource.url}, um trecho citado ou sua localização não aparece junto em resultado bem-sucedido de ferramenta host apropriada ligado à request e ao run atuais.`;
     }
   }
   return undefined;

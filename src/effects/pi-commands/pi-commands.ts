@@ -842,6 +842,43 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
   });
 }
 
+function startChapterCurationRequest(
+  api: ExtensionAPI,
+  shared: LoriExtensionState,
+  ctx: Pick<ExtensionContext, "ui">,
+  request: {
+    requestId: string;
+    draft: DomainDraft;
+    target: "draft";
+  } | {
+    requestId: string;
+    draft: DomainDraft;
+    target: "active";
+    currentChapterVersionId: string;
+  },
+): void {
+  shared.curationRequest = {
+    requestId: request.requestId,
+    domainId: request.draft.id,
+    target: request.target,
+    ...(request.target === "active" ? { expectedCurrentChapterVersionId: request.currentChapterVersionId } : {}),
+    awaitingAgentStart: true,
+    agentRunId: undefined,
+    sourceToolCalls: {},
+    sourceEvidence: [],
+  };
+  try {
+    api.sendUserMessage(buildChapterCurationPrompt(
+      request.requestId,
+      request.draft,
+      request.target === "active" ? { currentChapterVersionId: request.currentChapterVersionId } : {},
+    ));
+  } catch {
+    shared.curationRequest = undefined;
+    ctx.ui.notify("Lori: não foi possível iniciar a curadoria pelo agent; nenhuma proposta foi salva.", "error");
+  }
+}
+
 export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionState): void {
   registerChapterCurationTool(api, shared);
 
@@ -901,43 +938,23 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
 
       const requestId = randomUUID();
       if (selectedDomain !== undefined) {
-        shared.curationRequest = {
+        startChapterCurationRequest(api, shared, ctx, {
           requestId,
-          domainId: selectedDomain.id,
+          draft: activeDomainDraft(selectedDomain),
           target: "active",
-          expectedCurrentChapterVersionId: selectedDomain.currentChapterVersionId,
-          awaitingAgentStart: true,
-          agentRunId: undefined,
-          sourceToolCalls: {},
-          sourceEvidence: [],
-        };
-        try {
-          api.sendUserMessage(buildChapterCurationPrompt(requestId, activeDomainDraft(selectedDomain), {
-            currentChapterVersionId: selectedDomain.currentChapterVersionId,
-          }));
-        } catch {
-          shared.curationRequest = undefined;
-          ctx.ui.notify("Lori: não foi possível iniciar a curadoria pelo agent; nenhuma proposta foi salva.", "error");
-        }
+          currentChapterVersionId: selectedDomain.currentChapterVersionId,
+        });
         return;
       }
 
-      if (selectedDraft === undefined) return;
-      shared.curationRequest = {
-        requestId,
-        domainId: selectedDraft.id,
-        target: "draft",
-        awaitingAgentStart: true,
-        agentRunId: undefined,
-        sourceToolCalls: {},
-        sourceEvidence: [],
-      };
-      try {
-        api.sendUserMessage(buildChapterCurationPrompt(requestId, selectedDraft));
-      } catch {
-        shared.curationRequest = undefined;
-        ctx.ui.notify("Lori: não foi possível iniciar a curadoria pelo agent; nenhuma proposta foi salva.", "error");
+      if (selectedDraft === undefined) {
+        return;
       }
+      startChapterCurationRequest(api, shared, ctx, {
+        requestId,
+        draft: selectedDraft,
+        target: "draft",
+      });
     },
   });
 

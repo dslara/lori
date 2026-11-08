@@ -8,7 +8,9 @@ export function registerCurationSourceEvidenceHooks(api: ExtensionAPI, shared: L
 
   api.on("agent_start", () => {
     const request = shared.curationRequest;
-    if (request === undefined || !request.awaitingAgentStart) return;
+    if (request === undefined || !request.awaitingAgentStart) {
+      return;
+    }
     request.awaitingAgentStart = false;
     request.agentRunId = `${request.requestId}:run-${++nextRunId}`;
   });
@@ -21,7 +23,9 @@ export function registerCurationSourceEvidenceHooks(api: ExtensionAPI, shared: L
       agentRunId === undefined ||
       seenToolCallIds.has(event.toolCallId) ||
       !isSourceResearchTool(event.toolName)
-    ) return;
+    ) {
+      return;
+    }
     seenToolCallIds.add(event.toolCallId);
     request.sourceToolCalls[event.toolCallId] = {
       requestId: request.requestId,
@@ -33,7 +37,9 @@ export function registerCurationSourceEvidenceHooks(api: ExtensionAPI, shared: L
   api.on("tool_result", (event) => {
     const request = shared.curationRequest;
     const call = request?.sourceToolCalls[event.toolCallId];
-    if (request === undefined || call === undefined) return;
+    if (request === undefined || call === undefined) {
+      return;
+    }
     delete request.sourceToolCalls[event.toolCallId];
     if (
       call.requestId !== request.requestId ||
@@ -46,8 +52,12 @@ export function registerCurationSourceEvidenceHooks(api: ExtensionAPI, shared: L
     }
 
     const text = event.content.flatMap((block) => block.type === "text" ? [block.text] : []);
-    if (event.structuredContent !== undefined) text.push(JSON.stringify(event.structuredContent));
-    if (text.length === 0 || request.agentRunId === undefined) return;
+    if (event.structuredContent !== undefined) {
+      text.push(JSON.stringify(event.structuredContent));
+    }
+    if (text.length === 0 || request.agentRunId === undefined) {
+      return;
+    }
     request.sourceEvidence.push({
       requestId: request.requestId,
       agentRunId: request.agentRunId,
@@ -60,6 +70,8 @@ export function registerCurationSourceEvidenceHooks(api: ExtensionAPI, shared: L
 
   api.on("agent_end", () => {
     const request = shared.curationRequest;
-    if (request?.agentRunId !== undefined) shared.curationRequest = undefined;
+    if (request?.agentRunId !== undefined) {
+      shared.curationRequest = undefined;
+    }
   });
 }

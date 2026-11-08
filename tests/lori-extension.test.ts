@@ -87,7 +87,9 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
   const verifiedSpanishSource = [
     "https://www.spanishdict.com/guide/basic-greetings",
     "Buenos días, ¿cómo está?",
+    "00:14–00:18",
     "Quisiera pedir una sopa, por favor.",
+    "00:42–00:47",
   ].join("\n");
   const observeToolCall = (toolName: string, toolCallId: string): void => {
     toolCallHandler?.({ toolName, toolCallId, input: {} });
@@ -101,7 +103,9 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
     emitToolResult(toolName, toolCallId, text, isError);
   };
   const endAgentRun = (): void => {
-    if (!agentRunActive) return;
+    if (!agentRunActive) {
+      return;
+    }
     agentRunActive = false;
     agentEndHandler?.({ type: "agent_end", messages: [] });
   };
@@ -146,10 +150,18 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
       if (event === "session_shutdown") {
         shutdownHandler = handler as ShutdownHandler;
       }
-      if (event === "agent_start") agentStartHandler = handler as unknown as AgentStartHandler;
-      if (event === "agent_end") agentEndHandler = handler as unknown as AgentEndHandler;
-      if (event === "tool_call") toolCallHandler = handler as unknown as ToolCallHandler;
-      if (event === "tool_result") toolResultHandler = handler as unknown as ToolResultHandler;
+      if (event === "agent_start") {
+        agentStartHandler = handler as unknown as AgentStartHandler;
+      }
+      if (event === "agent_end") {
+        agentEndHandler = handler as unknown as AgentEndHandler;
+      }
+      if (event === "tool_call") {
+        toolCallHandler = handler as unknown as ToolCallHandler;
+      }
+      if (event === "tool_result") {
+        toolResultHandler = handler as unknown as ToolResultHandler;
+      }
     },
     registerCommand(name: string, options: { handler: CommandHandler }) {
       commandHandlers.set(name, options.handler);
@@ -229,7 +241,9 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
         }
         const tool = registeredTools.get("lori_submit_chapter");
         expect(tool).toBeDefined();
-        if (!tool) return undefined;
+        if (!tool) {
+          return undefined;
+        }
         const result = await Reflect.apply(tool.execute, undefined, ["tool-call", params, undefined, undefined, { ui, cwd, hasUI: true }]);
         endAgentRun();
         return result;
@@ -243,7 +257,9 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
 }
 
 async function prepareCurationDraft(harness: Harness, domainName = "Spanish", start = true): Promise<void> {
-  if (start) await harness.start();
+  if (start) {
+    await harness.start();
+  }
   harness.ui.inputResponses.push(
     domainName,
     "Hold a basic conversation while traveling",
@@ -269,7 +285,9 @@ async function prepareApprovedDomain(
   await harness.submitCuration(validCuration(curationRequestIds(harness)));
   harness.ui.confirmResponses.push(true, acceptOffer);
   harness.ui.inputResponses.push("3", "4");
-  if (primaryTechnique !== undefined) harness.ui.selectResponses.push(primaryTechnique);
+  if (primaryTechnique !== undefined) {
+    harness.ui.selectResponses.push(primaryTechnique);
+  }
   await harness.runApprove();
 }
 
@@ -282,7 +300,9 @@ async function startApprovedStudy(
   await prepareApprovedDomain(harness, false, undefined, domainName, start);
   const snapshot = JSON.parse(await readFile(join(harness.cwd, ".lori", "snapshot.json"), "utf8"));
   const domain = snapshot.domains.find((entry: { name: string }) => entry.name === domainName);
-  if (!domain) throw new Error(`Expected approved ${domainName} Domain in the harness snapshot.`);
+  if (!domain) {
+    throw new Error(`Expected approved ${domainName} Domain in the harness snapshot.`);
+  }
   harness.ui.selectResponses.push(`${domain.name} — ${domain.learningObjective} [${domain.id}]`, primaryTechnique);
   await harness.runStart("");
 }
@@ -317,6 +337,7 @@ function validCuration(params: { requestId: string; domainId: string }): Record<
             id: "greetings",
             order: 1,
             objective: "Recognize and use common greetings in a short exchange.",
+            prerequisiteNodeIds: [],
             exitProofContributions: [{
               criterion: "The recording includes a greeting.",
               rationale: "This Node gives the Player the greeting needed to open the role-play recording.",
@@ -328,6 +349,7 @@ function validCuration(params: { requestId: string; domainId: string }): Record<
             id: "ordering",
             order: 2,
             objective: "Ask for a meal and respond to a simple follow-up question.",
+            prerequisiteNodeIds: [],
             exitProofContributions: [{
               criterion: "The recording includes an order and a relevant response to one follow-up question.",
               rationale: "This Node supplies the order and response practice needed for the second observable part of the role-play.",
@@ -694,7 +716,7 @@ describe("Lori Chapter curation", () => {
     await harness.submitCuration(params);
 
     expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).toBe(before);
-    expect(harness.ui.notifications.at(-1)?.message).toContain("trechos citados não aparece");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("um trecho citado ou sua localização não aparece");
   });
 
   test("requires successful source tool results from the current request, not stale or unrelated results", async () => {

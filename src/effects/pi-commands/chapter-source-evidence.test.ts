@@ -29,7 +29,9 @@ function setup(requestId = "request-1") {
   registerCurationSourceEvidenceHooks(api, shared);
   const emit = (eventName: string, event: unknown) => {
     const handler = handlers.get(eventName);
-    if (handler === undefined) throw new Error(`No handler registered for ${eventName}`);
+    if (handler === undefined) {
+      throw new Error(`No handler registered for ${eventName}`);
+    }
     handler(event);
   };
   return { shared, emit };
@@ -40,7 +42,9 @@ describe("curation source evidence lifecycle", () => {
     const { shared, emit } = setup();
     emit("agent_start", { type: "agent_start" });
     const runId = shared.curationRequest?.agentRunId;
-    if (runId === undefined) throw new Error("Expected the active curation request to be bound to an agent run.");
+    if (runId === undefined) {
+      throw new Error("Expected the active curation request to be bound to an agent run.");
+    }
     expect(runId).toBeDefined();
 
     emit("tool_call", { type: "tool_call", toolName: "cache_search", toolCallId: "cache-1", input: {} });
@@ -52,7 +56,7 @@ describe("curation source evidence lifecycle", () => {
       toolName: "brave_search",
       toolCallId: "source-1",
       input: {},
-      content: [{ type: "text", text: "https://example.com/phrases Good morning." }],
+      content: [{ type: "text", text: "https://example.com/phrases Good morning. Greetings" }],
       isError: false,
     });
 
@@ -63,7 +67,7 @@ describe("curation source evidence lifecycle", () => {
       toolCallId: "source-1",
       toolName: "brave_search",
       isError: false,
-      text: "https://example.com/phrases Good morning.",
+      text: "https://example.com/phrases Good morning. Greetings",
     }]);
   });
 

@@ -7,6 +7,7 @@ const validProposal = () => ({
     id: "greetings",
     order: 1,
     objective: "Use a greeting in context.",
+    prerequisiteNodeIds: [] as string[],
     exitProofContributions: [{
       criterion: "Open and close the conversation politely.",
       rationale: "The Node provides the greeting and closing language needed for this observable action.",
@@ -54,15 +55,29 @@ describe("validateChapterSourceEvidence", () => {
     ...overrides,
   });
 
-  test("requires an exact URL and excerpt in a resultado bem-sucedido linked to the same request and run", () => {
+  test("requires an exact URL, excerpt, and locator in a successful result linked to the same request and run", () => {
     const result = validateChapterProposal(validProposal());
-    if (!result.ok) throw new Error("Expected a valid Chapter fixture.");
-    const sourceResult = "Source https://example.com/phrases states: Good morning.";
+    if (!result.ok) {
+      throw new Error("Expected a valid Chapter fixture.");
+    }
+    const sourceResult = "Source https://example.com/phrases states: Good morning. Locator: Greetings";
 
     expect(validateChapterSourceEvidence(result.proposal, [evidence(sourceResult)], {
       requestId: "request-1",
       agentRunId: "run-1",
     })).toBeUndefined();
+    expect(validateChapterSourceEvidence(result.proposal, [evidence(
+      "Source https://example.com/phrases states: Good morning.",
+    )], {
+      requestId: "request-1",
+      agentRunId: "run-1",
+    })).toContain("resultado bem-sucedido");
+    expect(validateChapterSourceEvidence(result.proposal, [evidence(
+      "Source https://example.com/phrases states: Good morning. Locator: Introductions",
+    )], {
+      requestId: "request-1",
+      agentRunId: "run-1",
+    })).toContain("resultado bem-sucedido");
     expect(validateChapterSourceEvidence(result.proposal, [evidence(sourceResult, { requestId: "old-request" })], {
       requestId: "request-1",
       agentRunId: "run-1",
@@ -73,9 +88,11 @@ describe("validateChapterSourceEvidence", () => {
     })).toContain("resultado bem-sucedido");
   });
 
-  test("rejects failed, unrelated, or split results that do not provide both exact source strings", () => {
+  test("rejects failed, unrelated, or split results that do not provide all exact source fields", () => {
     const result = validateChapterProposal(validProposal());
-    if (!result.ok) throw new Error("Expected a valid Chapter fixture.");
+    if (!result.ok) {
+      throw new Error("Expected a valid Chapter fixture.");
+    }
     const expected = { requestId: "request-1", agentRunId: "run-1" };
 
     expect(validateChapterSourceEvidence(result.proposal, [evidence(
@@ -85,8 +102,8 @@ describe("validateChapterSourceEvidence", () => {
       "https://example.com/phrases Good morning.", { toolName: "cache_search" },
     )], expected)).toContain("resultado bem-sucedido");
     expect(validateChapterSourceEvidence(result.proposal, [
-      evidence("https://example.com/phrases"),
-      evidence("Good morning.", { toolCallId: "call-2" }),
+      evidence("https://example.com/phrases Good morning."),
+      evidence("Greetings", { toolCallId: "call-2" }),
     ], expected)).toContain("resultado bem-sucedido");
     expect(validateChapterSourceEvidence(result.proposal, [evidence("https://example.com/phrases Good Morning.")], expected))
       .toContain("resultado bem-sucedido");
@@ -99,6 +116,7 @@ describe("validateChapterProposal", () => {
 
     expect(result.ok).toBe(true);
     if (result.ok) {
+      expect(result.proposal.nodes[0]?.prerequisiteNodeIds).toEqual([]);
       expect(result.proposal.nodes[0]?.exitProofContributions).toEqual([{
         criterion: "Open and close the conversation politely.",
         rationale: "The Node provides the greeting and closing language needed for this observable action.",
@@ -130,5 +148,96 @@ describe("validateChapterProposal", () => {
     const emptyRationale = validProposal();
     emptyRationale.nodes[0]!.exitProofContributions[0]!.rationale = "   ";
     expect(validateChapterProposal(emptyRationale)).toMatchObject({ ok: false });
+  });
+
+  test("accepts an ordered prerequisite chain ending in an Exit Proof contribution", () => {
+    const proposal = validProposal();
+    proposal.nodes = [
+      {
+        ...proposal.nodes[0]!,
+        id: "sounds",
+        order: 1,
+        objective: "Recognize the basic sounds.",
+        prerequisiteNodeIds: [],
+        exitProofContributions: [],
+      },
+      {
+        ...proposal.nodes[0]!,
+        id: "greetings",
+        order: 2,
+        objective: "Use a greeting in context.",
+        prerequisiteNodeIds: ["sounds"],
+      },
+      {
+        ...proposal.nodes[0]!,
+        id: "polite-closing",
+        order: 3,
+        objective: "Use a polite closing in context.",
+        prerequisiteNodeIds: ["greetings"],
+        exitProofContributions: [{
+          criterion: "Open and close the conversation politely.",
+          rationale: "This Node provides the separate closing language needed to complete the observable conversation.",
+        }],
+      },
+    ];
+
+    const result = validateChapterProposal(proposal);
+
+    expect(result.ok).toBe(true);
+    if (result.ok) {
+      expect(result.proposal.nodes.map(({ prerequisiteNodeIds }) => prerequisiteNodeIds)).toEqual([[], ["sounds"], ["greetings"]]);
+    }
+  });
+
+  test("rejects an unconnected Node that contributes neither to the Exit Proof nor structurally", () => {
+    const proposal = validProposal();
+    proposal.nodes.push({
+      ...proposal.nodes[0]!,
+      id: "unrelated",
+      order: 2,
+      objective: "Study an unrelated topic.",
+      prerequisiteNodeIds: [],
+      exitProofContributions: [],
+    });
+
+    expect(validateChapterProposal(proposal)).toMatchObject({ ok: false });
+  });
+
+  test("rejects repeated objectives and repeated Exit Proof criteria without dependency", () => {
+    const duplicateObjective = validProposal();
+    duplicateObjective.nodes.push({
+      ...duplicateObjective.nodes[0]!,
+      id: "same-objective",
+      order: 2,
+      prerequisiteNodeIds: ["greetings"],
+    });
+    expect(validateChapterProposal(duplicateObjective)).toMatchObject({ ok: false });
+
+    const duplicateCriterion = validProposal();
+    duplicateCriterion.nodes.push({
+      ...duplicateCriterion.nodes[0]!,
+      id: "independent-greetings",
+      order: 2,
+      objective: "Use a different greeting in context.",
+      prerequisiteNodeIds: [],
+    });
+    expect(validateChapterProposal(duplicateCriterion)).toMatchObject({ ok: false });
+  });
+
+  test("rejects prerequisite references to later or unknown Nodes", () => {
+    const futureReference = validProposal();
+    futureReference.nodes[0]!.prerequisiteNodeIds = ["later-node"];
+    futureReference.nodes.push({
+      ...futureReference.nodes[0]!,
+      id: "later-node",
+      order: 2,
+      objective: "Ask a follow-up question.",
+      prerequisiteNodeIds: [],
+    });
+    expect(validateChapterProposal(futureReference)).toMatchObject({ ok: false });
+
+    const unknownReference = validProposal();
+    unknownReference.nodes[0]!.prerequisiteNodeIds = ["missing-node"];
+    expect(validateChapterProposal(unknownReference)).toMatchObject({ ok: false });
   });
 });
