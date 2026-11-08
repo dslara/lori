@@ -5,6 +5,12 @@ import type { LoriAction } from "../core/actions.ts";
 import type { LoriState } from "./state.ts";
 
 export function rootReducer(state: LoriState, action: LoriAction): LoriState {
+  if (
+    action.type === "domain-draft/propose-chapter" &&
+    (state.session?.kind !== "metalearning" || state.session.status !== "open" || state.session.domainId !== action.id)
+  ) {
+    return state;
+  }
   if (action.type === "session/open-metalearning" && state.domainDraft !== null) {
     return state;
   }

@@ -21,6 +21,13 @@ export function reduceDomainDraft(
   draft: DomainDraft | null,
   action: LoriAction,
 ): DomainDraft | null {
+  if (action.type === "domain-draft/propose-chapter") {
+    if (draft === null || draft.id !== action.id || draft.phase !== "awaiting_curation") {
+      return draft;
+    }
+    return { ...draft, phase: "awaiting_approval", pendingChapter: action.proposal };
+  }
+
   if (action.type === "session/open-metalearning") {
     if (draft !== null || action.domainId.trim().length === 0 || !Number.isFinite(action.startedAt)) {
       return draft;
@@ -84,6 +91,7 @@ export function isSessionAction(action: LoriAction): action is SessionAction {
     case "session/close":
       return true;
     case "domain-draft/answer":
+    case "domain-draft/propose-chapter":
       return false;
   }
 }

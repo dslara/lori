@@ -1,5 +1,7 @@
 import { randomUUID } from "node:crypto";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
+import { Value } from "typebox/value";
+import { validateChapterProposal, validateProposalForDraft } from "../../core/domain/chapter.ts";
 import type { Baseline, DomainDraft, DomainDraftAnswerAction } from "../../core/domain/types.ts";
 import { restoreSessionAsPaused } from "../../core/processors/lifecycle.ts";
 import { selectCanOpenSession } from "../../core/session/selectors.ts";
@@ -9,6 +11,13 @@ import type { SkinProvider } from "../../presentation/skin/provider.ts";
 import { loadOrCreateSnapshot, writeSnapshot } from "../persist/persist.ts";
 import type { SnapshotResult } from "../persist/types.ts";
 import { showError, showStatus } from "../ui/ui.ts";
+import {
+  buildChapterCurationPrompt,
+  chapterCurationToolParameters,
+  renderChapterProposal,
+  renderCurationBlocker,
+  type ChapterCurationToolResult,
+} from "./chapter-curation.ts";
 import type {
   DispatchAndPersistResult,
   LoriExtensionState,
@@ -56,7 +65,7 @@ const BASELINE_OPTIONS = [
   "5 · Familiaridade profunda: explico, adapto e resolvo casos novos",
 ] as const;
 
-type DomainDraftField = keyof Omit<DomainDraft, "id" | "phase">;
+type DomainDraftField = keyof Omit<DomainDraft, "id" | "phase" | "pendingChapter">;
 
 function nextDomainDraftField(draft: DomainDraft): DomainDraftField | undefined {
   return ([
@@ -408,7 +417,16 @@ async function continueDomainPreparation(
     }
     if (draft.phase === "awaiting_curation") {
       const status = showStatus(ctx, state, skin);
-      ctx.ui.notify(`${status}\nQuestionário salvo; o Domain continua em preparação e ainda não está ativo.`, "info");
+      ctx.ui.notify(`${status}\nQuestionário salvo; use /lori-curate para solicitar explicitamente uma proposta. O Domain continua em preparação e ainda não está ativo.`, "info");
+      return;
+    }
+    if (draft.phase === "awaiting_approval") {
+      const proposal = draft.pendingChapter;
+      if (proposal === undefined) {
+        ctx.ui.notify("Lori: a proposta pendente está ausente no snapshot; o Domain continua inativo.", "error");
+        return;
+      }
+      ctx.ui.notify(renderChapterProposal(draft, proposal), "info");
       return;
     }
 
@@ -474,7 +492,200 @@ function requireReadyState(
   return { store: shared.store, projectDir: shared.projectDir, skin: shared.skin };
 }
 
+function isRecord(value: unknown): value is Record<string, unknown> {
+  return typeof value === "object" && value !== null && !Array.isArray(value);
+}
+
+function toolMessage(text: string, isError = false) {
+  return { content: [{ type: "text" as const, text }], details: { message: text }, isError };
+}
+
+function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionState): void {
+  api.registerTool({
+    name: "lori_submit_chapter",
+    label: "Submit Lori Chapter proposal",
+    description: "Submit the structured proposal or explicit research blocker for the current /lori-curate request.",
+    promptSnippet: "Submit the researched first Chapter proposal through Lori's TypeBox tool",
+    promptGuidelines: [
+      "Use lori_submit_chapter only for the requestId and domainId in the current /lori-curate message.",
+      "Use lori_submit_chapter with status blocked when no verifiable, compatible sources satisfy the Player's restrictions.",
+    ],
+    parameters: chapterCurationToolParameters,
+    async execute(_toolCallId, params, _signal, _onUpdate, toolCtx) {
+      const request = shared.curationRequest;
+      const projectDir = shared.projectDir;
+      if (
+        !request ||
+        !isRecord(params) ||
+        params.requestId !== request.requestId ||
+        params.domainId !== request.domainId ||
+        projectDir === undefined
+      ) {
+        const message = "Lori recusou o tool: ele não corresponde à request atual de curadoria; nenhuma proposta foi salva.";
+        toolCtx.ui.notify(message, "warning");
+        return toolMessage(message, true);
+      }
+
+      const latest = await dispatchAndPersist(projectDir, () => undefined);
+      if (!acceptDispatchResult(shared, toolCtx, latest, "Lori: não foi possível validar o snapshot da curadoria.")) {
+        return toolMessage("Lori não conseguiu validar a request atual; nenhuma proposta foi salva.", true);
+      }
+      const currentDraft = latest.state.domainDraft;
+      if (
+        latest.state.session?.kind !== "metalearning" ||
+        latest.state.session.status !== "open" ||
+        latest.state.session.domainId !== request.domainId ||
+        shared.projectDir !== projectDir ||
+        shared.curationRequest?.requestId !== request.requestId ||
+        currentDraft?.id !== request.domainId ||
+        currentDraft.phase !== "awaiting_curation"
+      ) {
+        const message = "Lori recusou o tool: a fase ou a request atual mudou; nenhuma proposta foi salva.";
+        toolCtx.ui.notify(message, "warning");
+        if (shared.curationRequest?.requestId === request.requestId) shared.curationRequest = undefined;
+        return toolMessage(message, true);
+      }
+
+      if (!Value.Check(chapterCurationToolParameters, params)) {
+        const message = "Lori não aceitou a resposta estruturada do tool; ela precisa incluir uma proposta válida ou a razão do bloqueio. Nenhuma proposta foi salva.";
+        toolCtx.ui.notify(message, "warning");
+        return toolMessage(message, true);
+      }
+      const submission = params as ChapterCurationToolResult;
+      if (submission.result.status === "blocked") {
+        const blocker = renderCurationBlocker(submission.result.reason);
+        toolCtx.ui.notify(blocker, "warning");
+        if (shared.curationRequest?.requestId === request.requestId) shared.curationRequest = undefined;
+        return { ...toolMessage(blocker), terminate: true };
+      }
+
+      if (!Array.isArray(submission.result.proposal.resources) || submission.result.proposal.resources.length === 0) {
+        const blocker = renderCurationBlocker("a pesquisa não encontrou recurso adequado para sustentar os Nodes e seus trechos de evidência.");
+        toolCtx.ui.notify(blocker, "warning");
+        if (shared.curationRequest?.requestId === request.requestId) shared.curationRequest = undefined;
+        return { ...toolMessage(blocker), terminate: true };
+      }
+
+      const validation = validateChapterProposal(submission.result.proposal);
+      if (!validation.ok) {
+        const message = `Lori não aceitou a proposta: ${validation.reason} Nenhuma proposta foi salva; não relaxe as restrições para corrigir o problema.`;
+        toolCtx.ui.notify(message, "warning");
+        return toolMessage(message, true);
+      }
+      const incompatibility = validateProposalForDraft(validation.proposal, currentDraft);
+      if (incompatibility !== undefined) {
+        const hasCompatibleResource = validation.proposal.resources.some(({ compatibility }) => compatibility.compatible);
+        const hasIncompatibleResource = validation.proposal.resources.some(({ compatibility }) => !compatibility.compatible);
+        if (hasIncompatibleResource && hasCompatibleResource) {
+          const message = "Lori recusou a proposta porque ela mistura recursos compatíveis e incompatíveis. Nenhuma proposta foi salva; envie somente recursos compatíveis, sem relaxar as restrições.";
+          toolCtx.ui.notify(message, "warning");
+          return toolMessage(message, true);
+        }
+        if (hasIncompatibleResource) {
+          const blocker = renderCurationBlocker(incompatibility);
+          toolCtx.ui.notify(blocker, "warning");
+          if (shared.curationRequest?.requestId === request.requestId) shared.curationRequest = undefined;
+          return { ...toolMessage(blocker), terminate: true };
+        }
+        const message = `Lori não aceitou a proposta: ${incompatibility} Nenhuma proposta foi salva; envie novamente valores que correspondam à request atual.`;
+        toolCtx.ui.notify(message, "warning");
+        return toolMessage(message, true);
+      }
+
+      const saved = await dispatchAndPersist(projectDir, (state) => {
+        const draft = state.domainDraft;
+        if (
+          shared.projectDir !== projectDir ||
+          shared.curationRequest?.requestId !== request.requestId ||
+          shared.curationRequest.domainId !== request.domainId ||
+          state.session?.kind !== "metalearning" ||
+          state.session.status !== "open" ||
+          state.session.domainId !== request.domainId ||
+          draft?.id !== request.domainId ||
+          draft.phase !== "awaiting_curation" ||
+          validateProposalForDraft(validation.proposal, draft) !== undefined
+        ) {
+          return undefined;
+        }
+        return { type: "domain-draft/propose-chapter", id: draft.id, proposal: validation.proposal };
+      });
+      if (!acceptDispatchResult(shared, toolCtx, saved, "Lori: proposta não salva porque não foi possível persistir o snapshot.")) {
+        return toolMessage("Lori não conseguiu salvar a proposta; nenhuma aprovação ou ativação ocorreu.", true);
+      }
+      if (saved.status !== "persisted") {
+        const message = "Lori não salvou a proposta porque a fase ou a request atual mudou; use /lori-curate explicitamente para uma nova tentativa.";
+        toolCtx.ui.notify(message, "warning");
+        return toolMessage(message, true);
+      }
+
+      if (shared.curationRequest?.requestId === request.requestId) shared.curationRequest = undefined;
+      const pending = saved.state.domainDraft?.pendingChapter;
+      if (pending === undefined || saved.state.domainDraft === null) {
+        const message = "Lori não encontrou a proposta pendente no estado salvo; o Domain permanece inativo.";
+        toolCtx.ui.notify(message, "error");
+        return toolMessage(message, true);
+      }
+      if (shared.skin) showStatus(toolCtx, saved.state, shared.skin);
+      const presentation = renderChapterProposal(saved.state.domainDraft, pending);
+      toolCtx.ui.notify(presentation, "info");
+      return { ...toolMessage(presentation), terminate: true };
+    },
+  });
+}
+
 export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionState): void {
+  registerChapterCurationTool(api, shared);
+
+  api.registerCommand("lori-curate", {
+    description: "Solicitar explicitamente ao agent uma proposta estruturada para o primeiro Chapter",
+    handler: async (args, ctx) => {
+      const ready = requireReadyState(shared, ctx);
+      if (!ready) return;
+      if (args.trim().length > 0) {
+        ctx.ui.notify("Uso: /lori-curate (sem argumentos)", "warning");
+        return;
+      }
+      if (!ctx.isIdle()) {
+        ctx.ui.notify("Lori: aguarde o agent terminar a execução atual antes de solicitar a curadoria.", "warning");
+        return;
+      }
+
+      const latest = await dispatchAndPersist(ready.projectDir, () => undefined);
+      if (!acceptDispatchResult(shared, ctx, latest, "Lori: não foi possível consultar o snapshot antes da curadoria.")) return;
+      const { state } = latest;
+      const draft = state.domainDraft;
+      if (draft === null) {
+        ctx.ui.notify("Lori: /lori-curate atende somente ao Domain inicial em preparação; re-curation de Domain ativo não está disponível.", "warning");
+        return;
+      }
+      if (draft.phase === "awaiting_approval") {
+        ctx.ui.notify("Lori: já existe uma proposta pendente. Ela permanece para revisão; re-curation não está disponível neste fluxo.", "warning");
+        return;
+      }
+      if (
+        state.session?.kind !== "metalearning" ||
+        state.session.domainId !== draft.id ||
+        state.session.status !== "open"
+      ) {
+        ctx.ui.notify("Lori: retome a Session de Metalearning antes de solicitar a curadoria.", "warning");
+        return;
+      }
+      if (draft.phase !== "awaiting_curation") {
+        ctx.ui.notify("Lori: conclua o questionário antes de solicitar a curadoria.", "warning");
+        return;
+      }
+
+      const requestId = randomUUID();
+      shared.curationRequest = { requestId, domainId: draft.id };
+      try {
+        api.sendUserMessage(buildChapterCurationPrompt(requestId, draft));
+      } catch {
+        shared.curationRequest = undefined;
+        ctx.ui.notify("Lori: não foi possível iniciar a curadoria pelo agent; nenhuma proposta foi salva.", "error");
+      }
+    },
+  });
+
   api.registerCommand("lori-init", {
     description: "Preparar um Domain com objetivo e questionário de Metalearning; sem argumentos",
     handler: async (args, ctx) => {

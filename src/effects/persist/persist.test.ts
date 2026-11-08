@@ -80,6 +80,30 @@ describe("Lori snapshot persistence", () => {
     expect(await readdir(join(projectDir, ".lori"))).toEqual(["snapshot.json"]);
   });
 
+  test("migrates a valid v2 snapshot to the Chapter proposal schema without losing Player state", async () => {
+    const projectDir = await mkdtemp(join(tmpdir(), "lori-snapshot-v2-migration-"));
+    projectDirs.push(projectDir);
+    const snapshotPath = join(projectDir, SNAPSHOT_RELATIVE_PATH);
+    await mkdir(join(projectDir, ".lori"), { recursive: true });
+    await writeFile(snapshotPath, JSON.stringify({
+      schemaVersion: 2,
+      player: { totalXp: 41 },
+      session: null,
+      sessionHistory: [],
+      domainDraft: null,
+      skinConfig: { skin: "minimal" },
+    }));
+
+    const result = await loadOrCreateSnapshot(projectDir);
+
+    expect(result).toMatchObject({ ok: true, state: { player: { totalXp: 41 }, domainDraft: null } });
+    expect(JSON.parse(await readFile(snapshotPath, "utf8"))).toMatchObject({
+      schemaVersion: SNAPSHOT_SCHEMA_VERSION,
+      player: { totalXp: 41 },
+      domainDraft: null,
+    });
+  });
+
   test("refuses to write through a .lori directory symlink", async () => {
     const projectDir = await mkdtemp(join(tmpdir(), "lori-snapshot-project-"));
     const targetDir = await mkdtemp(join(tmpdir(), "lori-snapshot-target-"));

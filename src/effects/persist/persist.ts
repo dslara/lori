@@ -3,9 +3,10 @@ import { randomUUID } from "node:crypto";
 import { dirname, isAbsolute, join, relative, sep } from "node:path";
 import { createInitialState, type LoriState } from "../../store/state.ts";
 import type { Session } from "../../core/session/types.ts";
+import { validateChapterProposal, validateProposalForDraft } from "../../core/domain/chapter.ts";
 import type { SnapshotResult } from "./types.ts";
 
-export const SNAPSHOT_SCHEMA_VERSION = 2;
+export const SNAPSHOT_SCHEMA_VERSION = 3;
 export const SNAPSHOT_RELATIVE_PATH = ".lori/snapshot.json";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
@@ -139,7 +140,7 @@ function decodePlayer(value: Record<string, unknown>): LoriState["player"] | und
   return { totalXp: value.player.totalXp };
 }
 
-function decodeDomainDraft(value: unknown): LoriState["domainDraft"] | undefined {
+function decodeDomainDraft(value: unknown, schemaVersion: 2 | 3): LoriState["domainDraft"] | undefined {
   if (value === null) {
     return null;
   }
@@ -147,7 +148,8 @@ function decodeDomainDraft(value: unknown): LoriState["domainDraft"] | undefined
     !isRecord(value) ||
     typeof value.id !== "string" ||
     value.id.trim().length === 0 ||
-    (value.phase !== "collecting" && value.phase !== "awaiting_curation")
+    (value.phase !== "collecting" && value.phase !== "awaiting_curation" && value.phase !== "awaiting_approval") ||
+    (schemaVersion === 2 && value.phase === "awaiting_approval")
   ) {
     return undefined;
   }
@@ -186,7 +188,7 @@ function decodeDomainDraft(value: unknown): LoriState["domainDraft"] | undefined
     }
     draft.baseline = value.baseline as NonNullable<typeof draft.baseline>;
   }
-  if (draft.phase === "awaiting_curation" && (
+  if (draft.phase !== "collecting" && (
     draft.name === undefined ||
     draft.learningObjective === undefined ||
     draft.motivation === undefined ||
@@ -196,6 +198,15 @@ function decodeDomainDraft(value: unknown): LoriState["domainDraft"] | undefined
     draft.preferences === undefined ||
     draft.materialRestrictions === undefined
   )) {
+    return undefined;
+  }
+  if (draft.phase === "awaiting_approval") {
+    const proposal = validateChapterProposal(value.pendingChapter);
+    if (!proposal.ok || validateProposalForDraft(proposal.proposal, draft) !== undefined) {
+      return undefined;
+    }
+    draft.pendingChapter = proposal.proposal;
+  } else if (value.pendingChapter !== undefined) {
     return undefined;
   }
   return draft;
@@ -226,11 +237,11 @@ function decodeSnapshotV1(value: Record<string, unknown>): SnapshotResult {
   };
 }
 
-function decodeSnapshotV2(value: Record<string, unknown>): SnapshotResult {
+function decodeSnapshotCurrent(value: Record<string, unknown>, schemaVersion: 2 | 3): SnapshotResult {
   const player = decodePlayer(value);
   const skinConfig = decodeSkinConfig(value);
   const session = decodeSession(value.session, 2);
-  const domainDraft = value.domainDraft === undefined ? null : decodeDomainDraft(value.domainDraft);
+  const domainDraft = value.domainDraft === undefined ? null : decodeDomainDraft(value.domainDraft, schemaVersion);
   const history = value.sessionHistory;
   if (!player || !skinConfig || session === undefined || domainDraft === undefined || !Array.isArray(history)) {
     return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
@@ -265,8 +276,8 @@ function decodeSnapshot(value: unknown): SnapshotResult {
   if (value.schemaVersion === 1) {
     return decodeSnapshotV1(value);
   }
-  if (value.schemaVersion === SNAPSHOT_SCHEMA_VERSION) {
-    return decodeSnapshotV2(value);
+  if (value.schemaVersion === 2 || value.schemaVersion === SNAPSHOT_SCHEMA_VERSION) {
+    return decodeSnapshotCurrent(value, value.schemaVersion);
   }
   return {
     ok: false,
@@ -348,7 +359,7 @@ async function loadOrCreateSnapshotFile(projectDir: string): Promise<SnapshotRes
   }
 
   const decoded = decodeSnapshot(parsed);
-  if (!decoded.ok || !isRecord(parsed) || parsed.schemaVersion !== 1) {
+  if (!decoded.ok || !isRecord(parsed) || parsed.schemaVersion === SNAPSHOT_SCHEMA_VERSION) {
     return decoded;
   }
   try {

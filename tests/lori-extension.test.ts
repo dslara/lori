@@ -22,7 +22,11 @@ type UI = {
 
 type StartHandler = (event: { type: "session_start"; reason: "startup" }, ctx: { cwd: string; ui: UI }) => void | Promise<void>;
 type ShutdownHandler = () => void | Promise<void>;
-type CommandHandler = (args: string, ctx: { ui: UI }) => void | Promise<void>;
+type CommandHandler = (args: string, ctx: { ui: UI; isIdle?(): boolean }) => void | Promise<void>;
+type RegisteredTool = {
+  parameters: unknown;
+  execute: (...args: never[]) => unknown;
+};
 
 type Harness = {
   start(): Promise<void>;
@@ -33,6 +37,10 @@ type Harness = {
   runClose(args: string): Promise<void>;
   runAbandon(): Promise<void>;
   runResume(): Promise<void>;
+  runCurate(args?: string): Promise<void>;
+  submitCuration(params: unknown): Promise<unknown>;
+  toolParameters(name: string): unknown;
+  sentUserMessages: string[];
   ui: UI;
 };
 
@@ -50,6 +58,8 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
   let startHandler: StartHandler | undefined;
   let shutdownHandler: ShutdownHandler | undefined;
   const commandHandlers = new Map<string, CommandHandler>();
+  const registeredTools = new Map<string, RegisteredTool>();
+  const sentUserMessages: string[] = [];
   const ui: UI = {
     notifications: [],
     statuses: [],
@@ -88,6 +98,12 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
     },
     registerCommand(name: string, options: { handler: CommandHandler }) {
       commandHandlers.set(name, options.handler);
+    },
+    registerTool(definition: { name: string; parameters: unknown; execute: (...args: never[]) => unknown }) {
+      registeredTools.set(definition.name, definition);
+    },
+    sendUserMessage(content: string) {
+      sentUserMessages.push(content);
     },
   } as unknown as ExtensionAPI;
 
@@ -133,11 +149,285 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
       async runResume() {
         const handler = commandHandlers.get("lori-resume");
         expect(handler).toBeDefined();
-        await handler?.("", { ui });
+        await handler?.("", { ui, isIdle: () => true });
+      },
+      async runCurate(args = "") {
+        const handler = commandHandlers.get("lori-curate");
+        expect(handler).toBeDefined();
+        await handler?.(args, { ui, isIdle: () => true });
+      },
+      async submitCuration(params) {
+        const tool = registeredTools.get("lori_submit_chapter");
+        expect(tool).toBeDefined();
+        if (!tool) return undefined;
+        return await Reflect.apply(tool.execute, undefined, ["tool-call", params, undefined, undefined, { ui, cwd, hasUI: true }]);
+      },
+      toolParameters(name) {
+        return registeredTools.get(name)?.parameters;
+      },
+      sentUserMessages,
+    },
+  };
+}
+
+async function prepareCurationDraft(harness: Harness): Promise<void> {
+  await harness.start();
+  harness.ui.inputResponses.push(
+    "Spanish",
+    "Hold a basic conversation while traveling",
+    "I am visiting family this summer",
+    "sem prazo",
+    "4",
+    "Audio and short dialogues",
+    "No paid-only materials",
+  );
+  harness.ui.selectResponses.push("4 · Consigo aplicar sem orientação na maioria dos casos");
+  await harness.runInit("");
+}
+
+function curationRequestIds(harness: Harness): { requestId: string; domainId: string } {
+  const message = harness.sentUserMessages.at(-1) ?? "";
+  const requestId = message.match(/requestId: ([a-f0-9-]+)/)?.[1];
+  const domainId = message.match(/domainId: ([a-f0-9-]+)/)?.[1];
+  if (!requestId || !domainId) {
+    throw new Error("The curation request must identify its current request and Domain draft.");
+  }
+  return { requestId, domainId };
+}
+
+function validCuration(params: { requestId: string; domainId: string }): Record<string, unknown> {
+  return {
+    ...params,
+    result: {
+      status: "proposal",
+      proposal: {
+        outcome: "Hold a short conversation to arrange a meal in Spanish.",
+        nodes: [
+          {
+            id: "greetings",
+            order: 1,
+            objective: "Recognize and use common greetings in a short exchange.",
+            evidenceRefs: [{ resourceId: "resource-1", evidenceId: "greetings-excerpt" }],
+            recommendedResourceId: "resource-1",
+          },
+          {
+            id: "ordering",
+            order: 2,
+            objective: "Ask for a meal and respond to a simple follow-up question.",
+            evidenceRefs: [{ resourceId: "resource-1", evidenceId: "ordering-excerpt" }],
+            recommendedResourceId: "resource-1",
+          },
+        ],
+        principle: "Directness",
+        exitProof: {
+          description: "Record a role-play arranging a meal without reading a script.",
+          criteria: ["The recording includes a greeting, an order, and a relevant response to one follow-up question."],
+        },
+        effort: {
+          minimumHours: 3,
+          maximumHours: 5,
+          estimateRationale: "The range includes listening and repeated short role-plays.",
+          deadline: null,
+          hoursPerWeek: 4,
+          feasibility: "At four hours per week, the estimate fits the declared availability without promising a completion date.",
+        },
+        resources: [
+          {
+            id: "resource-1",
+            title: "Spanish greetings and ordering dialogue",
+            url: "https://example.org/spanish-dialogue",
+            justification: "The short audio dialogue matches the stated preference and provides language used in the Exit Proof.",
+            limitations: "The dialogue uses a regional accent that may differ from the Player's travel destination.",
+            compatibility: {
+              preferencesConsidered: "The source includes a short audio dialogue.",
+              restrictionsConsidered: "The source is freely accessible and does not require payment.",
+              compatible: true,
+            },
+            evidence: [
+              { id: "greetings-excerpt", excerpt: "Buenos días, ¿cómo está?", locator: "00:14–00:18" },
+              { id: "ordering-excerpt", excerpt: "Quisiera pedir una sopa, por favor.", locator: "00:42–00:47" },
+            ],
+            author: "Example Language Institute",
+            language: "Spanish",
+            format: "Audio dialogue with transcript",
+            access: "Public, no account required",
+          },
+        ],
       },
     },
   };
 }
+
+describe("Lori Chapter curation", () => {
+  test("sends the saved questionnaire only after explicit /lori-curate and registers a TypeBox tool", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+
+    expect(harness.sentUserMessages).toEqual([]);
+    await harness.runCurate();
+
+    expect(harness.sentUserMessages).toHaveLength(1);
+    expect(harness.sentUserMessages[0]).toContain("Hold a basic conversation while traveling");
+    expect(harness.sentUserMessages[0]).toContain("Baseline: 4");
+    expect(harness.sentUserMessages[0]).toContain("Horas por semana: 4");
+    expect(harness.sentUserMessages[0]).toContain("Audio and short dialogues");
+    expect(harness.sentUserMessages[0]).toContain("No paid-only materials");
+    expect(harness.toolParameters("lori_submit_chapter")).toMatchObject({ type: "object" });
+    expect(JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).domainDraft.phase).toBe("awaiting_curation");
+  });
+
+  test("persists and presents a referenced proposal as pending without activating the Domain", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await harness.runCurate();
+    const params = curationRequestIds(harness);
+
+    await harness.submitCuration(validCuration(params));
+
+    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(snapshot.domainDraft).toMatchObject({ phase: "awaiting_approval" });
+    expect(snapshot.domainDraft.pendingChapter).toMatchObject({
+      outcome: "Hold a short conversation to arrange a meal in Spanish.",
+    });
+    expect(snapshot.domainDraft.pendingChapter.resources[0]).toMatchObject({
+      author: "Example Language Institute",
+      evidence: [{ id: "greetings-excerpt", excerpt: "Buenos días, ¿cómo está?", locator: "00:14–00:18" }, { id: "ordering-excerpt" }],
+    });
+    expect(snapshot.domains ?? []).toEqual([]);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("1. greetings");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Exit Proof");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Example Language Institute");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("ainda não está ativo");
+  });
+
+  test("restores a pending proposal for review without triggering another agent turn", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await harness.runCurate();
+    await harness.submitCuration(validCuration(curationRequestIds(harness)));
+
+    const { harness: restored } = await createHarness(cwd);
+    await restored.start();
+    await restored.runResume();
+
+    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(snapshot.domainDraft.phase).toBe("awaiting_approval");
+    expect(snapshot.session.status).toBe("open");
+    expect(restored.sentUserMessages).toEqual([]);
+    expect(restored.ui.notifications.at(-1)?.message).toContain("Proposta pendente");
+    expect(restored.ui.notifications.at(-1)?.message).toContain("aguarda a decisão explícita");
+  });
+
+  test("rejects a proposal with inconsistent evidence references without persisting it", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await harness.runCurate();
+    const params = curationRequestIds(harness);
+    const before = await readFile(join(cwd, ".lori", "snapshot.json"), "utf8");
+    const invalid = validCuration(params);
+    const result = invalid.result as { proposal: { nodes: Array<{ evidenceRefs: Array<{ evidenceId: string }> }> } };
+    result.proposal.nodes[0]!.evidenceRefs[0]!.evidenceId = "missing-evidence";
+
+    await harness.submitCuration(invalid);
+
+    expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).toBe(before);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("referência");
+  });
+
+  test("blocks proposals without resources or compatible, traceable sources and asks the Player for a decision", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await harness.runCurate();
+    const params = curationRequestIds(harness);
+    const before = await readFile(join(cwd, ".lori", "snapshot.json"), "utf8");
+    const empty = validCuration(params);
+    const emptyResult = empty.result as { proposal: { resources: unknown[] } };
+    emptyResult.proposal.resources = [];
+
+    await harness.submitCuration(empty);
+
+    expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).toBe(before);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("não encontrou fontes compatíveis");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("decisão");
+  });
+
+  test("rejects more than three resources at the TypeBox tool boundary", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await harness.runCurate();
+    const params = curationRequestIds(harness);
+    const before = await readFile(join(cwd, ".lori", "snapshot.json"), "utf8");
+    const invalid = validCuration(params);
+    const result = invalid.result as { proposal: { resources: Array<Record<string, unknown>> } };
+    result.proposal.resources.push({ ...result.proposal.resources[0], id: "resource-2" });
+    result.proposal.resources.push({ ...result.proposal.resources[0], id: "resource-3" });
+    result.proposal.resources.push({ ...result.proposal.resources[0], id: "resource-4" });
+
+    await harness.submitCuration(invalid);
+
+    expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).toBe(before);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("não aceitou a resposta estruturada");
+  });
+
+  test("rejects an untraceable HTTP source even when its tool payload is structurally valid", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await harness.runCurate();
+    const params = curationRequestIds(harness);
+    const before = await readFile(join(cwd, ".lori", "snapshot.json"), "utf8");
+    const invalid = validCuration(params);
+    const result = invalid.result as { proposal: { resources: Array<{ url: string }> } };
+    result.proposal.resources[0]!.url = "http://example.org/spanish-dialogue";
+
+    await harness.submitCuration(invalid);
+
+    expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).toBe(before);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("URL não verificável");
+  });
+
+  test("rejects tool calls not authorized by the current curation request", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await harness.runCurate();
+    const params = curationRequestIds(harness);
+    const before = await readFile(join(cwd, ".lori", "snapshot.json"), "utf8");
+
+    await harness.submitCuration(validCuration({ ...params, requestId: "stale-request" }));
+
+    expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).toBe(before);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("request atual");
+  });
+
+  test("rejects a matching tool call after the Session leaves the authorized open phase", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await harness.runCurate();
+    const params = curationRequestIds(harness);
+    await harness.runAbandon();
+    const before = await readFile(join(cwd, ".lori", "snapshot.json"), "utf8");
+
+    await harness.submitCuration(validCuration(params));
+
+    expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).toBe(before);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("fase ou a request atual mudou");
+  });
+
+  test("a blocked research result does not advance the draft and explains the impediment", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await harness.runCurate();
+    const params = curationRequestIds(harness);
+    const before = await readFile(join(cwd, ".lori", "snapshot.json"), "utf8");
+
+    await harness.submitCuration({ ...params, result: { status: "blocked", reason: "As fontes acessíveis encontradas exigem pagamento, contra a restrição declarada." } });
+
+    const after = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(JSON.stringify(after)).toBe(JSON.stringify(JSON.parse(before)));
+    expect(after.domainDraft.phase).toBe("awaiting_curation");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("contra a restrição declarada");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("decisão");
+  });
+});
 
 describe("Lori startup and status", () => {
   test("collects a Domain draft one question at a time without activating it", async () => {
@@ -318,7 +608,7 @@ describe("Lori startup and status", () => {
     const snapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
     expect(await readdir(join(cwd, ".lori"))).toEqual(["snapshot.json"]);
     expect(snapshot).toEqual({
-      schemaVersion: 2,
+      schemaVersion: 3,
       player: { totalXp: 0 },
       session: null,
       sessionHistory: [],
@@ -613,7 +903,7 @@ describe("Lori startup and status", () => {
     await harness.runClose("  2.5  |  4  ");
 
     const closedSnapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
-    expect(closedSnapshot.schemaVersion).toBe(2);
+    expect(closedSnapshot.schemaVersion).toBe(3);
     expect(closedSnapshot.player.totalXp).toBe(before.player.totalXp);
     expect(closedSnapshot.session).toMatchObject({
       status: "closed",
@@ -1147,7 +1437,7 @@ describe("Lori startup and status", () => {
     const { cwd, harness } = await createHarness();
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
     const originalContents = JSON.stringify({
-      schemaVersion: 3,
+      schemaVersion: 4,
       player: { totalXp: 0 },
       session: null,
       skinConfig: { skin: "minimal" },
@@ -1159,7 +1449,7 @@ describe("Lori startup and status", () => {
     await harness.runStatus();
 
     expect(harness.ui.notifications[0]?.type).toBe("error");
-    expect(harness.ui.notifications[0]?.message).toContain("não suportada (3)");
+    expect(harness.ui.notifications[0]?.message).toContain("não suportada (4)");
     expect(harness.ui.notifications[0]?.message).toContain("preservado");
     expect(harness.ui.notifications.at(-1)?.message).toContain("não suportada");
     expect(await readFile(snapshotPath, "utf8")).toBe(originalContents);
@@ -1190,7 +1480,7 @@ describe("Lori startup and status", () => {
 
     const migrated = JSON.parse(await readFile(snapshotPath, "utf8"));
     expect(migrated).toMatchObject({
-      schemaVersion: 2,
+      schemaVersion: 3,
       player: { totalXp: 87 },
       session: {
         kind: "legacyStudy",

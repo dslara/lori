@@ -10,6 +10,7 @@ function clearSharedState(shared: LoriExtensionState, error?: string): void {
   shared.projectDir = undefined;
   shared.skin = undefined;
   shared.startupError = error;
+  shared.curationRequest = undefined;
 }
 
 export default function loriExtension(pi: ExtensionAPI): void {
@@ -18,11 +19,13 @@ export default function loriExtension(pi: ExtensionAPI): void {
     projectDir: undefined,
     skin: undefined,
     startupError: undefined,
+    curationRequest: undefined,
   };
 
   registerLoriCommands(pi, shared);
 
   pi.on("session_start", async (_event, ctx) => {
+    shared.curationRequest = undefined;
     const result = await initializeSessionState(ctx.cwd);
     if (!result.ok) {
       clearSharedState(shared, result.error);
