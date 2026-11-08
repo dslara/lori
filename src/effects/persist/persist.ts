@@ -3,7 +3,7 @@ import { randomUUID } from "node:crypto";
 import { dirname, isAbsolute, join, relative, sep } from "node:path";
 import { createInitialState, type LoriState } from "../../store/state.ts";
 import type { Session } from "../../core/session/types.ts";
-import { validateChapterProposal, validateProposalForDraft } from "../../core/domain/chapter.ts";
+import { validateChapterProposal, validateProposalForDraft, validateProposalForQuestionnaire } from "../../core/domain/chapter.ts";
 import type { ActiveDomain, ChapterVersionReference, DomainQuestionnaire } from "../../core/domain/types.ts";
 import type { SnapshotResult } from "./types.ts";
 
@@ -348,7 +348,7 @@ function decodeDomainDraft(value: unknown, schemaVersion: 2 | 3 | 4): LoriState[
   return draft;
 }
 
-function decodeActiveDomain(value: unknown): ActiveDomain | undefined {
+function decodeActiveDomain(value: unknown, schemaVersion: 2 | 3 | 4): ActiveDomain | undefined {
   if (
     !isRecord(value) ||
     typeof value.id !== "string" || value.id.trim().length === 0 ||
@@ -401,6 +401,18 @@ function decodeActiveDomain(value: unknown): ActiveDomain | undefined {
     preferences: questionnaire.preferences,
     materialRestrictions: questionnaire.materialRestrictions,
   };
+  let pendingChapter: ActiveDomain["pendingChapter"];
+  if (value.pendingChapter !== undefined) {
+    const proposal = validateChapterProposal(value.pendingChapter);
+    if (
+      schemaVersion < 4 ||
+      !proposal.ok ||
+      validateProposalForQuestionnaire(proposal.proposal, answers) !== undefined
+    ) {
+      return undefined;
+    }
+    pendingChapter = proposal.proposal;
+  }
   return {
     id: value.id,
     name: value.name,
@@ -409,6 +421,7 @@ function decodeActiveDomain(value: unknown): ActiveDomain | undefined {
     status: "active",
     chapters,
     currentChapterVersionId: value.currentChapterVersionId,
+    ...(pendingChapter === undefined ? {} : { pendingChapter }),
   };
 }
 
@@ -463,7 +476,7 @@ function decodeSnapshotCurrent(value: Record<string, unknown>, schemaVersion: 2 
   const domains: ActiveDomain[] = [];
   const domainIds = new Set<string>();
   for (const entry of domainValues) {
-    const domain = decodeActiveDomain(entry);
+    const domain = decodeActiveDomain(entry, schemaVersion);
     if (domain === undefined || domainIds.has(domain.id)) {
       return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
     }
@@ -496,7 +509,7 @@ function decodeSnapshotCurrent(value: Record<string, unknown>, schemaVersion: 2 
       session?.kind !== "metalearning" ||
       session.status === "closed" ||
       session.chapterRef?.domainId !== domainDraft.id ||
-      !domains.some((domain) => domain.id === domainDraft.id && domain.currentChapterVersionId === session.chapterRef?.chapterVersionId)
+      !domains.some((domain) => domain.id === domainDraft.id && domain.chapters.some(({ id }) => id === session.chapterRef?.chapterVersionId))
     ))
   ) {
     return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };

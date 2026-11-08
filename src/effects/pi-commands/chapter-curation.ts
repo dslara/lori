@@ -82,9 +82,17 @@ export type ChapterCurationToolResult = {
     | { status: "blocked"; reason: string };
 };
 
-export function buildChapterCurationPrompt(requestId: string, draft: DomainDraft): string {
+export function buildChapterCurationPrompt(
+  requestId: string,
+  draft: DomainDraft,
+  options: { currentChapterVersionId?: string } = {},
+): string {
+  const isRecuration = options.currentChapterVersionId !== undefined;
   return [
-    "Solicitação explícita /lori-curate para propor o primeiro Chapter do Domain. Use apenas o provider e as ferramentas disponíveis nesta sessão Pi para pesquisar; não invente fontes e não relaxe preferências ou restrições.",
+    isRecuration
+      ? "Solicitação explícita /lori-curate para propor uma nova versão do Chapter atual do Domain ativo. Use as respostas salvas e apenas o provider e as ferramentas disponíveis nesta sessão Pi; não invente fontes e não relaxe preferências ou restrições."
+      : "Solicitação explícita /lori-curate para propor o primeiro Chapter do Domain. Use apenas o provider e as ferramentas disponíveis nesta sessão Pi para pesquisar; não invente fontes e não relaxe preferências ou restrições.",
+    ...(options.currentChapterVersionId === undefined ? [] : [`Versão aprovada atual: ${options.currentChapterVersionId}`]),
     `requestId: ${requestId}`,
     `domainId: ${draft.id}`,
     `Domain: ${draft.name}`,
@@ -99,14 +107,22 @@ export function buildChapterCurationPrompt(requestId: string, draft: DomainDraft
     "Uma proposta exige 1–3 recursos compatíveis, URLs HTTPS, trechos textuais rastreáveis com localização, Nodes em ordem com objetivos, referências consistentes aos trechos e recurso recomendado por Node. Inclua limitações e metadados relevantes; não atribua score universal Tier 1.",
     "Se não encontrar recurso verificável e compatível com todas as restrições, use result.status=blocked com a razão. Não submeta Chapter vazio, não invente fonte e não proponha relaxar as restrições.",
     "O Chapter precisa ter outcome, Principle, Exit Proof com critérios observáveis, faixa de esforço e uma explicação que relacione explicitamente o prazo e as horas semanais fornecidas. Copie deadline e hoursPerWeek exatamente no objeto effort.",
-    "Use somente os requestId e domainId acima nesta resposta. A proposta ficará pendente para revisão do Player; não ativa o Domain.",
+    isRecuration
+      ? "Use somente os requestId e domainId acima nesta resposta. A proposta ficará pendente para revisão do Player; não altera a versão atual nem sua disponibilidade."
+      : "Use somente os requestId e domainId acima nesta resposta. A proposta ficará pendente para revisão do Player; não ativa o Domain.",
     "Se o tool rejeitar a estrutura ou as referências, explique o impedimento ao Player e não relaxe as restrições.",
   ].join("\n");
 }
 
-export function renderChapterProposal(draft: DomainDraft, proposal: ChapterProposal): string {
+export function renderChapterProposal(
+  draft: DomainDraft,
+  proposal: ChapterProposal,
+  options: { currentChapterVersionId?: string } = {},
+): string {
   const lines = [
-    `Proposta pendente para ${draft.name} — o Domain ainda não está ativo.`,
+    options.currentChapterVersionId === undefined
+      ? `Proposta pendente para ${draft.name} — o Domain ainda não está ativo.`
+      : `Nova proposta pendente para ${draft.name}; Chapter ${options.currentChapterVersionId} continua ativo até aprovação.`,
     `Outcome: ${proposal.outcome}`,
     `Principle: ${proposal.principle}`,
     "Nodes:",
@@ -144,14 +160,20 @@ export function renderChapterProposal(draft: DomainDraft, proposal: ChapterPropo
     ].filter((entry): entry is [string, string] => entry[1] !== undefined);
     if (metadata.length > 0) lines.push(`  Metadados: ${metadata.map(([name, value]) => `${name}: ${value}`).join("; ")}`);
   }
-  lines.push("A proposta aguarda a decisão explícita do Player; o Domain não foi ativado.");
+  lines.push(options.currentChapterVersionId === undefined
+    ? "A proposta aguarda a decisão explícita do Player; o Domain não foi ativado."
+    : "A proposta aguarda a decisão explícita do Player; a versão atual permanece ativa até aprovação.");
   return lines.join("\n");
 }
 
-export function renderCurationBlocker(reason: string): string {
+export function renderCurationBlocker(reason: string, isRecuration = false): string {
   return [
     `Lori não encontrou fontes compatíveis ou verificáveis para uma proposta válida: ${reason}`,
-    "O Domain permanece em preparação e nenhuma proposta foi salva. As preferências e restrições não serão relaxadas automaticamente.",
-    "Peço sua decisão: manter a curadoria bloqueada ou alterar conscientemente seu objetivo/restrições em outro preparo; depois, solicite /lori-curate explicitamente.",
+    isRecuration
+      ? "A versão aprovada atual permanece ativa e nenhuma proposta nova foi salva. As preferências e restrições não serão relaxadas automaticamente."
+      : "O Domain permanece em preparação e nenhuma proposta foi salva. As preferências e restrições não serão relaxadas automaticamente.",
+    isRecuration
+      ? "Peço sua decisão: manter a versão atual ou alterar conscientemente objetivo/restrições em outro preparo; solicite /lori-curate explicitamente para uma nova tentativa."
+      : "Peço sua decisão: manter a curadoria bloqueada ou alterar conscientemente seu objetivo/restrições em outro preparo; depois, solicite /lori-curate explicitamente.",
   ].join("\n");
 }

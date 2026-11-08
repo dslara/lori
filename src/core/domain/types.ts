@@ -32,6 +32,14 @@ export type ActiveDomain = {
   status: "active";
   chapters: ChapterVersion[];
   currentChapterVersionId: string;
+  pendingChapter?: ChapterProposal;
+};
+
+export type ActiveDomainProposalAction = {
+  type: "domain/propose-chapter";
+  id: string;
+  expectedCurrentChapterVersionId: string;
+  proposal: ChapterProposal;
 };
 
 export type DomainDraft = {

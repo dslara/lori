@@ -232,6 +232,14 @@ async function startApprovedStudy(
   await harness.runStart("");
 }
 
+async function approveFirstChapter(harness: Harness): Promise<void> {
+  await harness.runCurate();
+  await harness.submitCuration(validCuration(curationRequestIds(harness)));
+  harness.ui.confirmResponses.push(true);
+  harness.ui.inputResponses.push("3", "4");
+  await harness.runApprove();
+}
+
 function curationRequestIds(harness: Harness): { requestId: string; domainId: string } {
   const message = harness.sentUserMessages.at(-1) ?? "";
   const requestId = message.match(/requestId: ([a-f0-9-]+)/)?.[1];
@@ -643,6 +651,190 @@ describe("Lori Chapter curation", () => {
 
     expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).toBe(before);
     expect(harness.ui.notifications.at(-1)?.message).toContain("fase ou a request atual mudou");
+  });
+
+  test("explicitly selects an active Domain and reuses its saved questionnaire without opening a Session", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await approveFirstChapter(harness);
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const before = JSON.parse(await readFile(snapshotPath, "utf8"));
+    const domain = before.domains[0];
+    const selectedDomain = `${domain.name} · ${domain.learningObjective} [${domain.id}]`;
+    harness.ui.selectResponses.push(selectedDomain);
+
+    await harness.runCurate();
+
+    const after = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(harness.ui.selectCalls.at(-1)).toMatchObject({
+      title: "Escolher Domain para re-curar",
+      options: [selectedDomain],
+    });
+    expect(harness.sentUserMessages).toHaveLength(2);
+    expect(harness.sentUserMessages.at(-1)).toContain("Hold a basic conversation while traveling");
+    expect(harness.sentUserMessages.at(-1)).toContain("I am visiting family this summer");
+    expect(harness.sentUserMessages.at(-1)).toContain("Audio and short dialogues");
+    expect(harness.sentUserMessages.at(-1)).toContain("No paid-only materials");
+    expect(after.session).toEqual(before.session);
+    expect(after.domainDraft).toBeNull();
+    expect(after.domains[0]).toEqual(before.domains[0]);
+  });
+
+  test("canceling active-Domain selection leaves the snapshot and current Chapter unchanged", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await approveFirstChapter(harness);
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const before = await readFile(snapshotPath, "utf8");
+
+    harness.ui.selectResponses.push(undefined);
+    await harness.runCurate();
+
+    expect(await readFile(snapshotPath, "utf8")).toBe(before);
+    expect(harness.sentUserMessages).toHaveLength(1);
+    expect(harness.ui.notifications.at(-1)?.message).not.toContain("Session iniciada");
+  });
+
+  test("stores a re-curation proposal separately and rejection leaves the approved Chapter current", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await approveFirstChapter(harness);
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const before = JSON.parse(await readFile(snapshotPath, "utf8"));
+    const domain = before.domains[0];
+    harness.ui.selectResponses.push(`${domain.name} · ${domain.learningObjective} [${domain.id}]`);
+    await harness.runCurate();
+    await harness.submitCuration(validCuration(curationRequestIds(harness)));
+
+    const proposed = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(proposed.domains[0].pendingChapter).toMatchObject({
+      outcome: "Hold a short conversation to arrange a meal in Spanish.",
+    });
+    expect(proposed.domains[0].chapters).toEqual(before.domains[0].chapters);
+    expect(proposed.domains[0].currentChapterVersionId).toBe(before.domains[0].currentChapterVersionId);
+
+    const beforeRejection = await readFile(snapshotPath, "utf8");
+    harness.ui.confirmResponses.push(false);
+    await harness.runApprove();
+    expect(await readFile(snapshotPath, "utf8")).toBe(beforeRejection);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Chapter atual permanece ativo");
+  });
+
+  test("authorizes active-Domain proposals by the current request ID", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await approveFirstChapter(harness);
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const before = await readFile(snapshotPath, "utf8");
+    const domain = JSON.parse(before).domains[0];
+    const selectedDomain = `${domain.name} · ${domain.learningObjective} [${domain.id}]`;
+    harness.ui.selectResponses.push(selectedDomain, selectedDomain);
+    await harness.runCurate();
+    const staleRequest = curationRequestIds(harness);
+    await harness.runCurate();
+
+    await harness.submitCuration(validCuration(staleRequest));
+
+    expect(await readFile(snapshotPath, "utf8")).toBe(before);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("request atual");
+  });
+
+  test("keeps an in-progress Metalearning Verdict linked to its original Chapter after re-curation approval", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await harness.runCurate();
+    await harness.submitCuration(validCuration(curationRequestIds(harness)));
+    harness.ui.confirmResponses.push(true);
+    await harness.runApprove();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const awaitingVerdict = JSON.parse(await readFile(snapshotPath, "utf8"));
+    const domain = awaitingVerdict.domains[0];
+    const originalChapterVersionId = domain.currentChapterVersionId;
+    expect(awaitingVerdict.session.status).toBe("paused");
+    harness.ui.selectResponses.push(`${domain.name} · ${domain.learningObjective} [${domain.id}]`);
+    await harness.runCurate();
+    await harness.submitCuration(validCuration(curationRequestIds(harness)));
+    harness.ui.confirmResponses.push(true);
+
+    await harness.runApprove();
+
+    const reapproved = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(reapproved.domains[0].currentChapterVersionId).not.toBe(originalChapterVersionId);
+    expect(reapproved.session.chapterRef).toEqual({ domainId: domain.id, chapterVersionId: originalChapterVersionId });
+    expect(reapproved.domainDraft.phase).toBe("awaiting_verdict");
+    const { harness: restored } = await createHarness(cwd);
+    await restored.start();
+    restored.ui.inputResponses.push("5", "4");
+    await restored.runResume();
+
+    const closed = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(closed.session.verdict.chapterRef).toEqual({ domainId: domain.id, chapterVersionId: originalChapterVersionId });
+    expect(closed.domainDraft).toBeNull();
+  });
+
+  test("restores a pending re-curation proposal without automatically starting research on resume", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await approveFirstChapter(harness);
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const approved = JSON.parse(await readFile(snapshotPath, "utf8"));
+    const approvedDomain = approved.domains[0];
+    harness.ui.selectResponses.push(
+      `${approvedDomain.name} — ${approvedDomain.learningObjective} [${approvedDomain.id}]`,
+      "Active Recall · Retrieval",
+    );
+    await harness.runStart("");
+    await harness.runAbandon();
+    const paused = JSON.parse(await readFile(snapshotPath, "utf8"));
+    const domain = paused.domains[0];
+    harness.ui.selectResponses.push(`${domain.name} · ${domain.learningObjective} [${domain.id}]`);
+    await harness.runCurate();
+    await harness.submitCuration(validCuration(curationRequestIds(harness)));
+
+    const { harness: restored } = await createHarness(cwd);
+    await restored.start();
+    await restored.runResume();
+
+    const resumed = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(resumed.schemaVersion).toBe(4);
+    expect(resumed.domains[0].pendingChapter.outcome).toBe("Hold a short conversation to arrange a meal in Spanish.");
+    expect(resumed.domains[0].currentChapterVersionId).toBe(domain.currentChapterVersionId);
+    expect(resumed.session.status).toBe("open");
+    expect(restored.sentUserMessages).toEqual([]);
+  });
+
+  test("approves a new Chapter version without deleting old versions or rewriting historical Verdict references", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    await approveFirstChapter(harness);
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const before = JSON.parse(await readFile(snapshotPath, "utf8"));
+    const domain = before.domains[0];
+    const originalSession = before.session;
+    const oldVersion = domain.currentChapterVersionId;
+    harness.ui.selectResponses.push(`${domain.name} · ${domain.learningObjective} [${domain.id}]`);
+    await harness.runCurate();
+    await harness.submitCuration(validCuration(curationRequestIds(harness)));
+    harness.ui.confirmResponses.push(true);
+
+    await harness.runApprove();
+
+    const approved = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(approved.domains[0].chapters).toHaveLength(2);
+    expect(approved.domains[0].chapters[0]).toEqual(domain.chapters[0]);
+    expect(approved.domains[0].chapters[1]).toMatchObject({ version: 2 });
+    expect(approved.domains[0].currentChapterVersionId).toBe(approved.domains[0].chapters[1].id);
+    expect(approved.domains[0]).not.toHaveProperty("pendingChapter");
+    expect(approved.session).toEqual(originalSession);
+    expect(approved.session.verdict.chapterRef).toEqual({ domainId: domain.id, chapterVersionId: oldVersion });
+
+    harness.ui.selectResponses.push(
+      `${domain.name} — ${domain.learningObjective} [${domain.id}]`,
+      "Active Recall · Retrieval",
+    );
+    await harness.runStart("");
+    const withHistory = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(withHistory.sessionHistory[0].verdict.chapterRef).toEqual({ domainId: domain.id, chapterVersionId: oldVersion });
   });
 
   test("a blocked research result does not advance the draft and explains the impediment", async () => {

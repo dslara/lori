@@ -80,7 +80,7 @@ describe("Lori snapshot persistence", () => {
     expect(await readdir(join(projectDir, ".lori"))).toEqual(["snapshot.json"]);
   });
 
-  test("migrates the pre-approval v3 snapshot shape with an empty active Domain collection", async () => {
+  test("migrates the v3 snapshot shape to the re-curation schema with an empty active Domain collection", async () => {
     const projectDir = await mkdtemp(join(tmpdir(), "lori-snapshot-v3-domains-"));
     projectDirs.push(projectDir);
     const snapshotPath = join(projectDir, SNAPSHOT_RELATIVE_PATH);

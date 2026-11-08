@@ -20,5 +20,10 @@ export type LoriExtensionState = {
   projectDir: string | undefined;
   skin: SkinProvider | undefined;
   startupError: string | undefined;
-  curationRequest: { requestId: string; domainId: string } | undefined;
+  curationRequest: {
+    requestId: string;
+    domainId: string;
+    target: "draft" | "active";
+    expectedCurrentChapterVersionId?: string;
+  } | undefined;
 };

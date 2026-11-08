@@ -1,3 +1,4 @@
+import { validateChapterProposal, validateProposalForQuestionnaire } from "../core/domain/chapter.ts";
 import { reduceDomainDraft, isSessionAction } from "../core/domain/reducer.ts";
 import type { DomainQuestionnaire } from "../core/domain/types.ts";
 import { reducePlayer } from "../core/player/reducer.ts";
@@ -33,6 +34,18 @@ export function rootReducer(state: LoriState, action: LoriAction): LoriState {
   ) {
     return state;
   }
+  if (action.type === "domain/propose-chapter") {
+    const domain = state.domains.find(({ id }) => id === action.id);
+    const validation = validateChapterProposal(action.proposal);
+    if (
+      domain === undefined ||
+      domain.currentChapterVersionId !== action.expectedCurrentChapterVersionId ||
+      !validation.ok ||
+      validateProposalForQuestionnaire(validation.proposal, domain.questionnaire) !== undefined
+    ) {
+      return state;
+    }
+  }
   if (action.type === "domain-draft/save-verdict-focus") {
     const draft = state.domainDraft;
     const session = state.session;
@@ -46,7 +59,7 @@ export function rootReducer(state: LoriState, action: LoriAction): LoriState {
       session.status !== "open" ||
       session.domainId !== draft.id ||
       session.chapterRef === undefined ||
-      !state.domains.some((domain) => domain.id === session.domainId && domain.currentChapterVersionId === session.chapterRef?.chapterVersionId)
+      !state.domains.some((domain) => domain.id === session.domainId && domain.chapters.some(({ id }) => id === session.chapterRef?.chapterVersionId))
     ) {
       return state;
     }
@@ -62,28 +75,37 @@ export function rootReducer(state: LoriState, action: LoriAction): LoriState {
       !Number.isFinite(draft.verdictFocus) ||
       !Number.isFinite(action.focus) ||
       !Number.isFinite(action.honesty) ||
-      !state.domains.some((domain) => domain.id === session.domainId && domain.currentChapterVersionId === session.chapterRef?.chapterVersionId)
+      !state.domains.some((domain) => domain.id === session.domainId && domain.chapters.some(({ id }) => id === session.chapterRef?.chapterVersionId))
     ) {
       return state;
     }
   }
   if (action.type === "domain/approve") {
     const draft = state.domainDraft;
-    if (
-      state.session?.kind !== "metalearning" ||
-      state.session.status !== "open" ||
-      draft === null ||
-      draft.id !== action.id ||
-      draft.phase !== "awaiting_approval" ||
-      draft.pendingChapter === undefined ||
-      action.chapterVersionId.trim().length === 0 ||
-      !Number.isFinite(action.approvedAt) ||
-      getQuestionnaire(draft) === undefined ||
-      draft.name === undefined ||
-      draft.learningObjective === undefined ||
-      state.domains.some(({ id }) => id === draft.id)
-    ) {
-      return state;
+    if (draft?.id === action.id && draft.phase === "awaiting_approval") {
+      if (
+        state.session?.kind !== "metalearning" ||
+        state.session.status !== "open" ||
+        draft.pendingChapter === undefined ||
+        action.chapterVersionId.trim().length === 0 ||
+        !Number.isFinite(action.approvedAt) ||
+        getQuestionnaire(draft) === undefined ||
+        draft.name === undefined ||
+        draft.learningObjective === undefined ||
+        state.domains.some(({ id }) => id === draft.id)
+      ) {
+        return state;
+      }
+    } else {
+      const domain = state.domains.find(({ id }) => id === action.id);
+      if (
+        domain?.pendingChapter === undefined ||
+        action.chapterVersionId.trim().length === 0 ||
+        domain.chapters.some(({ id }) => id === action.chapterVersionId) ||
+        !Number.isFinite(action.approvedAt)
+      ) {
+        return state;
+      }
     }
   }
   if (action.type === "session/open-metalearning" && state.domainDraft !== null) {
@@ -111,7 +133,8 @@ export function rootReducer(state: LoriState, action: LoriAction): LoriState {
 
   const player = reducePlayer(state.player, action);
   const reducedSession = isSessionAction(action) ? reduceSession(state.session, action) : state.session;
-  const session = action.type === "domain/approve" && reducedSession?.kind === "metalearning"
+  const isInitialApproval = action.type === "domain/approve" && state.domainDraft?.id === action.id && state.domainDraft.phase === "awaiting_approval";
+  const session = action.type === "domain/approve" && isInitialApproval && reducedSession?.kind === "metalearning"
     ? { ...reducedSession, chapterRef: { domainId: action.id, chapterVersionId: action.chapterVersionId } }
     : reducedSession;
   let domainDraft = reduceDomainDraft(state.domainDraft, action);
@@ -123,10 +146,10 @@ export function rootReducer(state: LoriState, action: LoriAction): LoriState {
   ) {
     domainDraft = null;
   }
+
   let domains = state.domains;
   const draft = state.domainDraft;
-  const pendingChapter = draft?.pendingChapter;
-  if (action.type === "domain/approve" && draft !== null && pendingChapter !== undefined) {
+  if (action.type === "domain/approve" && isInitialApproval && draft?.pendingChapter !== undefined) {
     const questionnaire = getQuestionnaire(draft);
     if (questionnaire !== undefined && draft.name !== undefined && draft.learningObjective !== undefined) {
       domains = [...state.domains, {
@@ -139,12 +162,33 @@ export function rootReducer(state: LoriState, action: LoriAction): LoriState {
           id: action.chapterVersionId,
           version: 1,
           approvedAt: action.approvedAt,
-          chapter: pendingChapter,
+          chapter: draft.pendingChapter,
         }],
         currentChapterVersionId: action.chapterVersionId,
       }];
     }
+  } else if (action.type === "domain/propose-chapter") {
+    domains = state.domains.map((domain) => domain.id === action.id
+      ? { ...domain, pendingChapter: action.proposal }
+      : domain);
+  } else if (action.type === "domain/approve") {
+    domains = state.domains.map((domain) => {
+      if (domain.id !== action.id || domain.pendingChapter === undefined) return domain;
+      const { pendingChapter: _pendingChapter, ...approvedDomain } = domain;
+      const nextVersion = Math.max(...domain.chapters.map(({ version }) => version)) + 1;
+      return {
+        ...approvedDomain,
+        chapters: [...domain.chapters, {
+          id: action.chapterVersionId,
+          version: nextVersion,
+          approvedAt: action.approvedAt,
+          chapter: domain.pendingChapter,
+        }],
+        currentChapterVersionId: action.chapterVersionId,
+      };
+    });
   }
+
   if (player === state.player && session === state.session && domainDraft === state.domainDraft && domains === state.domains) {
     return state;
   }
