@@ -1,5 +1,6 @@
 export type SessionDetails = {
-  domain: string;
+  kind: "legacyStudy";
+  name: string;
   primaryTechnique: string;
   startedAt: number;
   totalPausedMs: number;

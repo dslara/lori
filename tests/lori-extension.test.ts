@@ -1,4 +1,4 @@
-import { mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
+import { chmod, mkdir, mkdtemp, readFile, readdir, rm, writeFile } from "node:fs/promises";
 import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, spyOn, test } from "bun:test";
@@ -144,9 +144,10 @@ describe("Lori startup and status", () => {
     const snapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
     expect(await readdir(join(cwd, ".lori"))).toEqual(["snapshot.json"]);
     expect(snapshot).toEqual({
-      schemaVersion: 1,
+      schemaVersion: 2,
       player: { totalXp: 0 },
       session: null,
+      sessionHistory: [],
       skinConfig: { skin: "minimal" },
     });
     expect(harness.ui.statuses.at(-1)?.text).toContain("Session: nenhuma ativa");
@@ -182,7 +183,7 @@ describe("Lori startup and status", () => {
     const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
     expect(snapshot.session).toMatchObject({
       status: "open",
-      domain: "React",
+      name: "React",
       primaryTechnique: "Active Recall",
     });
     expect(typeof snapshot.session.startedAt).toBe("number");
@@ -252,7 +253,7 @@ describe("Lori startup and status", () => {
     const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
     expect(snapshot.session).toMatchObject({
       status: "open",
-      domain: "React",
+      name: "React",
       primaryTechnique: "Active Recall",
     });
   });
@@ -263,8 +264,9 @@ describe("Lori startup and status", () => {
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
     const snapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
     snapshot.session = {
+      kind: "legacyStudy",
       status: "closed",
-      domain: "Japanese",
+      name: "Japanese",
       primaryTechnique: "Direct Practice",
       startedAt: 1_000,
       totalPausedMs: 0,
@@ -285,7 +287,7 @@ describe("Lori startup and status", () => {
     const savedSnapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
     expect(savedSnapshot.session).toMatchObject({
       status: "open",
-      domain: "Japanese",
+      name: "Japanese",
       primaryTechnique: "Direct Practice",
     });
   });
@@ -304,7 +306,7 @@ describe("Lori startup and status", () => {
     const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
     expect(snapshot.session).toMatchObject({
       status: "open",
-      domain: "Math",
+      name: "Math",
       primaryTechnique: "Active Recall",
     });
   });
@@ -328,7 +330,7 @@ describe("Lori startup and status", () => {
     const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
     expect(snapshot.session).toMatchObject({
       status: "open",
-      domain: "Japanese",
+      name: "Japanese",
       primaryTechnique: "Active Recall",
     });
   });
@@ -351,7 +353,7 @@ describe("Lori startup and status", () => {
     const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
     expect(snapshot.session).toMatchObject({
       status: "open",
-      domain: "Japanese",
+      name: "Japanese",
       primaryTechnique: "Direct Practice",
     });
   });
@@ -374,7 +376,7 @@ describe("Lori startup and status", () => {
     const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
     expect(snapshot.session).toMatchObject({
       status: "open",
-      domain: "Rust",
+      name: "Rust",
       primaryTechnique: "Direct Practice",
     });
   });
@@ -396,7 +398,7 @@ describe("Lori startup and status", () => {
     expect(harness.ui.selectCalls[0]?.options).toContain("Informar outra técnica");
     expect(snapshot.session).toMatchObject({
       status: "open",
-      domain: "Rust",
+      name: "Rust",
       primaryTechnique: "Active Recall",
     });
   });
@@ -436,11 +438,11 @@ describe("Lori startup and status", () => {
     await harness.runClose("  2.5  |  4  ");
 
     const closedSnapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
-    expect(closedSnapshot.schemaVersion).toBe(1);
+    expect(closedSnapshot.schemaVersion).toBe(2);
     expect(closedSnapshot.player.totalXp).toBe(before.player.totalXp);
     expect(closedSnapshot.session).toMatchObject({
       status: "closed",
-      domain: "React",
+      name: "React",
       primaryTechnique: "Active Recall",
       verdict: { focus: 2.5, honesty: 4 },
     });
@@ -540,7 +542,7 @@ describe("Lori startup and status", () => {
     await harness.runStart("Japanese | Direct Practice");
     expect(JSON.parse(await readFile(snapshotPath, "utf8")).session).toMatchObject({
       status: "open",
-      domain: "Japanese",
+      name: "Japanese",
       primaryTechnique: "Direct Practice",
     });
   });
@@ -556,7 +558,7 @@ describe("Lori startup and status", () => {
     const paused = JSON.parse(await readFile(snapshotPath, "utf8")).session;
     expect(paused).toMatchObject({
       status: "paused",
-      domain: "React",
+      name: "React",
       primaryTechnique: "Active Recall",
       startedAt: opened.startedAt,
     });
@@ -568,7 +570,7 @@ describe("Lori startup and status", () => {
     const resumed = JSON.parse(await readFile(snapshotPath, "utf8")).session;
     expect(resumed).toMatchObject({
       status: "open",
-      domain: "React",
+      name: "React",
       primaryTechnique: "Active Recall",
       startedAt: opened.startedAt,
     });
@@ -649,7 +651,7 @@ describe("Lori startup and status", () => {
     const savedSnapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
     expect(savedSnapshot.session).toMatchObject({
       status: "open",
-      domain: "Japanese",
+      name: "Japanese",
       primaryTechnique: "Direct Practice",
     });
   });
@@ -752,14 +754,21 @@ describe("Lori startup and status", () => {
 
     try {
       await harness.start();
-      expect(await readSession()).toMatchObject({ status: "paused", pausedAt: 3_000 });
+      expect(await readSession()).toMatchObject({
+        kind: "legacyStudy",
+        status: "paused",
+        name: "React",
+        pausedAt: 3_000,
+      });
 
       await harness.runResume();
       expect((await readSession()).status).toBe("open");
 
       await harness.runClose("1 | 1");
       expect(await readSession()).toMatchObject({
+        kind: "legacyStudy",
         status: "closed",
+        name: "React",
         closedAt: 3_000,
       });
     } finally {
@@ -935,11 +944,35 @@ describe("Lori startup and status", () => {
     expect(JSON.parse(await readFile(snapshotPath, "utf8")).skinConfig.skin).toBe("broken");
   });
 
+  test("preserves the snapshot when reading its contents fails", async () => {
+    const { cwd, harness } = await createHarness();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const originalContents = JSON.stringify({
+      schemaVersion: 1,
+      player: { totalXp: 23 },
+      session: null,
+      skinConfig: { skin: "minimal" },
+    });
+    await mkdir(join(cwd, ".lori"), { recursive: true });
+    await writeFile(snapshotPath, originalContents);
+    await chmod(snapshotPath, 0);
+
+    try {
+      await harness.start();
+    } finally {
+      await chmod(snapshotPath, 0o644);
+    }
+
+    expect(harness.ui.notifications[0]?.message).toContain("não foi possível ler");
+    expect(harness.ui.notifications[0]?.message).toContain("preservado");
+    expect(await readFile(snapshotPath, "utf8")).toBe(originalContents);
+  });
+
   test("reports and preserves a snapshot with an unsupported schema version", async () => {
     const { cwd, harness } = await createHarness();
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
     const originalContents = JSON.stringify({
-      schemaVersion: 2,
+      schemaVersion: 3,
       player: { totalXp: 0 },
       session: null,
       skinConfig: { skin: "minimal" },
@@ -951,9 +984,166 @@ describe("Lori startup and status", () => {
     await harness.runStatus();
 
     expect(harness.ui.notifications[0]?.type).toBe("error");
-    expect(harness.ui.notifications[0]?.message).toContain("não suportada (2)");
+    expect(harness.ui.notifications[0]?.message).toContain("não suportada (3)");
     expect(harness.ui.notifications[0]?.message).toContain("preservado");
     expect(harness.ui.notifications.at(-1)?.message).toContain("não suportada");
+    expect(await readFile(snapshotPath, "utf8")).toBe(originalContents);
+  });
+
+  test("migrates a closed v1 Session to legacyStudy and archives its Verdict when a new Session starts", async () => {
+    const { cwd, harness } = await createHarness();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const legacySession = {
+      status: "closed",
+      domain: "Japanese",
+      primaryTechnique: "Direct Practice",
+      startedAt: 1_000,
+      totalPausedMs: 250,
+      pausedAt: 2_000,
+      closedAt: 2_500,
+      verdict: { focus: 2.5, honesty: 4 },
+    };
+    await mkdir(join(cwd, ".lori"), { recursive: true });
+    await writeFile(snapshotPath, JSON.stringify({
+      schemaVersion: 1,
+      player: { totalXp: 87 },
+      session: legacySession,
+      skinConfig: { skin: "terminal" },
+    }));
+
+    await harness.start();
+
+    const migrated = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(migrated).toMatchObject({
+      schemaVersion: 2,
+      player: { totalXp: 87 },
+      session: {
+        kind: "legacyStudy",
+        status: "closed",
+        name: "Japanese",
+        primaryTechnique: "Direct Practice",
+        startedAt: 1_000,
+        totalPausedMs: 250,
+        pausedAt: 2_000,
+        closedAt: 2_500,
+        verdict: { focus: 2.5, honesty: 4 },
+      },
+      sessionHistory: [],
+      skinConfig: { skin: "terminal" },
+    });
+    expect(migrated.session.learningObjective).toBeUndefined();
+    expect(migrated.domains ?? []).toEqual([]);
+
+    await harness.runStart("Rust | Retrieval");
+
+    const continued = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(continued.session).toMatchObject({
+      kind: "legacyStudy",
+      status: "open",
+      name: "Rust",
+      primaryTechnique: "Retrieval",
+    });
+    expect(continued.sessionHistory).toEqual([migrated.session]);
+    expect(continued.player.totalXp).toBe(87);
+    expect(continued.skinConfig.skin).toBe("terminal");
+  });
+
+  test("resumes and closes a migrated paused legacyStudy without losing its original name or timestamps", async () => {
+    const { cwd, harness } = await createHarness();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    await mkdir(join(cwd, ".lori"), { recursive: true });
+    await writeFile(snapshotPath, JSON.stringify({
+      schemaVersion: 1,
+      player: { totalXp: 17 },
+      session: {
+        status: "paused",
+        domain: "Calculus",
+        primaryTechnique: "Feynman Technique",
+        startedAt: 1_000,
+        totalPausedMs: 100,
+        pausedAt: 2_000,
+      },
+      skinConfig: { skin: "minimal" },
+    }));
+
+    await harness.start();
+
+    const migrated = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(migrated.session).toMatchObject({
+      kind: "legacyStudy",
+      status: "paused",
+      name: "Calculus",
+      primaryTechnique: "Feynman Technique",
+      startedAt: 1_000,
+      totalPausedMs: 100,
+      pausedAt: 2_000,
+    });
+    await harness.runResume();
+    await harness.runClose("3 | 4");
+
+    const closed = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(closed.session).toMatchObject({
+      kind: "legacyStudy",
+      status: "closed",
+      name: "Calculus",
+      primaryTechnique: "Feynman Technique",
+      startedAt: 1_000,
+      verdict: { focus: 3, honesty: 4 },
+    });
+    expect(closed.session.closedAt).toBeGreaterThanOrEqual(
+      closed.session.startedAt + closed.session.totalPausedMs,
+    );
+    expect(closed.player.totalXp).toBe(17);
+  });
+
+  test("preserves a v1 snapshot when atomic migration writing fails", async () => {
+    const { cwd, harness } = await createHarness();
+    const loriDir = join(cwd, ".lori");
+    const snapshotPath = join(loriDir, "snapshot.json");
+    const originalContents = JSON.stringify({
+      schemaVersion: 1,
+      player: { totalXp: 23 },
+      session: null,
+      skinConfig: { skin: "minimal" },
+    });
+    await mkdir(loriDir, { recursive: true });
+    await writeFile(snapshotPath, originalContents);
+    await chmod(loriDir, 0o555);
+
+    try {
+      await harness.start();
+    } finally {
+      await chmod(loriDir, 0o755);
+    }
+
+    expect(harness.ui.notifications[0]?.message).toContain("não foi possível migrar");
+    expect(harness.ui.notifications[0]?.message).toContain("original foi preservado");
+    expect(await readFile(snapshotPath, "utf8")).toBe(originalContents);
+  });
+
+  test("preserves an invalid v1 snapshot when migration validation fails", async () => {
+    const { cwd, harness } = await createHarness();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const originalContents = JSON.stringify({
+      schemaVersion: 1,
+      player: { totalXp: 23 },
+      session: {
+        status: "paused",
+        domain: "React",
+        primaryTechnique: "Active Recall",
+        startedAt: 1_000,
+        totalPausedMs: 0,
+        pausedAt: 999,
+      },
+      skinConfig: { skin: "minimal" },
+    });
+    await mkdir(join(cwd, ".lori"), { recursive: true });
+    await writeFile(snapshotPath, originalContents);
+
+    await harness.start();
+
+    expect(harness.ui.notifications[0]?.type).toBe("error");
+    expect(harness.ui.notifications[0]?.message).toContain("preservado");
     expect(await readFile(snapshotPath, "utf8")).toBe(originalContents);
   });
 

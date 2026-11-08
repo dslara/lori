@@ -28,8 +28,9 @@ describe("Lori snapshot persistence", () => {
     const updatedState = {
       ...initialState,
       session: {
+        kind: "legacyStudy" as const,
         status: "open" as const,
-        domain: "React",
+        name: "React",
         primaryTechnique: "Active Recall",
         startedAt: 1_000,
         totalPausedMs: 0,
@@ -60,8 +61,9 @@ describe("Lori snapshot persistence", () => {
     const updatedState = {
       ...initialState,
       session: {
+        kind: "legacyStudy" as const,
         status: "open" as const,
-        domain: "React",
+        name: "React",
         primaryTechnique: "Active Recall",
         startedAt: 1_000,
         totalPausedMs: 0,

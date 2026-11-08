@@ -12,8 +12,9 @@ describe("Session core", () => {
     });
 
     expect(session).toEqual({
+      kind: "legacyStudy",
       status: "open",
-      domain: "React",
+      name: "React",
       primaryTechnique: "Active Recall",
       startedAt: 1_000,
       totalPausedMs: 0,
@@ -55,8 +56,9 @@ describe("Session core", () => {
     });
 
     expect(paused).toEqual({
+      kind: "legacyStudy",
       status: "paused",
-      domain: "React",
+      name: "React",
       primaryTechnique: "Active Recall",
       startedAt: 1_000,
       totalPausedMs: 0,
@@ -82,8 +84,9 @@ describe("Session core", () => {
     });
 
     expect(resumed).toEqual({
+      kind: "legacyStudy",
       status: "open",
-      domain: "React",
+      name: "React",
       primaryTechnique: "Active Recall",
       startedAt: 1_000,
       totalPausedMs: 6_000,
@@ -140,8 +143,9 @@ describe("Session core", () => {
     });
 
     expect(closed).toEqual({
+      kind: "legacyStudy",
       status: "closed",
-      domain: "React",
+      name: "React",
       primaryTechnique: "Active Recall",
       startedAt: 1_000,
       totalPausedMs: 0,
@@ -227,8 +231,9 @@ describe("Session core", () => {
       primaryTechnique: "Direct Practice",
       startedAt: 3_000,
     })).toEqual({
+      kind: "legacyStudy",
       status: "open",
-      domain: "Japanese",
+      name: "Japanese",
       primaryTechnique: "Direct Practice",
       startedAt: 3_000,
       totalPausedMs: 0,

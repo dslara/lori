@@ -28,7 +28,7 @@ export function renderStatus(
   const elapsed = formatElapsed(selectElapsedMs(session, now));
   if (session.status === "closed") {
     return skin.render("session.closed", {
-      domain: session.domain,
+      domain: session.name,
       technique: session.primaryTechnique,
       elapsed,
       focus: session.verdict.focus,
@@ -38,7 +38,7 @@ export function renderStatus(
 
   const sessionEvent = event ?? (session.status === "open" ? "session.open" : "session.paused");
   return skin.render(sessionEvent, {
-    domain: session.domain,
+    domain: session.name,
     technique: session.primaryTechnique,
     elapsed,
   });

@@ -17,8 +17,9 @@ export function reduceSession(state: Session | null, action: SessionAction): Ses
     }
 
     return {
+      kind: "legacyStudy",
       status: "open",
-      domain: action.domain,
+      name: action.domain,
       primaryTechnique: action.primaryTechnique,
       startedAt: action.startedAt,
       totalPausedMs: 0,
@@ -49,8 +50,9 @@ export function reduceSession(state: Session | null, action: SessionAction): Ses
     }
 
     return {
+      kind: state.kind,
       status: "open",
-      domain: state.domain,
+      name: state.name,
       primaryTechnique: state.primaryTechnique,
       startedAt: state.startedAt,
       totalPausedMs: state.totalPausedMs + action.resumedAt - state.pausedAt,
@@ -74,8 +76,9 @@ export function reduceSession(state: Session | null, action: SessionAction): Ses
   }
 
   return {
+    kind: state.kind,
     status: "closed",
-    domain: state.domain,
+    name: state.name,
     primaryTechnique: state.primaryTechnique,
     startedAt: state.startedAt,
     totalPausedMs: state.totalPausedMs,

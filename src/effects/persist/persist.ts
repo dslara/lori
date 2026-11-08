@@ -2,28 +2,30 @@ import { mkdir, readFile, realpath, rename, rm, writeFile } from "node:fs/promis
 import { randomUUID } from "node:crypto";
 import { dirname, isAbsolute, join, relative, sep } from "node:path";
 import { createInitialState, type LoriState } from "../../store/state.ts";
+import type { Session } from "../../core/session/types.ts";
 import type { SnapshotResult } from "./types.ts";
 
-export const SNAPSHOT_SCHEMA_VERSION = 1;
+export const SNAPSHOT_SCHEMA_VERSION = 2;
 export const SNAPSHOT_RELATIVE_PATH = ".lori/snapshot.json";
 
 function isRecord(value: unknown): value is Record<string, unknown> {
   return typeof value === "object" && value !== null && !Array.isArray(value);
 }
 
-function decodeSession(value: unknown): NonNullable<LoriState["session"]> | null | undefined {
+function decodeSession(value: unknown, version: 1 | 2): Session | null | undefined {
   if (value === null) {
     return null;
   }
+  if (!isRecord(value)) {
+    return undefined;
+  }
+
+  const name = version === 1 ? value.domain : value.name;
   if (
-    !isRecord(value) ||
-    (
-      value.status !== "open" &&
-      value.status !== "paused" &&
-      value.status !== "closed"
-    ) ||
-    typeof value.domain !== "string" ||
-    value.domain.trim().length === 0 ||
+    (version === 2 && value.kind !== "legacyStudy") ||
+    (value.status !== "open" && value.status !== "paused" && value.status !== "closed") ||
+    typeof name !== "string" ||
+    name.trim().length === 0 ||
     typeof value.primaryTechnique !== "string" ||
     value.primaryTechnique.trim().length === 0 ||
     typeof value.startedAt !== "number" ||
@@ -41,14 +43,16 @@ function decodeSession(value: unknown): NonNullable<LoriState["session"]> | null
     return undefined;
   }
 
+  const details = {
+    kind: "legacyStudy" as const,
+    name,
+    primaryTechnique: value.primaryTechnique,
+    startedAt: value.startedAt,
+    totalPausedMs,
+  };
+
   if (value.status === "open") {
-    return {
-      status: "open",
-      domain: value.domain,
-      primaryTechnique: value.primaryTechnique,
-      startedAt: value.startedAt,
-      totalPausedMs,
-    };
+    return { ...details, status: "open" };
   }
 
   if (value.status === "paused") {
@@ -59,14 +63,7 @@ function decodeSession(value: unknown): NonNullable<LoriState["session"]> | null
     ) {
       return undefined;
     }
-    return {
-      status: "paused",
-      domain: value.domain,
-      primaryTechnique: value.primaryTechnique,
-      startedAt: value.startedAt,
-      totalPausedMs,
-      pausedAt: value.pausedAt,
-    };
+    return { ...details, status: "paused", pausedAt: value.pausedAt };
   }
 
   const pausedAt = value.pausedAt;
@@ -89,15 +86,70 @@ function decodeSession(value: unknown): NonNullable<LoriState["session"]> | null
     return undefined;
   }
   return {
+    ...details,
     status: "closed",
-    domain: value.domain,
-    primaryTechnique: value.primaryTechnique,
-    startedAt: value.startedAt,
-    totalPausedMs,
     closedAt: value.closedAt,
     ...(typeof pausedAt === "number" ? { pausedAt } : {}),
     verdict: { focus: value.verdict.focus, honesty: value.verdict.honesty },
   };
+}
+
+function decodePlayer(value: Record<string, unknown>): LoriState["player"] | undefined {
+  if (
+    !isRecord(value.player) ||
+    typeof value.player.totalXp !== "number" ||
+    !Number.isFinite(value.player.totalXp) ||
+    value.player.totalXp < 0
+  ) {
+    return undefined;
+  }
+  return { totalXp: value.player.totalXp };
+}
+
+function decodeSkinConfig(value: Record<string, unknown>): LoriState["skinConfig"] | undefined {
+  if (
+    !isRecord(value.skinConfig) ||
+    typeof value.skinConfig.skin !== "string" ||
+    value.skinConfig.skin.trim().length === 0
+  ) {
+    return undefined;
+  }
+  return { skin: value.skinConfig.skin };
+}
+
+function decodeSnapshotV1(value: Record<string, unknown>): SnapshotResult {
+  const player = decodePlayer(value);
+  const skinConfig = decodeSkinConfig(value);
+  const session = decodeSession(value.session, 1);
+  if (!player || !skinConfig || session === undefined) {
+    return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
+  }
+
+  return {
+    ok: true,
+    state: { player, session, sessionHistory: [], skinConfig },
+  };
+}
+
+function decodeSnapshotV2(value: Record<string, unknown>): SnapshotResult {
+  const player = decodePlayer(value);
+  const skinConfig = decodeSkinConfig(value);
+  const session = decodeSession(value.session, 2);
+  const history = value.sessionHistory;
+  if (!player || !skinConfig || session === undefined || !Array.isArray(history)) {
+    return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
+  }
+
+  const sessionHistory: Session[] = [];
+  for (const entry of history) {
+    const archivedSession = decodeSession(entry, 2);
+    if (archivedSession === undefined || archivedSession === null || archivedSession.status !== "closed") {
+      return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
+    }
+    sessionHistory.push(archivedSession);
+  }
+
+  return { ok: true, state: { player, session, sessionHistory, skinConfig } };
 }
 
 function decodeSnapshot(value: unknown): SnapshotResult {
@@ -107,36 +159,15 @@ function decodeSnapshot(value: unknown): SnapshotResult {
   if (typeof value.schemaVersion !== "number" || !Number.isInteger(value.schemaVersion)) {
     return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
   }
-  if (value.schemaVersion !== SNAPSHOT_SCHEMA_VERSION) {
-    return {
-      ok: false,
-      error: `Lori: versão de snapshot não suportada (${value.schemaVersion}); o arquivo existente foi preservado.`,
-    };
+  if (value.schemaVersion === 1) {
+    return decodeSnapshotV1(value);
   }
-
-  const player = value.player;
-  const session = decodeSession(value.session);
-  const skinConfig = value.skinConfig;
-  if (
-    !isRecord(player) ||
-    typeof player.totalXp !== "number" ||
-    !Number.isFinite(player.totalXp) ||
-    player.totalXp < 0 ||
-    session === undefined ||
-    !isRecord(skinConfig) ||
-    typeof skinConfig.skin !== "string" ||
-    skinConfig.skin.trim().length === 0
-  ) {
-    return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
+  if (value.schemaVersion === SNAPSHOT_SCHEMA_VERSION) {
+    return decodeSnapshotV2(value);
   }
-
   return {
-    ok: true,
-    state: {
-      player: { totalXp: player.totalXp },
-      session,
-      skinConfig: { skin: skinConfig.skin },
-    },
+    ok: false,
+    error: `Lori: versão de snapshot não suportada (${value.schemaVersion}); o arquivo existente foi preservado.`,
   };
 }
 
@@ -212,5 +243,18 @@ async function loadOrCreateSnapshotFile(projectDir: string): Promise<SnapshotRes
   } catch {
     return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
   }
-  return decodeSnapshot(parsed);
+
+  const decoded = decodeSnapshot(parsed);
+  if (!decoded.ok || !isRecord(parsed) || parsed.schemaVersion !== 1) {
+    return decoded;
+  }
+  try {
+    await writeSnapshotFile(projectDir, decoded.state);
+    return decoded;
+  } catch {
+    return {
+      ok: false,
+      error: "Lori: não foi possível migrar o snapshot; o arquivo original foi preservado.",
+    };
+  }
 }

@@ -370,7 +370,7 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
       }
 
       const previous = currentSession?.status === "closed"
-        ? { domain: currentSession.domain, primaryTechnique: currentSession.primaryTechnique }
+        ? { domain: currentSession.name, primaryTechnique: currentSession.primaryTechnique }
         : undefined;
       const resolvedInput = await resolveStartInput(input, previous, ctx);
       if (resolvedInput === undefined) {
@@ -438,7 +438,7 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
       if (result.status === "unchanged") {
         const session = result.state.session;
         ctx.ui.notify(skin.render("session.closeRejected", {
-          domain: session?.domain ?? "",
+          domain: session?.name ?? "",
           technique: session?.primaryTechnique ?? "",
         }), "warning");
         return;
@@ -475,7 +475,7 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
       if (result.status === "unchanged") {
         const session = result.state.session;
         ctx.ui.notify(skin.render("session.pauseRejected", {
-          domain: session?.domain ?? "",
+          domain: session?.name ?? "",
           technique: session?.primaryTechnique ?? "",
         }), "warning");
         return;
@@ -512,7 +512,7 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
       if (result.status === "unchanged") {
         const session = result.state.session;
         ctx.ui.notify(skin.render("session.resumeRejected", {
-          domain: session?.domain ?? "",
+          domain: session?.name ?? "",
           technique: session?.primaryTechnique ?? "",
         }), "warning");
         return;

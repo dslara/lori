@@ -20,7 +20,7 @@ describe("Lori store", () => {
       startedAt: 2_000,
     });
 
-    expect(openedState.session?.domain).toBe("React");
+    expect(openedState.session?.name).toBe("React");
     expect(store.getState().player.totalXp).toBe(23);
     expect(store.getState()).toBe(openedState);
   });

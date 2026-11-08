@@ -9,5 +9,13 @@ export function rootReducer(state: LoriState, action: SessionAction): LoriState 
   if (player === state.player && session === state.session) {
     return state;
   }
-  return { ...state, player, session };
+  let sessionHistory = state.sessionHistory;
+  if (
+    action.type === "session/open" &&
+    state.session?.status === "closed" &&
+    session !== state.session
+  ) {
+    sessionHistory = [...sessionHistory, state.session];
+  }
+  return { ...state, player, session, sessionHistory };
 }

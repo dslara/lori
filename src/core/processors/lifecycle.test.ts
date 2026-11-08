@@ -4,8 +4,9 @@ import { restoreSessionAsPaused } from "./lifecycle.ts";
 describe("Session lifecycle", () => {
   test("turns an open Session into a pause at the restoration timestamp", () => {
     expect(restoreSessionAsPaused({
+      kind: "legacyStudy",
       status: "open",
-      domain: "React",
+      name: "React",
       primaryTechnique: "Active Recall",
       startedAt: 1_000,
       totalPausedMs: 2_000,
@@ -18,8 +19,9 @@ describe("Session lifecycle", () => {
   test("does not create a lifecycle action for an already paused or absent Session", () => {
     expect(restoreSessionAsPaused(null, 9_000)).toBeUndefined();
     expect(restoreSessionAsPaused({
+      kind: "legacyStudy",
       status: "paused",
-      domain: "React",
+      name: "React",
       primaryTechnique: "Active Recall",
       startedAt: 1_000,
       totalPausedMs: 2_000,
@@ -29,8 +31,9 @@ describe("Session lifecycle", () => {
 
   test("restores an open Session at its last valid timestamp after clock rollback", () => {
     expect(restoreSessionAsPaused({
+      kind: "legacyStudy",
       status: "open",
-      domain: "React",
+      name: "React",
       primaryTechnique: "Active Recall",
       startedAt: 1_000,
       totalPausedMs: 2_000,
