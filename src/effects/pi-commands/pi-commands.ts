@@ -12,6 +12,7 @@ import type { SkinProvider } from "../../presentation/skin/provider.ts";
 import { loadOrCreateSnapshot, writeSnapshot } from "../persist/persist.ts";
 import type { SnapshotResult } from "../persist/types.ts";
 import { showError, showStatus } from "../ui/ui.ts";
+import { registerCurationSourceEvidenceHooks } from "./chapter-source-evidence.ts";
 import {
   buildChapterCurationPrompt,
   chapterCurationToolParameters,
@@ -665,28 +666,8 @@ function toolMessage(text: string, isError = false) {
   return { content: [{ type: "text" as const, text }], details: { message: text }, isError };
 }
 
-function isSourceResearchTool(toolName: string): boolean {
-  return /(?:web|browser|fetch|search|browse|tavily|brave|exa|firecrawl|serp|google|bing)/i.test(toolName);
-}
-
 function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionState): void {
-  api.on("tool_call", (event) => {
-    const request = shared.curationRequest;
-    if (request && isSourceResearchTool(event.toolName)) {
-      request.sourceToolCalls[event.toolCallId] = event.toolName;
-    }
-  });
-
-  api.on("tool_result", (event) => {
-    const request = shared.curationRequest;
-    const toolName = request?.sourceToolCalls[event.toolCallId];
-    if (!request || !toolName) return;
-    delete request.sourceToolCalls[event.toolCallId];
-    if (event.isError || event.toolName !== toolName || !isSourceResearchTool(event.toolName)) return;
-    const text = event.content.flatMap((block) => block.type === "text" ? [block.text] : []);
-    if (event.structuredContent !== undefined) text.push(JSON.stringify(event.structuredContent));
-    if (text.length > 0) request.sourceEvidence.push(text.join("\n"));
-  });
+  registerCurationSourceEvidenceHooks(api, shared);
 
   api.registerTool({
     name: "lori_submit_chapter",
@@ -759,7 +740,10 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
         toolCtx.ui.notify(message, "warning");
         return toolMessage(message, true);
       }
-      const sourceVerificationError = validateChapterSourceEvidence(validation.proposal, request.sourceEvidence);
+      const sourceVerificationError = validateChapterSourceEvidence(validation.proposal, request.sourceEvidence, {
+        requestId: request.requestId,
+        agentRunId: request.agentRunId,
+      });
       if (sourceVerificationError !== undefined) {
         const message = `Lori bloqueou a proposta: ${sourceVerificationError} Nenhuma proposta foi salva; pesquise a fonte com uma ferramenta host apropriada nesta request.`;
         toolCtx.ui.notify(message, "warning");
@@ -922,6 +906,8 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
           domainId: selectedDomain.id,
           target: "active",
           expectedCurrentChapterVersionId: selectedDomain.currentChapterVersionId,
+          awaitingAgentStart: true,
+          agentRunId: undefined,
           sourceToolCalls: {},
           sourceEvidence: [],
         };
@@ -941,6 +927,8 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
         requestId,
         domainId: selectedDraft.id,
         target: "draft",
+        awaitingAgentStart: true,
+        agentRunId: undefined,
         sourceToolCalls: {},
         sourceEvidence: [],
       };

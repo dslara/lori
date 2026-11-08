@@ -3,6 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, test } from "bun:test";
 import { createInitialState } from "../../store/state.ts";
+import { buildChapterCurationPrompt } from "../pi-commands/chapter-curation.ts";
 import {
   loadOrCreateSnapshot,
   SNAPSHOT_RELATIVE_PATH,
@@ -17,6 +18,37 @@ afterEach(async () => {
 });
 
 describe("Lori snapshot persistence", () => {
+  test("redacts an ambiguous path from curation context without changing the persisted draft", async () => {
+    const projectDir = await mkdtemp(join(tmpdir(), "lori-snapshot-private-path-"));
+    projectDirs.push(projectDir);
+    const path = "/home/player/private notes/recording.wav";
+    const state = {
+      ...createInitialState(),
+      session: { kind: "metalearning" as const, status: "open" as const, domainId: "domain-private-path", startedAt: 1, totalPausedMs: 0 },
+      domainDraft: {
+        id: "domain-private-path",
+        phase: "awaiting_curation" as const,
+        name: "Audio practice",
+        learningObjective: "Understand recorded speech.",
+        motivation: "Study with personal recordings.",
+        deadline: null,
+        hoursPerWeek: 3,
+        baseline: 1 as const,
+        preferences: `Use ${path} for practice.`,
+        materialRestrictions: "No restrictions.",
+      },
+    };
+    await writeSnapshot(projectDir, state);
+    const restored = await loadOrCreateSnapshot(projectDir);
+
+    expect(restored.ok).toBe(true);
+    if (!restored.ok) throw new Error("Expected the saved draft snapshot to load.");
+    expect(restored.state.domainDraft?.preferences).toBe(`Use ${path} for practice.`);
+    const prompt = buildChapterCurationPrompt("request-1", restored.state.domainDraft!);
+    expect(prompt).not.toContain(path);
+    expect(prompt).not.toContain("notes/recording.wav");
+  });
+
   test("replaces an existing snapshot with complete state", async () => {
     const projectDir = await mkdtemp(join(tmpdir(), "lori-snapshot-"));
     projectDirs.push(projectDir);

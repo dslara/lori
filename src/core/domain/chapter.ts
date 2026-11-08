@@ -17,6 +17,15 @@ export type ChapterResourceEvidence = {
   locator: string;
 };
 
+export type ChapterSourceEvidence = {
+  requestId: string;
+  agentRunId: string;
+  toolCallId: string;
+  toolName: string;
+  isError: boolean;
+  text: string;
+};
+
 export type ChapterResource = {
   id: string;
   title: string;
@@ -46,10 +55,17 @@ export type ChapterNodeEvidenceRef = {
   evidenceId: string;
 };
 
+export type ChapterNodeExitProofContribution = {
+  criterion: string;
+  rationale: string;
+};
+
 export type ChapterNode = {
   id: string;
   order: number;
   objective: string;
+  exitProofContributions?: ChapterNodeExitProofContribution[];
+  /** Legacy review detail retained when decoding older snapshots. */
   exitProofCriterion?: string;
   evidenceRefs: ChapterNodeEvidenceRef[];
   recommendedResourceId: string;
@@ -96,6 +112,29 @@ function isRecord(value: unknown): value is Record<string, unknown> {
 
 function isNonEmptyString(value: unknown): value is string {
   return typeof value === "string" && value.trim().length > 0;
+}
+
+function decodeExitProofContributions(
+  value: unknown,
+  criteria: unknown[],
+): ChapterNodeExitProofContribution[] | undefined {
+  if (!Array.isArray(value) || value.length === 0) return undefined;
+  const contributions: ChapterNodeExitProofContribution[] = [];
+  const seenCriteria = new Set<string>();
+  for (const entry of value) {
+    if (
+      !isRecord(entry) ||
+      !isNonEmptyString(entry.criterion) ||
+      !criteria.includes(entry.criterion) ||
+      !isNonEmptyString(entry.rationale) ||
+      seenCriteria.has(entry.criterion)
+    ) {
+      return undefined;
+    }
+    seenCriteria.add(entry.criterion);
+    contributions.push({ criterion: entry.criterion, rationale: entry.rationale });
+  }
+  return contributions;
 }
 
 function isHttpUrl(value: unknown): value is string {
@@ -231,7 +270,7 @@ export function validateChapterProposal(
       nodeIds.has(entry.id) ||
       entry.order !== index + 1 ||
       !isNonEmptyString(entry.objective) ||
-      (!options.allowMissingReviewDetails && !isNonEmptyString(entry.exitProofCriterion)) ||
+      (!options.allowMissingReviewDetails && !Array.isArray(entry.exitProofContributions)) ||
       (entry.exitProofCriterion !== undefined && (!isNonEmptyString(entry.exitProofCriterion) || !value.exitProof.criteria.includes(entry.exitProofCriterion))) ||
       !Array.isArray(entry.evidenceRefs) ||
       entry.evidenceRefs.length === 0 ||
@@ -239,6 +278,14 @@ export function validateChapterProposal(
       !resourceIds.has(entry.recommendedResourceId)
     ) {
       return { ok: false, reason: "A proposta contém Nodes fora de ordem, sem objetivo, sem recurso recomendado ou sem referências consistentes." };
+    }
+
+    const contributions = decodeExitProofContributions(entry.exitProofContributions, value.exitProof.criteria);
+    if (
+      (entry.exitProofContributions !== undefined && contributions === undefined) ||
+      (!options.allowMissingReviewDetails && contributions === undefined)
+    ) {
+      return { ok: false, reason: "Cada Node precisa explicar, com rationale específico, sua contribuição necessária a um critério válido do Exit Proof." };
     }
 
     nodeIds.add(entry.id);
@@ -268,14 +315,17 @@ export function validateChapterProposal(
       id: entry.id,
       order: entry.order,
       objective: entry.objective,
+      ...(contributions === undefined ? {} : { exitProofContributions: contributions }),
       ...(entry.exitProofCriterion === undefined ? {} : { exitProofCriterion: entry.exitProofCriterion as string }),
       evidenceRefs: nodeEvidenceRefs,
       recommendedResourceId: entry.recommendedResourceId,
     });
   }
 
-  if (!options.allowMissingReviewDetails && value.exitProof.criteria.some((criterion) => !nodes.some(({ exitProofCriterion }) => exitProofCriterion === criterion))) {
-    return { ok: false, reason: "Cada critério do Exit Proof precisa estar ligado a ao menos um Node necessário." };
+  if (!options.allowMissingReviewDetails && value.exitProof.criteria.some((criterion) =>
+    !nodes.some(({ exitProofContributions }) => exitProofContributions?.some((contribution) => contribution.criterion === criterion))
+  )) {
+    return { ok: false, reason: "Cada critério do Exit Proof precisa estar ligado à contribuição justificada de ao menos um Node necessário." };
   }
 
   if (resources.some(({ id }) => !referencedResourceIds.has(id))) {
@@ -302,17 +352,33 @@ export function validateChapterProposal(
   };
 }
 
+const sourceResearchToolNames = /^(?:web_search|search_web|web_fetch|browser|browser_search|browse|browse_url|fetch_url|open_url|(?:tavily|brave|exa|firecrawl|serp|google|bing)_search|search_(?:tavily|brave|exa|firecrawl|serp|google|bing))$/i;
+
+export function isSourceResearchTool(toolName: string): boolean {
+  return sourceResearchToolNames.test(toolName);
+}
+
 export function validateChapterSourceEvidence(
   proposal: ChapterProposal,
-  toolResults: readonly string[],
+  toolResults: readonly ChapterSourceEvidence[],
+  expected: { requestId: string; agentRunId: string | undefined },
 ): string | undefined {
-  for (const resource of proposal.resources) {
-    const hasVerifiedUrl = toolResults.some((result) => result.includes(resource.url));
-    const hasVerifiedExcerpts = resource.evidence.every(({ excerpt }) =>
-      toolResults.some((result) => result.includes(resource.url) && result.includes(excerpt))
+  const currentRunResults = expected.agentRunId === undefined
+    ? []
+    : toolResults.filter((result) =>
+      result.requestId === expected.requestId &&
+      result.agentRunId === expected.agentRunId &&
+      result.toolCallId.trim().length > 0 &&
+      result.isError === false &&
+      isSourceResearchTool(result.toolName) &&
+      result.text.length > 0
     );
-    if (!hasVerifiedUrl || !hasVerifiedExcerpts) {
-      return `A URL ${resource.url} ou um dos trechos citados não aparece em resultado bem-sucedido de ferramenta host apropriada nesta request.`;
+  for (const resource of proposal.resources) {
+    const hasVerifiedExcerpts = resource.evidence.every(({ excerpt }) =>
+      currentRunResults.some((result) => result.text.includes(resource.url) && result.text.includes(excerpt))
+    );
+    if (!hasVerifiedExcerpts) {
+      return `A URL ${resource.url} ou um dos trechos citados não aparece junto em resultado bem-sucedido de ferramenta host apropriada ligado à request e ao run atuais.`;
     }
   }
   return undefined;

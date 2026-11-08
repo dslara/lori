@@ -3,7 +3,7 @@ import type { DomainDraft } from "../../core/domain/types.ts";
 import type { ChapterProposal } from "../../core/domain/chapter.ts";
 import { redactSensitiveText } from "../../core/privacy/redact-sensitive-text.ts";
 
-const nonEmptyString = (description: string) => Type.String({ minLength: 1, description });
+const nonEmptyString = (description: string) => Type.String({ minLength: 1, pattern: "\\S", description });
 
 const evidenceSchema = Type.Object({
   id: nonEmptyString("Stable evidence ID, referenced by Nodes."),
@@ -41,7 +41,10 @@ const chapterSchema = Type.Object({
     id: nonEmptyString("Unique Node ID within this Chapter."),
     order: Type.Integer({ minimum: 1, description: "One-based contiguous order in the Chapter." }),
     objective: nonEmptyString("Specific learning objective for this Node."),
-    exitProofCriterion: nonEmptyString("Exact Exit Proof criterion this Node is necessary to satisfy."),
+    exitProofContributions: Type.Array(Type.Object({
+      criterion: nonEmptyString("Exact Exit Proof criterion this Node contributes to satisfying."),
+      rationale: nonEmptyString("Specific reason this Node is needed to satisfy that criterion."),
+    }, { additionalProperties: false }), { minItems: 1, description: "Every Node must justify its necessity through at least one Exit Proof criterion." }),
     evidenceRefs: Type.Array(Type.Object({
       resourceId: nonEmptyString("ID of a resource in this proposal."),
       evidenceId: nonEmptyString("ID of an excerpt registered on that resource."),
@@ -108,7 +111,7 @@ export function buildChapterCurationPrompt(
     `Restrições: ${draft.materialRestrictions === null || draft.materialRestrictions === undefined ? "nenhuma declarada" : redactSensitiveText(draft.materialRestrictions)}`,
     "Pesquise fontes reais com as ferramentas disponíveis. Considere uma fonte verificável somente se uma ferramenta desta sessão permitiu inspecionar o conteúdo; cite trechos exatos e localização. Se não puder acessar o conteúdo, use status blocked. Retorne a proposta somente por lori_submit_chapter; nunca use texto livre como substituto do tool.",
     "Uma proposta exige 1–3 recursos compatíveis, URLs HTTPS, trechos textuais rastreáveis com localização, Nodes em ordem com objetivos, referências consistentes aos trechos e recurso recomendado por Node. Registre separadamente scope, justificativa e limitações de cada recurso; inclua metadados relevantes e não atribua score universal Tier 1.",
-    "Proponha o menor conjunto ordenado de Nodes necessário para satisfazer o Exit Proof; omita qualquer Node não essencial. Cada Node deve nomear exatamente um critério observável do Exit Proof que ele é necessário para satisfazer.",
+    "Proponha o menor conjunto ordenado de Nodes necessário para satisfazer o Exit Proof; omita qualquer Node não essencial. Cada Node deve declarar uma ou mais exitProofContributions: copie exatamente cada critério observável relacionado e forneça um rationale específico de por que esse Node é necessário para satisfazê-lo. Relacione todo critério do Exit Proof a pelo menos um Node.",
     "Se não encontrar recurso verificável e compatível com todas as restrições, use result.status=blocked com a razão. Não submeta Chapter vazio, não invente fonte e não proponha relaxar as restrições.",
     "O Chapter precisa ter outcome, Principle, Exit Proof com critérios observáveis, faixa de esforço e uma explicação que relacione explicitamente o prazo e as horas semanais fornecidas. Copie deadline e hoursPerWeek exatamente no objeto effort.",
     isRecuration
@@ -134,7 +137,14 @@ export function renderChapterProposal(
   for (const node of proposal.nodes) {
     const recommended = proposal.resources.find(({ id }) => id === node.recommendedResourceId);
     lines.push(`${node.order}. ${node.id}: ${node.objective}`);
-    lines.push(`   Critério do Exit Proof atendido: ${node.exitProofCriterion ?? "Não registrado na proposta original."}`);
+    if (node.exitProofContributions !== undefined) {
+      for (const contribution of node.exitProofContributions) {
+        lines.push(`   Critério do Exit Proof: ${contribution.criterion}`);
+        lines.push(`   Contribuição necessária: ${contribution.rationale}`);
+      }
+    } else {
+      lines.push(`   Critério do Exit Proof atendido: ${node.exitProofCriterion ?? "Não registrado na proposta original."}`);
+    }
     lines.push(`   Recurso recomendado: ${recommended?.title ?? node.recommendedResourceId} (${recommended?.url ?? "URL ausente"})`);
     for (const ref of node.evidenceRefs) {
       const resource = proposal.resources.find(({ id }) => id === ref.resourceId);

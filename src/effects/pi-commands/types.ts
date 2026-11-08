@@ -1,4 +1,5 @@
 import type { LoriAction } from "../../core/actions.ts";
+import type { ChapterSourceEvidence } from "../../core/domain/chapter.ts";
 import type { SkinProvider } from "../../presentation/skin/provider.ts";
 import type { LoriState } from "../../store/state.ts";
 import type { LoriStore } from "../../store/store.ts";
@@ -25,7 +26,9 @@ export type LoriExtensionState = {
     domainId: string;
     target: "draft" | "active";
     expectedCurrentChapterVersionId?: string;
-    sourceToolCalls: Record<string, string>;
-    sourceEvidence: string[];
+    awaitingAgentStart: boolean;
+    agentRunId: string | undefined;
+    sourceToolCalls: Record<string, { requestId: string; agentRunId: string; toolName: string }>;
+    sourceEvidence: ChapterSourceEvidence[];
   } | undefined;
 };

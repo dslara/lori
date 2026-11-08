@@ -25,6 +25,8 @@ type UI = {
 
 type StartHandler = (event: { type: "session_start"; reason: "startup" }, ctx: { cwd: string; ui: UI }) => void | Promise<void>;
 type ShutdownHandler = () => void | Promise<void>;
+type AgentStartHandler = (event: { type: "agent_start" }) => void | Promise<void>;
+type AgentEndHandler = (event: { type: "agent_end"; messages: unknown[] }) => void | Promise<void>;
 type ToolCallHandler = (event: { toolName: string; toolCallId: string; input: Record<string, unknown> }) => unknown;
 type ToolResultHandler = (event: {
   toolName: string;
@@ -73,6 +75,9 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
   }
   let startHandler: StartHandler | undefined;
   let shutdownHandler: ShutdownHandler | undefined;
+  let agentStartHandler: AgentStartHandler | undefined;
+  let agentEndHandler: AgentEndHandler | undefined;
+  let agentRunActive = false;
   let toolCallHandler: ToolCallHandler | undefined;
   let toolResultHandler: ToolResultHandler | undefined;
   const commandHandlers = new Map<string, CommandHandler>();
@@ -94,6 +99,11 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
   const observeToolResult = (toolName: string, toolCallId: string, text: string, isError = false): void => {
     observeToolCall(toolName, toolCallId);
     emitToolResult(toolName, toolCallId, text, isError);
+  };
+  const endAgentRun = (): void => {
+    if (!agentRunActive) return;
+    agentRunActive = false;
+    agentEndHandler?.({ type: "agent_end", messages: [] });
   };
   const ui: UI = {
     notifications: [],
@@ -136,6 +146,8 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
       if (event === "session_shutdown") {
         shutdownHandler = handler as ShutdownHandler;
       }
+      if (event === "agent_start") agentStartHandler = handler as unknown as AgentStartHandler;
+      if (event === "agent_end") agentEndHandler = handler as unknown as AgentEndHandler;
       if (event === "tool_call") toolCallHandler = handler as unknown as ToolCallHandler;
       if (event === "tool_result") toolResultHandler = handler as unknown as ToolResultHandler;
     },
@@ -147,6 +159,8 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
     },
     sendUserMessage(content: string) {
       sentUserMessages.push(content);
+      agentRunActive = true;
+      agentStartHandler?.({ type: "agent_start" });
     },
   } as unknown as ExtensionAPI;
 
@@ -196,6 +210,7 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
         await handler?.("", { ui, isIdle: () => true });
       },
       async runCurate(args = "") {
+        endAgentRun();
         const handler = commandHandlers.get("lori-curate");
         expect(handler).toBeDefined();
         await handler?.(args, { ui, isIdle: () => true });
@@ -215,7 +230,9 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
         const tool = registeredTools.get("lori_submit_chapter");
         expect(tool).toBeDefined();
         if (!tool) return undefined;
-        return await Reflect.apply(tool.execute, undefined, ["tool-call", params, undefined, undefined, { ui, cwd, hasUI: true }]);
+        const result = await Reflect.apply(tool.execute, undefined, ["tool-call", params, undefined, undefined, { ui, cwd, hasUI: true }]);
+        endAgentRun();
+        return result;
       },
       toolParameters(name) {
         return registeredTools.get(name)?.parameters;
@@ -300,7 +317,10 @@ function validCuration(params: { requestId: string; domainId: string }): Record<
             id: "greetings",
             order: 1,
             objective: "Recognize and use common greetings in a short exchange.",
-            exitProofCriterion: "The recording includes a greeting.",
+            exitProofContributions: [{
+              criterion: "The recording includes a greeting.",
+              rationale: "This Node gives the Player the greeting needed to open the role-play recording.",
+            }],
             evidenceRefs: [{ resourceId: "resource-1", evidenceId: "greetings-excerpt" }],
             recommendedResourceId: "resource-1",
           },
@@ -308,7 +328,10 @@ function validCuration(params: { requestId: string; domainId: string }): Record<
             id: "ordering",
             order: 2,
             objective: "Ask for a meal and respond to a simple follow-up question.",
-            exitProofCriterion: "The recording includes an order and a relevant response to one follow-up question.",
+            exitProofContributions: [{
+              criterion: "The recording includes an order and a relevant response to one follow-up question.",
+              rationale: "This Node supplies the order and response practice needed for the second observable part of the role-play.",
+            }],
             evidenceRefs: [{ resourceId: "resource-1", evidenceId: "ordering-excerpt" }],
             recommendedResourceId: "resource-1",
           },
@@ -610,7 +633,8 @@ describe("Lori Chapter curation", () => {
     expect(JSON.stringify(snapshot)).not.toContain("sourceToolCalls");
     expect(harness.ui.notifications.at(-1)?.message).toContain("1. greetings");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Exit Proof");
-    expect(harness.ui.notifications.at(-1)?.message).toContain("Critério do Exit Proof atendido");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Critério do Exit Proof:");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Contribuição necessária:");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Scope: Short beginner greeting and ordering exchanges");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Example Language Institute");
     expect(harness.ui.notifications.at(-1)?.message).toContain("ainda não está ativo");
@@ -622,7 +646,10 @@ describe("Lori Chapter curation", () => {
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
     const oldSnapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
     for (const chapter of oldSnapshot.domains[0].chapters) {
-      for (const node of chapter.chapter.nodes) delete node.exitProofCriterion;
+      for (const node of chapter.chapter.nodes) {
+        delete node.exitProofCriterion;
+        delete node.exitProofContributions;
+      }
       for (const resource of chapter.chapter.resources) delete resource.scope;
     }
     await writeFile(snapshotPath, JSON.stringify(oldSnapshot));
@@ -724,20 +751,20 @@ describe("Lori Chapter curation", () => {
     expect(harness.ui.notifications.at(-1)?.message).toContain("referência");
   });
 
-  test("rejects a Node that names no Exit Proof criterion", async () => {
+  test("rejects a Node contribution that names an invalid Exit Proof criterion", async () => {
     const { cwd, harness } = await createHarness();
     await prepareCurationDraft(harness);
     await harness.runCurate();
     const params = curationRequestIds(harness);
     const before = await readFile(join(cwd, ".lori", "snapshot.json"), "utf8");
     const invalid = validCuration(params);
-    const proposal = (invalid.result as { proposal: { nodes: Array<{ exitProofCriterion: string }> } }).proposal;
-    proposal.nodes[0]!.exitProofCriterion = "This criterion is not in the Exit Proof.";
+    const proposal = (invalid.result as { proposal: { nodes: Array<{ exitProofContributions: Array<{ criterion: string }> }> } }).proposal;
+    proposal.nodes[0]!.exitProofContributions[0]!.criterion = "This criterion is not in the Exit Proof.";
 
     await harness.submitCuration(invalid);
 
     expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).toBe(before);
-    expect(harness.ui.notifications.at(-1)?.message).toContain("Nodes");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("critério válido");
   });
 
   test("blocks proposals without resources or compatible, traceable sources and asks the Player for a decision", async () => {
