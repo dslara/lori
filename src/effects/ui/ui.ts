@@ -1,5 +1,5 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
-import { selectElapsedMs } from "../../core/session/selectors.ts";
+import { isMetalearningSession, selectElapsedMs } from "../../core/session/selectors.ts";
 import type { SkinProvider } from "../../presentation/skin/provider.ts";
 import type { LoriState } from "../../store/state.ts";
 import type { SessionDisplayEvent } from "./types.ts";
@@ -26,14 +26,14 @@ export function renderStatus(
   }
 
   const elapsed = formatElapsed(selectElapsedMs(session, now));
-  const domain = session.kind === "metalearning"
+  const isMetalearning = isMetalearningSession(session);
+  const domain = isMetalearning
     ? state.domains.find(({ id }) => id === session.domainId)?.name ?? state.domainDraft?.name ?? "Domain em preparação"
     : session.kind === "study"
     ? state.domains.find(({ id }) => id === session.domainId)?.name ?? "Domain"
     : session.name;
   let status: string;
   if (session.status === "closed") {
-    const isMetalearning = session.kind === "metalearning";
     status = skin.render("session.closed", {
       domain,
       technique: isMetalearning ? "Metalearning" : session.primaryTechnique,
@@ -43,7 +43,6 @@ export function renderStatus(
     });
   } else {
     const sessionEvent = event ?? (session.status === "open" ? "session.open" : "session.paused");
-    const isMetalearning = session.kind === "metalearning";
     status = skin.render(sessionEvent, {
       domain,
       technique: isMetalearning ? "Metalearning" : session.primaryTechnique,
@@ -61,7 +60,7 @@ export function renderStatus(
   if (session.status !== "closed") {
     const previousVerdict = state.sessionHistory.at(-1);
     if (previousVerdict?.status === "closed") {
-      const isMetalearning = previousVerdict.kind === "metalearning";
+      const isMetalearning = isMetalearningSession(previousVerdict);
       const domain = isMetalearning || previousVerdict.kind === "study"
         ? state.domains.find(({ id }) => id === previousVerdict.domainId)?.name ?? "Domain"
         : previousVerdict.name;

@@ -21,6 +21,7 @@ export type ChapterResource = {
   id: string;
   title: string;
   url: string;
+  scope?: string;
   justification: string;
   limitations: string;
   compatibility: {
@@ -49,6 +50,7 @@ export type ChapterNode = {
   id: string;
   order: number;
   objective: string;
+  exitProofCriterion?: string;
   evidenceRefs: ChapterNodeEvidenceRef[];
   recommendedResourceId: string;
 };
@@ -106,12 +108,14 @@ function isHttpUrl(value: unknown): value is string {
   }
 }
 
-function decodeResource(value: unknown): ChapterResource | undefined {
+function decodeResource(value: unknown, allowMissingScope = false): ChapterResource | undefined {
   if (
     !isRecord(value) ||
     !isNonEmptyString(value.id) ||
     !isNonEmptyString(value.title) ||
     !isHttpUrl(value.url) ||
+    (!allowMissingScope && !isNonEmptyString(value.scope)) ||
+    (value.scope !== undefined && !isNonEmptyString(value.scope)) ||
     !isNonEmptyString(value.justification) ||
     !isNonEmptyString(value.limitations) ||
     !isRecord(value.compatibility) ||
@@ -152,6 +156,7 @@ function decodeResource(value: unknown): ChapterResource | undefined {
     id: value.id,
     title: value.title,
     url: value.url,
+    ...(value.scope === undefined ? {} : { scope: value.scope as string }),
     justification: value.justification,
     limitations: value.limitations,
     compatibility: {
@@ -164,7 +169,10 @@ function decodeResource(value: unknown): ChapterResource | undefined {
   };
 }
 
-export function validateChapterProposal(value: unknown): ChapterProposalValidation {
+export function validateChapterProposal(
+  value: unknown,
+  options: { allowMissingReviewDetails?: boolean } = {},
+): ChapterProposalValidation {
   if (
     !isRecord(value) ||
     !isNonEmptyString(value.outcome) ||
@@ -201,7 +209,7 @@ export function validateChapterProposal(value: unknown): ChapterProposalValidati
   const resourceIds = new Set<string>();
   const evidenceRefs = new Set<string>();
   for (const entry of value.resources) {
-    const resource = decodeResource(entry);
+    const resource = decodeResource(entry, options.allowMissingReviewDetails);
     if (resource === undefined || resourceIds.has(resource.id)) {
       return { ok: false, reason: "A proposta contém recurso inválido, URL não verificável ou evidência sem trecho e localização rastreáveis." };
     }
@@ -223,6 +231,8 @@ export function validateChapterProposal(value: unknown): ChapterProposalValidati
       nodeIds.has(entry.id) ||
       entry.order !== index + 1 ||
       !isNonEmptyString(entry.objective) ||
+      (!options.allowMissingReviewDetails && !isNonEmptyString(entry.exitProofCriterion)) ||
+      (entry.exitProofCriterion !== undefined && (!isNonEmptyString(entry.exitProofCriterion) || !value.exitProof.criteria.includes(entry.exitProofCriterion))) ||
       !Array.isArray(entry.evidenceRefs) ||
       entry.evidenceRefs.length === 0 ||
       !isNonEmptyString(entry.recommendedResourceId) ||
@@ -258,9 +268,14 @@ export function validateChapterProposal(value: unknown): ChapterProposalValidati
       id: entry.id,
       order: entry.order,
       objective: entry.objective,
+      ...(entry.exitProofCriterion === undefined ? {} : { exitProofCriterion: entry.exitProofCriterion as string }),
       evidenceRefs: nodeEvidenceRefs,
       recommendedResourceId: entry.recommendedResourceId,
     });
+  }
+
+  if (!options.allowMissingReviewDetails && value.exitProof.criteria.some((criterion) => !nodes.some(({ exitProofCriterion }) => exitProofCriterion === criterion))) {
+    return { ok: false, reason: "Cada critério do Exit Proof precisa estar ligado a ao menos um Node necessário." };
   }
 
   if (resources.some(({ id }) => !referencedResourceIds.has(id))) {
@@ -285,6 +300,22 @@ export function validateChapterProposal(value: unknown): ChapterProposalValidati
       resources,
     },
   };
+}
+
+export function validateChapterSourceEvidence(
+  proposal: ChapterProposal,
+  toolResults: readonly string[],
+): string | undefined {
+  for (const resource of proposal.resources) {
+    const hasVerifiedUrl = toolResults.some((result) => result.includes(resource.url));
+    const hasVerifiedExcerpts = resource.evidence.every(({ excerpt }) =>
+      toolResults.some((result) => result.includes(resource.url) && result.includes(excerpt))
+    );
+    if (!hasVerifiedUrl || !hasVerifiedExcerpts) {
+      return `A URL ${resource.url} ou um dos trechos citados não aparece em resultado bem-sucedido de ferramenta host apropriada nesta request.`;
+    }
+  }
+  return undefined;
 }
 
 export function validateProposalForQuestionnaire(

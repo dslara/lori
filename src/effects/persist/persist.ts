@@ -337,7 +337,7 @@ function decodeDomainDraft(value: unknown, schemaVersion: 2 | 3 | 4): LoriState[
     return undefined;
   }
   if (draft.phase === "awaiting_approval") {
-    const proposal = validateChapterProposal(value.pendingChapter);
+    const proposal = validateChapterProposal(value.pendingChapter, { allowMissingReviewDetails: true });
     if (!proposal.ok || validateProposalForDraft(proposal.proposal, draft) !== undefined) {
       return undefined;
     }
@@ -385,7 +385,7 @@ function decodeActiveDomain(value: unknown, schemaVersion: 2 | 3 | 4): ActiveDom
     ) {
       return undefined;
     }
-    const chapter = validateChapterProposal(entry.chapter);
+    const chapter = validateChapterProposal(entry.chapter, { allowMissingReviewDetails: true });
     if (!chapter.ok) return undefined;
     versionIds.add(entry.id);
     versionNumbers.add(entry.version);
@@ -403,7 +403,7 @@ function decodeActiveDomain(value: unknown, schemaVersion: 2 | 3 | 4): ActiveDom
   };
   let pendingChapter: ActiveDomain["pendingChapter"];
   if (value.pendingChapter !== undefined) {
-    const proposal = validateChapterProposal(value.pendingChapter);
+    const proposal = validateChapterProposal(value.pendingChapter, { allowMissingReviewDetails: true });
     if (
       schemaVersion < 4 ||
       !proposal.ok ||

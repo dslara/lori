@@ -1,5 +1,9 @@
 import type { Session } from "./types.ts";
 
+export function isMetalearningSession(session: Session | null | undefined): session is Extract<Session, { kind: "metalearning" }> {
+  return session?.kind === "metalearning";
+}
+
 export function selectCanOpenSession(session: Session | null): boolean {
   return session === null || session.status === "closed";
 }

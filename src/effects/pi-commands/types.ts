@@ -25,5 +25,7 @@ export type LoriExtensionState = {
     domainId: string;
     target: "draft" | "active";
     expectedCurrentChapterVersionId?: string;
+    sourceToolCalls: Record<string, string>;
+    sourceEvidence: string[];
   } | undefined;
 };

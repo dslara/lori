@@ -1,6 +1,7 @@
 import { Type } from "typebox";
 import type { DomainDraft } from "../../core/domain/types.ts";
 import type { ChapterProposal } from "../../core/domain/chapter.ts";
+import { redactSensitiveText } from "../../core/privacy/redact-sensitive-text.ts";
 
 const nonEmptyString = (description: string) => Type.String({ minLength: 1, description });
 
@@ -14,8 +15,9 @@ const resourceSchema = Type.Object({
   id: nonEmptyString("Stable resource ID, referenced by Nodes."),
   title: nonEmptyString("Resource title."),
   url: Type.String({ format: "uri", description: "Verifiable HTTPS source URL." }),
+  scope: nonEmptyString("What the resource covers and does not cover."),
   justification: nonEmptyString("Why this resource fits the objective and Player context."),
-  limitations: nonEmptyString("Known scope, access, or quality limitations."),
+  limitations: nonEmptyString("Known access or quality limitations."),
   compatibility: Type.Object({
     preferencesConsidered: nonEmptyString("How declared material preferences were considered, or why none apply."),
     restrictionsConsidered: nonEmptyString("How every declared material restriction was honored, or why none apply."),
@@ -39,6 +41,7 @@ const chapterSchema = Type.Object({
     id: nonEmptyString("Unique Node ID within this Chapter."),
     order: Type.Integer({ minimum: 1, description: "One-based contiguous order in the Chapter." }),
     objective: nonEmptyString("Specific learning objective for this Node."),
+    exitProofCriterion: nonEmptyString("Exact Exit Proof criterion this Node is necessary to satisfy."),
     evidenceRefs: Type.Array(Type.Object({
       resourceId: nonEmptyString("ID of a resource in this proposal."),
       evidenceId: nonEmptyString("ID of an excerpt registered on that resource."),
@@ -95,16 +98,17 @@ export function buildChapterCurationPrompt(
     ...(options.currentChapterVersionId === undefined ? [] : [`Versão aprovada atual: ${options.currentChapterVersionId}`]),
     `requestId: ${requestId}`,
     `domainId: ${draft.id}`,
-    `Domain: ${draft.name}`,
-    `Learning Objective: ${draft.learningObjective}`,
-    `Motivação: ${draft.motivation}`,
-    `Prazo: ${draft.deadline ?? "sem prazo"}`,
+    `Domain: ${redactSensitiveText(draft.name ?? "")}`,
+    `Learning Objective: ${redactSensitiveText(draft.learningObjective ?? "")}`,
+    `Motivação: ${redactSensitiveText(draft.motivation ?? "")}`,
+    `Prazo: ${draft.deadline === null || draft.deadline === undefined ? "sem prazo" : redactSensitiveText(draft.deadline)}`,
     `Horas por semana: ${draft.hoursPerWeek}`,
     `Baseline: ${draft.baseline}`,
-    `Preferências: ${draft.preferences ?? "nenhuma declarada"}`,
-    `Restrições: ${draft.materialRestrictions ?? "nenhuma declarada"}`,
+    `Preferências: ${draft.preferences === null || draft.preferences === undefined ? "nenhuma declarada" : redactSensitiveText(draft.preferences)}`,
+    `Restrições: ${draft.materialRestrictions === null || draft.materialRestrictions === undefined ? "nenhuma declarada" : redactSensitiveText(draft.materialRestrictions)}`,
     "Pesquise fontes reais com as ferramentas disponíveis. Considere uma fonte verificável somente se uma ferramenta desta sessão permitiu inspecionar o conteúdo; cite trechos exatos e localização. Se não puder acessar o conteúdo, use status blocked. Retorne a proposta somente por lori_submit_chapter; nunca use texto livre como substituto do tool.",
-    "Uma proposta exige 1–3 recursos compatíveis, URLs HTTPS, trechos textuais rastreáveis com localização, Nodes em ordem com objetivos, referências consistentes aos trechos e recurso recomendado por Node. Inclua limitações e metadados relevantes; não atribua score universal Tier 1.",
+    "Uma proposta exige 1–3 recursos compatíveis, URLs HTTPS, trechos textuais rastreáveis com localização, Nodes em ordem com objetivos, referências consistentes aos trechos e recurso recomendado por Node. Registre separadamente scope, justificativa e limitações de cada recurso; inclua metadados relevantes e não atribua score universal Tier 1.",
+    "Proponha o menor conjunto ordenado de Nodes necessário para satisfazer o Exit Proof; omita qualquer Node não essencial. Cada Node deve nomear exatamente um critério observável do Exit Proof que ele é necessário para satisfazer.",
     "Se não encontrar recurso verificável e compatível com todas as restrições, use result.status=blocked com a razão. Não submeta Chapter vazio, não invente fonte e não proponha relaxar as restrições.",
     "O Chapter precisa ter outcome, Principle, Exit Proof com critérios observáveis, faixa de esforço e uma explicação que relacione explicitamente o prazo e as horas semanais fornecidas. Copie deadline e hoursPerWeek exatamente no objeto effort.",
     isRecuration
@@ -130,6 +134,7 @@ export function renderChapterProposal(
   for (const node of proposal.nodes) {
     const recommended = proposal.resources.find(({ id }) => id === node.recommendedResourceId);
     lines.push(`${node.order}. ${node.id}: ${node.objective}`);
+    lines.push(`   Critério do Exit Proof atendido: ${node.exitProofCriterion ?? "Não registrado na proposta original."}`);
     lines.push(`   Recurso recomendado: ${recommended?.title ?? node.recommendedResourceId} (${recommended?.url ?? "URL ausente"})`);
     for (const ref of node.evidenceRefs) {
       const resource = proposal.resources.find(({ id }) => id === ref.resourceId);
@@ -144,6 +149,7 @@ export function renderChapterProposal(
   lines.push("Recursos:");
   for (const resource of proposal.resources) {
     lines.push(`- ${resource.title} — ${resource.url}`);
+    lines.push(`  Scope: ${resource.scope ?? "Não registrado na proposta original."}`);
     lines.push(`  Adequação: ${resource.justification}`);
     lines.push(`  Limitações: ${resource.limitations}`);
     lines.push(`  Compatibilidade: ${resource.compatibility.preferencesConsidered} ${resource.compatibility.restrictionsConsidered}`);
