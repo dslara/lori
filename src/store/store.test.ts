@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createInitialState } from "../state.ts";
+import { createInitialState } from "./state.ts";
 import { createStore } from "./store.ts";
 
 describe("Lori store", () => {

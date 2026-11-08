@@ -1,4 +1,4 @@
-import { createInitialState, type LoriState } from "../state.ts";
+import { createInitialState, type LoriState } from "./state.ts";
 import { rootReducer } from "./root-reducer.ts";
 import type { SessionAction } from "../core/session/types.ts";
 

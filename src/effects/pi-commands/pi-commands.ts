@@ -2,7 +2,7 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import { restoreSessionAsPaused } from "../../core/processors/lifecycle.ts";
 import { selectCanOpenSession } from "../../core/session/selectors.ts";
 import { createStore, type LoriStore } from "../../store/store.ts";
-import type { LoriState } from "../../state.ts";
+import type { LoriState } from "../../store/state.ts";
 import type { SkinProvider } from "../../presentation/skin/provider.ts";
 import { loadOrCreateSnapshot, writeSnapshot } from "../persist/persist.ts";
 import type { SnapshotResult } from "../persist/types.ts";

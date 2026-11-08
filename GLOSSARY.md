@@ -18,6 +18,7 @@ Ubiquitous language of Lori, a gamified accelerated-learning extension. Technica
 | Term          | Definition                                                              | Aliases to avoid              |
 | ------------- | ----------------------------------------------------------------------- | ----------------------------- |
 | **Domain**    | A subject or skill being learned (e.g. Japanese, React, calculus)       | Subject, topic, territory     |
+| **Baseline** | The Player's self-reported familiarity with a learning objective before curation, rated from 1 to 5; not a performance test | Assessment, skill test |
 | **Skill Tree**| Visual map of concepts and prerequisites inside a domain                | Tree, roadmap, tech tree      |
 | **Node**      | A single concept, technique, or milestone in a skill tree. Starts locked, becomes cleared by an exit proof | Item, skill, lesson |
 | **Locked**    | Initial state of a Node, not yet conquered                              | Dim, closed, apagado          |
@@ -122,6 +123,7 @@ Ubiquitous language of Lori, a gamified accelerated-learning extension. Technica
 - A **Domain** contains exactly one **Skill Tree**
 - A **Skill Tree** has many **Nodes** with prerequisite edges
 - A **Chapter** is a finite arc of a **Skill Tree** closed by an **Exit Proof**
+- A **Chapter** has one primary **Principle** that guides its **Exit Proof** form; the learning outcome and **Domain** determine its success criteria.
 - A **Clear** grants an **Unlock**: the next **Chapter**, one **Technique**, one **Quest**
 - A **Session** belongs to exactly one **Domain** and closes with a **Verdict**
 - A **Technique** starts as a **Ritual** and becomes a **Passive** at mastery level

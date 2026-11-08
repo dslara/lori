@@ -1,7 +1,7 @@
 import { mkdir, readFile, realpath, rename, rm, writeFile } from "node:fs/promises";
 import { randomUUID } from "node:crypto";
 import { dirname, isAbsolute, join, relative, sep } from "node:path";
-import { createInitialState, type LoriState } from "../../state.ts";
+import { createInitialState, type LoriState } from "../../store/state.ts";
 import type { SnapshotResult } from "./types.ts";
 
 export const SNAPSHOT_SCHEMA_VERSION = 1;

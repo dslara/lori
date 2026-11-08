@@ -1,6 +1,6 @@
 import type { SessionAction } from "../../core/session/types.ts";
 import type { SkinProvider } from "../../presentation/skin/provider.ts";
-import type { LoriState } from "../../state.ts";
+import type { LoriState } from "../../store/state.ts";
 import type { LoriStore } from "../../store/store.ts";
 
 export type DispatchAndPersistResult =

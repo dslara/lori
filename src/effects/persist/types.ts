@@ -1,4 +1,4 @@
-import type { LoriState } from "../../state.ts";
+import type { LoriState } from "../../store/state.ts";
 
 export type SnapshotResult =
   | { ok: true; state: LoriState }
