@@ -21,7 +21,7 @@ describe("Skin provider", () => {
     const provider = await createSkinProvider(await createProjectDir(), { skin: "minimal" });
 
     expect(provider.render("status.idle", { totalXp: 12 })).toBe(
-      "Lori · Session: nenhuma ativa · XP: 12 · Skin Minimal",
+      "Lori · Session: nenhuma ativa\nXP: 12 · Skin Minimal",
     );
   });
 
@@ -46,16 +46,16 @@ describe("Skin provider", () => {
       }),
       provider.render("session.closeRejected", { domain: "Math", technique: "Recall" }),
     ]).toEqual([
-      "Lori · Session: nenhuma ativa · XP: 7 · Skin Minimal",
-      "Lori · Session: open · Domain: Math · Primary Technique: Recall · Elapsed: 5m",
-      "Lori · Session não iniciada · já existe uma Session ativa · Domain solicitado: Math · Primary Technique: Recall",
-      "Lori · Session pausada · Domain: Math · Primary Technique: Recall · Elapsed: 5m",
-      "Lori · Não foi possível pausar a Session · Domain: Math · Primary Technique: Recall",
-      "Lori · Session retomada · Domain: Math · Primary Technique: Recall · Elapsed: 5m",
-      "Lori · Não foi possível retomar a Session · Domain: Math · Primary Technique: Recall",
-      "Lori · Session restaurada como pausada · Domain: Math · Primary Technique: Recall · Elapsed: 5m",
-      "Lori · Session fechada · Domain: Math · Primary Technique: Recall · Elapsed: 5m · Focus: 3 · Honesty: 4",
-      "Lori · Não foi possível fechar a Session · Domain: Math · Primary Technique: Recall",
+      "Lori · Session: nenhuma ativa\nXP: 7 · Skin Minimal",
+      "Lori · Session open\nDomain: Math · Technique: Recall · Elapsed: 5m",
+      "Lori · Session não iniciada\njá existe uma Session ativa · Domain solicitado: Math · Technique: Recall",
+      "Lori · Session pausada\nDomain: Math · Technique: Recall · Elapsed: 5m",
+      "Lori · Não foi possível pausar a Session\nDomain: Math · Technique: Recall",
+      "Lori · Session retomada\nDomain: Math · Technique: Recall · Elapsed: 5m",
+      "Lori · Não foi possível retomar a Session\nDomain: Math · Technique: Recall",
+      "Lori · Session restaurada como pausada\nDomain: Math · Technique: Recall · Elapsed: 5m",
+      "Lori · Session fechada\nDomain: Math · Technique: Recall\nElapsed: 5m · Focus: 3 · Honesty: 4",
+      "Lori · Não foi possível fechar a Session\nDomain: Math · Technique: Recall",
     ]);
   });
 
@@ -76,7 +76,7 @@ describe("Skin provider", () => {
     const provider = await createSkinProvider(await createProjectDir(), { skin: "missing" });
 
     expect(provider.render("status.idle", { totalXp: 8 })).toBe(
-      "Lori · Session: nenhuma ativa · XP: 8 · Skin Minimal",
+      "Lori · Session: nenhuma ativa\nXP: 8 · Skin Minimal",
     );
   });
 
@@ -97,7 +97,7 @@ describe("Skin provider", () => {
 
     expect(provider.render("status.idle", { totalXp: 3 })).toBe("Custom XP=3");
     expect(provider.render("session.open", { domain: "Math", technique: "Recall", elapsed: "5m" })).toBe(
-      "Lori · Session: open · Domain: Math · Primary Technique: Recall · Elapsed: 5m",
+      "Lori · Session open\nDomain: Math · Technique: Recall · Elapsed: 5m",
     );
     expect(provider.render("session.closed", {
       domain: "Math",
@@ -106,7 +106,7 @@ describe("Skin provider", () => {
       focus: 2,
       honesty: 3,
     })).toBe(
-      "Lori · Session fechada · Domain: Math · Primary Technique: Recall · Elapsed: 5m · Focus: 2 · Honesty: 3",
+      "Lori · Session fechada\nDomain: Math · Technique: Recall\nElapsed: 5m · Focus: 2 · Honesty: 3",
     );
   });
 
@@ -117,7 +117,7 @@ describe("Skin provider", () => {
     const provider = await createSkinProvider(projectDir, { skin: "broken" });
 
     expect(provider.render("session.paused", { domain: "Japanese", technique: "Recall", elapsed: "9m" })).toBe(
-      "Lori · Session pausada · Domain: Japanese · Primary Technique: Recall · Elapsed: 9m",
+      "Lori · Session pausada\nDomain: Japanese · Technique: Recall · Elapsed: 9m",
     );
   });
 
@@ -131,7 +131,7 @@ describe("Skin provider", () => {
     const provider = await createSkinProvider(projectDir, { skin: "../escape" });
 
     expect(provider.render("status.idle", { totalXp: 0 })).toBe(
-      "Lori · Session: nenhuma ativa · XP: 0 · Skin Minimal",
+      "Lori · Session: nenhuma ativa\nXP: 0 · Skin Minimal",
     );
   });
 
@@ -142,6 +142,6 @@ describe("Skin provider", () => {
       domain: "{elapsed}",
       technique: "Recall",
       elapsed: "00:00:10",
-    })).toBe("Lori · Session: open · Domain: {elapsed} · Primary Technique: Recall · Elapsed: 00:00:10");
+    })).toBe("Lori · Session open\nDomain: {elapsed} · Technique: Recall · Elapsed: 00:00:10");
   });
 });

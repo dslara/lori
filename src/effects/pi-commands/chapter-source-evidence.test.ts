@@ -38,7 +38,7 @@ function setup(requestId = "request-1") {
 }
 
 describe("curation source evidence lifecycle", () => {
-  test("captures only successful results from an approved research tool in the active request and run", () => {
+  test("captures successful results from any tool in the active request and run", () => {
     const { shared, emit } = setup();
     emit("agent_start", { type: "agent_start" });
     const runId = shared.curationRequest?.agentRunId;
@@ -47,14 +47,11 @@ describe("curation source evidence lifecycle", () => {
     }
     expect(runId).toBeDefined();
 
-    emit("tool_call", { type: "tool_call", toolName: "cache_search", toolCallId: "cache-1", input: {} });
     emit("tool_call", { type: "tool_call", toolName: "my_private_search", toolCallId: "search-1", input: {} });
-    emit("tool_call", { type: "tool_call", toolName: "arbitrary_fetch", toolCallId: "fetch-1", input: {} });
-    emit("tool_call", { type: "tool_call", toolName: "brave_search", toolCallId: "source-1", input: {} });
     emit("tool_result", {
       type: "tool_result",
-      toolName: "brave_search",
-      toolCallId: "source-1",
+      toolName: "my_private_search",
+      toolCallId: "search-1",
       input: {},
       content: [{ type: "text", text: "https://example.com/phrases Good morning. Greetings" }],
       isError: false,
@@ -64,8 +61,8 @@ describe("curation source evidence lifecycle", () => {
     expect(shared.curationRequest?.sourceEvidence).toEqual([{
       requestId: "request-1",
       agentRunId: runId,
-      toolCallId: "source-1",
-      toolName: "brave_search",
+      toolCallId: "search-1",
+      toolName: "my_private_search",
       isError: false,
       text: "https://example.com/phrases Good morning. Greetings",
     }]);

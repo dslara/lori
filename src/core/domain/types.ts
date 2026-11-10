@@ -77,3 +77,9 @@ export type DomainApprovalAction = {
   chapterVersionId: string;
   approvedAt: number;
 };
+
+export type DomainDeleteAction = {
+  type: "domain/delete";
+  id: string;
+  target: "active" | "draft";
+};

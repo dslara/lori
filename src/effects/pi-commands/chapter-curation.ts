@@ -105,8 +105,8 @@ export function buildChapterCurationPrompt(
   const isRecuration = options.currentChapterVersionId !== undefined;
   return [
     isRecuration
-      ? "Solicitação explícita /lori-curate para propor uma nova versão do Chapter atual do Domain ativo. Use as respostas salvas e apenas o provider e as ferramentas disponíveis nesta sessão Pi; não invente fontes e não relaxe preferências ou restrições."
-      : "Solicitação explícita /lori-curate para propor o primeiro Chapter do Domain. Use apenas o provider e as ferramentas disponíveis nesta sessão Pi para pesquisar; não invente fontes e não relaxe preferências ou restrições.",
+      ? "Solicitação explícita /lori-curate para propor uma nova versão do Chapter atual do Domain ativo. Use as respostas salvas."
+      : "Solicitação explícita /lori-curate para propor o primeiro Chapter do Domain.",
     ...(options.currentChapterVersionId === undefined ? [] : [`Versão aprovada atual: ${options.currentChapterVersionId}`]),
     `requestId: ${requestId}`,
     `domainId: ${draft.id}`,
@@ -118,15 +118,15 @@ export function buildChapterCurationPrompt(
     `Baseline: ${draft.baseline}`,
     `Preferências: ${draft.preferences === null || draft.preferences === undefined ? "nenhuma declarada" : redactSensitiveText(draft.preferences)}`,
     `Restrições: ${draft.materialRestrictions === null || draft.materialRestrictions === undefined ? "nenhuma declarada" : redactSensitiveText(draft.materialRestrictions)}`,
-    "Pesquise fontes reais com as ferramentas disponíveis. Considere uma fonte verificável somente se uma ferramenta desta sessão permitiu inspecionar o conteúdo; cite trechos exatos e localização. Se não puder acessar o conteúdo, use status blocked. Retorne a proposta somente por lori_submit_chapter; nunca use texto livre como substituto do tool.",
+    "Pesquise fontes reais com as ferramentas disponíveis que o agente da curadoria escolher; Lori não impõe allowlist de ferramentas. Considere uma fonte verificável somente quando uma chamada bem-sucedida na request e no run atuais permitiu inspecionar seu conteúdo e a saída dessa mesma chamada contém a URL HTTPS, o trecho exato e o locator citados. Se não puder verificar uma fonte compatível, use result.status=blocked. Não invente fontes nem relaxe restrições. Envie proposta ou bloqueio somente por lori_submit_chapter; texto livre não substitui o tool.",
     "Uma proposta exige 1–3 recursos compatíveis, URLs HTTPS, trechos textuais rastreáveis com localização, Nodes em ordem com objetivos, referências consistentes aos trechos e recurso recomendado por Node. Registre separadamente scope, justificativa e limitações de cada recurso; inclua metadados relevantes e não atribua score universal Tier 1.",
     "Proponha o menor conjunto ordenado de Nodes necessário para satisfazer o Exit Proof; omita qualquer Node não essencial e não repita objetivos. Declare prerequisiteNodeIds apenas com IDs de Nodes anteriores que sejam dependências necessárias, ou [] quando não houver pré-requisito. Para cada prerequisiteNodeId, declare em prerequisiteRationales exatamente um objeto com esse ID e um rationale específico não vazio que explique a dependência. Cada critério do Exit Proof deve ter exatamente um Node contribuinte: copie-o exatamente em exitProofContributions desse Node e não permita que outro Node também o declare, mesmo se houver uma relação prerequisite entre eles. Nodes preparatórios devem declarar exitProofContributions: [] e estar num caminho de prerequisites até um Node contribuinte; não duplique neles claims de critérios. Cada contribuição deve ter um rationale específico não vazio de por que aquele Node é necessário. Relacione todos os critérios do Exit Proof a um único Node contribuinte.",
-    "Se não encontrar recurso verificável e compatível com todas as restrições, use result.status=blocked com a razão. Não submeta Chapter vazio, não invente fonte e não proponha relaxar as restrições.",
+    "Não submeta Chapter vazio.",
     "O Chapter precisa ter outcome, Principle, Exit Proof com critérios observáveis, faixa de esforço e uma explicação que relacione explicitamente o prazo e as horas semanais fornecidas. Copie deadline e hoursPerWeek exatamente no objeto effort.",
     isRecuration
       ? "Use somente os requestId e domainId acima nesta resposta. A proposta ficará pendente para revisão do Player; não altera a versão atual nem sua disponibilidade."
       : "Use somente os requestId e domainId acima nesta resposta. A proposta ficará pendente para revisão do Player; não ativa o Domain.",
-    "Se o tool rejeitar a estrutura ou as referências, explique o impedimento ao Player e não relaxe as restrições.",
+    "Se lori_submit_chapter rejeitar a estrutura ou as referências, considere a proposta não salva e explique ao Player o impedimento específico em texto breve. Não apresente a proposta em texto livre nem relaxe as restrições.",
   ].join("\n");
 }
 

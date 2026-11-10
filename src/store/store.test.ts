@@ -103,4 +103,57 @@ describe("Lori store", () => {
     });
     expect(store.getState().session).toMatchObject({ kind: "study", nodeId: "first-node", resourceId: "resource-1" });
   });
+
+  test("deletes only the selected Domain and its Session history while preserving XP and other Domains", () => {
+    const createDomain = (id: string) => ({
+      id,
+      name: id,
+      learningObjective: `Learn ${id}.`,
+      questionnaire: {
+        motivation: "Personal goal",
+        deadline: null,
+        hoursPerWeek: 2,
+        baseline: 1 as const,
+        preferences: null,
+        materialRestrictions: null,
+      },
+      status: "active" as const,
+      chapters: [],
+      currentChapterVersionId: `chapter-${id}`,
+    });
+    const createClosedSession = (domainId: string) => {
+      const chapterRef = { domainId, chapterVersionId: `chapter-${domainId}` };
+      return {
+        kind: "study" as const,
+        status: "closed" as const,
+        domainId,
+        chapterRef,
+        nodeId: `node-${domainId}`,
+        resourceId: `resource-${domainId}`,
+        primaryTechnique: "Active Recall",
+        startedAt: 1_000,
+        totalPausedMs: 0,
+        closedAt: 2_000,
+        verdict: { focus: 3, honesty: 4, chapterRef },
+      };
+    };
+    const selectedDomain = createDomain("domain-1");
+    const otherDomain = createDomain("domain-2");
+    const selectedSession = createClosedSession(selectedDomain.id);
+    const otherSession = createClosedSession(otherDomain.id);
+    const store = createStore({
+      ...createInitialState(),
+      player: { totalXp: 42 },
+      domains: [selectedDomain, otherDomain],
+      session: otherSession,
+      sessionHistory: [selectedSession, otherSession],
+    });
+
+    store.dispatch({ type: "domain/delete", id: selectedDomain.id, target: "active" });
+
+    expect(store.getState().domains).toEqual([otherDomain]);
+    expect(store.getState().sessionHistory).toEqual([otherSession]);
+    expect(store.getState().session).toBe(otherSession);
+    expect(store.getState().player.totalXp).toBe(42);
+  });
 });

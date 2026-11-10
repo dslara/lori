@@ -5,6 +5,7 @@ import type { LoriState } from "../../store/state.ts";
 import type { SessionDisplayEvent } from "./types.ts";
 
 const STATUS_KEY = "lori";
+const WIDGET_KEY = "lori-details";
 
 function formatElapsed(elapsedMs: number): string {
   const totalSeconds = Math.floor(elapsedMs / 1_000);
@@ -79,11 +80,14 @@ export function showStatus(
   event?: SessionDisplayEvent,
 ): string {
   const status = renderStatus(state, skin, Date.now(), event);
-  ctx.ui.setStatus(STATUS_KEY, status);
+  const lines = status.split("\n");
+  ctx.ui.setStatus(STATUS_KEY, undefined);
+  ctx.ui.setWidget(WIDGET_KEY, lines, { placement: "belowEditor" });
   return status;
 }
 
 export function showError(ctx: Pick<ExtensionContext, "ui">, error: string): void {
-  ctx.ui.setStatus(STATUS_KEY, "Lori: erro no snapshot");
+  ctx.ui.setStatus(STATUS_KEY, undefined);
+  ctx.ui.setWidget(WIDGET_KEY, undefined);
   ctx.ui.notify(error, "error");
 }

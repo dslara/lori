@@ -460,12 +460,6 @@ export function validateChapterProposal(
   };
 }
 
-const sourceResearchToolNames = /^(?:web_search|search_web|web_fetch|browser|browser_search|browse|browse_url|fetch_url|open_url|(?:tavily|brave|exa|firecrawl|serp|google|bing)_search|search_(?:tavily|brave|exa|firecrawl|serp|google|bing))$/i;
-
-export function isSourceResearchTool(toolName: string): boolean {
-  return sourceResearchToolNames.test(toolName);
-}
-
 export function validateChapterSourceEvidence(
   proposal: ChapterProposal,
   toolResults: readonly ChapterSourceEvidence[],
@@ -478,7 +472,6 @@ export function validateChapterSourceEvidence(
       result.agentRunId === expected.agentRunId &&
       result.toolCallId.trim().length > 0 &&
       result.isError === false &&
-      isSourceResearchTool(result.toolName) &&
       result.text.length > 0
     );
   for (const resource of proposal.resources) {

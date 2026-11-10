@@ -69,6 +69,20 @@ const validSubmission = () => ({
 });
 
 describe("chapter curation prompt and proposal presentation", () => {
+  test("leaves tool choice to the agent and states the exact evidence gate", () => {
+    const prompts = [
+      buildChapterCurationPrompt("request-1", draft),
+      buildChapterCurationPrompt("request-1", draft, { currentChapterVersionId: "chapter-1" }),
+    ];
+
+    for (const prompt of prompts) {
+      expect(prompt).toContain("ferramentas disponíveis que o agente da curadoria escolher");
+      expect(prompt).toContain("Lori não impõe allowlist de ferramentas");
+      expect(prompt).toContain("a saída dessa mesma chamada contém a URL HTTPS, o trecho exato e o locator citados");
+      expect(prompt).toContain("explique ao Player o impedimento específico");
+    }
+  });
+
   test("asks for the smallest essential Node set and specific, justified contributions", () => {
     const prompt = buildChapterCurationPrompt("request-1", draft);
 

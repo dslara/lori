@@ -1,4 +1,4 @@
-import type { ActiveDomainProposalAction, DomainApprovalAction, DomainDraftAction } from "./domain/types.ts";
+import type { ActiveDomainProposalAction, DomainApprovalAction, DomainDeleteAction, DomainDraftAction } from "./domain/types.ts";
 import type { SessionAction } from "./session/types.ts";
 
-export type LoriAction = SessionAction | DomainApprovalAction | DomainDraftAction | ActiveDomainProposalAction;
+export type LoriAction = SessionAction | DomainApprovalAction | DomainDeleteAction | DomainDraftAction | ActiveDomainProposalAction;

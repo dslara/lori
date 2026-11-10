@@ -89,7 +89,7 @@ describe("validateChapterSourceEvidence", () => {
     })).toContain("resultado bem-sucedido");
   });
 
-  test("rejects failed, unrelated, or split results that do not provide all exact source fields", () => {
+  test("rejects failed, stale, or incomplete results that do not provide all exact source fields", () => {
     const result = validateChapterProposal(validProposal());
     if (!result.ok) {
       throw new Error("Expected a valid Chapter fixture.");
@@ -100,8 +100,8 @@ describe("validateChapterSourceEvidence", () => {
       "https://example.com/phrases Good morning.", { isError: true },
     )], expected)).toContain("resultado bem-sucedido");
     expect(validateChapterSourceEvidence(result.proposal, [evidence(
-      "https://example.com/phrases Good morning.", { toolName: "cache_search" },
-    )], expected)).toContain("resultado bem-sucedido");
+      "Source https://example.com/phrases states: Good morning. Locator: Greetings", { toolName: "cache_search" },
+    )], expected)).toBeUndefined();
     expect(validateChapterSourceEvidence(result.proposal, [
       evidence("https://example.com/phrases Good morning."),
       evidence("Greetings", { toolCallId: "call-2" }),

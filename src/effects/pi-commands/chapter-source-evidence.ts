@@ -1,5 +1,4 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { isSourceResearchTool } from "../../core/domain/chapter.ts";
 import type { LoriExtensionState } from "./types.ts";
 
 export function registerCurationSourceEvidenceHooks(api: ExtensionAPI, shared: LoriExtensionState): void {
@@ -21,8 +20,7 @@ export function registerCurationSourceEvidenceHooks(api: ExtensionAPI, shared: L
     if (
       request === undefined ||
       agentRunId === undefined ||
-      seenToolCallIds.has(event.toolCallId) ||
-      !isSourceResearchTool(event.toolName)
+      seenToolCallIds.has(event.toolCallId)
     ) {
       return;
     }
@@ -45,8 +43,7 @@ export function registerCurationSourceEvidenceHooks(api: ExtensionAPI, shared: L
       call.requestId !== request.requestId ||
       call.agentRunId !== request.agentRunId ||
       call.toolName !== event.toolName ||
-      event.isError ||
-      !isSourceResearchTool(event.toolName)
+      event.isError
     ) {
       return;
     }

@@ -8,7 +8,11 @@ import loriExtension from "../extensions/lori/index.ts";
 type UI = {
   notifications: Array<{ message: string; type?: string }>;
   statuses: Array<{ key: string; text: string | undefined }>;
-  widgets: Array<{ key: string; content: string[] | undefined }>;
+  widgets: Array<{
+    key: string;
+    content: string[] | undefined;
+    placement?: "aboveEditor" | "belowEditor";
+  }>;
   selectCalls: Array<{ title: string; options: string[] }>;
   selectResponses: Array<string | undefined>;
   inputCalls: Array<{ title: string; placeholder: string | undefined }>;
@@ -17,7 +21,11 @@ type UI = {
   confirmResponses: boolean[];
   notify(message: string, type?: "info" | "warning" | "error"): void;
   setStatus(key: string, text: string | undefined): void;
-  setWidget(key: string, content: string[] | undefined): void;
+  setWidget(
+    key: string,
+    content: string[] | undefined,
+    options?: { placement?: "aboveEditor" | "belowEditor" },
+  ): void;
   select(title: string, options: string[]): Promise<string | undefined>;
   input(title: string, placeholder?: string): Promise<string | undefined>;
   confirm(title: string, message: string): Promise<boolean>;
@@ -46,6 +54,7 @@ type Harness = {
   start(): Promise<void>;
   shutdown(): Promise<void>;
   runStatus(): Promise<void>;
+  runDelete(args: string): Promise<void>;
   runInit(args: string): Promise<void>;
   runStart(args: string): Promise<void>;
   runClose(args: string): Promise<void>;
@@ -63,6 +72,10 @@ type Harness = {
 };
 
 const projectDirs: string[] = [];
+
+function statusWidgetText(ui: UI): string {
+  return ui.widgets.at(-1)?.content?.join("\n") ?? "";
+}
 
 afterEach(async () => {
   await Promise.all(projectDirs.splice(0).map((dir) => rm(dir, { recursive: true, force: true })));
@@ -125,8 +138,8 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
     setStatus(key, text) {
       this.statuses.push({ key, text });
     },
-    setWidget(key, content) {
-      this.widgets.push({ key, content });
+    setWidget(key, content, options) {
+      this.widgets.push({ key, content, placement: options?.placement });
     },
     async select(title, options) {
       this.selectCalls.push({ title, options });
@@ -195,6 +208,11 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
         const handler = commandHandlers.get("lori-status");
         expect(handler).toBeDefined();
         await handler?.("", { ui });
+      },
+      async runDelete(args) {
+        const handler = commandHandlers.get("lori-delete");
+        expect(handler).toBeDefined();
+        await handler?.(args, { ui, isIdle: () => true });
       },
       async runInit(args) {
         const handler = commandHandlers.get("lori-init");
@@ -269,7 +287,7 @@ async function prepareCurationDraft(harness: Harness, domainName = "Spanish", st
     "Audio and short dialogues",
     "No paid-only materials",
   );
-  harness.ui.selectResponses.push("4 · Consigo aplicar sem orientação na maioria dos casos");
+  harness.ui.selectResponses.push("4 · Realizo tarefas comuns com autonomia");
   await harness.runInit("");
 }
 
@@ -539,7 +557,8 @@ describe("Lori Chapter curation", () => {
     expect(closed).not.toHaveProperty("cards");
     expect(closed).not.toHaveProperty("weaknesses");
     expect(closed.domains[0].chapters).toHaveLength(1);
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Focus: -123.5 · Honesty: 1e+200");
+    expect(statusWidgetText(harness.ui)).toContain("Focus: -123.5");
+    expect(statusWidgetText(harness.ui)).toContain("Honesty: 1e+200");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Verdict permanece fechado");
     const domain = closed.domains[0];
     harness.ui.selectResponses.push(`${domain.name} — ${domain.learningObjective} [${domain.id}]`, "Active Recall · Retrieval");
@@ -550,8 +569,9 @@ describe("Lori Chapter curation", () => {
     expect(continued.sessionHistory).toEqual([closed.session]);
     expect(continued.session).toMatchObject({ status: "open", kind: "study", domainId, primaryTechnique: "Active Recall" });
     expect(continued.player.totalXp).toBe(37);
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Focus: -123.5 · Honesty: 1e+200");
-    expect(harness.ui.statuses.at(-1)?.text).toContain(chapterRef.chapterVersionId);
+    expect(statusWidgetText(harness.ui)).toContain("Focus: -123.5");
+    expect(statusWidgetText(harness.ui)).toContain("Honesty: 1e+200");
+    expect(statusWidgetText(harness.ui)).toContain(chapterRef.chapterVersionId);
   });
 
   test("resuming after Focus was saved asks only for Honesty and keeps the saved answer", async () => {
@@ -1160,7 +1180,99 @@ describe("Lori first Study Session", () => {
   });
 });
 
+describe("Lori Domain deletion", () => {
+  test("deletes a selected Domain and its closed Session history only after confirmation", async () => {
+    const { cwd, harness } = await createHarness();
+    await startApprovedStudy(harness, "Spanish");
+    await harness.runClose("2 | 3");
+
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const beforeSnapshot = await readFile(snapshotPath, "utf8");
+    const before = JSON.parse(beforeSnapshot);
+    const domain = before.domains[0];
+    expect(before.session.status).toBe("closed");
+    expect(before.sessionHistory).toHaveLength(1);
+
+    const selection = `${domain.name} — ${domain.learningObjective} [${domain.id}]`;
+    harness.ui.selectResponses.push(selection);
+    harness.ui.confirmResponses.push(false);
+    await harness.runDelete("");
+    expect(await readFile(snapshotPath, "utf8")).toBe(beforeSnapshot);
+
+    harness.ui.selectResponses.push(selection);
+    harness.ui.confirmResponses.push(true);
+    await harness.runDelete("");
+
+    const after = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(after.domains).toEqual([]);
+    expect(after.session).toBeNull();
+    expect(after.sessionHistory).toEqual([]);
+    expect(after.player).toEqual(before.player);
+    expect(harness.ui.confirmCalls.at(-1)?.message).toContain(domain.name);
+    expect(harness.ui.confirmCalls.at(-1)?.message).toContain("Chapter");
+    expect(harness.ui.confirmCalls.at(-1)?.message).toContain("Session");
+  });
+
+  test("deletes a preparation draft and its Metalearning Session after explicit confirmation", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    harness.ui.inputResponses.push("Rust", undefined);
+    await harness.runInit("");
+
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const before = JSON.parse(await readFile(snapshotPath, "utf8"));
+    const draft = before.domainDraft;
+    expect(draft.name).toBe("Rust");
+    expect(before.session).toMatchObject({ kind: "metalearning", status: "paused", domainId: draft.id });
+
+    harness.ui.selectResponses.push(`Rust — em preparação [${draft.id}]`);
+    harness.ui.confirmResponses.push(true);
+    await harness.runDelete("");
+
+    const after = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(after.domainDraft).toBeNull();
+    expect(after.session).toBeNull();
+    expect(after.domains).toEqual([]);
+    expect(after.player).toEqual(before.player);
+    expect(harness.ui.confirmCalls.at(-1)?.message).toContain("Respostas salvas");
+    expect(harness.ui.confirmCalls.at(-1)?.message).toContain("Metalearning");
+  });
+
+  test("does not delete a Domain while its Study Session is open", async () => {
+    const { cwd, harness } = await createHarness();
+    await startApprovedStudy(harness, "Spanish");
+
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const before = await readFile(snapshotPath, "utf8");
+    const domain = JSON.parse(before).domains[0];
+    harness.ui.selectResponses.push(`${domain.name} — ${domain.learningObjective} [${domain.id}]`);
+    const confirmCallsBeforeDelete = harness.ui.confirmCalls.length;
+
+    await harness.runDelete("");
+
+    expect(await readFile(snapshotPath, "utf8")).toBe(before);
+    expect(harness.ui.confirmCalls).toHaveLength(confirmCallsBeforeDelete);
+    expect(harness.ui.notifications.at(-1)?.message).toContain("feche ou retome");
+  });
+});
+
 describe("Lori startup and status", () => {
+  test("shows multiline status below the editor without a footer entry", async () => {
+    const { harness } = await createHarness();
+
+    await harness.start();
+
+    expect(harness.ui.statuses.at(-1)).toEqual({
+      key: "lori",
+      text: undefined,
+    });
+    expect(harness.ui.widgets.at(-1)).toEqual({
+      key: "lori-details",
+      content: ["Lori · Session: nenhuma ativa", "XP: 0 · Skin Minimal"],
+      placement: "belowEditor",
+    });
+  });
+
   test("collects a Domain draft one question at a time without activating it", async () => {
     const { cwd, harness } = await createHarness();
     await harness.start();
@@ -1173,27 +1285,27 @@ describe("Lori startup and status", () => {
       "Audio and short dialogues",
       "No paid-only materials",
     );
-    harness.ui.selectResponses.push("4 · Consigo aplicar sem orientação na maioria dos casos");
+    harness.ui.selectResponses.push("4 · Realizo tarefas comuns com autonomia");
 
     await harness.runInit("");
 
     expect(harness.ui.inputCalls).toEqual([
-      { title: "Nome do Domain", placeholder: undefined },
-      { title: "Learning Objective", placeholder: undefined },
-      { title: "Motivação", placeholder: undefined },
-      { title: "Prazo ou 'sem prazo'", placeholder: undefined },
-      { title: "Horas por semana", placeholder: undefined },
-      { title: "Preferências de materiais (opcional)", placeholder: undefined },
-      { title: "Restrições de materiais (opcional)", placeholder: undefined },
+      { title: "Como você quer chamar este Domain?", placeholder: "Um assunto ou habilidade, ex.: japonês, React ou álgebra." },
+      { title: "O que você quer conseguir fazer?", placeholder: "Descreva um resultado observável. Ex.: manter uma conversa básica em japonês." },
+      { title: "Por que aprender isso agora?", placeholder: "O contexto atual ajuda a personalizar o plano. Ex.: viagem, trabalho ou projeto pessoal." },
+      { title: "Até quando quer alcançar esse objetivo?", placeholder: "Informe uma data-alvo se houver. Vazio ou 'sem prazo' significa sem prazo." },
+      { title: "Quanto tempo por semana consegue dedicar?", placeholder: "Número de horas realista, ex.: 3." },
+      { title: "Que formatos prefere para aprender?", placeholder: "Ex.: documentação, vídeos, áudio ou exercícios. Vazio = sem preferência." },
+      { title: "Que restrições os materiais precisam respeitar?", placeholder: "Ex.: idioma, custo, acessibilidade ou ferramentas. Vazio = sem restrições." },
     ]);
     expect(harness.ui.selectCalls).toEqual([{
-      title: "Baseline — selecione sua familiaridade atual (não é um teste)",
+      title: "Baseline — como avalia seu ponto de partida para este objetivo? (não é um teste)",
       options: [
-        "1 · Nenhuma familiaridade: nunca estudei ou usei",
-        "2 · Familiaridade inicial: reconheço alguns conceitos",
-        "3 · Familiaridade intermediária: aplico o básico com consulta",
-        "4 · Consigo aplicar sem orientação na maioria dos casos",
-        "5 · Familiaridade profunda: explico, adapto e resolvo casos novos",
+        "1 · Começando do zero: não estudei nem usei os conceitos",
+        "2 · Reconheço conceitos, mas ainda não consigo aplicá-los",
+        "3 · Realizo tarefas básicas com apoio ou consulta",
+        "4 · Realizo tarefas comuns com autonomia",
+        "5 · Adapto o conhecimento e resolvo casos novos",
       ],
     }]);
 
@@ -1251,17 +1363,17 @@ describe("Lori startup and status", () => {
       "",
       "",
     );
-    restored.ui.selectResponses.push("1 · Nenhuma familiaridade: nunca estudei ou usei");
+    restored.ui.selectResponses.push("1 · Começando do zero: não estudei nem usei os conceitos");
 
     await restored.runResume();
 
-    expect(restored.ui.inputCalls.map(({ title }) => title)).toEqual([
-      "Learning Objective",
-      "Motivação",
-      "Prazo ou 'sem prazo'",
-      "Horas por semana",
-      "Preferências de materiais (opcional)",
-      "Restrições de materiais (opcional)",
+    expect(restored.ui.inputCalls).toEqual([
+      { title: "O que você quer conseguir fazer?", placeholder: "Descreva um resultado observável. Ex.: manter uma conversa básica em japonês." },
+      { title: "Por que aprender isso agora?", placeholder: "O contexto atual ajuda a personalizar o plano. Ex.: viagem, trabalho ou projeto pessoal." },
+      { title: "Até quando quer alcançar esse objetivo?", placeholder: "Informe uma data-alvo se houver. Vazio ou 'sem prazo' significa sem prazo." },
+      { title: "Quanto tempo por semana consegue dedicar?", placeholder: "Número de horas realista, ex.: 3." },
+      { title: "Que formatos prefere para aprender?", placeholder: "Ex.: documentação, vídeos, áudio ou exercícios. Vazio = sem preferência." },
+      { title: "Que restrições os materiais precisam respeitar?", placeholder: "Ex.: idioma, custo, acessibilidade ou ferramentas. Vazio = sem restrições." },
     ]);
     const completedSnapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
     expect(completedSnapshot.domainDraft).toMatchObject({
@@ -1284,24 +1396,38 @@ describe("Lori startup and status", () => {
     expect(completedSnapshot.domains ?? []).toEqual([]);
   });
 
-  test("requires an explicit deadline or 'sem prazo' instead of treating an empty answer as no deadline", async () => {
+  test("treats an empty deadline as no deadline and continues the questionnaire", async () => {
     const { cwd, harness } = await createHarness();
     await harness.start();
-    harness.ui.inputResponses.push("Data Science", "Build a small classifier", "Explore this career path", "   ");
+    harness.ui.inputResponses.push(
+      "Data Science",
+      "Build a small classifier",
+      "Explore this career path",
+      "   ",
+      "3",
+      "",
+      "",
+    );
+    harness.ui.selectResponses.push("2 · Reconheço conceitos, mas ainda não consigo aplicá-los");
 
     await harness.runInit("");
 
-    const snapshotPath = join(cwd, ".lori", "snapshot.json");
-    const paused = JSON.parse(await readFile(snapshotPath, "utf8"));
-    expect(paused.domainDraft).toMatchObject({
-      phase: "collecting",
+    const snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    expect(snapshot.domainDraft).toMatchObject({
+      phase: "awaiting_curation",
       name: "Data Science",
       learningObjective: "Build a small classifier",
       motivation: "Explore this career path",
+      deadline: null,
+      hoursPerWeek: 3,
+      baseline: 2,
+      preferences: null,
+      materialRestrictions: null,
     });
-    expect(paused.domainDraft).not.toHaveProperty("deadline");
-    expect(paused.session.status).toBe("paused");
-    expect(harness.ui.notifications.some(({ message }) => message.includes("declare explicitamente 'sem prazo'"))).toBe(true);
+    expect(snapshot.session.status).toBe("open");
+    expect(harness.ui.inputCalls).toHaveLength(7);
+    expect(harness.ui.selectCalls).toHaveLength(1);
+    expect(harness.ui.notifications.some(({ message }) => message.includes("Informe um prazo"))).toBe(false);
   });
 
   test("rejects Domain preparation arguments and blocks Study Session start while onboarding is active", async () => {
@@ -1346,8 +1472,8 @@ describe("Lori startup and status", () => {
       domainDraft: null,
       skinConfig: { skin: "minimal" },
     });
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Session: nenhuma ativa");
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Skin Minimal");
+    expect(statusWidgetText(harness.ui)).toContain("Session: nenhuma ativa");
+    expect(statusWidgetText(harness.ui)).toContain("Skin Minimal");
 
     await harness.runStatus();
     expect(harness.ui.notifications.at(-1)?.message).toContain("Session: nenhuma ativa");
@@ -1389,10 +1515,10 @@ describe("Lori startup and status", () => {
       "Escolher Domain ativo",
       "Escolher Primary Technique",
     ]);
-    const status = harness.ui.statuses.at(-1)?.text ?? "";
-    expect(status).toContain("Session: open");
+    const status = statusWidgetText(harness.ui);
+    expect(status).toContain("Session open");
     expect(status).toContain("Domain: React");
-    expect(status).toContain("Primary Technique: Active Recall");
+    expect(status).toContain("Technique: Active Recall");
     expect(status).toContain("Study references:");
     expect(status).toContain("greetings");
     expect(status).toContain("resource-1");
@@ -1400,7 +1526,7 @@ describe("Lori startup and status", () => {
 
     await harness.runStatus();
     expect(harness.ui.notifications.at(-1)?.message).toContain("Domain: React");
-    expect(harness.ui.notifications.at(-1)?.message).toContain("Primary Technique: Active Recall");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Technique: Active Recall");
     expect(harness.ui.notifications.at(-1)?.message).toContain("resource-1");
   });
 
@@ -1571,7 +1697,7 @@ describe("Lori startup and status", () => {
 
       await harness.runStatus();
 
-      expect(harness.ui.statuses.at(-1)?.text).toContain("Elapsed: 00:01:00");
+      expect(statusWidgetText(harness.ui)).toContain("Elapsed: 00:01:00");
       expect(harness.ui.notifications.at(-1)?.message).toContain("Elapsed: 00:01:00");
     } finally {
       now.mockRestore();
@@ -1608,14 +1734,15 @@ describe("Lori startup and status", () => {
       verdict: { focus: 2.5, honesty: 4, chapterRef: before.session.chapterRef },
     });
     expect(closedSnapshot.session.closedAt).toBeGreaterThanOrEqual(closedSnapshot.session.startedAt);
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Session fechada");
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Focus: 2.5 · Honesty: 4");
+    expect(statusWidgetText(harness.ui)).toContain("Session fechada");
+    expect(statusWidgetText(harness.ui)).toContain("Focus: 2.5");
+    expect(statusWidgetText(harness.ui)).toContain("Honesty: 4");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Session fechada");
 
     const { harness: restored } = await createHarness(cwd);
     await restored.start();
     await restored.runStatus();
-    expect(restored.ui.statuses.at(-1)?.text).toContain("Session fechada");
+    expect(statusWidgetText(restored.ui)).toContain("Session fechada");
     expect(restored.ui.notifications.at(-1)?.message).toContain("Focus: 2.5 · Honesty: 4");
     expect(JSON.parse(await readFile(snapshotPath, "utf8")).session.verdict).toEqual({
       focus: 2.5,
@@ -1648,7 +1775,9 @@ describe("Lori startup and status", () => {
     await startApprovedStudy(harness, "React", "Active Recall · Retrieval", false);
     await harness.runClose("3 | 4");
 
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Terminal close React · 00:00:00 · 3/4");
+    expect(statusWidgetText(harness.ui)).toContain("Terminal close React");
+    expect(statusWidgetText(harness.ui)).toContain("00:00:00");
+    expect(statusWidgetText(harness.ui)).toContain("3/4");
   });
 
   test("closes a paused Session without adding paused time or applying a rating range", async () => {
@@ -1671,7 +1800,8 @@ describe("Lori startup and status", () => {
       pausedSession.pausedAt - pausedSession.startedAt - pausedSession.totalPausedMs,
     );
     expect(snapshot.player.totalXp).toBe(xpBeforeClose);
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Focus: 0 · Honesty: -7.25");
+    expect(statusWidgetText(harness.ui)).toContain("Focus: 0");
+    expect(statusWidgetText(harness.ui)).toContain("Honesty: -7.25");
   });
 
   test("rejects missing, non-numeric, and non-finite close values before changing state", async () => {
@@ -1686,7 +1816,7 @@ describe("Lori startup and status", () => {
 
     expect(await readFile(snapshotPath, "utf8")).toBe(initialSnapshot);
     expect(harness.ui.notifications.slice(-9).every(({ type }) => type === "warning")).toBe(true);
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Session: open");
+    expect(statusWidgetText(harness.ui)).toContain("Session open");
   });
 
   test("does not resume or close a closed Session again, but allows a fresh selected study", async () => {
@@ -1699,7 +1829,7 @@ describe("Lori startup and status", () => {
     await harness.runResume();
     await harness.runClose("5 | 5");
     expect(JSON.parse(await readFile(snapshotPath, "utf8"))).toEqual(closedSnapshot);
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Session fechada");
+    expect(statusWidgetText(harness.ui)).toContain("Session fechada");
 
     const domain = closedSnapshot.domains[0];
     harness.ui.selectResponses.push(`${domain.name} — ${domain.learningObjective} [${domain.id}]`, "Build From Scratch · Directness");
@@ -1731,8 +1861,8 @@ describe("Lori startup and status", () => {
       startedAt: opened.startedAt,
     });
     expect(paused.pausedAt).toBeGreaterThanOrEqual(opened.startedAt);
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Session pausada");
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Elapsed:");
+    expect(statusWidgetText(harness.ui)).toContain("Session pausada");
+    expect(statusWidgetText(harness.ui)).toContain("Elapsed:");
 
     await harness.runResume();
     const resumed = JSON.parse(await readFile(snapshotPath, "utf8")).session;
@@ -1747,7 +1877,7 @@ describe("Lori startup and status", () => {
       startedAt: opened.startedAt,
     });
     expect(resumed.totalPausedMs).toBeGreaterThanOrEqual(0);
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Session retomada");
+    expect(statusWidgetText(harness.ui)).toContain("Session retomada");
   });
 
   test("rejects abandon and resume when the Session is in the wrong state", async () => {
@@ -1786,7 +1916,7 @@ describe("Lori startup and status", () => {
     expect(harness.ui.notifications.slice(-3).every(({ type }) => type === "warning")).toBe(true);
     expect(harness.ui.inputCalls).toHaveLength(0);
     expect(harness.ui.selectCalls).toHaveLength(0);
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Session: nenhuma ativa");
+    expect(statusWidgetText(harness.ui)).toContain("Session: nenhuma ativa");
   });
 
   test("does not retain an unpersisted Study Session when the snapshot becomes unavailable", async () => {
@@ -1871,8 +2001,8 @@ describe("Lori startup and status", () => {
     const rejection = harness.ui.notifications.at(-1)?.message ?? "";
     expect(rejection).toContain("Session não iniciada");
     expect(rejection).toContain("já existe uma Session ativa");
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Domain: React");
-    expect(harness.ui.statuses.at(-1)?.text).not.toContain("Japanese");
+    expect(statusWidgetText(harness.ui)).toContain("Domain: React");
+    expect(statusWidgetText(harness.ui)).not.toContain("Japanese");
   });
 
   test("restores an open Session as paused and persists its excluded pause time", async () => {
@@ -1892,11 +2022,13 @@ describe("Lori startup and status", () => {
 
     await harness.start();
 
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Session restaurada como pausada");
+    expect(statusWidgetText(harness.ui)).toContain("Session restaurada como pausada");
     await harness.runStatus();
 
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Session pausada");
-    expect(harness.ui.statuses.at(-1)?.text).toContain("Elapsed: 00:01:05");
+    expect(statusWidgetText(harness.ui)).toBe(
+      "Lori · Session pausada\nDomain: React · Technique: Active Recall · Elapsed: 00:01:05",
+    );
+    expect(harness.ui.statuses.at(-1)?.text).toBeUndefined();
     expect(harness.ui.notifications.at(-1)?.message).toContain("Session pausada");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Elapsed: 00:01:05");
 
@@ -1960,14 +2092,15 @@ describe("Lori startup and status", () => {
     const { harness: reloadedInstance } = await createHarness(cwd);
     await reloadedInstance.start();
 
-    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Session pausada");
-    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("greetings");    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("resource-1");
-    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain(paused.chapterRef.chapterVersionId);
+    expect(statusWidgetText(reloadedInstance.ui)).toContain("Session pausada");
+    expect(statusWidgetText(reloadedInstance.ui)).toContain("greetings");
+    expect(statusWidgetText(reloadedInstance.ui)).toContain("resource-1");
+    expect(statusWidgetText(reloadedInstance.ui)).toContain(paused.chapterRef.chapterVersionId);
     await reloadedInstance.runStatus();
 
-    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Session pausada");
-    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Domain: Japanese");
-    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Primary Technique: Build From Scratch");
+    expect(statusWidgetText(reloadedInstance.ui)).toContain("Session pausada");
+    expect(statusWidgetText(reloadedInstance.ui)).toContain("Domain: Japanese");
+    expect(statusWidgetText(reloadedInstance.ui)).toContain("Technique: Build From Scratch");
     expect(reloadedInstance.ui.notifications.at(-1)?.message).toContain("Elapsed: 00:00:00");
     expect(reloadedInstance.ui.notifications.at(-1)?.message).toContain("Study references:");
     expect(JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).session).toMatchObject({
@@ -1990,8 +2123,8 @@ describe("Lori startup and status", () => {
     await reloadedInstance.start();
     await reloadedInstance.runStatus();
 
-    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("XP: 0");
-    expect(reloadedInstance.ui.statuses.at(-1)?.text).toContain("Session: nenhuma ativa");
+    expect(statusWidgetText(reloadedInstance.ui)).toContain("XP: 0");
+    expect(statusWidgetText(reloadedInstance.ui)).toContain("Session: nenhuma ativa");
     expect(reloadedInstance.ui.notifications.at(-1)?.message).toContain("Skin Minimal");
     expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).toBe(savedSnapshot);
   });
@@ -2009,7 +2142,8 @@ describe("Lori startup and status", () => {
     expect(harness.ui.notifications[0]?.type).toBe("error");
     expect(harness.ui.notifications[0]?.message).toContain("ilegível");
     expect(harness.ui.notifications[0]?.message).toContain("preservado");
-    expect(harness.ui.statuses.at(-1)?.text).toContain("erro no snapshot");
+    expect(harness.ui.statuses.at(-1)?.text).toBeUndefined();
+    expect(harness.ui.widgets.at(-1)?.content).toBeUndefined();
     expect(harness.ui.notifications.at(-1)?.message).toContain("preservado");
     expect(await readFile(snapshotPath, "utf8")).toBe(originalContents);
   });
@@ -2034,7 +2168,7 @@ describe("Lori startup and status", () => {
     await harness.start();
     await harness.runStatus();
 
-    expect(harness.ui.statuses.at(-1)?.text).toBe("Terminal XP=15");
+    expect(statusWidgetText(harness.ui)).toBe("Terminal XP=15");
     expect(harness.ui.notifications.at(-1)?.message).toBe("Terminal XP=15");
   });
 
@@ -2068,12 +2202,12 @@ describe("Lori startup and status", () => {
 
     await harness.start();
 
-    expect(harness.ui.statuses.at(-1)?.text).toBe(
+    expect(statusWidgetText(harness.ui)).toBe(
       "Terminal restored Session React | Active Recall | 00:01:05",
     );
 
     await harness.runStatus();
-    expect(harness.ui.statuses.at(-1)?.text).toBe(
+    expect(statusWidgetText(harness.ui)).toBe(
       "Terminal paused Session React | Active Recall | 00:01:05",
     );
     expect(harness.ui.notifications.at(-1)?.message).toBe(
@@ -2098,11 +2232,9 @@ describe("Lori startup and status", () => {
     await harness.start();
     await harness.runStatus();
 
-    expect(harness.ui.statuses.at(-1)?.text).toBe(
-      "Lori · Session: nenhuma ativa · XP: 6 · Skin Minimal",
-    );
+    expect(statusWidgetText(harness.ui)).toBe("Lori · Session: nenhuma ativa\nXP: 6 · Skin Minimal");
     expect(harness.ui.notifications.at(-1)?.message).toBe(
-      "Lori · Session: nenhuma ativa · XP: 6 · Skin Minimal",
+      "Lori · Session: nenhuma ativa\nXP: 6 · Skin Minimal",
     );
     expect(JSON.parse(await readFile(snapshotPath, "utf8")).skinConfig.skin).toBe("not-installed");
   });
@@ -2124,9 +2256,7 @@ describe("Lori startup and status", () => {
 
     await harness.start();
 
-    expect(harness.ui.statuses.at(-1)?.text).toBe(
-      "Lori · Session: nenhuma ativa · XP: 4 · Skin Minimal",
-    );
+    expect(statusWidgetText(harness.ui)).toBe("Lori · Session: nenhuma ativa\nXP: 4 · Skin Minimal");
     expect(JSON.parse(await readFile(snapshotPath, "utf8")).skinConfig.skin).toBe("broken");
   });
 

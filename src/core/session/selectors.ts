@@ -8,6 +8,10 @@ export function selectCanOpenSession(session: Session | null): boolean {
   return session === null || session.status === "closed";
 }
 
+export function selectSessionBelongsToDomain(session: Session | null | undefined, domainId: string): boolean {
+  return session !== null && session !== undefined && "domainId" in session && session.domainId === domainId;
+}
+
 export function selectElapsedMs(session: Session, now: number): number {
   if (session.status === "closed") {
     const elapsedUntil = session.pausedAt ?? session.closedAt;

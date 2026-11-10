@@ -5,7 +5,7 @@ import { validateChapterProposal, validateChapterSourceEvidence, validateProposa
 import type { ActiveDomain, Baseline, DomainDraft, DomainDraftAnswerAction } from "../../core/domain/types.ts";
 import { selectNextDomainDraftField, selectRecommendedStudyTarget, type DomainDraftQuestionField } from "../../core/domain/selectors.ts";
 import { restoreSessionAsPaused } from "../../core/processors/lifecycle.ts";
-import { isMetalearningSession, selectCanOpenSession } from "../../core/session/selectors.ts";
+import { isMetalearningSession, selectCanOpenSession, selectSessionBelongsToDomain } from "../../core/session/selectors.ts";
 import { createStore, type LoriStore } from "../../store/store.ts";
 import type { LoriState } from "../../store/state.ts";
 import type { SkinProvider } from "../../presentation/skin/provider.ts";
@@ -58,33 +58,60 @@ const TECHNIQUES = [
 ] as const;
 const CUSTOM_TECHNIQUE_OPTION = "Informar outra técnica";
 const BASELINE_OPTIONS = [
-  "1 · Nenhuma familiaridade: nunca estudei ou usei",
-  "2 · Familiaridade inicial: reconheço alguns conceitos",
-  "3 · Familiaridade intermediária: aplico o básico com consulta",
-  "4 · Consigo aplicar sem orientação na maioria dos casos",
-  "5 · Familiaridade profunda: explico, adapto e resolvo casos novos",
+  "1 · Começando do zero: não estudei nem usei os conceitos",
+  "2 · Reconheço conceitos, mas ainda não consigo aplicá-los",
+  "3 · Realizo tarefas básicas com apoio ou consulta",
+  "4 · Realizo tarefas comuns com autonomia",
+  "5 · Adapto o conhecimento e resolvo casos novos",
 ] as const;
 
-function domainDraftQuestionTitle(field: DomainDraftQuestionField): string {
-  switch (field) {
-    case "name": return "Nome do Domain";
-    case "learningObjective": return "Learning Objective";
-    case "motivation": return "Motivação";
-    case "deadline": return "Prazo ou 'sem prazo'";
-    case "hoursPerWeek": return "Horas por semana";
-    case "baseline": return "Baseline — selecione sua familiaridade atual (não é um teste)";
-    case "preferences": return "Preferências de materiais (opcional)";
-    case "materialRestrictions": return "Restrições de materiais (opcional)";
-  }
-}
+type DomainDraftQuestionPrompt = {
+  title: string;
+  guidance?: string;
+};
+
+const DOMAIN_DRAFT_QUESTIONS: Record<DomainDraftQuestionField, DomainDraftQuestionPrompt> = {
+  name: {
+    title: "Como você quer chamar este Domain?",
+    guidance: "Um assunto ou habilidade, ex.: japonês, React ou álgebra.",
+  },
+  learningObjective: {
+    title: "O que você quer conseguir fazer?",
+    guidance: "Descreva um resultado observável. Ex.: manter uma conversa básica em japonês.",
+  },
+  motivation: {
+    title: "Por que aprender isso agora?",
+    guidance: "O contexto atual ajuda a personalizar o plano. Ex.: viagem, trabalho ou projeto pessoal.",
+  },
+  deadline: {
+    title: "Até quando quer alcançar esse objetivo?",
+    guidance: "Informe uma data-alvo se houver. Vazio ou 'sem prazo' significa sem prazo.",
+  },
+  hoursPerWeek: {
+    title: "Quanto tempo por semana consegue dedicar?",
+    guidance: "Número de horas realista, ex.: 3.",
+  },
+  baseline: {
+    title: "Baseline — como avalia seu ponto de partida para este objetivo? (não é um teste)",
+  },
+  preferences: {
+    title: "Que formatos prefere para aprender?",
+    guidance: "Ex.: documentação, vídeos, áudio ou exercícios. Vazio = sem preferência.",
+  },
+  materialRestrictions: {
+    title: "Que restrições os materiais precisam respeitar?",
+    guidance: "Ex.: idioma, custo, acessibilidade ou ferramentas. Vazio = sem restrições.",
+  },
+};
 
 async function promptDomainDraftAnswer(
   id: string,
   field: DomainDraftQuestionField,
   ctx: Pick<ExtensionContext, "ui">,
 ): Promise<DomainDraftAnswerAction | undefined> {
+  const question = DOMAIN_DRAFT_QUESTIONS[field];
   if (field === "baseline") {
-    const selected = await ctx.ui.select(domainDraftQuestionTitle(field), [...BASELINE_OPTIONS]);
+    const selected = await ctx.ui.select(question.title, [...BASELINE_OPTIONS]);
     const index = BASELINE_OPTIONS.indexOf(selected as (typeof BASELINE_OPTIONS)[number]);
     if (index < 0) {
       return undefined;
@@ -92,7 +119,7 @@ async function promptDomainDraftAnswer(
     return { type: "domain-draft/answer", id, field, value: (index + 1) as Baseline };
   }
 
-  const response = await ctx.ui.input(domainDraftQuestionTitle(field));
+  const response = await ctx.ui.input(question.title, question.guidance);
   if (response === undefined) {
     return undefined;
   }
@@ -106,15 +133,11 @@ async function promptDomainDraftAnswer(
     return { type: "domain-draft/answer", id, field, value: hours };
   }
   if (field === "deadline") {
-    if (value.length === 0) {
-      ctx.ui.notify("Informe um prazo ou declare explicitamente 'sem prazo'.", "warning");
-      return undefined;
-    }
     return {
       type: "domain-draft/answer",
       id,
       field,
-      value: value.toLocaleLowerCase() === "sem prazo" ? null : value,
+      value: value.length === 0 || value.toLocaleLowerCase() === "sem prazo" ? null : value,
     };
   }
   if (field === "preferences" || field === "materialRestrictions") {
@@ -1052,6 +1075,113 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
       }
       showStatus(ctx, result.state, skin, "session.open");
       await continueDomainPreparation(shared, ctx, projectDir, skin);
+    },
+  });
+
+  api.registerCommand("lori-delete", {
+    description: "Excluir um Domain ativo ou em preparação com confirmação explícita",
+    handler: async (args, ctx) => {
+      const ready = requireReadyState(shared, ctx);
+      if (!ready) {
+        return;
+      }
+      if (args.trim().length > 0) {
+        ctx.ui.notify("Uso: /lori-delete (selecione um Domain)", "warning");
+        return;
+      }
+      if (!ctx.isIdle() || shared.curationRequest !== undefined) {
+        ctx.ui.notify("Lori: aguarde a curadoria terminar antes de excluir um Domain.", "warning");
+        return;
+      }
+
+      const { projectDir, skin } = ready;
+      const latest = await dispatchAndPersist(projectDir, () => undefined);
+      if (!acceptDispatchResult(shared, ctx, latest, "Lori: não foi possível consultar o snapshot antes da exclusão.")) {
+        return;
+      }
+      const state = latest.state;
+      const targets: Array<{
+        id: string;
+        kind: "active" | "draft";
+        label: string;
+        name: string;
+        chapterCount: number;
+        hasPendingChapter: boolean;
+      }> = state.domains.map((domain) => ({
+        id: domain.id,
+        kind: "active",
+        label: `${domain.name} — ${domain.learningObjective} [${domain.id}]`,
+        name: domain.name,
+        chapterCount: domain.chapters.length,
+        hasPendingChapter: domain.pendingChapter !== undefined,
+      }));
+      const draft = state.domainDraft;
+      if (draft !== null && !state.domains.some(({ id }) => id === draft.id)) {
+        targets.push({
+          id: draft.id,
+          kind: "draft",
+          label: `${draft.name ?? "Domain"} — em preparação [${draft.id}]`,
+          name: draft.name ?? "Domain em preparação",
+          chapterCount: 0,
+          hasPendingChapter: draft.pendingChapter !== undefined,
+        });
+      }
+      if (targets.length === 0) {
+        ctx.ui.notify("Lori: não há Domain ativo ou em preparação para excluir.", "warning");
+        return;
+      }
+
+      const selected = await ctx.ui.select("Escolher Domain para excluir", targets.map(({ label }) => label));
+      const target = targets.find(({ label }) => label === selected);
+      if (target === undefined) {
+        return;
+      }
+      if (
+        target.kind === "active" &&
+        state.session?.status !== "closed" &&
+        selectSessionBelongsToDomain(state.session, target.id)
+      ) {
+        ctx.ui.notify("Lori: feche ou retome a Session desse Domain antes de excluí-lo. Nenhum dado foi alterado.", "warning");
+        return;
+      }
+
+      const relatedSessions = [
+        ...state.sessionHistory,
+        ...(state.session === null ? [] : [state.session]),
+      ].filter((session) => selectSessionBelongsToDomain(session, target.id)).length;
+      const confirmation = target.kind === "active"
+        ? [
+            `Domain: ${target.name}`,
+            `Chapter versions: ${target.chapterCount}`,
+            `Proposta pendente: ${target.hasPendingChapter ? "sim" : "não"}`,
+            `Sessions/Verdicts associados que serão excluídos: ${relatedSessions}`,
+            "Player XP e outros Domains serão preservados.",
+            "Esta ação é permanente.",
+          ].join("\n")
+        : [
+            `Domain em preparação: ${target.name}`,
+            "Respostas salvas serão excluídas.",
+            `Proposta pendente: ${target.hasPendingChapter ? "sim" : "não"}.`,
+            `Metalearning Session e Sessions/Verdicts associados: ${relatedSessions}.`,
+            "Player XP e outros Domains serão preservados.",
+            "Esta ação é permanente.",
+          ].join("\n");
+      const confirmed = await ctx.ui.confirm(`Excluir ${target.name} permanentemente?`, confirmation);
+      if (!confirmed) {
+        ctx.ui.notify("Exclusão cancelada; nenhum dado foi alterado.", "info");
+        return;
+      }
+
+      const result = await dispatchAndPersist(projectDir, () => ({ type: "domain/delete", id: target.id, target: target.kind }));
+      if (!acceptDispatchResult(shared, ctx, result, "Lori: Domain não excluído porque não foi possível persistir o snapshot.")) {
+        return;
+      }
+      if (result.status === "unchanged") {
+        ctx.ui.notify("Lori: o Domain ou sua Session mudou durante a confirmação; nada foi excluído.", "warning");
+        return;
+      }
+      const status = showStatus(ctx, result.state, skin);
+      ctx.ui.notify(`Domain ${target.name} e seus dados associados foram excluídos. ${status}`, "info");
     },
   });
 
