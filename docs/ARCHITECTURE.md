@@ -69,6 +69,9 @@ Arquitetura escolhe o mais simples que fecha a jornada inicial: preparar e aprov
 
 ```
 .
+├── extensions/
+│   └── lori/
+│       └── index.ts                   # Entry point fino do pacote Pi
 ├── src/
 │   ├── core/                            # 100% puro, zero deps externas
 │   │   ├── player/
@@ -84,16 +87,15 @@ Arquitetura escolhe o mais simples que fecha a jornada inicial: preparar e aprov
 │   │   ├── store.ts                     # dispatch + getState
 │   │   ├── root-reducer.ts              # Só combina, sem lógica
 │   │   └── store.test.ts
+│   ├── pi/                              # Integração com Pi
+│   │   ├── commands/
+│   │   └── extension/
+│   │       └── pi-extension.ts          # Factory da extensão
 │   ├── effects/
 │   │   ├── persist/
 │   │   │   ├── types.ts
 │   │   │   ├── persist.ts               # Snapshot atômico + schemaVersion
 │   │   │   └── persist.test.ts
-│   │   ├── pi-commands/
-│   │   │   ├── types.ts
-│   │   │   └── pi-commands.ts
-│   │   ├── pi-extension/
-│   │   │   └── pi-extension.ts          # Adapter Pi (entry interno)
 │   │   └── ui/
 │   │       ├── types.ts
 │   │       └── ui.ts
@@ -118,7 +120,8 @@ Arquitetura escolhe o mais simples que fecha a jornada inicial: preparar e aprov
 | `src/store/` | Single source of truth, sem middleware | Conter regra de negócio (só orquestra reducers) |
 | `src/effects/` | Side effects: snapshot, Pi SDK | Conter regra de negócio (só orquestra) |
 | `src/presentation/` | Skin Minimal, provider e fallback | Modificar estado, parser ou condicionais (só traduz core → string) |
-| `.pi/extensions/lori/` | Entry point Pi, adapter | Conter core (só importa de `src/`), abrir recursos na factory |
+| `src/pi/` | Integração Pi: commands, curadoria e lifecycle | Conter regras de domínio |
+| `extensions/lori/index.ts` | Entry point do pacote; encaminha para a factory em `src/pi/` | Conter a implementação da extensão |
 | `tests/` na raiz | Integração Pi + e2e | Conter testes unitários (estes são co-located) |
 
 **Testes unitários são co-located.** Cada arquivo em `src/` leva seu `.test.ts` ao lado.
@@ -217,12 +220,12 @@ SM-2 puro sem penalty, cards manuais, técnicas e combos com bônus-ou-nada, ski
 | 3 | `effects/` não contém regra de negócio. Só orquestra. | Refatorar |
 | 4 | Actions são serializáveis (JSON). Tipos Action e Event seguem distintos. | Corrigir |
 | 5 | Snapshot guarda `player`, `domains`, `domainDraft`, `session`, `sessionHistory` e `skinConfig` com `schemaVersion` e rename atômico no projeto de estudo. Um processo Pi por projeto. | Corrigir |
-| 6 | Pi SDK vive só no adapter e em `src/effects/ui/`. Nada na factory além de registro. | Isolar |
+| 6 | Pi SDK vive em `src/pi/` e `src/effects/ui/`. A factory registra commands e lifecycle hooks. | Isolar |
 | 7 | `runtime.*` nunca persiste quando existir. Sempre recalcula no boot. | Bug |
 | 8 | Modifiers são bônus derivados, nunca abaixo do neutro. | Refatorar |
 | 9 | Quando SQLite pousar: `bun:sqlite` com prepared statements, nunca interpolação. | Segurança |
 | 10 | Dados sensíveis (paths, tokens) são filtrados antes de virar contexto LLM. | Privacidade |
-| 11 | `src/effects/pi-extension/pi-extension.ts` é o entry point do adapter (reexportado por `extensions/lori/index.ts`). Estado reconstrói em `session_start`. | Manutenção |
+| 11 | `src/pi/extension/pi-extension.ts` implementa a factory importada por `extensions/lori/index.ts`. Estado reconstrói em `session_start`. | Manutenção |
 | 12 | `appendEntry()` só para metadados de agent session, nunca dados de jogo. Validada no doc oficial. | Arquitetura |
 
 ---

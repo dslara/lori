@@ -22,4 +22,4 @@ Entry point único reconstrói tudo em `session_start` a partir do arquivo da Lo
 
 - `docs/extensions.md` (Pi 1.5.0): Extension Styles, async factory, Long-lived resources and shutdown, Lifecycle Overview, Session Events (`session_start`, `session_shutdown`), State Management, `pi.appendEntry`, ExtensionCommandContext, Custom UI (`setStatus`, `setWidget`)
 - `docs/sessions.md` e `docs/session-format.md` (Pi 1.5.0): storage JSONL e SessionManager
-- `extensions/lori/index.ts`: o entry point atual exporta uma factory vazia;
+- `extensions/lori/index.ts`: o entry point importa e expõe a factory implementada em `src/pi/extension/pi-extension.ts`;
