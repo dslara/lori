@@ -3,9 +3,10 @@ import { reduceSession } from "../session/reducer.ts";
 import { isMetalearningSession, selectCanOpenSession, selectSessionBelongsToDomain } from "../session/selectors.ts";
 import type { Session } from "../session/types.ts";
 import { validateChapterProposal, validateProposalForQuestionnaire } from "./chapter.ts";
+import { getQuestionnaire } from "./questionnaire.ts";
 import { selectRecommendedStudyTarget } from "./selectors.ts";
 import { reduceDomainDraft, isSessionAction } from "./reducer.ts";
-import type { ActiveDomain, DomainDraft, DomainQuestionnaire } from "./types.ts";
+import type { ActiveDomain, DomainDraft } from "./types.ts";
 
 export type DomainSessionState = {
   domains: ActiveDomain[];
@@ -13,23 +14,6 @@ export type DomainSessionState = {
   session: Session | null;
   sessionHistory: Session[];
 };
-
-function getQuestionnaire(draft: DomainDraft): DomainQuestionnaire | undefined {
-  if (
-    draft.motivation === undefined || draft.deadline === undefined || draft.hoursPerWeek === undefined ||
-    draft.baseline === undefined || draft.preferences === undefined || draft.materialRestrictions === undefined
-  ) {
-    return undefined;
-  }
-  return {
-    motivation: draft.motivation,
-    deadline: draft.deadline,
-    hoursPerWeek: draft.hoursPerWeek,
-    baseline: draft.baseline,
-    preferences: draft.preferences,
-    materialRestrictions: draft.materialRestrictions,
-  };
-}
 
 function isInitialApproval(state: DomainSessionState, action: LoriAction): boolean {
   return action.type === "domain/approve" && state.domainDraft?.id === action.id && state.domainDraft.phase === "awaiting_approval";

@@ -1,17 +1,7 @@
 import type { LoriAction } from "../actions.ts";
 import type { DomainDraft } from "./types.ts";
+import { isCompleteDomainDraft } from "./questionnaire.ts";
 import type { SessionAction } from "../session/types.ts";
-
-function hasCompletedQuestionnaire(draft: DomainDraft): boolean {
-  return draft.name !== undefined && draft.name.length > 0
-    && draft.learningObjective !== undefined && draft.learningObjective.length > 0
-    && draft.motivation !== undefined && draft.motivation.length > 0
-    && draft.deadline !== undefined
-    && draft.hoursPerWeek !== undefined
-    && draft.baseline !== undefined
-    && draft.preferences !== undefined
-    && draft.materialRestrictions !== undefined;
-}
 
 function isBaseline(value: number): value is 1 | 2 | 3 | 4 | 5 {
   return Number.isInteger(value) && value >= 1 && value <= 5;
@@ -107,7 +97,7 @@ export function reduceDomainDraft(
       break;
   }
 
-  return hasCompletedQuestionnaire(updated) ? { ...updated, phase: "awaiting_curation" } : updated;
+  return isCompleteDomainDraft(updated) ? { ...updated, phase: "awaiting_curation" } : updated;
 }
 
 export function isSessionAction(action: LoriAction): action is SessionAction {

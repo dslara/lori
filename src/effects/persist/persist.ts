@@ -4,6 +4,7 @@ import { dirname, isAbsolute, join, relative, sep } from "node:path";
 import { createInitialState, type LoriState } from "../../store/state.ts";
 import type { Session } from "../../core/session/types.ts";
 import { validateChapterProposal, validateProposalForDraft, validateProposalForQuestionnaire } from "../../core/domain/chapter.ts";
+import { isCompleteDomainDraft } from "../../core/domain/questionnaire.ts";
 import type { ActiveDomain, ChapterVersionReference, DomainQuestionnaire } from "../../core/domain/types.ts";
 import type { SnapshotResult } from "./types.ts";
 
@@ -313,16 +314,7 @@ function decodeDomainDraft(value: unknown, schemaVersion: 2 | 3 | 4): LoriState[
     }
     draft.verdictFocus = value.verdictFocus;
   }
-  if (draft.phase !== "collecting" && (
-    draft.name === undefined ||
-    draft.learningObjective === undefined ||
-    draft.motivation === undefined ||
-    draft.deadline === undefined ||
-    draft.hoursPerWeek === undefined ||
-    draft.baseline === undefined ||
-    draft.preferences === undefined ||
-    draft.materialRestrictions === undefined
-  )) {
+  if (draft.phase !== "collecting" && !isCompleteDomainDraft(draft)) {
     return undefined;
   }
   if (draft.phase === "awaiting_approval") {
