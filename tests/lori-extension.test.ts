@@ -2483,6 +2483,38 @@ describe("Lori startup and status", () => {
     expect(await readFile(snapshotPath, "utf8")).toBe(originalContents);
   });
 
+  test("preserves invalid v1 snapshots whose paused or closed timestamps fall inside the totalPausedMs window", async () => {
+    const cases = [
+      { status: "paused", pausedAt: 1_100 },
+      { status: "closed", pausedAt: 1_100, closedAt: 2_500, verdict: { focus: 3, honesty: 4 } },
+      { status: "closed", closedAt: 1_100, verdict: { focus: 3, honesty: 4 } },
+    ];
+    for (const extra of cases) {
+      const { cwd, harness } = await createHarness();
+      const snapshotPath = join(cwd, ".lori", "snapshot.json");
+      const originalContents = JSON.stringify({
+        schemaVersion: 1,
+        player: { totalXp: 23 },
+        session: {
+          domain: "React",
+          primaryTechnique: "Active Recall",
+          startedAt: 1_000,
+          totalPausedMs: 250,
+          ...extra,
+        },
+        skinConfig: { skin: "minimal" },
+      });
+      await mkdir(join(cwd, ".lori"), { recursive: true });
+      await writeFile(snapshotPath, originalContents);
+
+      await harness.start();
+
+      expect(harness.ui.notifications[0]?.type).toBe("error");
+      expect(harness.ui.notifications[0]?.message).toContain("preservado");
+      expect(await readFile(snapshotPath, "utf8")).toBe(originalContents);
+    }
+  });
+
   test("uses the configured Skin for Session command feedback", async () => {
     const { cwd, harness } = await createHarness();
     await mkdir(join(cwd, ".lori", "skins"), { recursive: true });
