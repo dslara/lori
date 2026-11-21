@@ -1,9 +1,9 @@
 import { describe, expect, test } from "bun:test";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import type { LoriExtensionState } from "./types.ts";
+import { createChapterCurationRuntime } from "./chapter-curation-runtime.ts";
 import { registerCurationSourceEvidenceHooks } from "./chapter-source-evidence.ts";
 
-function setup(requestId = "request-1") {
+test("Pi source evidence hooks forward tool results to the runtime and expire it at agent end", () => {
   const handlers = new Map<string, (event: unknown) => void>();
   const api = {
     on(event: string, handler: (event: unknown) => void) {
@@ -11,94 +11,38 @@ function setup(requestId = "request-1") {
       return () => undefined;
     },
   } as unknown as ExtensionAPI;
-  const shared: LoriExtensionState = {
-    store: undefined,
-    projectDir: undefined,
-    skin: undefined,
-    startupError: undefined,
-    curationRequest: {
-      requestId,
-      domainId: "domain-1",
-      target: "draft",
-      awaitingAgentStart: true,
-      agentRunId: undefined,
-      sourceToolCalls: {},
-      sourceEvidence: [],
-    },
-  };
-  registerCurationSourceEvidenceHooks(api, shared);
-  const emit = (eventName: string, event: unknown) => {
+  const runtime = createChapterCurationRuntime();
+  runtime.start({ requestId: "request-1", domainId: "domain-1", target: "draft" });
+  registerCurationSourceEvidenceHooks(api, runtime);
+
+  const emit = (eventName: string, event: unknown): void => {
     const handler = handlers.get(eventName);
     if (handler === undefined) {
       throw new Error(`No handler registered for ${eventName}`);
     }
     handler(event);
   };
-  return { shared, emit };
-}
 
-describe("curation source evidence lifecycle", () => {
-  test("captures successful results from any tool in the active request and run", () => {
-    const { shared, emit } = setup();
-    emit("agent_start", { type: "agent_start" });
-    const runId = shared.curationRequest?.agentRunId;
-    if (runId === undefined) {
-      throw new Error("Expected the active curation request to be bound to an agent run.");
-    }
-    expect(runId).toBeDefined();
-
-    emit("tool_call", { type: "tool_call", toolName: "my_private_search", toolCallId: "search-1", input: {} });
-    emit("tool_result", {
-      type: "tool_result",
-      toolName: "my_private_search",
-      toolCallId: "search-1",
-      input: {},
-      content: [{ type: "text", text: "https://example.com/phrases Good morning. Greetings" }],
-      isError: false,
-    });
-
-    expect(shared.curationRequest?.sourceToolCalls).toEqual({});
-    expect(shared.curationRequest?.sourceEvidence).toEqual([{
-      requestId: "request-1",
-      agentRunId: runId,
-      toolCallId: "search-1",
-      toolName: "my_private_search",
-      isError: false,
-      text: "https://example.com/phrases Good morning. Greetings",
-    }]);
+  emit("agent_start", { type: "agent_start" });
+  emit("tool_call", { type: "tool_call", toolName: "web_fetch", toolCallId: "fetch-1", input: {} });
+  emit("tool_result", {
+    type: "tool_result",
+    toolName: "web_fetch",
+    toolCallId: "fetch-1",
+    input: {},
+    content: [{ type: "text", text: "https://example.com/source Exact excerpt." }],
+    isError: false,
   });
 
-  test("expires evidence and pending calls at agent end so old results cannot enter another request", () => {
-    const { shared, emit } = setup();
-    emit("agent_start", { type: "agent_start" });
-    emit("tool_call", { type: "tool_call", toolName: "web_search", toolCallId: "old-call", input: {} });
-    const oldRunId = shared.curationRequest?.agentRunId;
+  expect(runtime.authorizeSubmission("request-1", "domain-1")?.sourceEvidence).toMatchObject([{
+    requestId: "request-1",
+    agentRunId: "request-1:run-1",
+    toolCallId: "fetch-1",
+    toolName: "web_fetch",
+    text: "https://example.com/source Exact excerpt.",
+  }]);
 
-    emit("agent_end", { type: "agent_end", messages: [] });
-    expect(shared.curationRequest).toBeUndefined();
+  emit("agent_end", { type: "agent_end", messages: [] });
 
-    shared.curationRequest = {
-      requestId: "request-2",
-      domainId: "domain-1",
-      target: "draft",
-      awaitingAgentStart: true,
-      agentRunId: undefined,
-      sourceToolCalls: {},
-      sourceEvidence: [],
-    };
-    emit("agent_start", { type: "agent_start" });
-    emit("tool_call", { type: "tool_call", toolName: "web_search", toolCallId: "old-call", input: {} });
-    emit("tool_result", {
-      type: "tool_result",
-      toolName: "web_search",
-      toolCallId: "old-call",
-      input: {},
-      content: [{ type: "text", text: "https://example.com/phrases Good morning." }],
-      isError: false,
-    });
-
-    expect(shared.curationRequest?.agentRunId).not.toBe(oldRunId);
-    expect(shared.curationRequest?.sourceEvidence).toEqual([]);
-    expect(shared.curationRequest?.sourceToolCalls).toEqual({});
-  });
+  expect(runtime.authorizeSubmission("request-1", "domain-1")).toBeUndefined();
 });

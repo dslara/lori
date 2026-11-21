@@ -691,7 +691,7 @@ function toolMessage(text: string, isError = false) {
 }
 
 function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionState): void {
-  registerCurationSourceEvidenceHooks(api, shared);
+  registerCurationSourceEvidenceHooks(api, shared.curationRuntime);
 
   api.registerTool({
     name: "lori_submit_chapter",
@@ -707,15 +707,13 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
     ],
     parameters: chapterCurationToolParameters,
     async execute(_toolCallId, params, _signal, _onUpdate, toolCtx) {
-      const request = shared.curationRequest;
       const projectDir = shared.projectDir;
-      if (
-        !request ||
-        !isRecord(params) ||
-        params.requestId !== request.requestId ||
-        params.domainId !== request.domainId ||
-        projectDir === undefined
-      ) {
+      const requestId = isRecord(params) && typeof params.requestId === "string" ? params.requestId : undefined;
+      const domainId = isRecord(params) && typeof params.domainId === "string" ? params.domainId : undefined;
+      const request = requestId === undefined || domainId === undefined
+        ? undefined
+        : shared.curationRuntime.authorizeSubmission(requestId, domainId);
+      if (!request || projectDir === undefined) {
         const message = "Lori recusou o tool: ele não corresponde à request atual de curadoria; nenhuma proposta foi salva.";
         toolCtx.ui.notify(message, "warning");
         return toolMessage(message, true);
@@ -733,11 +731,11 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
       if (
         !isAuthorizedPhase ||
         shared.projectDir !== projectDir ||
-        shared.curationRequest?.requestId !== request.requestId
+        shared.curationRuntime.authorizeSubmission(request.requestId, request.domainId) === undefined
       ) {
         const message = "Lori recusou o tool: a fase ou a request atual mudou; nenhuma proposta foi salva.";
         toolCtx.ui.notify(message, "warning");
-        if (shared.curationRequest?.requestId === request.requestId) shared.curationRequest = undefined;
+        shared.curationRuntime.clearIfCurrent(request.requestId);
         return toolMessage(message, true);
       }
 
@@ -750,7 +748,7 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
       if (submission.result.status === "blocked") {
         const blocker = renderCurationBlocker(submission.result.reason, request.target === "active");
         toolCtx.ui.notify(blocker, "warning");
-        if (shared.curationRequest?.requestId === request.requestId) shared.curationRequest = undefined;
+        shared.curationRuntime.clearIfCurrent(request.requestId);
         return { ...toolMessage(blocker), terminate: true };
       }
 
@@ -773,7 +771,7 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
         if (acceptance.kind === "blocked") {
           const blocker = renderCurationBlocker(acceptance.reason, request.target === "active");
           toolCtx.ui.notify(blocker, "warning");
-          if (shared.curationRequest?.requestId === request.requestId) shared.curationRequest = undefined;
+          shared.curationRuntime.clearIfCurrent(request.requestId);
           return { ...toolMessage(blocker), terminate: true };
         }
         let message: string;
@@ -791,8 +789,7 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
       const saved = await dispatchAndPersist(projectDir, (state) => {
         if (
           shared.projectDir !== projectDir ||
-          shared.curationRequest?.requestId !== request.requestId ||
-          shared.curationRequest.domainId !== request.domainId
+          shared.curationRuntime.authorizeSubmission(request.requestId, request.domainId) === undefined
         ) {
           return undefined;
         }
@@ -832,7 +829,7 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
         return toolMessage(message, true);
       }
 
-      if (shared.curationRequest?.requestId === request.requestId) shared.curationRequest = undefined;
+      shared.curationRuntime.clearIfCurrent(request.requestId);
       const pendingDomain = request.target === "active"
         ? saved.state.domains.find(({ id }) => id === request.domainId)
         : undefined;
@@ -872,16 +869,12 @@ function startChapterCurationRequest(
     currentChapterVersionId: string;
   },
 ): void {
-  shared.curationRequest = {
+  shared.curationRuntime.start({
     requestId: request.requestId,
     domainId: request.draft.id,
     target: request.target,
     ...(request.target === "active" ? { expectedCurrentChapterVersionId: request.currentChapterVersionId } : {}),
-    awaitingAgentStart: true,
-    agentRunId: undefined,
-    sourceToolCalls: {},
-    sourceEvidence: [],
-  };
+  });
   try {
     api.sendUserMessage(buildChapterCurationPrompt(
       request.requestId,
@@ -889,7 +882,7 @@ function startChapterCurationRequest(
       request.target === "active" ? { currentChapterVersionId: request.currentChapterVersionId } : {},
     ));
   } catch {
-    shared.curationRequest = undefined;
+    shared.curationRuntime.clearIfCurrent(request.requestId);
     ctx.ui.notify("Lori: não foi possível iniciar a curadoria pelo agent; nenhuma proposta foi salva.", "error");
   }
 }
@@ -1081,7 +1074,7 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
         ctx.ui.notify("Uso: /lori-delete (selecione um Domain)", "warning");
         return;
       }
-      if (!ctx.isIdle() || shared.curationRequest !== undefined) {
+      if (!ctx.isIdle() || shared.curationRuntime.current() !== undefined) {
         ctx.ui.notify("Lori: aguarde a curadoria terminar antes de excluir um Domain.", "warning");
         return;
       }

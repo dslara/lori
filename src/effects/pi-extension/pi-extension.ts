@@ -2,6 +2,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSkinProvider } from "../../presentation/skin/provider.ts";
 import { createStore } from "../../store/store.ts";
 import { initializeSessionState, registerLoriCommands } from "../pi-commands/pi-commands.ts";
+import { createChapterCurationRuntime } from "../pi-commands/chapter-curation-runtime.ts";
 import type { LoriExtensionState } from "../pi-commands/types.ts";
 import { showError, showStatus } from "../ui/ui.ts";
 
@@ -10,7 +11,7 @@ function clearSharedState(shared: LoriExtensionState, error?: string): void {
   shared.projectDir = undefined;
   shared.skin = undefined;
   shared.startupError = error;
-  shared.curationRequest = undefined;
+  shared.curationRuntime.clear();
 }
 
 export default function loriExtension(pi: ExtensionAPI): void {
@@ -19,13 +20,13 @@ export default function loriExtension(pi: ExtensionAPI): void {
     projectDir: undefined,
     skin: undefined,
     startupError: undefined,
-    curationRequest: undefined,
+    curationRuntime: createChapterCurationRuntime(),
   };
 
   registerLoriCommands(pi, shared);
 
   pi.on("session_start", async (_event, ctx) => {
-    shared.curationRequest = undefined;
+    shared.curationRuntime.clear();
     const result = await initializeSessionState(ctx.cwd);
     if (!result.ok) {
       clearSharedState(shared, result.error);
