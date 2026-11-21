@@ -73,34 +73,34 @@ type DomainDraftQuestionPrompt = {
 const DOMAIN_DRAFT_QUESTIONS: Record<DomainDraftQuestionField, DomainDraftQuestionPrompt> = {
   name: {
     title: "Como você quer chamar este Domain?",
-    guidance: "Um assunto ou habilidade, ex.: japonês, React ou álgebra.",
+    guidance: "Identifica o Domain nas telas e na curadoria. Texto livre, ex.: japonês, React ou álgebra.",
   },
   learningObjective: {
     title: "O que você quer conseguir fazer?",
-    guidance: "Descreva um resultado observável. Ex.: manter uma conversa básica em japonês.",
+    guidance: "Informa à curadoria o resultado que você busca. Texto livre, descreva algo observável. Ex.: manter uma conversa básica em japonês.",
   },
   motivation: {
     title: "Por que aprender isso agora?",
-    guidance: "O contexto atual ajuda a personalizar o plano. Ex.: viagem, trabalho ou projeto pessoal.",
+    guidance: "Entra como contexto da curadoria. Texto livre, ex.: viagem, trabalho ou projeto pessoal.",
   },
   deadline: {
     title: "Até quando quer alcançar esse objetivo?",
-    guidance: "Informe uma data-alvo se houver. Vazio ou 'sem prazo' significa sem prazo.",
+    guidance: "Entra no esforço proposto para o Chapter. Data sugerida: DD/MM/AAAA, ex.: 31/12/2026. Texto livre também é aceito; vazio ou 'sem prazo' = sem prazo.",
   },
   hoursPerWeek: {
     title: "Quanto tempo por semana consegue dedicar?",
-    guidance: "Número de horas realista, ex.: 3.",
+    guidance: "Entra no esforço proposto para o Chapter. Número de horas por semana, ex.: 3. Zero também é válido.",
   },
   baseline: {
-    title: "Baseline — como avalia seu ponto de partida para este objetivo? (não é um teste)",
+    title: "Baseline — como avalia seu ponto de partida para este objetivo? (não é um teste)\nEntra como contexto da curadoria. Selecione uma opção de 1 a 5.",
   },
   preferences: {
     title: "Que formatos prefere para aprender?",
-    guidance: "Ex.: documentação, vídeos, áudio ou exercícios. Vazio = sem preferência.",
+    guidance: "Entra no contexto da curadoria; cada recurso declara como considerou suas preferências. Texto livre, ex.: documentação, vídeos, áudio ou exercícios. Vazio = sem preferência.",
   },
   materialRestrictions: {
     title: "Que restrições os materiais precisam respeitar?",
-    guidance: "Ex.: idioma, custo, acessibilidade ou ferramentas. Vazio = sem restrições.",
+    guidance: "Entra no contexto da curadoria; cada recurso declara como respeita suas restrições. Texto livre, ex.: idioma, custo, acessibilidade ou ferramentas. Vazio = sem restrições.",
   },
 };
 
