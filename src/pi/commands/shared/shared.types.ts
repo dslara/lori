@@ -1,8 +1,8 @@
-import type { LoriAction } from "../../core/actions.ts";
-import type { ChapterCurationRuntime } from "./chapter-curation-runtime.ts";
-import type { SkinProvider } from "../../presentation/skin/provider.ts";
-import type { LoriState } from "../../store/state.ts";
-import type { LoriStore } from "../../store/store.ts";
+import type { LoriAction } from "../../../core/shared/actions.types.ts";
+import type { ChapterCurationRuntime } from "../lori-curate/lori-curate.types.ts";
+import type { SkinProvider } from "../../../presentation/skin/provider.ts";
+import type { LoriState } from "../../../store/state.ts";
+import type { LoriStore } from "../../../store/store.ts";
 
 export type DispatchAndPersistResult =
   | { status: "unchanged" | "persisted"; state: LoriState }
@@ -23,3 +23,15 @@ export type LoriExtensionState = {
   startupError: string | undefined;
   curationRuntime: ChapterCurationRuntime;
 };
+
+export type ReadyState = {
+  store: LoriStore;
+  projectDir: string;
+  skin: SkinProvider;
+};
+
+export type DomainDraftQuestionPrompt = {
+  title: string;
+  guidance?: string;
+};
+

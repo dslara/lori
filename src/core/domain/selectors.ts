@@ -1,5 +1,5 @@
 import type { ChapterNode, ChapterResource } from "./chapter.ts";
-import type { ActiveDomain, ChapterVersionReference, DomainDraft, DomainDraftAnswerAction } from "./types.ts";
+import type { ActiveDomain, ChapterVersionReference, DomainDraft, DomainDraftAnswerAction } from "./domain.types.ts";
 
 export type DomainDraftQuestionField = DomainDraftAnswerAction["field"];
 

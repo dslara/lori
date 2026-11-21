@@ -1,6 +1,6 @@
-import type { Player } from "../core/player/types.ts";
-import type { ActiveDomain, DomainDraft } from "../core/domain/types.ts";
-import type { Session } from "../core/session/types.ts";
+import type { Player } from "../core/player/player.types.ts";
+import type { ActiveDomain, DomainDraft } from "../core/domain/domain.types.ts";
+import type { Session } from "../core/session/session.types.ts";
 
 export type LoriState = {
   player: Player;

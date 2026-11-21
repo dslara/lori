@@ -1,7 +1,8 @@
 import { Type } from "typebox";
-import type { DomainDraft } from "../../core/domain/types.ts";
-import type { ChapterProposal } from "../../core/domain/chapter.ts";
-import { redactSensitiveText } from "../../core/privacy/redact-sensitive-text.ts";
+import type { DomainDraft } from "../../../core/domain/domain.types.ts";
+import type { ChapterProposal } from "../../../core/domain/chapter.ts";
+import type { ChapterCurationToolResult } from "./lori-curate.types.ts";
+import { redactSensitiveText } from "../../../core/privacy/redact-sensitive-text.ts";
 
 const nonEmptyString = (description: string) => Type.String({ minLength: 1, pattern: "\\S", description });
 
@@ -88,14 +89,6 @@ export const chapterCurationToolParameters = Type.Object({
     Type.Object({ status: Type.Literal("blocked"), reason: nonEmptyString("Why no verified compatible resources were found.") }, { additionalProperties: false }),
   ]),
 }, { additionalProperties: false });
-
-export type ChapterCurationToolResult = {
-  requestId: string;
-  domainId: string;
-  result:
-    | { status: "proposal"; proposal: ChapterProposal }
-    | { status: "blocked"; reason: string };
-};
 
 export function buildChapterCurationPrompt(
   requestId: string,

@@ -1,6 +1,6 @@
 import { describe, expect, test } from "bun:test";
 import { getQuestionnaire, isCompleteDomainDraft } from "./questionnaire.ts";
-import type { DomainDraft } from "./types.ts";
+import type { DomainDraft } from "./domain.types.ts";
 
 const completeDraft = (): DomainDraft => ({
   id: "domain-1",

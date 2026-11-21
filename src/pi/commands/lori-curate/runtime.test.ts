@@ -1,5 +1,5 @@
 import { describe, expect, test } from "bun:test";
-import { createChapterCurationRuntime } from "./chapter-curation-runtime.ts";
+import { createChapterCurationRuntime } from "./runtime.ts";
 
 describe("Chapter curation runtime", () => {
   test("authorizes matching request IDs and captures successful results from its active run", () => {

@@ -1,6 +1,6 @@
 import { createInitialState, type LoriState } from "./state.ts";
 import { rootReducer } from "./root-reducer.ts";
-import type { LoriAction } from "../core/actions.ts";
+import type { LoriAction } from "../core/shared/actions.types.ts";
 
 export type LoriStore = {
   dispatch(action: LoriAction): void;

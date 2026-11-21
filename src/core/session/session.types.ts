@@ -1,4 +1,4 @@
-import type { ChapterVersionReference } from "../domain/types.ts";
+import type { ChapterVersionReference } from "../domain/domain.types.ts";
 
 export type Verdict = {
   focus: number;

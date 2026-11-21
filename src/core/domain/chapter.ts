@@ -1,4 +1,4 @@
-import type { DomainQuestionnaire } from "./types.ts";
+import type { DomainQuestionnaire } from "./domain.types.ts";
 
 export type ChapterPrinciple =
   | "Metalearning"

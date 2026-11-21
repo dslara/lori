@@ -2,10 +2,10 @@ import { mkdir, readFile, realpath, rename, rm, writeFile } from "node:fs/promis
 import { randomUUID } from "node:crypto";
 import { dirname, isAbsolute, join, relative, sep } from "node:path";
 import { createInitialState, type LoriState } from "../../store/state.ts";
-import type { Session } from "../../core/session/types.ts";
+import type { Session } from "../../core/session/session.types.ts";
 import { decideChapterAcceptance } from "../../core/domain/chapter.ts";
 import { getQuestionnaire, isCompleteDomainDraft } from "../../core/domain/questionnaire.ts";
-import type { ActiveDomain, ChapterVersionReference, DomainQuestionnaire } from "../../core/domain/types.ts";
+import type { ActiveDomain, ChapterVersionReference, DomainQuestionnaire } from "../../core/domain/domain.types.ts";
 import type { SnapshotResult } from "./types.ts";
 
 export const SNAPSHOT_SCHEMA_VERSION = 4;

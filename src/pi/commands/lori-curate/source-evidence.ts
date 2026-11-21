@@ -1,5 +1,5 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import type { ChapterCurationRuntime } from "./chapter-curation-runtime.ts";
+import type { ChapterCurationRuntime } from "./lori-curate.types.ts";
 
 export function registerCurationSourceEvidenceHooks(
   api: ExtensionAPI,

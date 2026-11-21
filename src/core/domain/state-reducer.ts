@@ -1,12 +1,12 @@
-import type { LoriAction } from "../actions.ts";
+import type { LoriAction } from "../shared/actions.types.ts";
 import { reduceSession } from "../session/reducer.ts";
 import { isMetalearningSession, selectCanOpenSession, selectSessionBelongsToDomain } from "../session/selectors.ts";
-import type { Session } from "../session/types.ts";
+import type { Session } from "../session/session.types.ts";
 import { decideChapterAcceptance } from "./chapter.ts";
 import { getQuestionnaire } from "./questionnaire.ts";
 import { selectRecommendedStudyTarget } from "./selectors.ts";
 import { reduceDomainDraft, isSessionAction } from "./reducer.ts";
-import type { ActiveDomain, DomainDraft } from "./types.ts";
+import type { ActiveDomain, DomainDraft } from "./domain.types.ts";
 
 export type DomainSessionState = {
   domains: ActiveDomain[];

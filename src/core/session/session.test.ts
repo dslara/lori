@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { selectElapsedMs, selectTransitionAt } from "./selectors.ts";
 import { reduceSession } from "./reducer.ts";
-import type { Session } from "./types.ts";
+import type { Session } from "./session.types.ts";
 
 describe("Session core", () => {
   test("opens one Session with its starting timestamp and derives elapsed time", () => {

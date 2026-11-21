@@ -1,5 +1,5 @@
 import { selectCanOpenSession, selectEarliestTransitionAt } from "./selectors.ts";
-import type { Session, SessionAction } from "./types.ts";
+import type { Session, SessionAction } from "./session.types.ts";
 
 export function reduceSession(state: Session | null, action: SessionAction): Session | null {
   if (action.type === "session/open-metalearning") {

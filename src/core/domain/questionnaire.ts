@@ -1,4 +1,4 @@
-import type { Baseline, DomainDraft, DomainQuestionnaire } from "./types.ts";
+import type { Baseline, DomainDraft, DomainQuestionnaire } from "./domain.types.ts";
 
 type CompleteDomainDraft = DomainDraft & {
   name: string;

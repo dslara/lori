@@ -1,4 +1,4 @@
-import type { Session } from "./types.ts";
+import type { Session } from "./session.types.ts";
 
 export function isMetalearningSession(session: Session | null | undefined): session is Extract<Session, { kind: "metalearning" }> {
   return session?.kind === "metalearning";

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
-import { createChapterCurationRuntime } from "./chapter-curation-runtime.ts";
-import { registerCurationSourceEvidenceHooks } from "./chapter-source-evidence.ts";
+import { createChapterCurationRuntime } from "./runtime.ts";
+import { registerCurationSourceEvidenceHooks } from "./source-evidence.ts";
 
 test("Pi source evidence hooks forward tool results to the runtime and expire it at agent end", () => {
   const handlers = new Map<string, (event: unknown) => void>();

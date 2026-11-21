@@ -1,4 +1,4 @@
-import type { LoriAction } from "../core/actions.ts";
+import type { LoriAction } from "../core/shared/actions.types.ts";
 import { reduceDomainSessionState } from "../core/domain/state-reducer.ts";
 import { reducePlayer } from "../core/player/reducer.ts";
 import type { LoriState } from "./state.ts";

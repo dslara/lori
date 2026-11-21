@@ -75,11 +75,14 @@ Arquitetura escolhe o mais simples que fecha a jornada inicial: preparar e aprov
 ├── src/
 │   ├── core/                            # 100% puro, zero deps externas
 │   │   ├── player/
-│   │   │   ├── types.ts
+│   │   │   ├── player.types.ts
 │   │   │   ├── reducer.ts
 │   │   │   ├── selectors.ts
 │   │   │   └── player.test.ts
-│   │   ├── session/                     # Mesmo shape do player
+│   │   ├── session/                     # Mesmo shape do player; tipos em session.types.ts
+│   │   ├── domain/                      # Tipos em domain.types.ts
+│   │   ├── shared/
+│   │   │   └── actions.types.ts        # União das Actions compartilhadas
 │   │   └── processors/
 │   │       └── lifecycle/               # runtime, content, ghost = fog
 │   ├── store/                           # Só orquestra, sem regra

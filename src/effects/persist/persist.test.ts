@@ -3,7 +3,7 @@ import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { afterEach, describe, expect, test } from "bun:test";
 import { createInitialState } from "../../store/state.ts";
-import { buildChapterCurationPrompt } from "../../pi/commands/chapter-curation.ts";
+import { buildChapterCurationPrompt } from "../../pi/commands/lori-curate/curation.ts";
 import {
   loadOrCreateSnapshot,
   SNAPSHOT_RELATIVE_PATH,

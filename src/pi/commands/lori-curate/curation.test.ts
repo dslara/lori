@@ -1,8 +1,8 @@
 import { describe, expect, test } from "bun:test";
 import { Value } from "typebox/value";
-import type { DomainDraft } from "../../core/domain/types.ts";
-import { decideChapterAcceptance } from "../../core/domain/chapter.ts";
-import { buildChapterCurationPrompt, chapterCurationToolParameters, renderChapterProposal } from "./chapter-curation.ts";
+import type { DomainDraft } from "../../../core/domain/domain.types.ts";
+import { decideChapterAcceptance } from "../../../core/domain/chapter.ts";
+import { buildChapterCurationPrompt, chapterCurationToolParameters, renderChapterProposal } from "./curation.ts";
 
 const draft: DomainDraft = {
   id: "domain-1",

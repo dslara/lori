@@ -1,29 +1,5 @@
-import type { ChapterSourceEvidence } from "../../core/domain/chapter.ts";
-
-export type ChapterCurationRequest = {
-  requestId: string;
-  domainId: string;
-  target: "draft" | "active";
-  expectedCurrentChapterVersionId?: string;
-};
-
-export type ChapterCurationRequestView = Readonly<ChapterCurationRequest> & {
-  readonly agentRunId: string | undefined;
-  readonly sourceEvidence: readonly Readonly<ChapterSourceEvidence>[];
-};
-
-export type ChapterCurationRuntimeEvent =
-  | { type: "agent_start" }
-  | { type: "agent_end" }
-  | { type: "tool_call"; toolCallId: string; toolName: string }
-  | {
-      type: "tool_result";
-      toolCallId: string;
-      toolName: string;
-      isError: boolean;
-      content: readonly { type: string; text?: string }[];
-      structuredContent?: unknown;
-    };
+import type { ChapterSourceEvidence } from "../../../core/domain/chapter.ts";
+import type { ChapterCurationRequest, ChapterCurationRequestView, ChapterCurationRuntime, ChapterCurationRuntimeEvent } from "./lori-curate.types.ts";
 
 type ActiveChapterCurationRequest = ChapterCurationRequest & {
   awaitingAgentStart: boolean;
@@ -32,7 +8,7 @@ type ActiveChapterCurationRequest = ChapterCurationRequest & {
   sourceEvidence: ChapterSourceEvidence[];
 };
 
-export function createChapterCurationRuntime() {
+export function createChapterCurationRuntime(): ChapterCurationRuntime {
   let currentRequest: ActiveChapterCurationRequest | undefined;
   let nextRunId = 0;
   // shortcut: IDs stay registered for this extension lifetime; scope by run if Pi recycles IDs or memory grows materially.
@@ -153,5 +129,3 @@ export function createChapterCurationRuntime() {
     },
   };
 }
-
-export type ChapterCurationRuntime = ReturnType<typeof createChapterCurationRuntime>;

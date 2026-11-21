@@ -1,5 +1,5 @@
 import { selectTransitionAt } from "../session/selectors.ts";
-import type { Session, SessionAction } from "../session/types.ts";
+import type { Session, SessionAction } from "../session/session.types.ts";
 
 export function restoreSessionAsPaused(session: Session | null, restoredAt: number): SessionAction | undefined {
   if (session?.status !== "open" || !Number.isFinite(restoredAt)) {

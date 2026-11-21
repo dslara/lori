@@ -1,7 +1,7 @@
-import type { LoriAction } from "../actions.ts";
-import type { DomainDraft } from "./types.ts";
+import type { LoriAction } from "../shared/actions.types.ts";
+import type { DomainDraft } from "./domain.types.ts";
 import { isCompleteDomainDraft } from "./questionnaire.ts";
-import type { SessionAction } from "../session/types.ts";
+import type { SessionAction } from "../session/session.types.ts";
 
 function isBaseline(value: number): value is 1 | 2 | 3 | 4 | 5 {
   return Number.isInteger(value) && value >= 1 && value <= 5;

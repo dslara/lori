@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { decideChapterAcceptance, type ChapterSourceEvidence } from "./chapter.ts";
 import { reduceDomainSessionState, type DomainSessionState } from "./state-reducer.ts";
-import type { ActiveDomain, DomainDraft } from "./types.ts";
+import type { ActiveDomain, DomainDraft } from "./domain.types.ts";
 
 const validProposal = () => ({
   outcome: "Hold a short conversation.",
