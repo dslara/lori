@@ -5,7 +5,7 @@ import { decideChapterAcceptance } from "../../../core/domain/chapter.ts";
 import { getQuestionnaire } from "../../../core/domain/questionnaire.ts";
 import type { ActiveDomain, DomainDraft } from "../../../core/domain/domain.types.ts";
 import { isMetalearningSession } from "../../../core/session/selectors.ts";
-import { showStatus } from "../../../effects/ui/ui.ts";
+import { showStatus } from "../../ui/status/status.ts";
 import { registerCurationSourceEvidenceHooks } from "./source-evidence.ts";
 import { buildChapterCurationPrompt, chapterCurationToolParameters, renderChapterProposal, renderCurationBlocker } from "./curation.ts";
 import type { ChapterCurationToolResult } from "./lori-curate.types.ts";

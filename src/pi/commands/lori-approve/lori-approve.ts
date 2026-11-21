@@ -3,7 +3,7 @@ import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-a
 import type { ActiveDomain } from "../../../core/domain/domain.types.ts";
 import { isMetalearningSession } from "../../../core/session/selectors.ts";
 import type { SkinProvider } from "../../../presentation/skin/provider.ts";
-import { showStatus } from "../../../effects/ui/ui.ts";
+import { showStatus } from "../../ui/status/status.ts";
 import { renderChapterProposal } from "../lori-curate/curation.ts";
 import type { LoriExtensionState } from "../shared/shared.types.ts";
 import { activeDomainDraft, continueDomainPreparation } from "../shared/domain-preparation.ts";

@@ -2,7 +2,7 @@ import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createStore } from "../../../store/store.ts";
 import { loadOrCreateSnapshot } from "../../../effects/persist/persist.ts";
 import type { SnapshotResult } from "../../../effects/persist/types.ts";
-import { showError, showStatus } from "../../../effects/ui/ui.ts";
+import { showError, showStatus } from "../../ui/status/status.ts";
 import type { LoriExtensionState } from "../shared/shared.types.ts";
 import { requireReadyState } from "../shared/session.ts";
 

@@ -1,6 +1,6 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { selectSessionBelongsToDomain } from "../../../core/session/selectors.ts";
-import { showStatus } from "../../../effects/ui/ui.ts";
+import { showStatus } from "../../ui/status/status.ts";
 import type { LoriExtensionState } from "../shared/shared.types.ts";
 import { acceptDispatchResult, dispatchAndPersist } from "../shared/persistence.ts";
 import { requireReadyState } from "../shared/session.ts";

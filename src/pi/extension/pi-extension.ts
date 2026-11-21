@@ -4,7 +4,7 @@ import { createStore } from "../../store/store.ts";
 import { initializeSessionState, registerLoriCommands } from "../commands/commands.ts";
 import { createChapterCurationRuntime } from "../commands/lori-curate/runtime.ts";
 import type { LoriExtensionState } from "../commands/shared/shared.types.ts";
-import { showError, showStatus } from "../../effects/ui/ui.ts";
+import { showError, showStatus } from "../ui/status/status.ts";
 
 function clearSharedState(shared: LoriExtensionState, error?: string): void {
   shared.store = undefined;

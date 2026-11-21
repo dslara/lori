@@ -4,7 +4,7 @@ import { selectNextDomainDraftField, selectRecommendedStudyTarget, type DomainDr
 import { isMetalearningSession, selectCanOpenSession, selectTransitionAt } from "../../../core/session/selectors.ts";
 import type { LoriState } from "../../../store/state.ts";
 import type { SkinProvider } from "../../../presentation/skin/provider.ts";
-import { showStatus } from "../../../effects/ui/ui.ts";
+import { showStatus } from "../../ui/status/status.ts";
 import { renderChapterProposal } from "../lori-curate/curation.ts";
 import type { LoriExtensionState, DomainDraftQuestionPrompt } from "./shared.types.ts";
 import { acceptDispatchResult, dispatchAndPersist } from "./persistence.ts";

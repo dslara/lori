@@ -3,7 +3,7 @@ import { createStore } from "../../../store/store.ts";
 import type { LoriState } from "../../../store/state.ts";
 import { loadOrCreateSnapshot, writeSnapshot } from "../../../effects/persist/persist.ts";
 import type { SnapshotResult } from "../../../effects/persist/types.ts";
-import { showError } from "../../../effects/ui/ui.ts";
+import { showError } from "../../ui/status/status.ts";
 import type { DispatchAndPersistResult, LoriActionFactory, LoriExtensionState } from "./shared.types.ts";
 
 export async function dispatchAndPersist(
