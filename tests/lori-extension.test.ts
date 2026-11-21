@@ -46,6 +46,7 @@ type ToolResultHandler = (event: {
 type CommandHandler = (args: string, ctx: { ui: UI; isIdle?(): boolean }) => void | Promise<void>;
 type RegisteredTool = {
   parameters: unknown;
+  promptGuidelines?: string[];
   execute: (...args: never[]) => unknown;
 };
 
@@ -67,6 +68,7 @@ type Harness = {
   emitToolResult(toolName: string, toolCallId: string, text: string, isError?: boolean): void;
   observeToolResult(toolName: string, toolCallId: string, text: string, isError?: boolean): void;
   toolParameters(name: string): unknown;
+  toolPromptGuidelines(name: string): string[] | undefined;
   sentUserMessages: string[];
   ui: UI;
 };
@@ -179,7 +181,12 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
     registerCommand(name: string, options: { handler: CommandHandler }) {
       commandHandlers.set(name, options.handler);
     },
-    registerTool(definition: { name: string; parameters: unknown; execute: (...args: never[]) => unknown }) {
+    registerTool(definition: {
+      name: string;
+      parameters: unknown;
+      promptGuidelines?: string[];
+      execute: (...args: never[]) => unknown;
+    }) {
       registeredTools.set(definition.name, definition);
     },
     sendUserMessage(content: string) {
@@ -268,6 +275,9 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
       },
       toolParameters(name) {
         return registeredTools.get(name)?.parameters;
+      },
+      toolPromptGuidelines(name) {
+        return registeredTools.get(name)?.promptGuidelines;
       },
       sentUserMessages,
     },
@@ -557,8 +567,8 @@ describe("Lori Chapter curation", () => {
     expect(closed).not.toHaveProperty("cards");
     expect(closed).not.toHaveProperty("weaknesses");
     expect(closed.domains[0].chapters).toHaveLength(1);
-    expect(statusWidgetText(harness.ui)).toContain("Focus: -123.5");
-    expect(statusWidgetText(harness.ui)).toContain("Honesty: 1e+200");
+    expect(harness.ui.notifications.some(({ message }) => message.includes("Focus: -123.5"))).toBe(true);
+    expect(harness.ui.notifications.some(({ message }) => message.includes("Honesty: 1e+200"))).toBe(true);
     expect(harness.ui.notifications.at(-1)?.message).toContain("Verdict permanece fechado");
     const domain = closed.domains[0];
     harness.ui.selectResponses.push(`${domain.name} — ${domain.learningObjective} [${domain.id}]`, "Active Recall · Retrieval");
@@ -569,9 +579,9 @@ describe("Lori Chapter curation", () => {
     expect(continued.sessionHistory).toEqual([closed.session]);
     expect(continued.session).toMatchObject({ status: "open", kind: "study", domainId, primaryTechnique: "Active Recall" });
     expect(continued.player.totalXp).toBe(37);
-    expect(statusWidgetText(harness.ui)).toContain("Focus: -123.5");
-    expect(statusWidgetText(harness.ui)).toContain("Honesty: 1e+200");
-    expect(statusWidgetText(harness.ui)).toContain(chapterRef.chapterVersionId);
+    expect(harness.ui.notifications.some(({ message }) => message.includes("Focus: -123.5"))).toBe(true);
+    expect(harness.ui.notifications.some(({ message }) => message.includes("Honesty: 1e+200"))).toBe(true);
+    expect(harness.ui.notifications.some(({ message }) => message.includes(chapterRef.chapterVersionId))).toBe(true);
   });
 
   test("resuming after Focus was saved asks only for Honesty and keeps the saved answer", async () => {
@@ -627,6 +637,11 @@ describe("Lori Chapter curation", () => {
     expect(harness.sentUserMessages[0]).toContain("menor conjunto ordenado de Nodes");
     expect(harness.sentUserMessages[0]).toContain("scope, justificativa e limitações");
     expect(harness.toolParameters("lori_submit_chapter")).toMatchObject({ type: "object" });
+    const guidelines = harness.toolPromptGuidelines("lori_submit_chapter") ?? [];
+    expect(guidelines).toContain("For lori_submit_chapter, choose any research tools available in this Pi session; Lori does not impose an allowlist of tool names.");
+    expect(guidelines).toContain("Before submitting a proposal with lori_submit_chapter, ensure each resource's HTTPS URL, exact excerpt, and locator appear together in a successful tool result from the current request and run.");
+    expect(guidelines).toContain("Use lori_submit_chapter with status blocked when no verifiable, compatible sources satisfy the Player's restrictions.");
+    expect(guidelines).toContain("If lori_submit_chapter rejects a submission, treat it as unsaved and explain the specific error; do not present the proposal as free text or relax restrictions.");
     expect(JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).domainDraft.phase).toBe("awaiting_curation");
   });
 
@@ -1519,14 +1534,13 @@ describe("Lori startup and status", () => {
     expect(status).toContain("Session open");
     expect(status).toContain("Domain: React");
     expect(status).toContain("Technique: Active Recall");
-    expect(status).toContain("Study references:");
-    expect(status).toContain("greetings");
-    expect(status).toContain("resource-1");
     expect(status).toContain("Elapsed: 00:00:00");
 
     await harness.runStatus();
     expect(harness.ui.notifications.at(-1)?.message).toContain("Domain: React");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Technique: Active Recall");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Study references:");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("greetings");
     expect(harness.ui.notifications.at(-1)?.message).toContain("resource-1");
   });
 
@@ -1735,8 +1749,8 @@ describe("Lori startup and status", () => {
     });
     expect(closedSnapshot.session.closedAt).toBeGreaterThanOrEqual(closedSnapshot.session.startedAt);
     expect(statusWidgetText(harness.ui)).toContain("Session fechada");
-    expect(statusWidgetText(harness.ui)).toContain("Focus: 2.5");
-    expect(statusWidgetText(harness.ui)).toContain("Honesty: 4");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Focus: 2.5");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Honesty: 4");
     expect(harness.ui.notifications.at(-1)?.message).toContain("Session fechada");
 
     const { harness: restored } = await createHarness(cwd);
@@ -1800,8 +1814,8 @@ describe("Lori startup and status", () => {
       pausedSession.pausedAt - pausedSession.startedAt - pausedSession.totalPausedMs,
     );
     expect(snapshot.player.totalXp).toBe(xpBeforeClose);
-    expect(statusWidgetText(harness.ui)).toContain("Focus: 0");
-    expect(statusWidgetText(harness.ui)).toContain("Honesty: -7.25");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Focus: 0");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Honesty: -7.25");
   });
 
   test("rejects missing, non-numeric, and non-finite close values before changing state", async () => {
@@ -2093,9 +2107,6 @@ describe("Lori startup and status", () => {
     await reloadedInstance.start();
 
     expect(statusWidgetText(reloadedInstance.ui)).toContain("Session pausada");
-    expect(statusWidgetText(reloadedInstance.ui)).toContain("greetings");
-    expect(statusWidgetText(reloadedInstance.ui)).toContain("resource-1");
-    expect(statusWidgetText(reloadedInstance.ui)).toContain(paused.chapterRef.chapterVersionId);
     await reloadedInstance.runStatus();
 
     expect(statusWidgetText(reloadedInstance.ui)).toContain("Session pausada");
@@ -2103,6 +2114,9 @@ describe("Lori startup and status", () => {
     expect(statusWidgetText(reloadedInstance.ui)).toContain("Technique: Build From Scratch");
     expect(reloadedInstance.ui.notifications.at(-1)?.message).toContain("Elapsed: 00:00:00");
     expect(reloadedInstance.ui.notifications.at(-1)?.message).toContain("Study references:");
+    expect(reloadedInstance.ui.notifications.at(-1)?.message).toContain("greetings");
+    expect(reloadedInstance.ui.notifications.at(-1)?.message).toContain("resource-1");
+    expect(reloadedInstance.ui.notifications.at(-1)?.message).toContain(paused.chapterRef.chapterVersionId);
     expect(JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).session).toMatchObject({
       kind: "study",
       status: "paused",

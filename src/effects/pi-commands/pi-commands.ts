@@ -699,7 +699,10 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
     promptSnippet: "Submit the researched Chapter proposal through Lori's TypeBox tool",
     promptGuidelines: [
       "Use lori_submit_chapter only for the requestId and domainId in the current /lori-curate message.",
+      "For lori_submit_chapter, choose any research tools available in this Pi session; Lori does not impose an allowlist of tool names.",
+      "Before submitting a proposal with lori_submit_chapter, ensure each resource's HTTPS URL, exact excerpt, and locator appear together in a successful tool result from the current request and run.",
       "Use lori_submit_chapter with status blocked when no verifiable, compatible sources satisfy the Player's restrictions.",
+      "If lori_submit_chapter rejects a submission, treat it as unsaved and explain the specific error; do not present the proposal as free text or relax restrictions.",
     ],
     parameters: chapterCurationToolParameters,
     async execute(_toolCallId, params, _signal, _onUpdate, toolCtx) {

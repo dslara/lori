@@ -118,7 +118,7 @@ export function buildChapterCurationPrompt(
     `Baseline: ${draft.baseline}`,
     `Preferências: ${draft.preferences === null || draft.preferences === undefined ? "nenhuma declarada" : redactSensitiveText(draft.preferences)}`,
     `Restrições: ${draft.materialRestrictions === null || draft.materialRestrictions === undefined ? "nenhuma declarada" : redactSensitiveText(draft.materialRestrictions)}`,
-    "Pesquise fontes reais com as ferramentas disponíveis que o agente da curadoria escolher; Lori não impõe allowlist de ferramentas. Considere uma fonte verificável somente quando uma chamada bem-sucedida na request e no run atuais permitiu inspecionar seu conteúdo e a saída dessa mesma chamada contém a URL HTTPS, o trecho exato e o locator citados. Se não puder verificar uma fonte compatível, use result.status=blocked. Não invente fontes nem relaxe restrições. Envie proposta ou bloqueio somente por lori_submit_chapter; texto livre não substitui o tool.",
+    "Pesquise fontes reais com as ferramentas disponíveis. Cite trechos exatos e localização. Não invente fontes nem relaxe restrições.",
     "Uma proposta exige 1–3 recursos compatíveis, URLs HTTPS, trechos textuais rastreáveis com localização, Nodes em ordem com objetivos, referências consistentes aos trechos e recurso recomendado por Node. Registre separadamente scope, justificativa e limitações de cada recurso; inclua metadados relevantes e não atribua score universal Tier 1.",
     "Proponha o menor conjunto ordenado de Nodes necessário para satisfazer o Exit Proof; omita qualquer Node não essencial e não repita objetivos. Declare prerequisiteNodeIds apenas com IDs de Nodes anteriores que sejam dependências necessárias, ou [] quando não houver pré-requisito. Para cada prerequisiteNodeId, declare em prerequisiteRationales exatamente um objeto com esse ID e um rationale específico não vazio que explique a dependência. Cada critério do Exit Proof deve ter exatamente um Node contribuinte: copie-o exatamente em exitProofContributions desse Node e não permita que outro Node também o declare, mesmo se houver uma relação prerequisite entre eles. Nodes preparatórios devem declarar exitProofContributions: [] e estar num caminho de prerequisites até um Node contribuinte; não duplique neles claims de critérios. Cada contribuição deve ter um rationale específico não vazio de por que aquele Node é necessário. Relacione todos os critérios do Exit Proof a um único Node contribuinte.",
     "Não submeta Chapter vazio.",
@@ -126,7 +126,6 @@ export function buildChapterCurationPrompt(
     isRecuration
       ? "Use somente os requestId e domainId acima nesta resposta. A proposta ficará pendente para revisão do Player; não altera a versão atual nem sua disponibilidade."
       : "Use somente os requestId e domainId acima nesta resposta. A proposta ficará pendente para revisão do Player; não ativa o Domain.",
-    "Se lori_submit_chapter rejeitar a estrutura ou as referências, considere a proposta não salva e explique ao Player o impedimento específico em texto breve. Não apresente a proposta em texto livre nem relaxe as restrições.",
   ].join("\n");
 }
 

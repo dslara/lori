@@ -80,7 +80,7 @@ export function showStatus(
   event?: SessionDisplayEvent,
 ): string {
   const status = renderStatus(state, skin, Date.now(), event);
-  const lines = status.split("\n");
+  const lines = status.split("\n").slice(0, 2);
   ctx.ui.setStatus(STATUS_KEY, undefined);
   ctx.ui.setWidget(WIDGET_KEY, lines, { placement: "belowEditor" });
   return status;
