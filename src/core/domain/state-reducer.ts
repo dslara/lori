@@ -2,7 +2,7 @@ import type { LoriAction } from "../actions.ts";
 import { reduceSession } from "../session/reducer.ts";
 import { isMetalearningSession, selectCanOpenSession, selectSessionBelongsToDomain } from "../session/selectors.ts";
 import type { Session } from "../session/types.ts";
-import { validateChapterProposal, validateProposalForQuestionnaire } from "./chapter.ts";
+import { decideChapterAcceptance } from "./chapter.ts";
 import { getQuestionnaire } from "./questionnaire.ts";
 import { selectRecommendedStudyTarget } from "./selectors.ts";
 import { reduceDomainDraft, isSessionAction } from "./reducer.ts";
@@ -46,12 +46,21 @@ function isAllowed(state: DomainSessionState, action: LoriAction): boolean {
     (!isMetalearningSession(state.session) || state.session.status !== "open" || state.session.domainId !== action.id)
   ) return false;
 
+  if (action.type === "domain-draft/propose-chapter") {
+    const questionnaire = state.domainDraft === null ? undefined : getQuestionnaire(state.domainDraft);
+    if (
+      questionnaire === undefined ||
+      !decideChapterAcceptance(action.proposal, { review: "strict", questionnaire, sourceEvidence: null }).ok
+    ) {
+      return false;
+    }
+  }
+
   if (action.type === "domain/propose-chapter") {
     const domain = state.domains.find(({ id }) => id === action.id);
-    const validation = validateChapterProposal(action.proposal);
     if (
       domain === undefined || domain.currentChapterVersionId !== action.expectedCurrentChapterVersionId ||
-      !validation.ok || validateProposalForQuestionnaire(validation.proposal, domain.questionnaire) !== undefined
+      !decideChapterAcceptance(action.proposal, { review: "strict", questionnaire: domain.questionnaire, sourceEvidence: null }).ok
     ) return false;
   }
 

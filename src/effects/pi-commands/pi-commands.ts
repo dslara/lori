@@ -1,7 +1,8 @@
 import { randomUUID } from "node:crypto";
 import type { ExtensionAPI, ExtensionContext } from "@earendil-works/pi-coding-agent";
 import { Value } from "typebox/value";
-import { validateChapterProposal, validateChapterSourceEvidence, validateProposalForDraft, validateProposalForQuestionnaire } from "../../core/domain/chapter.ts";
+import { decideChapterAcceptance } from "../../core/domain/chapter.ts";
+import { getQuestionnaire } from "../../core/domain/questionnaire.ts";
 import type { ActiveDomain, Baseline, DomainDraft, DomainDraftAnswerAction } from "../../core/domain/types.ts";
 import { selectNextDomainDraftField, selectRecommendedStudyTarget, type DomainDraftQuestionField } from "../../core/domain/selectors.ts";
 import { restoreSessionAsPaused } from "../../core/processors/lifecycle.ts";
@@ -753,46 +754,36 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
         return { ...toolMessage(blocker), terminate: true };
       }
 
-      if (!Array.isArray(submission.result.proposal.resources) || submission.result.proposal.resources.length === 0) {
-        const blocker = renderCurationBlocker("a pesquisa não encontrou recurso adequado para sustentar os Nodes e seus trechos de evidência.", request.target === "active");
-        toolCtx.ui.notify(blocker, "warning");
-        if (shared.curationRequest?.requestId === request.requestId) shared.curationRequest = undefined;
-        return { ...toolMessage(blocker), terminate: true };
+      const questionnaire = request.target === "draft"
+        ? (currentDraft === null ? undefined : getQuestionnaire(currentDraft))
+        : currentDomain?.questionnaire;
+      // isAuthorizedPhase already guarantees the target; this check only narrows the questionnaire type.
+      if (questionnaire === undefined) {
+        const message = "Lori não aceitou a proposta: o alvo da curadoria deixou de existir ou está incompleto. Nenhuma proposta foi salva; envie novamente valores que correspondam à request atual.";
+        toolCtx.ui.notify(message, "warning");
+        return toolMessage(message, true);
       }
 
-      const validation = validateChapterProposal(submission.result.proposal);
-      if (!validation.ok) {
-        const message = `Lori não aceitou a proposta: ${validation.reason} Nenhuma proposta foi salva; não relaxe as restrições para corrigir o problema.`;
-        toolCtx.ui.notify(message, "warning");
-        return toolMessage(message, true);
-      }
-      const sourceVerificationError = validateChapterSourceEvidence(validation.proposal, request.sourceEvidence, {
-        requestId: request.requestId,
-        agentRunId: request.agentRunId,
+      const acceptance = decideChapterAcceptance(submission.result.proposal, {
+        review: "strict",
+        questionnaire,
+        sourceEvidence: { results: request.sourceEvidence, requestId: request.requestId, agentRunId: request.agentRunId },
       });
-      if (sourceVerificationError !== undefined) {
-        const message = `Lori bloqueou a proposta: ${sourceVerificationError} Nenhuma proposta foi salva; pesquise a fonte com uma ferramenta host apropriada nesta request.`;
-        toolCtx.ui.notify(message, "warning");
-        return toolMessage(message, true);
-      }
-      const incompatibility = request.target === "draft"
-        ? currentDraft === null ? "O draft da curadoria deixou de existir." : validateProposalForDraft(validation.proposal, currentDraft)
-        : currentDomain === undefined ? "O Domain ativo deixou de existir." : validateProposalForQuestionnaire(validation.proposal, currentDomain.questionnaire);
-      if (incompatibility !== undefined) {
-        const hasCompatibleResource = validation.proposal.resources.some(({ compatibility }) => compatibility.compatible);
-        const hasIncompatibleResource = validation.proposal.resources.some(({ compatibility }) => !compatibility.compatible);
-        if (hasIncompatibleResource && hasCompatibleResource) {
-          const message = "Lori recusou a proposta porque ela mistura recursos compatíveis e incompatíveis. Nenhuma proposta foi salva; envie somente recursos compatíveis, sem relaxar as restrições.";
-          toolCtx.ui.notify(message, "warning");
-          return toolMessage(message, true);
-        }
-        if (hasIncompatibleResource) {
-          const blocker = renderCurationBlocker(incompatibility, request.target === "active");
+      if (!acceptance.ok) {
+        if (acceptance.kind === "blocked") {
+          const blocker = renderCurationBlocker(acceptance.reason, request.target === "active");
           toolCtx.ui.notify(blocker, "warning");
           if (shared.curationRequest?.requestId === request.requestId) shared.curationRequest = undefined;
           return { ...toolMessage(blocker), terminate: true };
         }
-        const message = `Lori não aceitou a proposta: ${incompatibility} Nenhuma proposta foi salva; envie novamente valores que correspondam à request atual.`;
+        let message: string;
+        if (acceptance.kind === "unverified-source") {
+          message = `Lori bloqueou a proposta: ${acceptance.reason} Nenhuma proposta foi salva; pesquise a fonte com uma ferramenta host apropriada nesta request.`;
+        } else if (acceptance.kind === "mixed") {
+          message = "Lori recusou a proposta porque ela mistura recursos compatíveis e incompatíveis. Nenhuma proposta foi salva; envie somente recursos compatíveis, sem relaxar as restrições.";
+        } else {
+          message = `Lori não aceitou a proposta: ${acceptance.reason} Nenhuma proposta foi salva; corrija a proposta sem relaxar as restrições.`;
+        }
         toolCtx.ui.notify(message, "warning");
         return toolMessage(message, true);
       }
@@ -812,18 +803,16 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
             state.session.status !== "open" ||
             state.session.domainId !== request.domainId ||
             draft?.id !== request.domainId ||
-            draft.phase !== "awaiting_curation" ||
-            validateProposalForDraft(validation.proposal, draft) !== undefined
+            draft.phase !== "awaiting_curation"
           ) {
             return undefined;
           }
-          return { type: "domain-draft/propose-chapter", id: draft.id, proposal: validation.proposal };
+          return { type: "domain-draft/propose-chapter", id: draft.id, proposal: acceptance.proposal };
         }
         const domain = state.domains.find(({ id }) => id === request.domainId);
         if (
           domain === undefined ||
-          domain.currentChapterVersionId !== request.expectedCurrentChapterVersionId ||
-          validateProposalForQuestionnaire(validation.proposal, domain.questionnaire) !== undefined
+          domain.currentChapterVersionId !== request.expectedCurrentChapterVersionId
         ) {
           return undefined;
         }
@@ -831,7 +820,7 @@ function registerChapterCurationTool(api: ExtensionAPI, shared: LoriExtensionSta
           type: "domain/propose-chapter",
           id: domain.id,
           expectedCurrentChapterVersionId: domain.currentChapterVersionId,
-          proposal: validation.proposal,
+          proposal: acceptance.proposal,
         };
       });
       if (!acceptDispatchResult(shared, toolCtx, saved, "Lori: proposta não salva porque não foi possível persistir o snapshot.")) {

@@ -27,6 +27,7 @@ Ubiquitous language of Lori, a gamified accelerated-learning extension. Technica
 | **Exit Proof**| The artifact or demonstration that closes a Chapter                     | Exam, quiz, prova             |
 | **Clear**     | Completion of a Chapter by passing its exit proof                       | Stamp, carimbo                |
 | **Unlock**    | What a clear grants: the next Chapter, one technique, one quest         | Reward, prize                 |
+| **Chapter acceptance** | System decision that a Chapter proposal can be saved as pending. It activates nothing; only the Player's approval does | Approval (for the system), validation |
 
 ### Study Session
 

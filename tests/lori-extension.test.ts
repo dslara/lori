@@ -824,6 +824,7 @@ describe("Lori Chapter curation", () => {
 
     expect(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8")).toBe(before);
     expect(harness.ui.notifications.at(-1)?.message).toContain("critério válido");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("corrija a proposta sem relaxar as restrições");
   });
 
   test("blocks proposals without resources or compatible, traceable sources and asks the Player for a decision", async () => {

@@ -3,8 +3,8 @@ import { randomUUID } from "node:crypto";
 import { dirname, isAbsolute, join, relative, sep } from "node:path";
 import { createInitialState, type LoriState } from "../../store/state.ts";
 import type { Session } from "../../core/session/types.ts";
-import { validateChapterProposal, validateProposalForDraft, validateProposalForQuestionnaire } from "../../core/domain/chapter.ts";
-import { isCompleteDomainDraft } from "../../core/domain/questionnaire.ts";
+import { decideChapterAcceptance } from "../../core/domain/chapter.ts";
+import { getQuestionnaire, isCompleteDomainDraft } from "../../core/domain/questionnaire.ts";
 import type { ActiveDomain, ChapterVersionReference, DomainQuestionnaire } from "../../core/domain/types.ts";
 import type { SnapshotResult } from "./types.ts";
 
@@ -318,11 +318,15 @@ function decodeDomainDraft(value: unknown, schemaVersion: 2 | 3 | 4): LoriState[
     return undefined;
   }
   if (draft.phase === "awaiting_approval") {
-    const proposal = validateChapterProposal(value.pendingChapter, { allowMissingReviewDetails: true });
-    if (!proposal.ok || validateProposalForDraft(proposal.proposal, draft) !== undefined) {
+    const questionnaire = getQuestionnaire(draft);
+    if (questionnaire === undefined) {
       return undefined;
     }
-    draft.pendingChapter = proposal.proposal;
+    const acceptance = decideChapterAcceptance(value.pendingChapter, { review: "restored", questionnaire, sourceEvidence: null });
+    if (!acceptance.ok) {
+      return undefined;
+    }
+    draft.pendingChapter = acceptance.proposal;
   } else if (value.pendingChapter !== undefined) {
     return undefined;
   }
@@ -366,7 +370,7 @@ function decodeActiveDomain(value: unknown, schemaVersion: 2 | 3 | 4): ActiveDom
     ) {
       return undefined;
     }
-    const chapter = validateChapterProposal(entry.chapter, { allowMissingReviewDetails: true });
+    const chapter = decideChapterAcceptance(entry.chapter, { review: "restored", questionnaire: null, sourceEvidence: null });
     if (!chapter.ok) return undefined;
     versionIds.add(entry.id);
     versionNumbers.add(entry.version);
@@ -384,15 +388,14 @@ function decodeActiveDomain(value: unknown, schemaVersion: 2 | 3 | 4): ActiveDom
   };
   let pendingChapter: ActiveDomain["pendingChapter"];
   if (value.pendingChapter !== undefined) {
-    const proposal = validateChapterProposal(value.pendingChapter, { allowMissingReviewDetails: true });
+    const acceptance = decideChapterAcceptance(value.pendingChapter, { review: "restored", questionnaire: answers, sourceEvidence: null });
     if (
       schemaVersion < 4 ||
-      !proposal.ok ||
-      validateProposalForQuestionnaire(proposal.proposal, answers) !== undefined
+      !acceptance.ok
     ) {
       return undefined;
     }
-    pendingChapter = proposal.proposal;
+    pendingChapter = acceptance.proposal;
   }
   return {
     id: value.id,

@@ -1,4 +1,4 @@
-import type { DomainDraft, DomainQuestionnaire } from "./types.ts";
+import type { DomainQuestionnaire } from "./types.ts";
 
 export type ChapterPrinciple =
   | "Metalearning"
@@ -246,7 +246,7 @@ function decodeResource(value: unknown, allowMissingScope = false): ChapterResou
   };
 }
 
-export function validateChapterProposal(
+function validateChapterProposal(
   value: unknown,
   options: { allowMissingReviewDetails?: boolean } = {},
 ): ChapterProposalValidation {
@@ -460,7 +460,7 @@ export function validateChapterProposal(
   };
 }
 
-export function validateChapterSourceEvidence(
+function validateChapterSourceEvidence(
   proposal: ChapterProposal,
   toolResults: readonly ChapterSourceEvidence[],
   expected: { requestId: string; agentRunId: string | undefined },
@@ -489,7 +489,7 @@ export function validateChapterSourceEvidence(
   return undefined;
 }
 
-export function validateProposalForQuestionnaire(
+function validateProposalForQuestionnaire(
   proposal: ChapterProposal,
   questionnaire: Pick<DomainQuestionnaire, "deadline" | "hoursPerWeek">,
 ): string | undefined {
@@ -502,9 +502,45 @@ export function validateProposalForQuestionnaire(
   return undefined;
 }
 
-export function validateProposalForDraft(proposal: ChapterProposal, draft: DomainDraft): string | undefined {
-  return validateProposalForQuestionnaire(proposal, {
-    deadline: draft.deadline ?? null,
-    hoursPerWeek: draft.hoursPerWeek ?? Number.NaN,
-  });
+export type ChapterAcceptance =
+  | { ok: true; proposal: ChapterProposal }
+  | { ok: false; kind: "blocked" | "unverified-source" | "mixed" | "invalid"; reason: string };
+
+type ChapterAcceptanceOptions = {
+  /** "restored" accepts review details missing from older snapshots. */
+  review: "strict" | "restored";
+  /** null skips compatibility; only for approved Chapter history. */
+  questionnaire: Pick<DomainQuestionnaire, "deadline" | "hoursPerWeek"> | null;
+  /** null when there are no tool results to check (reducer and snapshot restoration). */
+  sourceEvidence: { results: readonly ChapterSourceEvidence[]; requestId: string; agentRunId: string | undefined } | null;
+};
+
+export function decideChapterAcceptance(value: unknown, options: ChapterAcceptanceOptions): ChapterAcceptance {
+  if (isRecord(value) && Array.isArray(value.resources) && value.resources.length === 0) {
+    return { ok: false, kind: "blocked", reason: "a pesquisa não encontrou recurso adequado para sustentar os Nodes e seus trechos de evidência." };
+  }
+  const validation = validateChapterProposal(value, { allowMissingReviewDetails: options.review === "restored" });
+  if (!validation.ok) {
+    return { ok: false, kind: "invalid", reason: validation.reason };
+  }
+  const { proposal } = validation;
+  if (options.sourceEvidence !== null) {
+    const reason = validateChapterSourceEvidence(proposal, options.sourceEvidence.results, options.sourceEvidence);
+    if (reason !== undefined) {
+      return { ok: false, kind: "unverified-source", reason };
+    }
+  }
+  if (options.questionnaire !== null) {
+    const incompatibility = validateProposalForQuestionnaire(proposal, options.questionnaire);
+    if (incompatibility !== undefined) {
+      const hasIncompatible = proposal.resources.some(({ compatibility }) => !compatibility.compatible);
+      const hasCompatible = proposal.resources.some(({ compatibility }) => compatibility.compatible);
+      if (hasIncompatible && hasCompatible) {
+        return { ok: false, kind: "mixed", reason: incompatibility };
+      }
+      // Without any usable source, the Player decides on research; otherwise the proposal just needs a retry.
+      return { ok: false, kind: hasIncompatible ? "blocked" : "invalid", reason: incompatibility };
+    }
+  }
+  return { ok: true, proposal };
 }

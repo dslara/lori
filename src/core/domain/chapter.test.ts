@@ -1,5 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { validateChapterProposal, validateChapterSourceEvidence, type ChapterSourceEvidence } from "./chapter.ts";
+import { decideChapterAcceptance, type ChapterSourceEvidence } from "./chapter.ts";
+import { reduceDomainSessionState, type DomainSessionState } from "./state-reducer.ts";
+import type { ActiveDomain, DomainDraft } from "./types.ts";
 
 const validProposal = () => ({
   outcome: "Hold a short conversation.",
@@ -45,7 +47,10 @@ const validProposal = () => ({
   }],
 });
 
-describe("validateChapterSourceEvidence", () => {
+const strict = { review: "strict" as const, questionnaire: null, sourceEvidence: null };
+const restored = { review: "restored" as const, questionnaire: null, sourceEvidence: null };
+
+describe("Chapter source evidence", () => {
   const evidence = (text: string, overrides: Partial<ChapterSourceEvidence> = {}): ChapterSourceEvidence => ({
     requestId: "request-1",
     agentRunId: "run-1",
@@ -55,65 +60,40 @@ describe("validateChapterSourceEvidence", () => {
     text,
     ...overrides,
   });
+  const checkSource = (results: ChapterSourceEvidence[], expected = { requestId: "request-1", agentRunId: "run-1" }) =>
+    decideChapterAcceptance(validProposal(), { ...strict, sourceEvidence: { results, ...expected } });
 
   test("requires an exact URL, excerpt, and locator in a successful result linked to the same request and run", () => {
-    const result = validateChapterProposal(validProposal());
-    if (!result.ok) {
-      throw new Error("Expected a valid Chapter fixture.");
-    }
     const sourceResult = "Source https://example.com/phrases states: Good morning. Locator: Greetings";
 
-    expect(validateChapterSourceEvidence(result.proposal, [evidence(sourceResult)], {
-      requestId: "request-1",
-      agentRunId: "run-1",
-    })).toBeUndefined();
-    expect(validateChapterSourceEvidence(result.proposal, [evidence(
-      "Source https://example.com/phrases states: Good morning.",
-    )], {
-      requestId: "request-1",
-      agentRunId: "run-1",
-    })).toContain("resultado bem-sucedido");
-    expect(validateChapterSourceEvidence(result.proposal, [evidence(
-      "Source https://example.com/phrases states: Good morning. Locator: Introductions",
-    )], {
-      requestId: "request-1",
-      agentRunId: "run-1",
-    })).toContain("resultado bem-sucedido");
-    expect(validateChapterSourceEvidence(result.proposal, [evidence(sourceResult, { requestId: "old-request" })], {
-      requestId: "request-1",
-      agentRunId: "run-1",
-    })).toContain("resultado bem-sucedido");
-    expect(validateChapterSourceEvidence(result.proposal, [evidence(sourceResult, { agentRunId: "old-run" })], {
-      requestId: "request-1",
-      agentRunId: "run-1",
-    })).toContain("resultado bem-sucedido");
+    expect(checkSource([evidence(sourceResult)])).toMatchObject({ ok: true });
+    expect(checkSource([evidence("Source https://example.com/phrases states: Good morning.")]))
+      .toMatchObject({ ok: false, kind: "unverified-source" });
+    expect(checkSource([evidence("Source https://example.com/phrases states: Good morning. Locator: Introductions")]))
+      .toMatchObject({ ok: false, kind: "unverified-source" });
+    expect(checkSource([evidence(sourceResult, { requestId: "old-request" })]))
+      .toMatchObject({ ok: false, kind: "unverified-source" });
+    expect(checkSource([evidence(sourceResult, { agentRunId: "old-run" })]))
+      .toMatchObject({ ok: false, kind: "unverified-source" });
   });
 
   test("rejects failed, stale, or incomplete results that do not provide all exact source fields", () => {
-    const result = validateChapterProposal(validProposal());
-    if (!result.ok) {
-      throw new Error("Expected a valid Chapter fixture.");
-    }
-    const expected = { requestId: "request-1", agentRunId: "run-1" };
-
-    expect(validateChapterSourceEvidence(result.proposal, [evidence(
-      "https://example.com/phrases Good morning.", { isError: true },
-    )], expected)).toContain("resultado bem-sucedido");
-    expect(validateChapterSourceEvidence(result.proposal, [evidence(
-      "Source https://example.com/phrases states: Good morning. Locator: Greetings", { toolName: "cache_search" },
-    )], expected)).toBeUndefined();
-    expect(validateChapterSourceEvidence(result.proposal, [
+    expect(checkSource([evidence("https://example.com/phrases Good morning.", { isError: true })]))
+      .toMatchObject({ ok: false, kind: "unverified-source" });
+    expect(checkSource([evidence("Source https://example.com/phrases states: Good morning. Locator: Greetings", { toolName: "cache_search" })]))
+      .toMatchObject({ ok: true });
+    expect(checkSource([
       evidence("https://example.com/phrases Good morning."),
       evidence("Greetings", { toolCallId: "call-2" }),
-    ], expected)).toContain("resultado bem-sucedido");
-    expect(validateChapterSourceEvidence(result.proposal, [evidence("https://example.com/phrases Good Morning.")], expected))
-      .toContain("resultado bem-sucedido");
+    ])).toMatchObject({ ok: false, kind: "unverified-source" });
+    expect(checkSource([evidence("https://example.com/phrases Good Morning.")]))
+      .toMatchObject({ ok: false, kind: "unverified-source" });
   });
 });
 
-describe("validateChapterProposal", () => {
+describe("Chapter proposal structure", () => {
   test("accepts a Node with a specific Exit Proof contribution and rationale", () => {
-    const result = validateChapterProposal(validProposal());
+    const result = decideChapterAcceptance(validProposal(), strict);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -129,7 +109,7 @@ describe("validateChapterProposal", () => {
     const proposal = validProposal();
     delete (proposal.nodes[0] as { exitProofContributions?: unknown }).exitProofContributions;
 
-    const result = validateChapterProposal(proposal);
+    const result = decideChapterAcceptance(proposal, strict);
 
     expect(result).toMatchObject({ ok: false });
   });
@@ -138,7 +118,7 @@ describe("validateChapterProposal", () => {
     const proposal = validProposal();
     proposal.exitProof.criteria.push("Answer a follow-up question.");
 
-    expect(validateChapterProposal(proposal)).toMatchObject({ ok: false });
+    expect(decideChapterAcceptance(proposal, strict)).toMatchObject({ ok: false });
   });
 
   test("rejects duplicate Exit Proof criteria after whitespace and case normalization", () => {
@@ -150,17 +130,17 @@ describe("validateChapterProposal", () => {
       rationale: "This is the same observable action with different formatting.",
     });
 
-    expect(validateChapterProposal(proposal)).toMatchObject({ ok: false });
+    expect(decideChapterAcceptance(proposal, strict)).toMatchObject({ ok: false });
   });
 
   test("rejects a Node contribution with an invalid criterion or empty rationale", () => {
     const invalidCriterion = validProposal();
     invalidCriterion.nodes[0]!.exitProofContributions[0]!.criterion = "A different criterion";
-    expect(validateChapterProposal(invalidCriterion)).toMatchObject({ ok: false });
+    expect(decideChapterAcceptance(invalidCriterion, strict)).toMatchObject({ ok: false });
 
     const emptyRationale = validProposal();
     emptyRationale.nodes[0]!.exitProofContributions[0]!.rationale = "   ";
-    expect(validateChapterProposal(emptyRationale)).toMatchObject({ ok: false });
+    expect(decideChapterAcceptance(emptyRationale, strict)).toMatchObject({ ok: false });
   });
 
   test("accepts an ordered prerequisite chain ending in an Exit Proof contribution", () => {
@@ -204,7 +184,7 @@ describe("validateChapterProposal", () => {
       },
     ];
 
-    const result = validateChapterProposal(proposal);
+    const result = decideChapterAcceptance(proposal, strict);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -228,7 +208,7 @@ describe("validateChapterProposal", () => {
       exitProofContributions: [],
     });
 
-    expect(validateChapterProposal(proposal)).toMatchObject({ ok: false });
+    expect(decideChapterAcceptance(proposal, strict)).toMatchObject({ ok: false });
   });
 
   test("rejects repeated objectives and repeated Exit Proof criteria even when dependent", () => {
@@ -239,7 +219,7 @@ describe("validateChapterProposal", () => {
       order: 2,
       prerequisiteNodeIds: ["greetings"],
     });
-    expect(validateChapterProposal(duplicateObjective)).toMatchObject({ ok: false });
+    expect(decideChapterAcceptance(duplicateObjective, strict)).toMatchObject({ ok: false });
 
     const duplicateCriterion = validProposal();
     duplicateCriterion.nodes.push({
@@ -253,7 +233,7 @@ describe("validateChapterProposal", () => {
         rationale: "The earlier greeting practice is necessary before this second attempt.",
       }],
     });
-    expect(validateChapterProposal(duplicateCriterion)).toMatchObject({ ok: false });
+    expect(decideChapterAcceptance(duplicateCriterion, strict)).toMatchObject({ ok: false });
   });
 
   test("requires non-empty rationales for prerequisite relationships", () => {
@@ -275,10 +255,10 @@ describe("validateChapterProposal", () => {
       },
     ];
 
-    expect(validateChapterProposal(proposal)).toMatchObject({ ok: false });
+    expect(decideChapterAcceptance(proposal, strict)).toMatchObject({ ok: false });
 
     delete (proposal.nodes[1] as { prerequisiteRationales?: unknown }).prerequisiteRationales;
-    expect(validateChapterProposal(proposal)).toMatchObject({ ok: false });
+    expect(decideChapterAcceptance(proposal, strict)).toMatchObject({ ok: false });
   });
 
   test("preserves legacy Chapter nodes without newly introduced review details", () => {
@@ -286,7 +266,7 @@ describe("validateChapterProposal", () => {
     delete (proposal.nodes[0] as { prerequisiteRationales?: unknown }).prerequisiteRationales;
     delete (proposal.nodes[0] as { exitProofContributions?: unknown }).exitProofContributions;
 
-    const result = validateChapterProposal(proposal, { allowMissingReviewDetails: true });
+    const result = decideChapterAcceptance(proposal, restored);
 
     expect(result.ok).toBe(true);
     if (result.ok) {
@@ -305,10 +285,145 @@ describe("validateChapterProposal", () => {
       objective: "Ask a follow-up question.",
       prerequisiteNodeIds: [],
     });
-    expect(validateChapterProposal(futureReference)).toMatchObject({ ok: false });
+    expect(decideChapterAcceptance(futureReference, strict)).toMatchObject({ ok: false });
 
     const unknownReference = validProposal();
     unknownReference.nodes[0]!.prerequisiteNodeIds = ["missing-node"];
-    expect(validateChapterProposal(unknownReference)).toMatchObject({ ok: false });
+    expect(decideChapterAcceptance(unknownReference, strict)).toMatchObject({ ok: false });
+  });
+});
+
+describe("decideChapterAcceptance", () => {
+  test("blocks a proposal without resources as a research blocker, before structural checks", () => {
+    expect(decideChapterAcceptance({ ...validProposal(), outcome: " ", resources: [] }, {
+      review: "strict",
+      questionnaire: null,
+      sourceEvidence: null,
+    })).toMatchObject({ ok: false, kind: "blocked" });
+  });
+
+  test("reports an unverified source only when source evidence is checked", () => {
+    const sourceResult: ChapterSourceEvidence = {
+      requestId: "request-1",
+      agentRunId: "run-1",
+      toolCallId: "call-1",
+      toolName: "brave_search",
+      isError: false,
+      text: "Source https://example.com/phrases states: Good morning. Locator: Greetings",
+    };
+    const checked = (results: ChapterSourceEvidence[]) => ({
+      ...strict,
+      sourceEvidence: { results, requestId: "request-1", agentRunId: "run-1" },
+    });
+
+    expect(decideChapterAcceptance(validProposal(), checked([sourceResult]))).toMatchObject({ ok: true });
+    expect(decideChapterAcceptance(validProposal(), checked([]))).toMatchObject({ ok: false, kind: "unverified-source" });
+    expect(decideChapterAcceptance(validProposal(), strict)).toMatchObject({ ok: true });
+  });
+
+  test("classifies compatibility and effort rejections against the Domain questionnaire", () => {
+    const commitments = { deadline: null, hoursPerWeek: 3 };
+    const decide = (proposal: unknown, questionnaire: typeof commitments | null = commitments) =>
+      decideChapterAcceptance(proposal, { review: "strict", questionnaire, sourceEvidence: null });
+
+    const effortMismatch = validProposal();
+    expect(decide(effortMismatch, { deadline: null, hoursPerWeek: 5 })).toMatchObject({ ok: false, kind: "invalid" });
+
+    const allIncompatible = validProposal();
+    allIncompatible.resources[0]!.compatibility.compatible = false;
+    expect(decide(allIncompatible)).toMatchObject({ ok: false, kind: "blocked" });
+
+    const mixed = validProposal();
+    mixed.resources.push({
+      ...mixed.resources[0]!,
+      id: "resource-2",
+      url: "https://example.com/other",
+      compatibility: { ...mixed.resources[0]!.compatibility, compatible: false },
+    });
+    mixed.nodes[0]!.evidenceRefs.push({ resourceId: "resource-2", evidenceId: "excerpt-1" });
+    expect(decide(mixed)).toMatchObject({ ok: false, kind: "mixed" });
+
+    expect(decide(effortMismatch, null)).toMatchObject({ ok: true });
+    expect(decide(allIncompatible, null)).toMatchObject({ ok: true });
+  });
+
+  test("accepts legacy review details only when restoring a snapshot", () => {
+    const legacy = validProposal();
+    delete (legacy.nodes[0] as { prerequisiteRationales?: unknown }).prerequisiteRationales;
+    delete (legacy.nodes[0] as { exitProofContributions?: unknown }).exitProofContributions;
+    const options = { questionnaire: null, sourceEvidence: null };
+
+    expect(decideChapterAcceptance(legacy, { ...options, review: "strict" })).toMatchObject({ ok: false, kind: "invalid" });
+    expect(decideChapterAcceptance(legacy, { ...options, review: "restored" })).toMatchObject({ ok: true });
+  });
+});
+
+describe("Chapter acceptance at the reducer", () => {
+  const decided = decideChapterAcceptance(validProposal(), { review: "strict", questionnaire: null, sourceEvidence: null });
+  if (!decided.ok) {
+    throw new Error("Expected a valid Chapter fixture.");
+  }
+  const draftWithHours = (hoursPerWeek: number): DomainDraft => ({
+    id: "draft-1",
+    phase: "awaiting_curation",
+    name: "Spanish",
+    learningObjective: "Order a meal in Spanish.",
+    motivation: "Travel.",
+    deadline: null,
+    hoursPerWeek,
+    baseline: 2,
+    preferences: null,
+    materialRestrictions: null,
+  });
+  const stateWithHours = (hoursPerWeek: number): DomainSessionState => ({
+    domains: [],
+    domainDraft: draftWithHours(hoursPerWeek),
+    session: { kind: "metalearning", status: "open", domainId: "draft-1", startedAt: 0, totalPausedMs: 0 },
+    sessionHistory: [],
+  });
+  const propose = { type: "domain-draft/propose-chapter" as const, id: "draft-1", proposal: decided.proposal };
+
+  test("refuses a draft proposal that does not match the saved questionnaire", () => {
+    const state = stateWithHours(5);
+
+    expect(reduceDomainSessionState(state, propose)).toBe(state);
+  });
+
+  test("stores a draft proposal that matches the saved questionnaire", () => {
+    expect(reduceDomainSessionState(stateWithHours(3), propose).domainDraft)
+      .toMatchObject({ phase: "awaiting_approval" });
+  });
+
+  const domainWithHours = (hoursPerWeek: number): ActiveDomain => ({
+    id: "domain-1",
+    name: "Spanish",
+    learningObjective: "Order a meal in Spanish.",
+    questionnaire: { motivation: "Travel.", deadline: null, hoursPerWeek, baseline: 2, preferences: null, materialRestrictions: null },
+    status: "active",
+    chapters: [{ id: "chapter-1", version: 1, approvedAt: 0, chapter: decided.proposal }],
+    currentChapterVersionId: "chapter-1",
+  });
+  const domainState = (hoursPerWeek: number): DomainSessionState => ({
+    domains: [domainWithHours(hoursPerWeek)],
+    domainDraft: null,
+    session: null,
+    sessionHistory: [],
+  });
+  const proposeDomain = {
+    type: "domain/propose-chapter" as const,
+    id: "domain-1",
+    expectedCurrentChapterVersionId: "chapter-1",
+    proposal: decided.proposal,
+  };
+
+  test("refuses an active Domain proposal that does not match its saved questionnaire", () => {
+    const state = domainState(5);
+
+    expect(reduceDomainSessionState(state, proposeDomain)).toBe(state);
+  });
+
+  test("stores an active Domain proposal that matches its saved questionnaire", () => {
+    expect(reduceDomainSessionState(domainState(3), proposeDomain).domains[0])
+      .toMatchObject({ pendingChapter: { outcome: "Hold a short conversation." } });
   });
 });

@@ -1,7 +1,7 @@
 import { describe, expect, test } from "bun:test";
 import { Value } from "typebox/value";
 import type { DomainDraft } from "../../core/domain/types.ts";
-import { validateChapterProposal } from "../../core/domain/chapter.ts";
+import { decideChapterAcceptance } from "../../core/domain/chapter.ts";
 import { buildChapterCurationPrompt, chapterCurationToolParameters, renderChapterProposal } from "./chapter-curation.ts";
 
 const draft: DomainDraft = {
@@ -152,7 +152,7 @@ describe("chapter curation prompt and proposal presentation", () => {
   });
 
   test("presents each Node's explicit contribution and rationale to the Player", () => {
-    const validation = validateChapterProposal(validSubmission().result.proposal);
+    const validation = decideChapterAcceptance(validSubmission().result.proposal, { review: "strict", questionnaire: null, sourceEvidence: null });
     if (!validation.ok) {
       throw new Error("Expected a valid Chapter proposal fixture.");
     }
@@ -187,7 +187,7 @@ describe("chapter curation prompt and proposal presentation", () => {
         }],
       },
     ];
-    const validation = validateChapterProposal(proposal);
+    const validation = decideChapterAcceptance(proposal, { review: "strict", questionnaire: null, sourceEvidence: null });
     if (!validation.ok) {
       throw new Error("Expected a valid proposal with a structural prerequisite.");
     }
