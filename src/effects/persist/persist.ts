@@ -26,6 +26,47 @@ function decodeChapterReference(value: unknown): ChapterVersionReference | null 
   return { domainId: value.domainId, chapterVersionId: value.chapterVersionId };
 }
 
+function decodeTotalPausedMs(value: unknown): number | undefined {
+  if (value === undefined) return 0;
+  if (typeof value !== "number" || !Number.isFinite(value) || value < 0) return undefined;
+  return value;
+}
+
+function decodePausedAt(value: Record<string, unknown>, startedAt: number, totalPausedMs: number): number | undefined {
+  const pausedAt = value.pausedAt;
+  if (typeof pausedAt !== "number" || !Number.isFinite(pausedAt) || pausedAt < startedAt + totalPausedMs) {
+    return undefined;
+  }
+  return pausedAt;
+}
+
+function decodeClosedEnvelope(
+  value: Record<string, unknown>,
+  startedAt: number,
+  totalPausedMs: number,
+): { closedAt: number; focus: number; honesty: number; pausedAt?: number } | undefined {
+  const pausedAt = value.pausedAt;
+  if (
+    typeof value.closedAt !== "number" || !Number.isFinite(value.closedAt) ||
+    value.closedAt < startedAt + totalPausedMs ||
+    (pausedAt !== undefined && (
+      typeof pausedAt !== "number" || !Number.isFinite(pausedAt) ||
+      pausedAt < startedAt + totalPausedMs || pausedAt > value.closedAt
+    )) ||
+    !isRecord(value.verdict) ||
+    typeof value.verdict.focus !== "number" || !Number.isFinite(value.verdict.focus) ||
+    typeof value.verdict.honesty !== "number" || !Number.isFinite(value.verdict.honesty)
+  ) {
+    return undefined;
+  }
+  return {
+    closedAt: value.closedAt,
+    focus: value.verdict.focus,
+    honesty: value.verdict.honesty,
+    ...(typeof pausedAt === "number" ? { pausedAt } : {}),
+  };
+}
+
 function decodeSession(value: unknown, version: 1 | 2 | 3 | 4): Session | null | undefined {
   if (value === null) {
     return null;
@@ -47,8 +88,8 @@ function decodeSession(value: unknown, version: 1 | 2 | 3 | 4): Session | null |
     ) {
       return undefined;
     }
-    const totalPausedMs = value.totalPausedMs === undefined ? 0 : value.totalPausedMs;
-    if (typeof totalPausedMs !== "number" || !Number.isFinite(totalPausedMs) || totalPausedMs < 0) {
+    const totalPausedMs = decodeTotalPausedMs(value.totalPausedMs);
+    if (totalPausedMs === undefined) {
       return undefined;
     }
     const details = {
@@ -63,44 +104,31 @@ function decodeSession(value: unknown, version: 1 | 2 | 3 | 4): Session | null |
     };
     if (value.status === "open") return { ...details, status: "open" };
     if (value.status === "paused") {
-      if (
-        typeof value.pausedAt !== "number" ||
-        !Number.isFinite(value.pausedAt) ||
-        value.pausedAt < value.startedAt + totalPausedMs
-      ) {
-        return undefined;
-      }
-      return { ...details, status: "paused", pausedAt: value.pausedAt };
+      const pausedAt = decodePausedAt(value, value.startedAt, totalPausedMs);
+      if (pausedAt === undefined) return undefined;
+      return { ...details, status: "paused", pausedAt };
     }
 
-    const pausedAt = value.pausedAt;
     const verdictChapterRef = isRecord(value.verdict)
       ? decodeChapterReference(value.verdict.chapterRef)
       : undefined;
     if (
-      !isRecord(value.verdict) ||
       verdictChapterRef === null || verdictChapterRef === undefined ||
       verdictChapterRef.domainId !== chapterRef.domainId ||
-      verdictChapterRef.chapterVersionId !== chapterRef.chapterVersionId ||
-      typeof value.verdict.focus !== "number" || !Number.isFinite(value.verdict.focus) ||
-      typeof value.verdict.honesty !== "number" || !Number.isFinite(value.verdict.honesty) ||
-      typeof value.closedAt !== "number" || !Number.isFinite(value.closedAt) ||
-      value.closedAt < value.startedAt + totalPausedMs ||
-      (pausedAt !== undefined && (
-        typeof pausedAt !== "number" ||
-        !Number.isFinite(pausedAt) ||
-        pausedAt < value.startedAt + totalPausedMs ||
-        pausedAt > value.closedAt
-      ))
+      verdictChapterRef.chapterVersionId !== chapterRef.chapterVersionId
     ) {
+      return undefined;
+    }
+    const closed = decodeClosedEnvelope(value, value.startedAt, totalPausedMs);
+    if (closed === undefined) {
       return undefined;
     }
     return {
       ...details,
       status: "closed",
-      closedAt: value.closedAt,
-      ...(typeof pausedAt === "number" ? { pausedAt } : {}),
-      verdict: { focus: value.verdict.focus, honesty: value.verdict.honesty, chapterRef },
+      closedAt: closed.closedAt,
+      ...(closed.pausedAt === undefined ? {} : { pausedAt: closed.pausedAt }),
+      verdict: { focus: closed.focus, honesty: closed.honesty, chapterRef },
     };
   }
 
@@ -116,8 +144,8 @@ function decodeSession(value: unknown, version: 1 | 2 | 3 | 4): Session | null |
     }
     const chapterRef = decodeChapterReference(version >= 3 ? value.chapterRef : undefined);
     if (chapterRef === undefined) return undefined;
-    const totalPausedMs = value.totalPausedMs === undefined ? 0 : value.totalPausedMs;
-    if (typeof totalPausedMs !== "number" || !Number.isFinite(totalPausedMs) || totalPausedMs < 0) {
+    const totalPausedMs = decodeTotalPausedMs(value.totalPausedMs);
+    if (totalPausedMs === undefined) {
       return undefined;
     }
     const details = {
@@ -131,17 +159,11 @@ function decodeSession(value: unknown, version: 1 | 2 | 3 | 4): Session | null |
       return { ...details, status: "open" };
     }
     if (value.status === "paused") {
-      if (
-        typeof value.pausedAt !== "number" ||
-        !Number.isFinite(value.pausedAt) ||
-        value.pausedAt < value.startedAt + totalPausedMs
-      ) {
-        return undefined;
-      }
-      return { ...details, status: "paused", pausedAt: value.pausedAt };
+      const pausedAt = decodePausedAt(value, value.startedAt, totalPausedMs);
+      if (pausedAt === undefined) return undefined;
+      return { ...details, status: "paused", pausedAt };
     }
 
-    const pausedAt = value.pausedAt;
     const verdictChapterRef = isRecord(value.verdict)
       ? decodeChapterReference(value.verdict.chapterRef)
       : undefined;
@@ -151,30 +173,20 @@ function decodeSession(value: unknown, version: 1 | 2 | 3 | 4): Session | null |
       verdictChapterRef === null ||
       verdictChapterRef === undefined ||
       verdictChapterRef.domainId !== chapterRef.domainId ||
-      verdictChapterRef.chapterVersionId !== chapterRef.chapterVersionId ||
-      typeof value.closedAt !== "number" ||
-      !Number.isFinite(value.closedAt) ||
-      value.closedAt < value.startedAt + totalPausedMs ||
-      (pausedAt !== undefined && (
-        typeof pausedAt !== "number" ||
-        !Number.isFinite(pausedAt) ||
-        pausedAt < value.startedAt + totalPausedMs ||
-        pausedAt > value.closedAt
-      )) ||
-      !isRecord(value.verdict) ||
-      typeof value.verdict.focus !== "number" ||
-      !Number.isFinite(value.verdict.focus) ||
-      typeof value.verdict.honesty !== "number" ||
-      !Number.isFinite(value.verdict.honesty)
+      verdictChapterRef.chapterVersionId !== chapterRef.chapterVersionId
     ) {
+      return undefined;
+    }
+    const closed = decodeClosedEnvelope(value, value.startedAt, totalPausedMs);
+    if (closed === undefined) {
       return undefined;
     }
     return {
       ...details,
       status: "closed",
-      closedAt: value.closedAt,
-      ...(typeof pausedAt === "number" ? { pausedAt } : {}),
-      verdict: { focus: value.verdict.focus, honesty: value.verdict.honesty, chapterRef },
+      closedAt: closed.closedAt,
+      ...(closed.pausedAt === undefined ? {} : { pausedAt: closed.pausedAt }),
+      verdict: { focus: closed.focus, honesty: closed.honesty, chapterRef },
     };
   }
 
@@ -192,12 +204,8 @@ function decodeSession(value: unknown, version: 1 | 2 | 3 | 4): Session | null |
     return undefined;
   }
 
-  const totalPausedMs = value.totalPausedMs === undefined ? 0 : value.totalPausedMs;
-  if (
-    typeof totalPausedMs !== "number" ||
-    !Number.isFinite(totalPausedMs) ||
-    totalPausedMs < 0
-  ) {
+  const totalPausedMs = decodeTotalPausedMs(value.totalPausedMs);
+  if (totalPausedMs === undefined) {
     return undefined;
   }
 
@@ -214,45 +222,27 @@ function decodeSession(value: unknown, version: 1 | 2 | 3 | 4): Session | null |
   }
 
   if (value.status === "paused") {
-    if (
-      typeof value.pausedAt !== "number" ||
-      !Number.isFinite(value.pausedAt) ||
-      value.pausedAt < value.startedAt + totalPausedMs
-    ) {
-      return undefined;
-    }
-    return { ...details, status: "paused", pausedAt: value.pausedAt };
+    const pausedAt = decodePausedAt(value, value.startedAt, totalPausedMs);
+    if (pausedAt === undefined) return undefined;
+    return { ...details, status: "paused", pausedAt };
   }
 
-  const pausedAt = value.pausedAt;
-  if (
-    typeof value.closedAt !== "number" ||
-    !Number.isFinite(value.closedAt) ||
-    value.closedAt < value.startedAt + totalPausedMs ||
-    (pausedAt !== undefined && (
-      typeof pausedAt !== "number" ||
-      !Number.isFinite(pausedAt) ||
-      pausedAt < value.startedAt + totalPausedMs ||
-      pausedAt > value.closedAt
-    )) ||
-    !isRecord(value.verdict) ||
-    typeof value.verdict.focus !== "number" ||
-    !Number.isFinite(value.verdict.focus) ||
-    typeof value.verdict.honesty !== "number" ||
-    !Number.isFinite(value.verdict.honesty)
-  ) {
+  const closed = decodeClosedEnvelope(value, value.startedAt, totalPausedMs);
+  if (closed === undefined) {
     return undefined;
   }
-  const chapterRef = decodeChapterReference(version >= 3 ? value.verdict.chapterRef : undefined);
+  const chapterRef = decodeChapterReference(
+    version >= 3 && isRecord(value.verdict) ? value.verdict.chapterRef : undefined,
+  );
   if (chapterRef === undefined) return undefined;
   return {
     ...details,
     status: "closed",
-    closedAt: value.closedAt,
-    ...(typeof pausedAt === "number" ? { pausedAt } : {}),
+    closedAt: closed.closedAt,
+    ...(closed.pausedAt === undefined ? {} : { pausedAt: closed.pausedAt }),
     verdict: {
-      focus: value.verdict.focus,
-      honesty: value.verdict.honesty,
+      focus: closed.focus,
+      honesty: closed.honesty,
       ...(chapterRef !== null ? { chapterRef } : {}),
     },
   };
