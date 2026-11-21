@@ -1,10 +1,10 @@
 import type { ExtensionAPI } from "@earendil-works/pi-coding-agent";
 import { createSkinProvider } from "../../presentation/skin/provider.ts";
 import { createStore } from "../../store/store.ts";
-import { initializeSessionState, registerLoriCommands } from "../pi-commands/pi-commands.ts";
-import { createChapterCurationRuntime } from "../pi-commands/chapter-curation-runtime.ts";
-import type { LoriExtensionState } from "../pi-commands/types.ts";
-import { showError, showStatus } from "../ui/ui.ts";
+import { initializeSessionState, registerLoriCommands } from "../commands/pi-commands.ts";
+import { createChapterCurationRuntime } from "../commands/chapter-curation-runtime.ts";
+import type { LoriExtensionState } from "../commands/types.ts";
+import { showError, showStatus } from "../../effects/ui/ui.ts";
 
 function clearSharedState(shared: LoriExtensionState, error?: string): void {
   shared.store = undefined;

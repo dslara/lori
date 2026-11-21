@@ -1,3 +1,3 @@
-import loriExtension from "../../src/effects/pi-extension/pi-extension.ts";
+import loriExtension from "../../src/pi/extension/pi-extension.ts";
 
 export default loriExtension;

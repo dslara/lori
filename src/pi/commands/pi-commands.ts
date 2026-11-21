@@ -10,9 +10,9 @@ import { isMetalearningSession, selectCanOpenSession, selectSessionBelongsToDoma
 import { createStore, type LoriStore } from "../../store/store.ts";
 import type { LoriState } from "../../store/state.ts";
 import type { SkinProvider } from "../../presentation/skin/provider.ts";
-import { loadOrCreateSnapshot, writeSnapshot } from "../persist/persist.ts";
-import type { SnapshotResult } from "../persist/types.ts";
-import { showError, showStatus } from "../ui/ui.ts";
+import { loadOrCreateSnapshot, writeSnapshot } from "../../effects/persist/persist.ts";
+import type { SnapshotResult } from "../../effects/persist/types.ts";
+import { showError, showStatus } from "../../effects/ui/ui.ts";
 import { registerCurationSourceEvidenceHooks } from "./chapter-source-evidence.ts";
 import {
   buildChapterCurationPrompt,
