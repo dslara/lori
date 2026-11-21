@@ -5,7 +5,7 @@ import { validateChapterProposal, validateChapterSourceEvidence, validateProposa
 import type { ActiveDomain, Baseline, DomainDraft, DomainDraftAnswerAction } from "../../core/domain/types.ts";
 import { selectNextDomainDraftField, selectRecommendedStudyTarget, type DomainDraftQuestionField } from "../../core/domain/selectors.ts";
 import { restoreSessionAsPaused } from "../../core/processors/lifecycle.ts";
-import { isMetalearningSession, selectCanOpenSession, selectSessionBelongsToDomain } from "../../core/session/selectors.ts";
+import { isMetalearningSession, selectCanOpenSession, selectSessionBelongsToDomain, selectTransitionAt } from "../../core/session/selectors.ts";
 import { createStore, type LoriStore } from "../../store/store.ts";
 import type { LoriState } from "../../store/state.ts";
 import type { SkinProvider } from "../../presentation/skin/provider.ts";
@@ -462,7 +462,7 @@ async function continueDomainPreparation(
           }
           return {
             type: "session/abandon",
-            pausedAt: Math.max(Date.now(), current.session.startedAt + current.session.totalPausedMs),
+            pausedAt: selectTransitionAt(current.session, Date.now()),
           };
         });
         if (!acceptDispatchResult(shared, ctx, paused, "Lori: avaliação não pausada porque não foi possível persistir o snapshot.")) {
@@ -513,7 +513,7 @@ async function continueDomainPreparation(
         ) {
           return undefined;
         }
-        const closedAt = Math.max(Date.now(), currentSession.startedAt + currentSession.totalPausedMs);
+        const closedAt = selectTransitionAt(currentSession, Date.now());
         if (!Number.isFinite(closedAt)) return undefined;
         return {
           type: "session/close",
@@ -551,7 +551,7 @@ async function continueDomainPreparation(
         }
         return {
           type: "session/abandon",
-          pausedAt: Math.max(Date.now(), current.session.startedAt + current.session.totalPausedMs),
+          pausedAt: selectTransitionAt(current.session, Date.now()),
         };
       });
       if (!acceptDispatchResult(shared, ctx, paused, "Lori: preparo não pausado porque não foi possível persistir o snapshot.")) {
@@ -1319,10 +1319,7 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
           return undefined;
         }
 
-        const earliestCloseAt = session.status === "open"
-          ? session.startedAt + session.totalPausedMs
-          : session.pausedAt;
-        const closedAt = Math.max(Date.now(), earliestCloseAt);
+        const closedAt = selectTransitionAt(session, Date.now());
         if (!Number.isFinite(closedAt)) {
           return undefined;
         }
@@ -1357,7 +1354,7 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
         if (session?.status !== "open") {
           return undefined;
         }
-        const pausedAt = Math.max(Date.now(), session.startedAt + session.totalPausedMs);
+        const pausedAt = selectTransitionAt(session, Date.now());
         if (!Number.isFinite(pausedAt)) {
           return undefined;
         }
@@ -1391,7 +1388,7 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
         if (session?.status !== "paused") {
           return undefined;
         }
-        const resumedAt = Math.max(Date.now(), session.pausedAt);
+        const resumedAt = selectTransitionAt(session, Date.now());
         if (!Number.isFinite(resumedAt)) {
           return undefined;
         }

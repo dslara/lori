@@ -1,6 +1,7 @@
 import { describe, expect, test } from "bun:test";
-import { selectElapsedMs } from "./selectors.ts";
+import { selectElapsedMs, selectTransitionAt } from "./selectors.ts";
 import { reduceSession } from "./reducer.ts";
+import type { Session } from "./types.ts";
 
 describe("Session core", () => {
   test("opens one Session with its starting timestamp and derives elapsed time", () => {
@@ -126,6 +127,30 @@ describe("Session core", () => {
     expect(reduceSession(alreadyPaused, { type: "session/abandon", pausedAt: 5_000 })).toBe(alreadyPaused);
     expect(reduceSession(alreadyPaused, { type: "session/resume", resumedAt: 3_999 })).toBe(alreadyPaused);
     expect(reduceSession(opened, { type: "session/resume", resumedAt: 5_000 })).toBe(opened);
+  });
+
+  test("stamps transitions no earlier than the Session's earliest valid timestamp after clock rollback", () => {
+    const timing = { startedAt: 1_000, totalPausedMs: 1_000 };
+    const opens: Array<Extract<Session, { status: "open" }>> = [
+      { kind: "legacyStudy", status: "open", name: "React", primaryTechnique: "Active Recall", ...timing },
+      {
+        kind: "study",
+        status: "open",
+        domainId: "react",
+        chapterRef: { domainId: "react", chapterVersionId: "v1" },
+        nodeId: "hooks",
+        resourceId: "resource-1",
+        primaryTechnique: "Active Recall",
+        ...timing,
+      },
+      { kind: "metalearning", status: "open", domainId: "react", ...timing },
+    ];
+
+    for (const open of opens) {
+      const paused = { ...open, status: "paused" as const, pausedAt: 4_000 };
+      expect(selectTransitionAt(open, 1_500)).toBe(2_000);
+      expect(selectTransitionAt(paused, 3_000)).toBe(4_000);
+    }
   });
 
   test("closes an open Session with a required Verdict and freezes elapsed without a minimum duration", () => {

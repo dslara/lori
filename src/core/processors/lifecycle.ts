@@ -1,3 +1,4 @@
+import { selectTransitionAt } from "../session/selectors.ts";
 import type { Session, SessionAction } from "../session/types.ts";
 
 export function restoreSessionAsPaused(session: Session | null, restoredAt: number): SessionAction | undefined {
@@ -5,10 +6,10 @@ export function restoreSessionAsPaused(session: Session | null, restoredAt: numb
     return undefined;
   }
 
-  const earliestPauseAt = session.startedAt + session.totalPausedMs;
-  if (!Number.isFinite(earliestPauseAt)) {
+  const pausedAt = selectTransitionAt(session, restoredAt);
+  if (!Number.isFinite(pausedAt)) {
     return undefined;
   }
 
-  return { type: "session/abandon", pausedAt: Math.max(restoredAt, earliestPauseAt) };
+  return { type: "session/abandon", pausedAt };
 }

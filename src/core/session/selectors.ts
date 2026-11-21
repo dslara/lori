@@ -20,3 +20,13 @@ export function selectElapsedMs(session: Session, now: number): number {
   const elapsedUntil = session.status === "open" ? now : session.pausedAt;
   return Math.max(0, elapsedUntil - session.startedAt - session.totalPausedMs);
 }
+
+// Earliest timestamp a transition from the current status may carry.
+export function selectEarliestTransitionAt(session: Extract<Session, { status: "open" | "paused" }>): number {
+  return session.status === "open" ? session.startedAt + session.totalPausedMs : session.pausedAt;
+}
+
+// Stamps a transition with `now`, never before the earliest valid timestamp (clock rollback).
+export function selectTransitionAt(session: Extract<Session, { status: "open" | "paused" }>, now: number): number {
+  return Math.max(now, selectEarliestTransitionAt(session));
+}

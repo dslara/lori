@@ -1,4 +1,4 @@
-import { selectCanOpenSession } from "./selectors.ts";
+import { selectCanOpenSession, selectEarliestTransitionAt } from "./selectors.ts";
 import type { Session, SessionAction } from "./types.ts";
 
 export function reduceSession(state: Session | null, action: SessionAction): Session | null {
@@ -69,7 +69,7 @@ export function reduceSession(state: Session | null, action: SessionAction): Ses
     if (state?.status !== "open" || !Number.isFinite(action.pausedAt)) {
       return state;
     }
-    if (action.pausedAt < state.startedAt + state.totalPausedMs) {
+    if (action.pausedAt < selectEarliestTransitionAt(state)) {
       return state;
     }
 
@@ -84,7 +84,7 @@ export function reduceSession(state: Session | null, action: SessionAction): Ses
     if (state?.status !== "paused" || !Number.isFinite(action.resumedAt)) {
       return state;
     }
-    if (action.resumedAt < state.pausedAt) {
+    if (action.resumedAt < selectEarliestTransitionAt(state)) {
       return state;
     }
 
@@ -107,10 +107,7 @@ export function reduceSession(state: Session | null, action: SessionAction): Ses
     return state;
   }
 
-  const earliestCloseAt = state.status === "open"
-    ? state.startedAt + state.totalPausedMs
-    : state.pausedAt;
-  if (action.closedAt < earliestCloseAt) {
+  if (action.closedAt < selectEarliestTransitionAt(state)) {
     return state;
   }
 
