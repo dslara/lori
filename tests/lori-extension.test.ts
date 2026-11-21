@@ -1253,21 +1253,30 @@ describe("Lori Domain deletion", () => {
     expect(harness.ui.confirmCalls.at(-1)?.message).toContain("Metalearning");
   });
 
-  test("does not delete a Domain while its Study Session is open", async () => {
+  test.each([
+    ["open", false],
+    ["paused", true],
+  ])("deletes a Domain with its %s Study Session without a Verdict or XP", async (status, paused) => {
     const { cwd, harness } = await createHarness();
     await startApprovedStudy(harness, "Spanish");
+    if (paused) {
+      await harness.runAbandon();
+    }
 
     const snapshotPath = join(cwd, ".lori", "snapshot.json");
-    const before = await readFile(snapshotPath, "utf8");
-    const domain = JSON.parse(before).domains[0];
+    const before = JSON.parse(await readFile(snapshotPath, "utf8"));
+    const domain = before.domains[0];
+    expect(before.session.status).toBe(status);
     harness.ui.selectResponses.push(`${domain.name} — ${domain.learningObjective} [${domain.id}]`);
-    const confirmCallsBeforeDelete = harness.ui.confirmCalls.length;
-
+    harness.ui.confirmResponses.push(true);
     await harness.runDelete("");
 
-    expect(await readFile(snapshotPath, "utf8")).toBe(before);
-    expect(harness.ui.confirmCalls).toHaveLength(confirmCallsBeforeDelete);
-    expect(harness.ui.notifications.at(-1)?.message).toContain("feche ou retome");
+    const after = JSON.parse(await readFile(snapshotPath, "utf8"));
+    expect(after.domains).toEqual([]);
+    expect(after.session).toBeNull();
+    expect(after.sessionHistory).toEqual([]);
+    expect(after.player).toEqual(before.player);
+    expect(harness.ui.confirmCalls.at(-1)?.message).toContain("sem Verdict e sem XP");
   });
 });
 

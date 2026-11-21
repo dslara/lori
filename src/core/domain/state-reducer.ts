@@ -54,13 +54,7 @@ function isAllowed(state: DomainSessionState, action: LoriAction): boolean {
       }
       return true;
     }
-    if (action.target !== "active" || !domainExists) {
-      return false;
-    }
-    return !(
-      (session?.status === "open" || session?.status === "paused") &&
-      selectSessionBelongsToDomain(session, action.id)
-    );
+    return domainExists;
   }
 
   if (

@@ -16,7 +16,7 @@ pi install /path/to/lori
 - `/lori-curate` explicitly requests a Chapter proposal for a draft or active Domain.
 - `/lori-approve` reviews and explicitly approves a pending Chapter proposal.
 - `/lori-start` starts a Study Session after explicit Domain and Primary Technique selection.
-- `/lori-delete` selects an active Domain or preparation draft and, after confirmation, removes its saved answers, Chapters, proposals, and linked Session history. Deleting a draft also removes its Metalearning Session. XP and unrelated Domains are preserved; an active Domain cannot be deleted while a linked Session is open or paused.
+- `/lori-delete` selects an active Domain or preparation draft and, after confirmation, removes its saved answers, Chapters, proposals, and linked Session history. Deleting a draft also removes its Metalearning Session. XP and unrelated Domains are preserved; an open or paused linked Session is discarded without a Verdict or XP.
 - `/lori-status` checks the Session and refreshes the dashboard.
 - `/lori-abandon` pauses an open Session without penalty.
 - `/lori-resume` resumes a paused Session or continues its saved preparation step.

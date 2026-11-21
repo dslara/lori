@@ -1139,25 +1139,22 @@ export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionSta
       if (target === undefined) {
         return;
       }
-      if (
-        target.kind === "active" &&
-        state.session?.status !== "closed" &&
-        selectSessionBelongsToDomain(state.session, target.id)
-      ) {
-        ctx.ui.notify("Lori: feche ou retome a Session desse Domain antes de excluí-lo. Nenhum dado foi alterado.", "warning");
-        return;
-      }
-
       const relatedSessions = [
         ...state.sessionHistory,
         ...(state.session === null ? [] : [state.session]),
       ].filter((session) => selectSessionBelongsToDomain(session, target.id)).length;
+      const discardsOpenSession = (
+        target.kind === "active" &&
+        state.session?.status !== "closed" &&
+        selectSessionBelongsToDomain(state.session, target.id)
+      );
       const confirmation = target.kind === "active"
         ? [
             `Domain: ${target.name}`,
             `Chapter versions: ${target.chapterCount}`,
             `Proposta pendente: ${target.hasPendingChapter ? "sim" : "não"}`,
             `Sessions/Verdicts associados que serão excluídos: ${relatedSessions}`,
+            ...(discardsOpenSession ? ["Session aberta ou pausada será descartada, sem Verdict e sem XP."] : []),
             "Player XP e outros Domains serão preservados.",
             "Esta ação é permanente.",
           ].join("\n")
