@@ -32,15 +32,14 @@ function decodeTotalPausedMs(value: unknown): number | undefined {
   return value;
 }
 
-function decodePausedAt(value: Record<string, unknown>, startedAt: number, totalPausedMs: number): number | undefined {
-  const pausedAt = value.pausedAt;
-  if (typeof pausedAt !== "number" || !Number.isFinite(pausedAt) || pausedAt < startedAt + totalPausedMs) {
+function decodePausedAt(value: unknown, startedAt: number, totalPausedMs: number): number | undefined {
+  if (typeof value !== "number" || !Number.isFinite(value) || value < startedAt + totalPausedMs) {
     return undefined;
   }
-  return pausedAt;
+  return value;
 }
 
-function decodeClosedEnvelope(
+function decodeClosedFields(
   value: Record<string, unknown>,
   startedAt: number,
   totalPausedMs: number,
@@ -104,7 +103,7 @@ function decodeSession(value: unknown, version: 1 | 2 | 3 | 4): Session | null |
     };
     if (value.status === "open") return { ...details, status: "open" };
     if (value.status === "paused") {
-      const pausedAt = decodePausedAt(value, value.startedAt, totalPausedMs);
+      const pausedAt = decodePausedAt(value.pausedAt, value.startedAt, totalPausedMs);
       if (pausedAt === undefined) return undefined;
       return { ...details, status: "paused", pausedAt };
     }
@@ -119,7 +118,7 @@ function decodeSession(value: unknown, version: 1 | 2 | 3 | 4): Session | null |
     ) {
       return undefined;
     }
-    const closed = decodeClosedEnvelope(value, value.startedAt, totalPausedMs);
+    const closed = decodeClosedFields(value, value.startedAt, totalPausedMs);
     if (closed === undefined) {
       return undefined;
     }
@@ -159,7 +158,7 @@ function decodeSession(value: unknown, version: 1 | 2 | 3 | 4): Session | null |
       return { ...details, status: "open" };
     }
     if (value.status === "paused") {
-      const pausedAt = decodePausedAt(value, value.startedAt, totalPausedMs);
+      const pausedAt = decodePausedAt(value.pausedAt, value.startedAt, totalPausedMs);
       if (pausedAt === undefined) return undefined;
       return { ...details, status: "paused", pausedAt };
     }
@@ -177,7 +176,7 @@ function decodeSession(value: unknown, version: 1 | 2 | 3 | 4): Session | null |
     ) {
       return undefined;
     }
-    const closed = decodeClosedEnvelope(value, value.startedAt, totalPausedMs);
+    const closed = decodeClosedFields(value, value.startedAt, totalPausedMs);
     if (closed === undefined) {
       return undefined;
     }
@@ -222,12 +221,12 @@ function decodeSession(value: unknown, version: 1 | 2 | 3 | 4): Session | null |
   }
 
   if (value.status === "paused") {
-    const pausedAt = decodePausedAt(value, value.startedAt, totalPausedMs);
+    const pausedAt = decodePausedAt(value.pausedAt, value.startedAt, totalPausedMs);
     if (pausedAt === undefined) return undefined;
     return { ...details, status: "paused", pausedAt };
   }
 
-  const closed = decodeClosedEnvelope(value, value.startedAt, totalPausedMs);
+  const closed = decodeClosedFields(value, value.startedAt, totalPausedMs);
   if (closed === undefined) {
     return undefined;
   }
