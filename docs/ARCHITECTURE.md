@@ -43,9 +43,9 @@ Arquitetura escolhe o mais simples que fecha a jornada inicial: preparar e aprov
 │  Persona: fog (loader, builder, switcher).                  │
 ├─────────────────────────────────────────────────────────────┤
 │  EFFECTS (side effects isolados)                            │
-│  - Pi adapter: entry point único, rebuild em session_start  │
+│  - Pi adapter: commands, setStatus, setWidget, rebuild      │
+│    em session_start                                         │
 │  - Persist: snapshot atômico/versionado                     │
-│  - UI: commands /lori-*, setStatus, setWidget               │
 │  - Sem timers, processos ou watchers. Timer é derivado.     │
 ├─────────────────────────────────────────────────────────────┤
 │  STORE (single source of truth, sem regra de negócio)       │
@@ -92,16 +92,17 @@ Arquitetura escolhe o mais simples que fecha a jornada inicial: preparar e aprov
 │   │   └── store.test.ts
 │   ├── pi/                              # Integração com Pi
 │   │   ├── commands/
-│   │   └── extension/
-│   │       └── pi-extension.ts          # Factory da extensão
-│   ├── effects/
-│   │   ├── persist/
-│   │   │   ├── types.ts
-│   │   │   ├── persist.ts               # Snapshot atômico + schemaVersion
-│   │   │   └── persist.test.ts
+│   │   ├── extension/
+│   │   │   └── pi-extension.ts          # Factory da extensão
 │   │   └── ui/
+│   │       └── status/
+│   │           ├── status.types.ts
+│   │           └── status.ts
+│   ├── effects/
+│   │   └── persist/
 │   │       ├── types.ts
-│   │       └── ui.ts
+│   │       ├── persist.ts               # Snapshot atômico + schemaVersion
+│   │       └── persist.test.ts
 │   └── presentation/
 │       └── skin/
 │           ├── provider.ts              # loadSkin + render + fallback
@@ -121,7 +122,7 @@ Arquitetura escolhe o mais simples que fecha a jornada inicial: preparar e aprov
 |------|-------|----------|
 | `src/core/` | Regras de negócio, estado, lifecycle processor | Importar `fs`, Pi SDK, skin, store ou qualquer dep externa |
 | `src/store/` | Single source of truth, sem middleware | Conter regra de negócio (só orquestra reducers) |
-| `src/effects/` | Side effects: snapshot, Pi SDK | Conter regra de negócio (só orquestra) |
+| `src/effects/` | Efeitos desacoplados do Pi, como persistência | Conter regra de negócio (só orquestra) |
 | `src/presentation/` | Skin Minimal, provider e fallback | Modificar estado, parser ou condicionais (só traduz core → string) |
 | `src/pi/` | Integração Pi: commands, curadoria e lifecycle | Conter regras de domínio |
 | `extensions/lori/index.ts` | Entry point do pacote; encaminha para a factory em `src/pi/` | Conter a implementação da extensão |
@@ -223,7 +224,7 @@ SM-2 puro sem penalty, cards manuais, técnicas e combos com bônus-ou-nada, ski
 | 3 | `effects/` não contém regra de negócio. Só orquestra. | Refatorar |
 | 4 | Actions são serializáveis (JSON). Tipos Action e Event seguem distintos. | Corrigir |
 | 5 | Snapshot guarda `player`, `domains`, `domainDraft`, `session`, `sessionHistory` e `skinConfig` com `schemaVersion` e rename atômico no projeto de estudo. Um processo Pi por projeto. | Corrigir |
-| 6 | Pi SDK vive em `src/pi/` e `src/effects/ui/`. A factory registra commands e lifecycle hooks. | Isolar |
+| 6 | Pi SDK vive em `src/pi/`. A factory registra commands e lifecycle hooks. | Isolar |
 | 7 | `runtime.*` nunca persiste quando existir. Sempre recalcula no boot. | Bug |
 | 8 | Modifiers são bônus derivados, nunca abaixo do neutro. | Refatorar |
 | 9 | Quando SQLite pousar: `bun:sqlite` com prepared statements, nunca interpolação. | Segurança |
