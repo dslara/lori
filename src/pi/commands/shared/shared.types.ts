@@ -32,6 +32,6 @@ export type ReadyState = {
 
 export type DomainDraftQuestionPrompt = {
   title: string;
-  guidance?: string;
+  guidance: string;
 };
 

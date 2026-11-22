@@ -40,7 +40,8 @@ const DOMAIN_DRAFT_QUESTIONS: Record<DomainDraftQuestionField, DomainDraftQuesti
     guidance: "Entra no esforço proposto para o Chapter. Número de horas por semana, ex.: 3. Zero também é válido.",
   },
   baseline: {
-    title: "Baseline — como avalia seu ponto de partida para este objetivo? (não é um teste)\nEntra como contexto da curadoria. Selecione uma opção de 1 a 5.",
+    title: "Baseline — como avalia seu ponto de partida para este objetivo? (não é um teste)",
+    guidance: "Entra como contexto da curadoria. Selecione uma opção de 1 a 5.",
   },
   preferences: {
     title: "Que formatos prefere para aprender?",
@@ -58,8 +59,9 @@ async function promptDomainDraftAnswer(
   ctx: Pick<ExtensionContext, "ui">,
 ): Promise<DomainDraftAnswerAction | undefined> {
   const question = DOMAIN_DRAFT_QUESTIONS[field];
+  const title = `${question.title}\n${question.guidance}`;
   if (field === "baseline") {
-    const selected = await ctx.ui.select(question.title, [...BASELINE_OPTIONS]);
+    const selected = await ctx.ui.select(title, [...BASELINE_OPTIONS]);
     const index = BASELINE_OPTIONS.indexOf(selected as (typeof BASELINE_OPTIONS)[number]);
     if (index < 0) {
       return undefined;
@@ -67,7 +69,7 @@ async function promptDomainDraftAnswer(
     return { type: "domain-draft/answer", id, field, value: (index + 1) as Baseline };
   }
 
-  const response = await ctx.ui.input(question.title, question.guidance);
+  const response = await ctx.ui.input(title);
   if (response === undefined) {
     return undefined;
   }

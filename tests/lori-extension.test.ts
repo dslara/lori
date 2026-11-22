@@ -1314,14 +1314,14 @@ describe("Lori startup and status", () => {
 
     await harness.runInit("");
 
-    expect(harness.ui.inputCalls).toEqual([
-      { title: "Como você quer chamar este Domain?", placeholder: "Identifica o Domain nas telas e na curadoria. Texto livre, ex.: japonês, React ou álgebra." },
-      { title: "O que você quer conseguir fazer?", placeholder: "Informa à curadoria o resultado que você busca. Texto livre, descreva algo observável. Ex.: manter uma conversa básica em japonês." },
-      { title: "Por que aprender isso agora?", placeholder: "Entra como contexto da curadoria. Texto livre, ex.: viagem, trabalho ou projeto pessoal." },
-      { title: "Até quando quer alcançar esse objetivo?", placeholder: "Entra no esforço proposto para o Chapter. Data sugerida: DD/MM/AAAA, ex.: 31/12/2026. Texto livre também é aceito; vazio ou 'sem prazo' = sem prazo." },
-      { title: "Quanto tempo por semana consegue dedicar?", placeholder: "Entra no esforço proposto para o Chapter. Número de horas por semana, ex.: 3. Zero também é válido." },
-      { title: "Que formatos prefere para aprender?", placeholder: "Entra no contexto da curadoria; cada recurso declara como considerou suas preferências. Texto livre, ex.: documentação, vídeos, áudio ou exercícios. Vazio = sem preferência." },
-      { title: "Que restrições os materiais precisam respeitar?", placeholder: "Entra no contexto da curadoria; cada recurso declara como respeita suas restrições. Texto livre, ex.: idioma, custo, acessibilidade ou ferramentas. Vazio = sem restrições." },
+    expect(harness.ui.inputCalls.map(({ title }) => title)).toEqual([
+      "Como você quer chamar este Domain?\nIdentifica o Domain nas telas e na curadoria. Texto livre, ex.: japonês, React ou álgebra.",
+      "O que você quer conseguir fazer?\nInforma à curadoria o resultado que você busca. Texto livre, descreva algo observável. Ex.: manter uma conversa básica em japonês.",
+      "Por que aprender isso agora?\nEntra como contexto da curadoria. Texto livre, ex.: viagem, trabalho ou projeto pessoal.",
+      "Até quando quer alcançar esse objetivo?\nEntra no esforço proposto para o Chapter. Data sugerida: DD/MM/AAAA, ex.: 31/12/2026. Texto livre também é aceito; vazio ou 'sem prazo' = sem prazo.",
+      "Quanto tempo por semana consegue dedicar?\nEntra no esforço proposto para o Chapter. Número de horas por semana, ex.: 3. Zero também é válido.",
+      "Que formatos prefere para aprender?\nEntra no contexto da curadoria; cada recurso declara como considerou suas preferências. Texto livre, ex.: documentação, vídeos, áudio ou exercícios. Vazio = sem preferência.",
+      "Que restrições os materiais precisam respeitar?\nEntra no contexto da curadoria; cada recurso declara como respeita suas restrições. Texto livre, ex.: idioma, custo, acessibilidade ou ferramentas. Vazio = sem restrições.",
     ]);
     expect(harness.ui.selectCalls).toEqual([{
       title: "Baseline — como avalia seu ponto de partida para este objetivo? (não é um teste)\nEntra como contexto da curadoria. Selecione uma opção de 1 a 5.",
@@ -1392,13 +1392,13 @@ describe("Lori startup and status", () => {
 
     await restored.runResume();
 
-    expect(restored.ui.inputCalls).toEqual([
-      { title: "O que você quer conseguir fazer?", placeholder: "Informa à curadoria o resultado que você busca. Texto livre, descreva algo observável. Ex.: manter uma conversa básica em japonês." },
-      { title: "Por que aprender isso agora?", placeholder: "Entra como contexto da curadoria. Texto livre, ex.: viagem, trabalho ou projeto pessoal." },
-      { title: "Até quando quer alcançar esse objetivo?", placeholder: "Entra no esforço proposto para o Chapter. Data sugerida: DD/MM/AAAA, ex.: 31/12/2026. Texto livre também é aceito; vazio ou 'sem prazo' = sem prazo." },
-      { title: "Quanto tempo por semana consegue dedicar?", placeholder: "Entra no esforço proposto para o Chapter. Número de horas por semana, ex.: 3. Zero também é válido." },
-      { title: "Que formatos prefere para aprender?", placeholder: "Entra no contexto da curadoria; cada recurso declara como considerou suas preferências. Texto livre, ex.: documentação, vídeos, áudio ou exercícios. Vazio = sem preferência." },
-      { title: "Que restrições os materiais precisam respeitar?", placeholder: "Entra no contexto da curadoria; cada recurso declara como respeita suas restrições. Texto livre, ex.: idioma, custo, acessibilidade ou ferramentas. Vazio = sem restrições." },
+    expect(restored.ui.inputCalls.map(({ title }) => title)).toEqual([
+      "O que você quer conseguir fazer?\nInforma à curadoria o resultado que você busca. Texto livre, descreva algo observável. Ex.: manter uma conversa básica em japonês.",
+      "Por que aprender isso agora?\nEntra como contexto da curadoria. Texto livre, ex.: viagem, trabalho ou projeto pessoal.",
+      "Até quando quer alcançar esse objetivo?\nEntra no esforço proposto para o Chapter. Data sugerida: DD/MM/AAAA, ex.: 31/12/2026. Texto livre também é aceito; vazio ou 'sem prazo' = sem prazo.",
+      "Quanto tempo por semana consegue dedicar?\nEntra no esforço proposto para o Chapter. Número de horas por semana, ex.: 3. Zero também é válido.",
+      "Que formatos prefere para aprender?\nEntra no contexto da curadoria; cada recurso declara como considerou suas preferências. Texto livre, ex.: documentação, vídeos, áudio ou exercícios. Vazio = sem preferência.",
+      "Que restrições os materiais precisam respeitar?\nEntra no contexto da curadoria; cada recurso declara como respeita suas restrições. Texto livre, ex.: idioma, custo, acessibilidade ou ferramentas. Vazio = sem restrições.",
     ]);
     const completedSnapshot = JSON.parse(await readFile(snapshotPath, "utf8"));
     expect(completedSnapshot.domainDraft).toMatchObject({
