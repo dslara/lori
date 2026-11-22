@@ -21,7 +21,8 @@
   },
   "scripts": {
     "test": "bun test",
-    "typecheck": "tsc --noEmit"
+    "typecheck": "tsc --noEmit",
+    "prototype:chapter": "pi --no-session --no-extensions -e ./docs/wayfinder/prototypes/chapter-presentation.ts"
   },
   "devDependencies": {
     "@types/bun": "latest",
