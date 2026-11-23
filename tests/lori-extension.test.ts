@@ -1086,7 +1086,7 @@ describe("Lori Chapter curation", () => {
     expect(closed.session.verdict.chapterRef).toEqual({ domainId: domain.id, chapterVersionId: originalChapterVersionId });
     expect(closed.domainDraft).toBeNull();
     const offer = restored.ui.confirmCalls.at(-1)?.message ?? "";
-    expect(offer).toContain(`Chapter version: 1 · ${originalChapterVersionId}`);
+    expect(offer).toContain(`Versão do Chapter: 1 · ${originalChapterVersionId}`);
     expect(offer).toContain("Outcome: Hold a short conversation to arrange a meal in Spanish.");
     expect(offer).not.toContain("Newly approved version outcome.");
   });
@@ -1280,7 +1280,7 @@ describe("Lori Chapter consultation", () => {
     expect(await readFile(snapshotPath, "utf8")).toBe(beforeReview);
     expect(harness.ui.customCalls).toEqual([]);
     harness.ui.selectResponses.push(domainOption);
-    harness.ui.customInputResponses.push([...Array.from({ length: 40 }, () => "PAGEDOWN"), "ESC"]);
+    harness.ui.customInputResponses.push([...Array.from({ length: 70 }, () => "DOWN"), "ESC"]);
     const selectCallCount = harness.ui.selectCalls.length;
 
     await harness.runChapter();
@@ -1293,25 +1293,65 @@ describe("Lori Chapter consultation", () => {
     }]);
     expect(report?.options).toMatchObject({ overlay: true });
     expect(report?.screens[0]?.capturesViewportInput).toBe(true);
-    expect(rendered).toContain(`Approved Chapter · ${domain.currentChapterVersionId}`);
+    expect(rendered).toContain(`Chapter aprovado · ${domain.currentChapterVersionId}`);
     expect(rendered).toContain("Current approved version two outcome.");
     expect(rendered).not.toContain("Historical version one outcome.");
     expect(rendered).not.toContain("Pending re-curation proposal must not be presented.");
-    expect(rendered).toContain("Learning Objective: Hold a basic conversation while traveling");
-    expect(rendered).toContain("Structural prerequisite Node");
+    expect(rendered).toContain("Objetivo de aprendizagem: Hold a basic conversation while traveling");
+    const nodeSection = (heading: string, nextHeading: string, ...markers: string[]): string => {
+      const frames = report?.frames.map((frame) => frame.join("\n")) ?? [];
+      return frames.map((frame) => {
+        const start = frame.indexOf(heading);
+        if (start < 0) return "";
+        const next = frame.indexOf(nextHeading, start + heading.length);
+        const section = frame.slice(start, next < 0 ? undefined : next);
+        return markers.every((marker) => section.includes(marker)) ? section : "";
+      }).find((section) => section.length > 0) ?? "";
+    };
+    const foundationSection = nodeSection(
+      "Node 1 · foundation",
+      "Node 2 · greetings",
+      "Objetivo: Recognize the parts of a short exchange.",
+      "Buenos días, ¿cómo está?",
+      "Spanish greetings and ordering dialogue",
+      "resource-1",
+      "00:14–00:18",
+    );
+    expect(foundationSection).not.toBe("");
+    expect(foundationSection).not.toContain("Quisiera pedir una sopa, por favor.");
+    const greetingsSection = nodeSection(
+      "Node 2 · greetings",
+      "Node 3 · ordering",
+      "Objetivo: Recognize and use common greetings in a short exchange.",
+      "Buenos días, ¿cómo está?",
+      "00:14–00:18",
+    );
+    expect(greetingsSection).not.toBe("");
+    const orderingSection = nodeSection(
+      "Node 3 · ordering",
+      "EXIT PROOF",
+      "Objetivo: Ask for a meal and respond to a simple follow-up question.",
+      "Quisiera pedir una sopa, por favor.",
+      "Spanish greetings and ordering dialogue",
+      "resource-1",
+      "00:42–00:47",
+    );
+    expect(orderingSection).not.toBe("");
+    expect(orderingSection).not.toContain("Buenos días, ¿cómo está?");
+    expect(rendered).toContain("Node preparatório estrutural");
     expect(rendered).toContain("opening pattern");
     expect(rendered).toContain("complete exchange.");
-    expect(rendered).toContain("Exit Proof contribution:");
-    expect(rendered).toContain("Contribution rationale:");
+    expect(rendered).toContain("Contribuição ao Exit Proof:");
+    expect(rendered).toContain("Justificativa da contribuição:");
     expect(rendered).toContain("Record a role-play arranging a meal without reading a script.");
-    expect(rendered).toContain("Estimate rationale:");
+    expect(rendered).toContain("Justificativa da estimativa:");
     expect(rendered).toContain("The range includes");
-    expect(rendered).toContain("Compatibility · preferences considered:");
+    expect(rendered).toContain("Compatibilidade · preferências consideradas:");
     expect(rendered).toContain("short audio");
     expect(rendered).toContain("dialogue.");
-    expect(rendered).toContain("Compatible: yes");
-    expect(rendered).toContain("Published: 2024-03-01");
-    expect(rendered).toContain("License: CC BY 4.0");
+    expect(rendered).toContain("Compatível: sim");
+    expect(rendered).toContain("Publicado: 2024-03-01");
+    expect(rendered).toContain("Licença: CC BY 4.0");
     expect(rendered).toContain("Buenos días, ¿cómo está?");
     expect(rendered).toContain("00:14–00:18");
     expect(rendered).toContain("Quisiera pedir una sopa, por favor.");
@@ -1329,16 +1369,19 @@ describe("Lori first Study Session", () => {
 
     const closed = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
     const confirmation = harness.ui.confirmCalls.at(-1);
+    const closedChapterRef = closed.session.verdict.chapterRef;
+    const closedChapter = closed.domains[0].chapters.find(({ id }: { id: string }) => id === closedChapterRef.chapterVersionId);
     expect(confirmation?.title).toContain("primeiro estudo");
     expect(confirmation?.message).toContain("greetings");
     expect(confirmation?.message).toContain("Recognize and use common greetings");
     expect(confirmation?.message).toContain("Spanish greetings and ordering dialogue");
     expect(confirmation?.message).toContain("https://www.spanishdict.com/guide/basic-greetings");
-    expect(confirmation?.message).toContain("Chapter summary from the closed Metalearning Verdict");
+    expect(confirmation?.message).toContain("Resumo do Chapter ligado ao Verdict fechado de Metalearning");
     expect(confirmation?.message).toContain("Outcome: Hold a short conversation to arrange a meal in Spanish.");
     expect(confirmation?.message).toContain("Principle: Directness");
-    expect(confirmation?.message).toContain("Ordered Nodes: greetings → ordering");
-    expect((confirmation?.message.indexOf("Chapter summary") ?? -1)).toBeLessThan(confirmation?.message.indexOf("Primeiro Node") ?? -1);
+    expect(confirmation?.message).toContain("Nodes em ordem: greetings — Recognize and use common greetings in a short exchange. → ordering — Ask for a meal and respond to a simple follow-up question.");
+    expect(confirmation?.message).toContain(`Versão do Chapter: ${closedChapter.version} · ${closedChapterRef.chapterVersionId}`);
+    expect((confirmation?.message.indexOf("Resumo do Chapter") ?? -1)).toBeLessThan(confirmation?.message.indexOf("Primeiro Node") ?? -1);
     expect(closed.session).toMatchObject({ kind: "metalearning", status: "closed" });
     expect(closed.sessionHistory).toEqual([]);
     expect(closed.domains).toHaveLength(1);

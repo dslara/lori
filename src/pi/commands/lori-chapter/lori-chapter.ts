@@ -3,35 +3,32 @@ import { truncateToWidth, wrapTextWithAnsi } from "@earendil-works/pi-tui";
 import type { ActiveDomain, ChapterVersion } from "../../../core/domain/domain.types.ts";
 import { readSnapshot } from "../../../effects/persist/persist.ts";
 import type { LoriExtensionState } from "../shared/shared.types.ts";
+import { formatChapterSummary } from "../shared/chapter-summary.ts";
 import { requireReadyState } from "../shared/session.ts";
 
 type ChapterResource = ChapterVersion["chapter"]["resources"][number];
 
 const RESOURCE_METADATA: Array<[keyof Pick<ChapterResource, "author" | "publishedAt" | "version" | "updatedAt" | "language" | "format" | "access" | "cost" | "license">, string]> = [
-  ["author", "Author"],
-  ["publishedAt", "Published"],
-  ["version", "Version"],
-  ["updatedAt", "Updated"],
-  ["language", "Language"],
-  ["format", "Format"],
-  ["access", "Access"],
-  ["cost", "Cost"],
-  ["license", "License"],
+  ["author", "Autoria"],
+  ["publishedAt", "Publicado"],
+  ["version", "Versão"],
+  ["updatedAt", "Atualizado"],
+  ["language", "Idioma"],
+  ["format", "Formato"],
+  ["access", "Acesso"],
+  ["cost", "Custo"],
+  ["license", "Licença"],
 ];
 
 function buildChapterReport(domain: ActiveDomain, version: ChapterVersion): string[] {
   const chapter = version.chapter;
   const resources = new Map(chapter.resources.map((resource) => [resource.id, resource]));
   const lines = [
-    "CHAPTER SUMMARY",
-    `Domain: ${domain.name} [${domain.id}]`,
-    `Learning Objective: ${domain.learningObjective}`,
-    `Chapter version: ${version.version} · ${version.id}`,
-    `Approved at: ${version.approvedAt}`,
-    `Outcome: ${chapter.outcome}`,
-    `Principle: ${chapter.principle}`,
+    "RESUMO DO CHAPTER",
+    ...formatChapterSummary(domain, version),
+    `Aprovado em: ${version.approvedAt}`,
     "",
-    "NODES · ORDER AND RELATIONSHIPS",
+    "NODES · ORDEM E RELAÇÕES",
   ];
 
   for (const node of chapter.nodes) {
@@ -39,30 +36,39 @@ function buildChapterReport(domain: ActiveDomain, version: ChapterVersion): stri
     lines.push(
       "",
       `Node ${node.order} · ${node.id}`,
-      `Objective: ${node.objective}`,
-      `Prerequisites: ${node.prerequisiteNodeIds.length === 0 ? "none" : node.prerequisiteNodeIds.join(", ")}`,
+      `Objetivo: ${node.objective}`,
+      `Pré-requisitos: ${node.prerequisiteNodeIds.length === 0 ? "nenhum" : node.prerequisiteNodeIds.join(", ")}`,
     );
     for (const prerequisite of node.prerequisiteRationales ?? []) {
-      lines.push(`Prerequisite rationale · ${prerequisite.prerequisiteNodeId}: ${prerequisite.rationale}`);
+      lines.push(`Justificativa do pré-requisito · ${prerequisite.prerequisiteNodeId}: ${prerequisite.rationale}`);
     }
     const contributions = node.exitProofContributions ?? [];
     if (contributions.length > 0) {
       for (const contribution of contributions) {
         lines.push(
-          `Exit Proof contribution: ${contribution.criterion}`,
-          `Contribution rationale: ${contribution.rationale}`,
+          `Contribuição ao Exit Proof: ${contribution.criterion}`,
+          `Justificativa da contribuição: ${contribution.rationale}`,
         );
       }
     } else if (node.exitProofCriterion !== undefined) {
-      lines.push(`Exit Proof contribution (legacy): ${node.exitProofCriterion}`);
+      lines.push(`Contribuição ao Exit Proof (legada): ${node.exitProofCriterion}`);
     } else if (chapter.nodes.some(({ prerequisiteNodeIds }) => prerequisiteNodeIds.includes(node.id))) {
-      lines.push("Structural prerequisite Node · no direct Exit Proof contribution.");
+      lines.push("Node preparatório estrutural · sem contribuição direta ao Exit Proof.");
     } else {
-      lines.push("No direct Exit Proof contribution stored.");
+      lines.push("Nenhuma contribuição direta ao Exit Proof registrada.");
     }
     lines.push(
-      `Recommended resource: ${recommendedResource?.id ?? node.recommendedResourceId} · ${recommendedResource?.title ?? "resource unavailable"}`,
+      `Recurso recomendado: ${recommendedResource?.id ?? node.recommendedResourceId} · ${recommendedResource?.title ?? "recurso indisponível"}`,
     );
+    for (const ref of node.evidenceRefs) {
+      const source = resources.get(ref.resourceId);
+      const evidence = source?.evidence.find(({ id }) => id === ref.evidenceId);
+      if (source === undefined || evidence === undefined) {
+        lines.push(`Referência de evidência indisponível: ${ref.evidenceId} · ${ref.resourceId}`);
+      } else {
+        lines.push(`Trecho ${evidence.id}: “${evidence.excerpt}” — ${source.title} (${source.id}), ${evidence.locator}`);
+      }
+    }
   }
 
   lines.push("", "EXIT PROOF", chapter.exitProof.description);
@@ -72,32 +78,32 @@ function buildChapterReport(domain: ActiveDomain, version: ChapterVersion): stri
 
   lines.push(
     "",
-    "EFFORT",
-    `Estimate: ${chapter.effort.minimumHours}–${chapter.effort.maximumHours} hours total.`,
-    `Availability: ${chapter.effort.hoursPerWeek} hours/week · deadline: ${chapter.effort.deadline ?? "none"}.`,
-    `Estimate rationale: ${chapter.effort.estimateRationale}`,
-    `Feasibility: ${chapter.effort.feasibility}`,
+    "ESFORÇO",
+    `Estimativa: ${chapter.effort.minimumHours}–${chapter.effort.maximumHours} horas no total.`,
+    `Disponibilidade: ${chapter.effort.hoursPerWeek} horas/semana · prazo: ${chapter.effort.deadline ?? "nenhum"}.`,
+    `Justificativa da estimativa: ${chapter.effort.estimateRationale}`,
+    `Viabilidade: ${chapter.effort.feasibility}`,
     "",
-    "RESOURCES AND EVIDENCE",
+    "RECURSOS E EVIDÊNCIAS",
   );
   for (const resource of chapter.resources) {
     lines.push(
       "",
-      `Resource ${resource.id} · ${resource.title}`,
+      `Recurso ${resource.id} · ${resource.title}`,
       `URL: ${resource.url}`,
-      `Scope: ${resource.scope ?? "not recorded"}`,
-      `Justification: ${resource.justification}`,
-      `Limitations: ${resource.limitations}`,
-      `Compatibility · preferences considered: ${resource.compatibility.preferencesConsidered}`,
-      `Compatibility · restrictions considered: ${resource.compatibility.restrictionsConsidered}`,
-      `Compatible: ${resource.compatibility.compatible ? "yes" : "no"}`,
+      `Escopo: ${resource.scope ?? "não registrado"}`,
+      `Justificativa: ${resource.justification}`,
+      `Limitações: ${resource.limitations}`,
+      `Compatibilidade · preferências consideradas: ${resource.compatibility.preferencesConsidered}`,
+      `Compatibilidade · restrições consideradas: ${resource.compatibility.restrictionsConsidered}`,
+      `Compatível: ${resource.compatibility.compatible ? "sim" : "não"}`,
     );
     for (const [field, label] of RESOURCE_METADATA) {
       const value = resource[field];
       if (value !== undefined) lines.push(`${label}: ${value}`);
     }
     for (const evidence of resource.evidence) {
-      lines.push(`Evidence ${evidence.id}: “${evidence.excerpt}” · ${resource.title} (${resource.id}), ${evidence.locator}`);
+      lines.push(`Trecho ${evidence.id}: “${evidence.excerpt}” — ${resource.title} (${resource.id}), ${evidence.locator}`);
     }
   }
 
@@ -164,9 +170,9 @@ export function registerLoriChapter(api: ExtensionAPI, shared: LoriExtensionStat
           const maxHeight = Math.max(1, Math.min(Math.floor(terminalRows * 0.9), terminalRows - 2));
           const header = [
             ...wrap(theme.fg("accent", `LORI · ${domain.name} · Chapter ${approvedVersion.version}`), width),
-            ...wrap(theme.fg("muted", `Approved Chapter · ${approvedVersion.id}`), width),
+            ...wrap(theme.fg("muted", `Chapter aprovado · ${approvedVersion.id}`), width),
           ];
-          const help = wrap(theme.fg("dim", "↑/↓ scroll · PgUp/PgDn page · Esc close"), width);
+          const help = wrap(theme.fg("dim", "↑/↓ rolar · PgUp/PgDn página · Esc fechar"), width);
           const rule = wrap(theme.fg("borderMuted", "─".repeat(Math.max(1, width - 2))), width);
           const documentLines = report.flatMap((line) => wrap(line, width));
           documentLineCount = documentLines.length;
@@ -176,7 +182,7 @@ export function registerLoriChapter(api: ExtensionAPI, shared: LoriExtensionStat
           scrollTop = Math.max(0, Math.min(scrollTop, maxScrollTop));
           const content = documentLines.slice(scrollTop, scrollTop + visibleRows);
           const indicator = [truncateToWidth(
-            theme.fg("dim", `Lines ${scrollTop + 1}–${Math.min(documentLines.length, scrollTop + visibleRows)}/${documentLines.length}`),
+            theme.fg("dim", `Linhas ${scrollTop + 1}–${Math.min(documentLines.length, scrollTop + visibleRows)}/${documentLines.length}`),
             width,
           )];
           cachedWidth = width;

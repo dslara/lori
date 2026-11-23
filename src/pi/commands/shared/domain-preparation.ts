@@ -1,6 +1,7 @@
 import type { ExtensionContext } from "@earendil-works/pi-coding-agent";
 import type { ActiveDomain, Baseline, DomainDraft, DomainDraftAnswerAction } from "../../../core/domain/domain.types.ts";
 import { selectNextDomainDraftField, selectRecommendedStudyTarget, type DomainDraftQuestionField } from "../../../core/domain/selectors.ts";
+import { formatChapterSummary } from "./chapter-summary.ts";
 import { isMetalearningSession, selectCanOpenSession, selectTransitionAt } from "../../../core/session/selectors.ts";
 import type { LoriState } from "../../../store/state.ts";
 import type { SkinProvider } from "../../../presentation/skin/provider.ts";
@@ -146,12 +147,8 @@ async function offerRecommendedFirstStudy(
   }
 
   const chapterSummary = [
-    "Chapter summary from the closed Metalearning Verdict",
-    `Domain: ${target.domain.name} [${target.domain.id}]`,
-    `Chapter version: ${target.chapter.version} · ${target.chapter.id}`,
-    `Outcome: ${target.chapter.chapter.outcome}`,
-    `Principle: ${target.chapter.chapter.principle}`,
-    `Ordered Nodes: ${target.chapter.chapter.nodes.map(({ id }) => id).join(" → ")}`,
+    "Resumo do Chapter ligado ao Verdict fechado de Metalearning",
+    ...formatChapterSummary(target.domain, target.chapter),
   ].join("\n");
   const accepted = await ctx.ui.confirm(
     "Iniciar o primeiro estudo?",
