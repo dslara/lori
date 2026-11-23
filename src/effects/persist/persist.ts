@@ -557,6 +557,43 @@ async function writeSnapshotFile(projectDir: string, state: LoriState): Promise<
   }
 }
 
+export async function readSnapshot(projectDir: string): Promise<SnapshotResult> {
+  let contents: string;
+  try {
+    const projectRoot = await realpath(projectDir);
+    const directory = await realpath(join(projectRoot, dirname(SNAPSHOT_RELATIVE_PATH)));
+    const pathFromProjectRoot = relative(projectRoot, directory);
+    if (
+      pathFromProjectRoot === "" ||
+      pathFromProjectRoot === ".." ||
+      pathFromProjectRoot.startsWith(`..${sep}`) ||
+      isAbsolute(pathFromProjectRoot)
+    ) {
+      return { ok: false, error: "Lori: snapshot directory must remain inside the study project." };
+    }
+    const snapshotPath = await realpath(join(directory, "snapshot.json"));
+    const pathFromSnapshotDirectory = relative(directory, snapshotPath);
+    if (
+      pathFromSnapshotDirectory === ".." ||
+      pathFromSnapshotDirectory.startsWith(`..${sep}`) ||
+      isAbsolute(pathFromSnapshotDirectory)
+    ) {
+      return { ok: false, error: "Lori: snapshot must remain inside the project snapshot directory." };
+    }
+    contents = await readFile(snapshotPath, "utf8");
+  } catch {
+    return { ok: false, error: "Lori: não foi possível ler o snapshot existente; use /lori-init para inicializar o projeto." };
+  }
+
+  let parsed: unknown;
+  try {
+    parsed = JSON.parse(contents);
+  } catch {
+    return { ok: false, error: "Lori: snapshot ilegível; o arquivo existente foi preservado." };
+  }
+  return decodeSnapshot(parsed);
+}
+
 export async function loadOrCreateSnapshot(projectDir: string): Promise<SnapshotResult> {
   await prepareSnapshotDirectory(projectDir);
   return loadOrCreateSnapshotFile(projectDir);

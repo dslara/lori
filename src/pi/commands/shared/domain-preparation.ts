@@ -145,11 +145,18 @@ async function offerRecommendedFirstStudy(
     return;
   }
 
+  const chapterSummary = [
+    "Chapter summary from the closed Metalearning Verdict",
+    `Domain: ${target.domain.name} [${target.domain.id}]`,
+    `Chapter version: ${target.chapter.version} · ${target.chapter.id}`,
+    `Outcome: ${target.chapter.chapter.outcome}`,
+    `Principle: ${target.chapter.chapter.principle}`,
+    `Ordered Nodes: ${target.chapter.chapter.nodes.map(({ id }) => id).join(" → ")}`,
+  ].join("\n");
   const accepted = await ctx.ui.confirm(
     "Iniciar o primeiro estudo?",
     [
-      `Domain: ${target.domain.name}`,
-      `Chapter version ${target.chapter.version} (${target.chapter.id})`,
+      chapterSummary,
       `Primeiro Node: ${target.node.id} — ${target.node.objective}`,
       `Recurso recomendado: ${target.resource.title} — ${target.resource.url} (${target.resource.id})`,
       "Deseja abrir uma Study Session para este Node?",

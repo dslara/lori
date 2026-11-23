@@ -19,6 +19,8 @@ type UI = {
   inputResponses: Array<string | undefined>;
   confirmCalls: Array<{ title: string; message: string }>;
   confirmResponses: boolean[];
+  customCalls: Array<{ options: unknown; screens: CustomScreen[]; frames: string[][] }>;
+  customInputResponses: string[][];
   notify(message: string, type?: "info" | "warning" | "error"): void;
   setStatus(key: string, text: string | undefined): void;
   setWidget(
@@ -29,6 +31,10 @@ type UI = {
   select(title: string, options: string[]): Promise<string | undefined>;
   input(title: string, placeholder?: string): Promise<string | undefined>;
   confirm(title: string, message: string): Promise<boolean>;
+  custom(
+    factory: (tui: never, theme: never, keybindings: never, done: (result: unknown) => void) => CustomScreen | Promise<CustomScreen>,
+    options?: unknown,
+  ): Promise<unknown>;
 };
 
 type StartHandler = (event: { type: "session_start"; reason: "startup" }, ctx: { cwd: string; ui: UI }) => void | Promise<void>;
@@ -43,7 +49,13 @@ type ToolResultHandler = (event: {
   content: Array<{ type: "text"; text: string }>;
   isError: boolean;
 }) => unknown;
-type CommandHandler = (args: string, ctx: { ui: UI; isIdle?(): boolean }) => void | Promise<void>;
+type CommandHandler = (args: string, ctx: { ui: UI; mode?: "tui" | "rpc"; isIdle?(): boolean }) => void | Promise<void>;
+type CustomScreen = {
+  render(width: number): string[];
+  handleInput(data: string): void;
+  invalidate?(): void;
+  capturesViewportInput?: boolean;
+};
 type RegisteredTool = {
   parameters: unknown;
   promptGuidelines?: string[];
@@ -55,6 +67,7 @@ type Harness = {
   start(): Promise<void>;
   shutdown(): Promise<void>;
   runStatus(): Promise<void>;
+  runChapter(args?: string, mode?: "tui" | "rpc"): Promise<void>;
   runDelete(args: string): Promise<void>;
   runInit(args: string): Promise<void>;
   runStart(args: string): Promise<void>;
@@ -134,6 +147,8 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
     inputResponses: [],
     confirmCalls: [],
     confirmResponses: [],
+    customCalls: [],
+    customInputResponses: [],
     notify(message, type) {
       this.notifications.push({ message, type });
     },
@@ -154,6 +169,47 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
     async confirm(title, message) {
       this.confirmCalls.push({ title, message });
       return this.confirmResponses.shift() ?? false;
+    },
+    async custom(factory, options = {}) {
+      const call = { options, screens: [] as CustomScreen[], frames: [] as string[][] };
+      this.customCalls.push(call);
+      let resolveCustom!: (result: unknown) => void;
+      let rejectCustom!: (error: unknown) => void;
+      const result = new Promise<unknown>((resolve, reject) => {
+        resolveCustom = resolve;
+        rejectCustom = reject;
+      });
+      const done = (value: unknown): void => resolveCustom(value);
+      const tui = { terminal: { rows: 24, columns: 80 }, requestRender() {} };
+      const theme = { fg: (_color: string, text: string) => text };
+      const keybindings = {
+        matches(data: string, action: string) {
+          const bindings: Record<string, string[]> = {
+            "tui.select.up": ["UP"],
+            "tui.altScreen.lineUp": ["UP"],
+            "tui.select.down": ["DOWN"],
+            "tui.altScreen.lineDown": ["DOWN"],
+            "tui.select.pageUp": ["PAGEUP"],
+            "tui.altScreen.pageUp": ["PAGEUP"],
+            "tui.select.pageDown": ["PAGEDOWN"],
+            "tui.altScreen.pageDown": ["PAGEDOWN"],
+            "tui.select.cancel": ["ESC"],
+            "tui.select.confirm": ["ENTER"],
+          };
+          return bindings[action]?.includes(data) ?? false;
+        },
+      };
+      void Promise.resolve(factory(tui as never, theme as never, keybindings as never, done)).then((screen) => {
+        call.screens.push(screen);
+        call.frames.push(screen.render(80));
+        for (const data of this.customInputResponses.shift() ?? []) {
+          screen.handleInput(data);
+          call.frames.push(screen.render(80));
+        }
+      }).catch((error: unknown) => {
+        rejectCustom(error);
+      });
+      return result;
     },
   };
 
@@ -215,6 +271,11 @@ async function createHarness(existingCwd?: string): Promise<{ cwd: string; harne
         const handler = commandHandlers.get("lori-status");
         expect(handler).toBeDefined();
         await handler?.("", { ui });
+      },
+      async runChapter(args = "", mode = "tui") {
+        const handler = commandHandlers.get("lori-chapter");
+        expect(handler).toBeDefined();
+        await handler?.(args, { ui, mode });
       },
       async runDelete(args) {
         const handler = commandHandlers.get("lori-delete");
@@ -1005,7 +1066,9 @@ describe("Lori Chapter curation", () => {
     expect(awaitingVerdict.session.status).toBe("paused");
     harness.ui.selectResponses.push(`${domain.name} · ${domain.learningObjective} [${domain.id}]`);
     await harness.runCurate();
-    await harness.submitCuration(validCuration(curationRequestIds(harness)));
+    const recuration = validCuration(curationRequestIds(harness));
+    (recuration.result as { proposal: { outcome: string } }).proposal.outcome = "Newly approved version outcome.";
+    await harness.submitCuration(recuration);
     harness.ui.confirmResponses.push(true);
 
     await harness.runApprove();
@@ -1022,6 +1085,10 @@ describe("Lori Chapter curation", () => {
     const closed = JSON.parse(await readFile(snapshotPath, "utf8"));
     expect(closed.session.verdict.chapterRef).toEqual({ domainId: domain.id, chapterVersionId: originalChapterVersionId });
     expect(closed.domainDraft).toBeNull();
+    const offer = restored.ui.confirmCalls.at(-1)?.message ?? "";
+    expect(offer).toContain(`Chapter version: 1 · ${originalChapterVersionId}`);
+    expect(offer).toContain("Outcome: Hold a short conversation to arrange a meal in Spanish.");
+    expect(offer).not.toContain("Newly approved version outcome.");
   });
 
   test("restores a pending re-curation proposal without automatically starting research on resume", async () => {
@@ -1106,6 +1173,155 @@ describe("Lori Chapter curation", () => {
   });
 });
 
+describe("Lori Chapter consultation", () => {
+  test("explains how to prepare a Domain when none is active without changing persisted files", async () => {
+    const { cwd, harness } = await createHarness();
+    await harness.start();
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const before = await readFile(snapshotPath, "utf8");
+    const projectFiles = await readdir(cwd);
+    const loriFiles = await readdir(join(cwd, ".lori"));
+
+    await harness.runChapter();
+
+    expect(harness.ui.notifications.at(-1)?.message).toContain("Nenhum Domain ativo");
+    expect(harness.ui.notifications.at(-1)?.message).toContain("/lori-init");
+    expect(harness.ui.selectCalls).toEqual([]);
+    expect(harness.ui.customCalls).toEqual([]);
+    expect(await readFile(snapshotPath, "utf8")).toBe(before);
+    expect(await readdir(cwd)).toEqual(projectFiles);
+    expect(await readdir(join(cwd, ".lori"))).toEqual(loriFiles);
+  });
+
+  test("reviews only the current approved Chapter in a scrollable report without changing state or files", async () => {
+    const { cwd, harness } = await createHarness();
+    await prepareCurationDraft(harness);
+    const prepareReportCuration = (outcome: string): Record<string, unknown> => {
+      const curation = validCuration(curationRequestIds(harness));
+      type ReportNode = {
+        id: string;
+        order: number;
+        objective: string;
+        prerequisiteNodeIds: string[];
+        prerequisiteRationales: Array<{ prerequisiteNodeId: string; rationale: string }>;
+        exitProofContributions: Array<{ criterion: string; rationale: string }>;
+        evidenceRefs: Array<{ resourceId: string; evidenceId: string }>;
+        recommendedResourceId: string;
+      };
+      const proposal = (curation.result as { proposal: { outcome: string; nodes: ReportNode[]; resources: Array<Record<string, unknown>> } }).proposal;
+      const [greetings, ordering] = proposal.nodes;
+      if (greetings === undefined || ordering === undefined) throw new Error("Expected the Chapter fixture to include two Nodes.");
+      proposal.outcome = outcome;
+      proposal.nodes = [
+        {
+          id: "foundation",
+          order: 1,
+          objective: "Recognize the parts of a short exchange.",
+          prerequisiteNodeIds: [],
+          prerequisiteRationales: [],
+          exitProofContributions: [],
+          evidenceRefs: greetings.evidenceRefs,
+          recommendedResourceId: greetings.recommendedResourceId,
+        },
+        {
+          ...greetings,
+          order: 2,
+          prerequisiteNodeIds: ["foundation"],
+          prerequisiteRationales: [{ prerequisiteNodeId: "foundation", rationale: "The opening pattern provides the structure needed to speak in a complete exchange." }],
+        },
+        {
+          ...ordering,
+          order: 3,
+          prerequisiteNodeIds: ["greetings"],
+          prerequisiteRationales: [{ prerequisiteNodeId: "greetings", rationale: "The greeting opens the exchange before the Player asks for a meal." }],
+        },
+      ];
+      Object.assign(proposal.resources[0], {
+        publishedAt: "2024-03-01",
+        version: "2nd edition",
+        updatedAt: "2025-01-01",
+        cost: "Free",
+        license: "CC BY 4.0",
+      });
+      return curation;
+    };
+
+    await harness.runCurate();
+    await harness.submitCuration(prepareReportCuration("Historical version one outcome."));
+    harness.ui.confirmResponses.push(true, false);
+    harness.ui.inputResponses.push("3", "4");
+    await harness.runApprove();
+
+    let snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    let domain = snapshot.domains[0];
+    harness.ui.selectResponses.push(`${domain.name} · ${domain.learningObjective} [${domain.id}]`);
+    await harness.runCurate();
+    await harness.submitCuration(prepareReportCuration("Current approved version two outcome."));
+    harness.ui.confirmResponses.push(true);
+    await harness.runApprove();
+
+    snapshot = JSON.parse(await readFile(join(cwd, ".lori", "snapshot.json"), "utf8"));
+    domain = snapshot.domains[0];
+    harness.ui.selectResponses.push(`${domain.name} · ${domain.learningObjective} [${domain.id}]`);
+    await harness.runCurate();
+    const pending = validCuration(curationRequestIds(harness));
+    (pending.result as { proposal: { outcome: string } }).proposal.outcome = "Pending re-curation proposal must not be presented.";
+    await harness.submitCuration(pending);
+
+    const snapshotPath = join(cwd, ".lori", "snapshot.json");
+    const beforeReview = await readFile(snapshotPath, "utf8");
+    const projectFiles = await readdir(cwd);
+    const loriFiles = await readdir(join(cwd, ".lori"));
+    const domainOption = `${domain.name} — ${domain.learningObjective} [${domain.id}]`;
+    harness.ui.selectResponses.push(undefined);
+
+    await harness.runChapter();
+
+    expect(await readFile(snapshotPath, "utf8")).toBe(beforeReview);
+    expect(harness.ui.customCalls).toEqual([]);
+    harness.ui.selectResponses.push(domainOption);
+    harness.ui.customInputResponses.push([...Array.from({ length: 40 }, () => "PAGEDOWN"), "ESC"]);
+    const selectCallCount = harness.ui.selectCalls.length;
+
+    await harness.runChapter();
+
+    const report = harness.ui.customCalls.at(-1);
+    const rendered = report?.frames.flat().join("\n") ?? "";
+    expect(harness.ui.selectCalls.slice(selectCallCount)).toEqual([{
+      title: "Escolher Domain ativo",
+      options: [domainOption],
+    }]);
+    expect(report?.options).toMatchObject({ overlay: true });
+    expect(report?.screens[0]?.capturesViewportInput).toBe(true);
+    expect(rendered).toContain(`Approved Chapter · ${domain.currentChapterVersionId}`);
+    expect(rendered).toContain("Current approved version two outcome.");
+    expect(rendered).not.toContain("Historical version one outcome.");
+    expect(rendered).not.toContain("Pending re-curation proposal must not be presented.");
+    expect(rendered).toContain("Learning Objective: Hold a basic conversation while traveling");
+    expect(rendered).toContain("Structural prerequisite Node");
+    expect(rendered).toContain("opening pattern");
+    expect(rendered).toContain("complete exchange.");
+    expect(rendered).toContain("Exit Proof contribution:");
+    expect(rendered).toContain("Contribution rationale:");
+    expect(rendered).toContain("Record a role-play arranging a meal without reading a script.");
+    expect(rendered).toContain("Estimate rationale:");
+    expect(rendered).toContain("The range includes");
+    expect(rendered).toContain("Compatibility · preferences considered:");
+    expect(rendered).toContain("short audio");
+    expect(rendered).toContain("dialogue.");
+    expect(rendered).toContain("Compatible: yes");
+    expect(rendered).toContain("Published: 2024-03-01");
+    expect(rendered).toContain("License: CC BY 4.0");
+    expect(rendered).toContain("Buenos días, ¿cómo está?");
+    expect(rendered).toContain("00:14–00:18");
+    expect(rendered).toContain("Quisiera pedir una sopa, por favor.");
+    expect(rendered).toContain("00:42–00:47");
+    expect(await readFile(snapshotPath, "utf8")).toBe(beforeReview);
+    expect(await readdir(cwd)).toEqual(projectFiles);
+    expect(await readdir(join(cwd, ".lori"))).toEqual(loriFiles);
+  });
+});
+
 describe("Lori first Study Session", () => {
   test("offers the first curated Node and resource after the Verdict, and rejection leaves the Verdict closed", async () => {
     const { cwd, harness } = await createHarness();
@@ -1118,6 +1334,11 @@ describe("Lori first Study Session", () => {
     expect(confirmation?.message).toContain("Recognize and use common greetings");
     expect(confirmation?.message).toContain("Spanish greetings and ordering dialogue");
     expect(confirmation?.message).toContain("https://www.spanishdict.com/guide/basic-greetings");
+    expect(confirmation?.message).toContain("Chapter summary from the closed Metalearning Verdict");
+    expect(confirmation?.message).toContain("Outcome: Hold a short conversation to arrange a meal in Spanish.");
+    expect(confirmation?.message).toContain("Principle: Directness");
+    expect(confirmation?.message).toContain("Ordered Nodes: greetings → ordering");
+    expect((confirmation?.message.indexOf("Chapter summary") ?? -1)).toBeLessThan(confirmation?.message.indexOf("Primeiro Node") ?? -1);
     expect(closed.session).toMatchObject({ kind: "metalearning", status: "closed" });
     expect(closed.sessionHistory).toEqual([]);
     expect(closed.domains).toHaveLength(1);

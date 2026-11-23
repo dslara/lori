@@ -4,6 +4,7 @@ import { registerLoriAbandon } from "./lori-abandon/lori-abandon.ts";
 import { registerLoriApprove } from "./lori-approve/lori-approve.ts";
 import { registerLoriClose } from "./lori-close/lori-close.ts";
 import { registerLoriCurate } from "./lori-curate/lori-curate.ts";
+import { registerLoriChapter } from "./lori-chapter/lori-chapter.ts";
 import { registerLoriDelete } from "./lori-delete/lori-delete.ts";
 import { registerLoriInit } from "./lori-init/lori-init.ts";
 import { registerLoriResume } from "./lori-resume/lori-resume.ts";
@@ -14,6 +15,7 @@ export { initializeSessionState } from "./shared/session-state.ts";
 
 export function registerLoriCommands(api: ExtensionAPI, shared: LoriExtensionState): void {
   registerLoriCurate(api, shared);
+  registerLoriChapter(api, shared);
   registerLoriApprove(api, shared);
   registerLoriInit(api, shared);
   registerLoriDelete(api, shared);
